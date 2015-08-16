@@ -1,0 +1,32 @@
+{
+  "name": "np",
+  "version": "0.0.0",
+  "description": "A better `npm publish`",
+  "license": "MIT",
+  "repository": "sindresorhus/np-sh",
+  "author": {
+    "name": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com"
+  },
+  "bin": {
+    "np": "np.sh"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "files": [
+    "np.sh"
+  ],
+  "keywords": [
+    "cli-app",
+    "cli",
+    "npm",
+    "publish",
+    "git",
+    "push"
+  ],
+  "dependencies": {
+    "trash": "^2.0.0"
+  }
+}
