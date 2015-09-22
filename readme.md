@@ -3,6 +3,16 @@
 > A better `npm publish`
 
 
+## Why
+
+- Pulls in remote git commits to ensure you publish the latest commit
+- Reinstalls dependencies to ensure it works with the latest dependency tree
+- Runs the tests
+- Bumps the version in package.json and creates a git tag
+- Publishes the new version to npm
+- Pushes commits and tags to GitHub
+
+
 ## Install
 
 ```
