@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A better `npm publish`",
   "license": "MIT",
-  "repository": "sindresorhus/np-sh",
+  "repository": "sindresorhus/np",
   "author": {
     "name": "Sindre Sorhus",
     "email": "sindresorhus@gmail.com",
