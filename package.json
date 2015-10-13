@@ -9,9 +9,7 @@
     "email": "sindresorhus@gmail.com",
     "url": "sindresorhus.com"
   },
-  "bin": {
-    "np": "np.sh"
-  },
+  "bin": "np.sh",
   "engines": {
     "node": ">=0.10.0"
   },
@@ -24,9 +22,12 @@
     "npm",
     "publish",
     "git",
-    "push"
+    "push",
+    "version",
+    "bump",
+    "commit"
   ],
   "dependencies": {
-    "trash": "^2.0.0"
+    "trash-cli": "^1.0.0"
   }
 }
