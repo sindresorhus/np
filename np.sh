@@ -5,7 +5,7 @@ if test 0 -ne `git status --porcelain | wc -l`; then
 	exit 128;
 fi
 
-if test "00" -ne `git fetch; git rev-list --count --left-right "@{u}"...HEAD | awk '{ print $1$2 }'`; then
+if test "00" -ne `git fetch; git rev-list --count --left-right @'{u}'...HEAD | awk '{ print $1$2 }'`; then
 	echo "Local/Remote history differ. Please push/pull changes." >&2;
 	exit 128;
 fi
