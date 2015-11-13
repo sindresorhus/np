@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-if test -n "$(git status --porcelain)"; then
+if test -n "$(git status -uno --porcelain)"; then
 	echo "Unclean working tree. Commit or stash changes first." >&2;
 	exit 128;
 fi
