@@ -5,9 +5,14 @@ if test -n "$(git status --porcelain)"; then
 	exit 128;
 fi
 
-if test "00" -ne `git fetch; git rev-list --count --left-right @'{u}'...HEAD | awk '{ print $1$2 }'`; then
-	echo "Local/Remote history differ. Please push/pull changes." >&2;
-	exit 128;
+if ! git fetch --quiet 2>/dev/null; then
+    echo "There was a problem fetching your branch" >&2;
+    exit 128;
+fi
+
+if test "00" != $(git rev-list --count --left-right @'{u}'...HEAD | awk '{ print $1$2 }'); then
+    echo "Local/Remote history differ. Please push/pull changes." >&2;
+    exit 128;
 fi
 
 ./node_modules/.bin/trash node_modules &>/dev/null;
