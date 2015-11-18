@@ -5,7 +5,7 @@
 
 ## Why
 
-- Pulls in remote git commits to ensure you publish the latest commit
+- Ensures the working directory is clean and that there are no unpulled changes
 - Reinstalls dependencies to ensure your project works with the latest dependency tree
 - Runs the tests
 - Bumps the version in package.json and creates a git tag
