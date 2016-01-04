@@ -17,7 +17,7 @@ fi
 
 trashCli=$(node -e "var path = require('path');console.log(path.join(path.dirname(require('fs').realpathSync('$0')), 'node_modules/.bin/trash'))");
 
-if test "$*" != '--keep'; then
+if test "$2" = '--keep'; then
 	node "$trashCli" node_modules &&
 	npm install
 fi
