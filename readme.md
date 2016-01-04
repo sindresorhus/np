@@ -23,8 +23,11 @@ $ npm install --global np
 ## Usage
 
 ```sh
-np [patch | minor | major | <version>]
+np [patch | minor | major | <version>] [--keep]
 # `patch` is default
+
+Options
+  --keep  Preserve the "node_modules" folder.
 ```
 
 
