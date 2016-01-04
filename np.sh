@@ -20,7 +20,7 @@ trashCli=$(node -e "var path = require('path');console.log(path.join(path.dirnam
 if test "$*" != '--keep'; then
 	node "$trashCli" node_modules &&
 	npm install
-fi;
+fi
 
 npm test &&
 npm version ${1:-patch} &&
