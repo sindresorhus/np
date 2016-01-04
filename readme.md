@@ -25,9 +25,10 @@ $ npm install --global np
 ```sh
 np [patch | minor | major | <version>] [--keep]
 # `patch` is default
-```
 
- 1. `--keep`: Stop from trashing `node_modules` and reinstalling.
+Options
+  --keep  Preserve the "node_modules" folder.
+```
 
 
 ## License
