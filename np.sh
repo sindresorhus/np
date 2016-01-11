@@ -15,9 +15,9 @@ if test "0" != "$(git rev-list --count --left-only @'{u}'...HEAD)"; then
 	exit 128;
 fi
 
-trashCli=$(node -e "var path = require('path');console.log(path.join(path.dirname(require('fs').realpathSync('$0')), 'node_modules/.bin/trash'))");
+realPath=$(node -e "console.log(require('path').dirname(require('fs').realpathSync('$0')))")
 
-node "$trashCli" node_modules &&
+$realPath/node_modules/.bin/trash node_modules &&
 npm install &&
 npm test &&
 npm version ${1:-patch} &&
