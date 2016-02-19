@@ -18,8 +18,9 @@ fi
 trashCli=$(node -e "var path = require('path');console.log(path.join(path.dirname(require('fs').realpathSync('$0')), 'node_modules/.bin/trash'))");
 
 node "$trashCli" node_modules &&
-npm install &&
+npm install --production &&
 npm test &&
 npm version ${1:-patch} &&
 npm publish &&
-git push --follow-tags
+git push --follow-tags &&
+(npm install --silent --no-spin >/dev/null &) # get devDependencies back in the background
