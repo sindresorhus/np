@@ -15,7 +15,7 @@ if test "0" != "$(git rev-list --count --left-only @'{u}'...HEAD)"; then
 	exit 128;
 fi
 
-trashCli=$(node -e "console.log(require.resolve('.bin/trash'))");
+trashCli=$(node -p "require.resolve('.bin/trash')");
 
 node "$trashCli" node_modules &&
 npm install &&
