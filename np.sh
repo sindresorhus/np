@@ -1,5 +1,10 @@
 #!/usr/bin/env sh
 
+if test "$(node -v | sed -e "s#v\([0-9]*\)\.[0-9]*\.[0-9]*#\1#")" == "6"; then
+	echo 'You should not publish when running Node.js 6. Please downgrade and publish again. https://github.com/npm/npm/issues/5082' >&2;
+	exit 128;
+fi
+
 if test -n "$(git status --porcelain)"; then
 	echo 'Unclean working tree. Commit or stash changes first.' >&2;
 	exit 128;
