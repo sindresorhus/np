@@ -5,18 +5,14 @@ const del = require('del');
 
 const exec = (cmd, args) => {
 	const result = execa.sync(cmd, args);
-
-	if (result.stderr !== '') {
-		throw new Error(result.stderr);
-	}
-
-	return result.stdout;
+	console.log(result.stdout);
+	console.log(result.stderr);
 };
 
 module.exports = input => {
 	input = input || 'patch';
 
-	if (!['patch', 'minor', 'major'].includes(input) && !semver.valid(input)) {
+	if (['patch', 'minor', 'major'].indexOf(input) === -1 && !semver.valid(input)) {
 		throw new Error('Version should be either path, minor, major, or a valid semver version.');
 	}
 
@@ -24,11 +20,11 @@ module.exports = input => {
 		throw new Error('You should not publish when running Node.js 6. Please downgrade and publish again. https://github.com/npm/npm/issues/5082');
 	}
 
-	if (exec('git', ['status', '--porcelain']) !== '') {
+	if (execa.sync('git', ['status', '--porcelain']).stdout !== '') {
 		throw new Error('Unclean working tree. Commit or stash changes first.');
 	}
 
-	if (exec('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']) !== '0') {
+	if (execa.sync('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']).stdout !== '0') {
 		throw new Error('Remote history differ. Please pull changes.');
 	}
 
