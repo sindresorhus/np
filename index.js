@@ -14,6 +14,10 @@ const exec = (cmd, args) => {
 	if (result.stderr) {
 		console.error(result.stderr);
 	}
+
+	if (result.status !== 0) {
+		throw new Error(result.stderr);
+	}
 };
 
 module.exports = input => {
