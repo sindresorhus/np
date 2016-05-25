@@ -26,7 +26,7 @@ $ npm install --global np
 $ np --help
 
   Usage
-	$ np [patch | minor | major | <version>] (Default: patch)
+    $ np [patch | minor | major | <version>] (Default: patch)
 
   Example
     $ np patch
