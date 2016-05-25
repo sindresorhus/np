@@ -22,12 +22,17 @@ $ npm install --global np
 
 ## Usage
 
-```sh
-np [patch | minor | major | <version>]
-# `patch` is default
+```
+$ np --help
+
+  Usage
+    $ np [patch | minor | major | <version>]
+
+  Example
+    $ np patch
 ```
 
 
 ## License
 
-MIT © [Sindre Sorhus](http://sindresorhus.com)
+MIT © [Sindre Sorhus](https://sindresorhus.com)

@@ -9,12 +9,16 @@
     "email": "sindresorhus@gmail.com",
     "url": "sindresorhus.com"
   },
-  "bin": "np.sh",
+  "bin": "cli.js",
   "engines": {
     "node": ">=0.10.0"
   },
+  "scripts": {
+    "test": "xo && ava"
+  },
   "files": [
-    "np.sh"
+    "index.js",
+    "cli.js"
   ],
   "keywords": [
     "cli-app",
@@ -28,6 +32,14 @@
     "commit"
   ],
   "dependencies": {
-    "trash-cli": "^1.0.0"
+    "del": "^2.2.0",
+    "execa": "^0.4.0",
+    "log-symbols": "^1.0.2",
+    "meow": "^3.7.0",
+    "semver": "^5.1.0"
+  },
+  "devDependencies": {
+    "ava": "*",
+    "xo": "*"
   }
 }
