@@ -4,9 +4,16 @@ const execa = require('execa');
 const del = require('del');
 
 const exec = (cmd, args) => {
+	// TODO Switch to `{stdio: 'inherit'}` instead of manual logging when a new execa version is released
 	const result = execa.sync(cmd, args);
-	console.log(result.stdout);
-	console.log(result.stderr);
+
+	if (result.stdout) {
+		console.log(result.stdout);
+	}
+
+	if (result.stderr) {
+		console.error(result.stderr);
+	}
 };
 
 module.exports = input => {
@@ -23,6 +30,8 @@ module.exports = input => {
 	if (execa.sync('git', ['status', '--porcelain']).stdout !== '') {
 		throw new Error('Unclean working tree. Commit or stash changes first.');
 	}
+
+	execa.sync('git', ['fetch']);
 
 	if (execa.sync('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']).stdout !== '0') {
 		throw new Error('Remote history differ. Please pull changes.');

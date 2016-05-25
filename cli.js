@@ -6,7 +6,7 @@ const np = require('./');
 
 const cli = meow(`
 	Usage
-	  $ np [patch | minor | major | <version>]
+	  $ np [patch | minor | major | <version>] (Default: patch)
 
 	Example
 	  $ np patch
