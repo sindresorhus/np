@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 'use strict';
-var meow = require('meow');
-var logSymbols = require('log-symbols');
-var np = require('./');
+const meow = require('meow');
+const logSymbols = require('log-symbols');
+const np = require('./');
 
-var cli = meow(`
+const cli = meow(`
 	Usage
 	  $ np [patch | minor | major | <version>]
 
@@ -15,5 +15,5 @@ var cli = meow(`
 try {
 	np(cli.input[0]);
 } catch (err) {
-	console.log(' ' + logSymbols.error + ' ' + err.message);
+	console.log(` ${logSymbols.error} ${err.message}`);
 }

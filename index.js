@@ -1,9 +1,9 @@
 'use strict';
-var semver = require('semver');
-var execa = require('execa');
-var del = require('del');
+const semver = require('semver');
+const execa = require('execa');
+const del = require('del');
 
-var exec = function (cmd, args) {
+const exec = (cmd, args) => {
 	const result = execa.sync(cmd, args);
 
 	if (result.stderr !== '') {
@@ -13,11 +13,11 @@ var exec = function (cmd, args) {
 	return result.stdout;
 };
 
-module.exports = function (input) {
+module.exports = input => {
 	input = input || 'patch';
 
-	if (['patch', 'minor', 'major'].indexOf(input) === -1 && !semver.valid(input)) {
-		throw new Error('Invalid version.');
+	if (!['patch', 'minor', 'major'].includes(input) && !semver.valid(input)) {
+		throw new Error('Version should be either path, minor, major, or a valid semver version.');
 	}
 
 	if (semver.gte(process.version, '6.0.0')) {

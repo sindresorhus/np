@@ -1,4 +1,4 @@
-# np
+# np [![Build Status](https://travis-ci.org/sindresorhus/np.svg?branch=master)](https://travis-ci.org/sindresorhus/np) [![Coverage Status]
 
 > A better `npm publish`
 
