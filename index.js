@@ -16,7 +16,7 @@ const exec = (cmd, args) => {
 	}
 
 	if (result.status !== 0) {
-		throw new Error(result.stderr);
+		throw new Error(`Exitted with status ${result.status}.`);
 	}
 };
 

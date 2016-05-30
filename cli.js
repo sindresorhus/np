@@ -15,5 +15,6 @@ const cli = meow(`
 try {
 	np(cli.input[0]);
 } catch (err) {
-	console.log(` ${logSymbols.error} ${err.message}`);
+	console.error(` ${logSymbols.error} ${err.message}`);
+	process.exit(1);
 }
