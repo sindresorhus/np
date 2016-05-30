@@ -1,4 +1,4 @@
-# np
+# np [![Build Status](https://travis-ci.org/sindresorhus/np.svg?branch=master)](https://travis-ci.org/sindresorhus/np)
 
 > A better `npm publish`
 
@@ -22,12 +22,17 @@ $ npm install --global np
 
 ## Usage
 
-```sh
-np [patch | minor | major | <version>]
-# `patch` is default
+```
+$ np --help
+
+  Usage
+    $ np [patch | minor | major | <version>] (Default: patch)
+
+  Example
+    $ np patch
 ```
 
 
 ## License
 
-MIT © [Sindre Sorhus](http://sindresorhus.com)
+MIT © [Sindre Sorhus](https://sindresorhus.com)
