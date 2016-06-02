@@ -8,12 +8,15 @@ const cli = meow(`
 	Usage
 	  $ np [patch | minor | major | <version>] (Default: patch)
 
+	Option
+	  --any-branch  Allow publishing from any branch
+
 	Example
 	  $ np patch
 `);
 
 try {
-	np(cli.input[0]);
+	np(cli.input[0], cli.flags);
 } catch (err) {
 	console.error(` ${logSymbols.error} ${err.message}`);
 	process.exit(1);

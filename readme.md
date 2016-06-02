@@ -5,6 +5,7 @@
 
 ## Why
 
+- Ensures you are publishing from the `master` branch
 - Ensures the working directory is clean and that there are no unpulled changes
 - Reinstalls dependencies to ensure your project works with the latest dependency tree
 - Runs the tests
@@ -27,6 +28,9 @@ $ np --help
 
   Usage
     $ np [patch | minor | major | <version>] (Default: patch)
+
+  Option
+    --any-branch  Allow publishing from any branch
 
   Example
     $ np patch
