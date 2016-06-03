@@ -3,6 +3,8 @@ const semver = require('semver');
 const execa = require('execa');
 const del = require('del');
 
+const VERSIONS = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch', 'prerelease'];
+
 const exec = (cmd, args) => {
 	// TODO Switch to `{stdio: 'inherit'}` instead of manual logging when a new execa version is released
 	const result = execa.sync(cmd, args);
@@ -24,8 +26,8 @@ module.exports = (input, opts) => {
 	input = input || 'patch';
 	opts = opts || {};
 
-	if (['patch', 'minor', 'major'].indexOf(input) === -1 && !semver.valid(input)) {
-		throw new Error('Version should be either path, minor, major, or a valid semver version.');
+	if (VERSIONS.indexOf(input) === -1 && !semver.valid(input)) {
+		throw new Error(`Version should be either ${VERSIONS.join(', ')}, or a valid semver version.`);
 	}
 
 	if (semver.gte(process.version, '6.0.0')) {

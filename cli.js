@@ -6,13 +6,15 @@ const np = require('./');
 
 const cli = meow(`
 	Usage
-	  $ np [patch | minor | major | <version>] (Default: patch)
+	  $ np [major | minor | patch | premajor | preminor | prepatch | prerelease | <version>] (Default: patch)
 
 	Options
 	  --any-branch  Allow publishing from any branch
 
-	Example
+	Examples
+	  $ np
 	  $ np patch
+	  $ np 1.0.2
 `);
 
 try {
