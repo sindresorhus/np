@@ -20,7 +20,7 @@ const exec = (cmd, args) => {
 	}
 };
 
-module.exports = input => {
+module.exports = (input, opts) => {
 	input = input || 'patch';
 
 	if (['patch', 'minor', 'major'].indexOf(input) === -1 && !semver.valid(input)) {
@@ -29,6 +29,10 @@ module.exports = input => {
 
 	if (semver.gte(process.version, '6.0.0')) {
 		throw new Error('You should not publish when running Node.js 6. Please downgrade and publish again. https://github.com/npm/npm/issues/5082');
+	}
+
+	if (!opts.anyBranch && execa.sync('git', ['symbolic-ref', '--short', 'HEAD']).stdout !== 'master') {
+		throw new Error('Not on `master` branch. Use --any-branch to publish anyway.');
 	}
 
 	if (execa.sync('git', ['status', '--porcelain']).stdout !== '') {
