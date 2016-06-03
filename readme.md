@@ -26,10 +26,12 @@ $ npm install --global np
 $ np --help
 
   Usage
-    $ np [patch | minor | major | <version>] (Default: patch)
+    $ np [major | minor | patch | premajor | preminor | prepatch | prerelease | <version>] (Default: patch)
 
   Example
-    $ np patch
+  	$ np
+    $ np major
+	$ np 1.0.2
 ```
 
 
