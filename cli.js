@@ -2,6 +2,7 @@
 'use strict';
 const meow = require('meow');
 const logSymbols = require('log-symbols');
+const updateNotifier = require('update-notifier');
 const np = require('./');
 
 const cli = meow(`
@@ -16,6 +17,8 @@ const cli = meow(`
 	  $ np patch
 	  $ np 1.0.2
 `);
+
+updateNotifier({pkg: cli.pkg}).notify();
 
 try {
 	np(cli.input[0], cli.flags);
