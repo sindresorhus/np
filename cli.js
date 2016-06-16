@@ -11,6 +11,7 @@ const cli = meow(`
 
 	Options
 	  --any-branch  Allow publishing from any branch
+	  --dry         Dry run
 
 	Examples
 	  $ np
