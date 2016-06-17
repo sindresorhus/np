@@ -26,6 +26,9 @@ module.exports = (input, opts) => {
 	input = input || 'patch';
 	opts = opts || {};
 
+	const runTests = !opts.skipTests && !opts.yolo;
+	const runCleanup = !opts.skipCleanup && !opts.yolo;
+
 	if (VERSIONS.indexOf(input) === -1 && !semver.valid(input)) {
 		throw new Error(`Version should be either ${VERSIONS.join(', ')}, or a valid semver version.`);
 	}
@@ -48,10 +51,15 @@ module.exports = (input, opts) => {
 		throw new Error('Remote history differ. Please pull changes.');
 	}
 
-	del.sync('node_modules');
+	if (runCleanup) {
+		del.sync('node_modules');
+		exec('npm', ['install']);
+	}
 
-	exec('npm', ['install']);
-	exec('npm', ['test']);
+	if (runTests) {
+		exec('npm', ['test']);
+	}
+
 	exec('npm', ['version', input]);
 	exec('npm', ['publish']);
 	exec('git', ['push', '--follow-tags']);
