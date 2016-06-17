@@ -32,8 +32,7 @@ $ np --help
   Options
     --any-branch  Allow publishing from any branch
     --skip-cleanup  Skips cleanup of node_modules
-    --skip-tests    Skips tests
-    --yolo          Alias for --skip-cleanup and --skip-tests
+    --yolo          Skips cleanup of node_modules and tests
 
   Examples
     $ np

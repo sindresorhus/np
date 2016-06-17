@@ -26,7 +26,7 @@ module.exports = (input, opts) => {
 	input = input || 'patch';
 	opts = opts || {};
 
-	const runTests = !opts.skipTests && !opts.yolo;
+	const runTests = !opts.yolo;
 	const runCleanup = !opts.skipCleanup && !opts.yolo;
 
 	if (VERSIONS.indexOf(input) === -1 && !semver.valid(input)) {
