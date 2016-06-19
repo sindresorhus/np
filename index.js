@@ -2,8 +2,11 @@
 const semver = require('semver');
 const execa = require('execa');
 const del = require('del');
+const chalk = require('chalk');
 
 const VERSIONS = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch', 'prerelease'];
+
+const log = str => console.log(chalk.bold(`\n${chalk.cyan('›')} ${str}\n`));
 
 const exec = (cmd, args) => {
 	// TODO Switch to `{stdio: 'inherit'}` instead of manual logging when a new execa version is released
@@ -45,6 +48,8 @@ module.exports = (input, opts) => {
 		throw new Error('Unclean working tree. Commit or stash changes first.');
 	}
 
+	log('Fetching remote git changes...');
+
 	execa.sync('git', ['fetch']);
 
 	if (execa.sync('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']).stdout !== '0') {
@@ -52,15 +57,20 @@ module.exports = (input, opts) => {
 	}
 
 	if (runCleanup) {
+		log('Reinstalling node modules. This might take a while...');
 		del.sync('node_modules');
 		exec('npm', ['install']);
 	}
 
 	if (runTests) {
+		log('Running tests...');
 		exec('npm', ['test']);
 	}
 
+	log('Publishing new version...');
 	exec('npm', ['version', input]);
 	exec('npm', ['publish']);
+	log('Pushing git commit and tag...');
 	exec('git', ['push', '--follow-tags']);
+	log('Done! 🎉');
 };
