@@ -12,7 +12,7 @@ const cli = meow(`
 	Options
 	  --any-branch    Allow publishing from any branch
 	  --skip-cleanup  Skips cleanup of node_modules
-	  --yolo          Skips cleanup of node_modules and tests
+	  --yolo          Skips cleanup and testing
 
 	Examples
 	  $ np
