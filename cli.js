@@ -10,7 +10,9 @@ const cli = meow(`
 	  $ np [major | minor | patch | premajor | preminor | prepatch | prerelease | <version>] (Default: patch)
 
 	Options
-	  --any-branch  Allow publishing from any branch
+	  --any-branch    Allow publishing from any branch
+	  --skip-cleanup  Skips cleanup of node_modules
+	  --yolo          Skips cleanup and testing
 
 	Examples
 	  $ np
