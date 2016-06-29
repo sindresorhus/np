@@ -2,27 +2,66 @@
 const semver = require('semver');
 const execa = require('execa');
 const del = require('del');
-const chalk = require('chalk');
+const Listr = require('listr');
+const Observable = require('any-observable');
 
 const VERSIONS = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch', 'prerelease'];
 
-const log = str => console.log(chalk.bold(`\n${chalk.cyan('›')} ${str}\n`));
-
 const exec = (cmd, args) => {
-	// TODO Switch to `{stdio: 'inherit'}` instead of manual logging when a new execa version is released
-	const result = execa.sync(cmd, args);
+	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
+	const cp = execa(cmd, args);
 
-	if (result.stdout) {
-		console.log(result.stdout);
+	return new Observable(observer => {
+		cp.stdout.on('data', observer.next.bind(observer));
+		cp.stderr.on('data', observer.next.bind(observer));
+
+		cp
+			.then(() => {
+				observer.complete();
+			})
+			.catch(err => {
+				observer.error(err);
+			});
+	});
+};
+
+const gitTasks = opts => {
+	const tasks = [
+		{
+			title: 'Check current branch',
+			task: () => execa.stdout('git', ['symbolic-ref', '--short', 'HEAD']).then(branch => {
+				if (branch !== 'master') {
+					throw new Error('Not on `master` branch. Use --any-branch to publish anyway.');
+				}
+			})
+		},
+		{
+			title: 'Check local working tree',
+			task: () => execa.stdout('git', ['status', '--porcelain']).then(status => {
+				if (status !== '') {
+					throw new Error('Unclean working tree. Commit or stash changes first.');
+				}
+			})
+		},
+		{
+			title: 'Fetch remote changes',
+			task: () => execa('git', ['fetch'])
+		},
+		{
+			title: 'Check remote history',
+			task: () => execa.stdout('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']).then(result => {
+				if (result !== '0') {
+					throw new Error('Remote history differ. Please pull changes.');
+				}
+			})
+		}
+	];
+
+	if (opts.anyBranch) {
+		tasks.shift();
 	}
 
-	if (result.stderr) {
-		console.error(result.stderr);
-	}
-
-	if (result.status !== 0) {
-		throw new Error(`Exited with status ${result.status}.`);
-	}
+	return new Listr(tasks);
 };
 
 module.exports = (input, opts) => {
@@ -33,44 +72,54 @@ module.exports = (input, opts) => {
 	const runCleanup = !opts.skipCleanup && !opts.yolo;
 
 	if (VERSIONS.indexOf(input) === -1 && !semver.valid(input)) {
-		throw new Error(`Version should be either ${VERSIONS.join(', ')}, or a valid semver version.`);
+		return Promise.reject(new Error(`Version should be either ${VERSIONS.join(', ')}, or a valid semver version.`));
 	}
 
 	if (semver.gte(process.version, '6.0.0')) {
-		throw new Error('You should not publish when running Node.js 6. Please downgrade and publish again. https://github.com/npm/npm/issues/5082');
+		return Promise.reject(new Error('You should not publish when running Node.js 6. Please downgrade and publish again. https://github.com/npm/npm/issues/5082'));
 	}
 
-	if (!opts.anyBranch && execa.sync('git', ['symbolic-ref', '--short', 'HEAD']).stdout !== 'master') {
-		throw new Error('Not on `master` branch. Use --any-branch to publish anyway.');
-	}
-
-	if (execa.sync('git', ['status', '--porcelain']).stdout !== '') {
-		throw new Error('Unclean working tree. Commit or stash changes first.');
-	}
-
-	log('Fetching remote git changes...');
-
-	execa.sync('git', ['fetch']);
-
-	if (execa.sync('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']).stdout !== '0') {
-		throw new Error('Remote history differ. Please pull changes.');
-	}
+	const tasks = new Listr([
+		{
+			title: 'Git',
+			task: () => gitTasks(opts)
+		}
+	]);
 
 	if (runCleanup) {
-		log('Reinstalling node modules. This might take a while...');
-		del.sync('node_modules');
-		exec('npm', ['install']);
+		tasks.add([
+			{
+				title: 'Cleanup',
+				task: () => del('node_modules')
+			},
+			{
+				title: 'Installing dependencies',
+				task: () => exec('npm', ['install'])
+			}
+		]);
 	}
 
 	if (runTests) {
-		log('Running tests...');
-		exec('npm', ['test']);
+		tasks.add({
+			title: 'Running tests',
+			task: () => exec('npm', ['test'])
+		});
 	}
 
-	log('Publishing new version...');
-	exec('npm', ['version', input]);
-	exec('npm', ['publish']);
-	log('Pushing git commit and tag...');
-	exec('git', ['push', '--follow-tags']);
-	log('Done! 🎉');
+	tasks.add([
+		{
+			title: 'Update version',
+			task: () => exec('npm', ['version', input])
+		},
+		{
+			title: 'Publishing package',
+			task: () => exec('npm', ['publish'])
+		},
+		{
+			title: 'Pushing tags',
+			task: () => exec('git', ['push', '--follow-tags'])
+		}
+	]);
+
+	return tasks.run();
 };

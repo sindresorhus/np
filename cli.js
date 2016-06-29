@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 const meow = require('meow');
-const logSymbols = require('log-symbols');
 const updateNotifier = require('update-notifier');
 const np = require('./');
 
@@ -22,9 +21,9 @@ const cli = meow(`
 
 updateNotifier({pkg: cli.pkg}).notify();
 
-try {
-	np(cli.input[0], cli.flags);
-} catch (err) {
-	console.error(` ${logSymbols.error} ${err.message}`);
-	process.exit(1);
-}
+Promise.resolve()
+	.then(() => np(cli.input[0], cli.flags))
+	.catch(err => {
+		console.error(`\n${err.message}`);
+		process.exit(1);
+	});
