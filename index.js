@@ -15,8 +15,8 @@ const exec = (cmd, args) => {
 	const cp = execa(cmd, args);
 
 	return Observable.merge(
-		streamToObservable(cp.stdout.pipe(split())),
-		streamToObservable(cp.stderr.pipe(split()))
+		streamToObservable(cp.stdout.pipe(split()), {await: cp}),
+		streamToObservable(cp.stderr.pipe(split()), {await: cp})
 	).filter(Boolean);
 };
 
