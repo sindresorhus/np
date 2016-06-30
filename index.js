@@ -3,7 +3,10 @@ const semver = require('semver');
 const execa = require('execa');
 const del = require('del');
 const Listr = require('listr');
+const split = require('split');
+require('any-observable/register/rxjs-all');
 const Observable = require('any-observable');
+const streamToObservable = require('stream-to-observable');
 
 const VERSIONS = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch', 'prerelease'];
 
@@ -11,18 +14,10 @@ const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
 	const cp = execa(cmd, args);
 
-	return new Observable(observer => {
-		cp.stdout.on('data', observer.next.bind(observer));
-		cp.stderr.on('data', observer.next.bind(observer));
-
-		cp
-			.then(() => {
-				observer.complete();
-			})
-			.catch(err => {
-				observer.error(err);
-			});
-	});
+	return Observable.merge(
+		streamToObservable(cp.stdout.pipe(split())),
+		streamToObservable(cp.stderr.pipe(split()))
+	).filter(Boolean);
 };
 
 const gitTasks = opts => {
