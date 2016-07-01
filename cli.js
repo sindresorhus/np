@@ -21,8 +21,10 @@ const cli = meow(`
 
 updateNotifier({pkg: cli.pkg}).notify();
 
-Promise.resolve()
-	.then(() => np(cli.input[0], cli.flags))
+np(cli.input[0], cli.flags)
+	.then(pkg => {
+		console.log(`\n ${pkg.name} ${pkg.version} published`);
+	})
 	.catch(err => {
 		console.error(`\n${err.message}`);
 		process.exit(1);

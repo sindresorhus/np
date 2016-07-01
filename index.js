@@ -1,13 +1,16 @@
 'use strict';
+const fs = require('fs');
 const semver = require('semver');
 const execa = require('execa');
 const del = require('del');
+const pify = require('pify');
 const Listr = require('listr');
 const split = require('split');
 require('any-observable/register/rxjs-all');
 const Observable = require('any-observable');
 const streamToObservable = require('stream-to-observable');
 
+const fsP = pify(fs);
 const VERSIONS = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch', 'prerelease'];
 
 const exec = (cmd, args) => {
@@ -103,7 +106,7 @@ module.exports = (input, opts) => {
 
 	tasks.add([
 		{
-			title: 'Update version',
+			title: 'Bumping version',
 			task: () => exec('npm', ['version', input])
 		},
 		{
@@ -116,5 +119,7 @@ module.exports = (input, opts) => {
 		}
 	]);
 
-	return tasks.run();
+	return tasks.run()
+		.then(() => fsP.readFile('package.json', 'utf8'))
+		.then(JSON.parse);
 };
