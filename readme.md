@@ -43,6 +43,11 @@ $ np --help
 ```
 
 
+## Tip
+
+You can use any of the test/version/publish related [npm lifecycle hooks](https://docs.npmjs.com/misc/scripts) to add extra behavior.
+
+
 ## License
 
 MIT © [Sindre Sorhus](https://sindresorhus.com)
