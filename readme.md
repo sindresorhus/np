@@ -13,6 +13,7 @@
 - Runs the tests
 - Bumps the version in package.json and creates a git tag
 - Publishes the new version to npm
+- Doesn't set the npm `dist-tag` to `latest` when publishing pre-release versions
 - Pushes commits and tags to GitHub
 
 
