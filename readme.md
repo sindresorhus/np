@@ -2,6 +2,8 @@
 
 > A better `npm publish`
 
+<img src="screenshot.gif" width="688">
+
 
 ## Why
 
