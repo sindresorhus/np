@@ -12,7 +12,7 @@
 - Reinstalls dependencies to ensure your project works with the latest dependency tree
 - Runs the tests
 - Bumps the version in package.json and creates a git tag
-- Publishes the new version to npm
+- Publishes the new version to npm, optionally under a [dist-tag](https://docs.npmjs.com/cli/dist-tag)
 - Pushes commits and tags to GitHub
 
 
@@ -35,11 +35,13 @@ $ np --help
     --any-branch    Allow publishing from any branch
     --skip-cleanup  Skips cleanup of node_modules
     --yolo          Skips cleanup and testing
+    --tag           Publish under a given dist-tag
 
   Examples
     $ np
     $ np major
     $ np 1.0.2
+    $ np 1.0.2-beta.3 --tag beta
 ```
 
 
