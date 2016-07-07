@@ -41,7 +41,7 @@ $ np --help
     $ np
     $ np major
     $ np 1.0.2
-    $ np 1.0.2-beta.3 --tag beta
+    $ np 1.0.2-beta.3 --tag=beta
 ```
 
 
