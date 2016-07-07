@@ -47,7 +47,18 @@ $ np --help
 
 ## Tip
 
-You can use any of the test/version/publish related [npm lifecycle hooks](https://docs.npmjs.com/misc/scripts) to add extra behavior.
+You can use any of the test/version/publish related [npm lifecycle hooks](https://docs.npmjs.com/misc/scripts) in your package.json to add extra behavior.
+
+For example, here we build the documentation before tagging the release:
+
+```json
+{
+	"name": "my-awesome-package",
+	"scripts": {
+		"preversion": "./build-docs"
+	}
+}
+```
 
 
 ## License
