@@ -29,7 +29,10 @@ $ npm install --global np
 $ np --help
 
   Usage
-    $ np [major | minor | patch | premajor | preminor | prepatch | prerelease | <version>] (Default: patch)
+    $ np <version>
+
+    Version can be:
+      patch | minor | major | prepatch | preminor | premajor | prerelease | 1.2.3
 
   Options
     --any-branch    Allow publishing from any branch
@@ -38,8 +41,7 @@ $ np --help
     --tag           Publish under a given dist-tag
 
   Examples
-    $ np
-    $ np major
+    $ np patch
     $ np 1.0.2
     $ np 1.0.2-beta.3 --tag=beta
 ```
