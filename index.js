@@ -111,7 +111,7 @@ module.exports = (input, opts) => {
 		},
 		{
 			title: 'Publishing package',
-			task: () => exec('npm', ['publish'])
+			task: () => exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []))
 		},
 		{
 			title: 'Pushing tags',

@@ -12,11 +12,13 @@ const cli = meow(`
 	  --any-branch    Allow publishing from any branch
 	  --skip-cleanup  Skips cleanup of node_modules
 	  --yolo          Skips cleanup and testing
+	  --tag           Publish under a given dist-tag
 
 	Examples
 	  $ np
 	  $ np patch
 	  $ np 1.0.2
+	  $ np 1.0.2-beta.3 --tag=beta
 `);
 
 updateNotifier({pkg: cli.pkg}).notify();
