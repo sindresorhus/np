@@ -73,11 +73,16 @@ module.exports = (input, opts) => {
 		return Promise.reject(new Error(`Version should be either ${VERSIONS.join(', ')}, or a valid semver version.`));
 	}
 
-	if (semver.gte(process.version, '6.0.0')) {
-		return Promise.reject(new Error('You should not publish when running Node.js 6. Please downgrade and publish again. https://github.com/npm/npm/issues/5082'));
-	}
-
 	const tasks = new Listr([
+		{
+			title: 'Prerequisite Check',
+			task: () => execa.stdout('npm', ['version', '--json']).then(json => {
+				const versions = JSON.parse(json);
+				if (semver.gte(process.version, '6.0.0') && !semver.satisfies(versions.npm, '>=2.15.8 <3.0.0 || >=3.10.1')) {
+					return Promise.reject(new Error(`npm@${versions.npm} has known issues publishing when running Node.js 6. Please upgrade npm or downgrade Node and publish again. https://github.com/npm/npm/issues/5082`));
+				}
+			})
+		},
 		{
 			title: 'Git',
 			task: () => gitTasks(opts)
