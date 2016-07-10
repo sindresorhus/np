@@ -47,7 +47,9 @@ $ np --help
 ```
 
 
-## Tip
+## Tips
+
+### npm hooks
 
 You can use any of the test/version/publish related [npm lifecycle hooks](https://docs.npmjs.com/misc/scripts) in your package.json to add extra behavior.
 
@@ -60,6 +62,14 @@ For example, here we build the documentation before tagging the release:
 		"preversion": "./build-docs"
 	}
 }
+```
+
+### Signed Git tag
+
+Set the [`sign-git-tag`](https://docs.npmjs.com/misc/config#sign-git-tag) npm config to have the Git tag signed:
+
+```
+$ npm config set sign-git-tag true
 ```
 
 
