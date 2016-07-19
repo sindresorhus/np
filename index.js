@@ -7,7 +7,7 @@ const split = require('split');
 require('any-observable/register/rxjs-all');
 const Observable = require('any-observable');
 const streamToObservable = require('stream-to-observable');
-const loadJsonFile = require('load-json-file');
+const readPkgUp = require('read-pkg-up');
 
 const VERSIONS = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch', 'prerelease'];
 
@@ -114,10 +114,12 @@ module.exports = (input, opts) => {
 		},
 		{
 			title: 'Publishing package',
-			task: () => loadJsonFile('package.json')
-				.then(packageJson => {
-					if (!packageJson.private) {
-						exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []));
+			task: () => readPkgUp()
+				.then(result => {
+					if (result.pkg.private) {
+						return 'Private package: publishing skipped';
+					} else {
+						return exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []));
 					}
 				})
 		},
@@ -128,5 +130,6 @@ module.exports = (input, opts) => {
 	]);
 
 	return tasks.run()
-		.then(() => loadJsonFile('package.json'));
+		.then(() => readPkgUp())
+		.then(result => result.pkg);
 };
