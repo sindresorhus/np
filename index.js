@@ -1,16 +1,14 @@
 'use strict';
-const fs = require('fs');
 const semver = require('semver');
 const execa = require('execa');
 const del = require('del');
-const pify = require('pify');
 const Listr = require('listr');
 const split = require('split');
 require('any-observable/register/rxjs-all');
 const Observable = require('any-observable');
 const streamToObservable = require('stream-to-observable');
+const loadJsonFile = require('load-json-file');
 
-const fsP = pify(fs);
 const VERSIONS = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch', 'prerelease'];
 
 const exec = (cmd, args) => {
@@ -60,11 +58,6 @@ const gitTasks = opts => {
 	}
 
 	return new Listr(tasks);
-};
-
-const getPackageJson = () => {
-	return fsP.readFile('package.json', 'utf8')
-		.then(JSON.parse);
 };
 
 module.exports = (input, opts) => {
@@ -121,7 +114,7 @@ module.exports = (input, opts) => {
 		},
 		{
 			title: 'Publishing package',
-			task: () => getPackageJson()
+			task: () => loadJsonFile('package.json')
 				.then(packageJson => {
 					if (!packageJson.private) {
 						exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []));
@@ -135,5 +128,5 @@ module.exports = (input, opts) => {
 	]);
 
 	return tasks.run()
-		.then(() => getPackageJson());
+		.then(() => loadJsonFile('package.json'));
 };
