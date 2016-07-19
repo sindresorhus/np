@@ -118,9 +118,9 @@ module.exports = (input, opts) => {
 				.then(result => {
 					if (result.pkg.private) {
 						return 'Private package: publishing skipped';
-					} else {
-						return exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []));
 					}
+
+					return exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []));
 				})
 		},
 		{
