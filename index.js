@@ -62,6 +62,11 @@ const gitTasks = opts => {
 	return new Listr(tasks);
 };
 
+const getPackageJson = () => {
+	return fsP.readFile('package.json', 'utf8')
+		.then(JSON.parse);
+};
+
 module.exports = (input, opts) => {
 	input = input || 'patch';
 	opts = opts || {};
@@ -116,7 +121,12 @@ module.exports = (input, opts) => {
 		},
 		{
 			title: 'Publishing package',
-			task: () => exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []))
+			task: () => getPackageJson()
+				.then(packageJson => {
+					if (!packageJson.private) {
+						exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []))
+					}
+				})
 		},
 		{
 			title: 'Pushing tags',
@@ -125,6 +135,5 @@ module.exports = (input, opts) => {
 	]);
 
 	return tasks.run()
-		.then(() => fsP.readFile('package.json', 'utf8'))
-		.then(JSON.parse);
+		.then(() => getPackageJson());
 };
