@@ -124,7 +124,7 @@ module.exports = (input, opts) => {
 			task: () => getPackageJson()
 				.then(packageJson => {
 					if (!packageJson.private) {
-						exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []))
+						exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []));
 					}
 				})
 		},
