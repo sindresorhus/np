@@ -114,14 +114,13 @@ module.exports = (input, opts) => {
 		},
 		{
 			title: 'Publishing package',
-			task: () => readPkgUp()
-				.then(result => {
-					if (result.pkg.private) {
-						return 'Private package: publishing skipped';
-					}
+			task: () => {
+				if (readPkgUp.sync().pkg.private) {
+					return 'Private package: publishing skipped.';
+				}
 
-					return exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []));
-				})
+				return exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []));
+			}
 		},
 		{
 			title: 'Pushing tags',
