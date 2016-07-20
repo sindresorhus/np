@@ -72,6 +72,14 @@ Set the [`sign-git-tag`](https://docs.npmjs.com/misc/config#sign-git-tag) npm co
 $ npm config set sign-git-tag true
 ```
 
+### Private packages
+
+You can use np for modules that aren't publicly published to npm (perhaps installed from a private git repo).
+
+Set `"private": true` in your `package.json` and the publish step will be skipped. All other steps
+including versioning and pushing tags will still be completed.
+
+<img src="private-packages.png" width="306">
 
 ## License
 
