@@ -1,16 +1,14 @@
 'use strict';
-const fs = require('fs');
 const semver = require('semver');
 const execa = require('execa');
 const del = require('del');
-const pify = require('pify');
 const Listr = require('listr');
 const split = require('split');
 require('any-observable/register/rxjs-all');
 const Observable = require('any-observable');
 const streamToObservable = require('stream-to-observable');
+const readPkgUp = require('read-pkg-up');
 
-const fsP = pify(fs);
 const VERSIONS = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch', 'prerelease'];
 
 const exec = (cmd, args) => {
@@ -116,7 +114,13 @@ module.exports = (input, opts) => {
 		},
 		{
 			title: 'Publishing package',
-			task: () => exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []))
+			task: () => {
+				if (readPkgUp.sync().pkg.private) {
+					return 'Private package: publishing skipped.';
+				}
+
+				return exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []));
+			}
 		},
 		{
 			title: 'Pushing tags',
@@ -125,6 +129,6 @@ module.exports = (input, opts) => {
 	]);
 
 	return tasks.run()
-		.then(() => fsP.readFile('package.json', 'utf8'))
-		.then(JSON.parse);
+		.then(() => readPkgUp())
+		.then(result => result.pkg);
 };
