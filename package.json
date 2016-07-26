@@ -35,7 +35,7 @@
     "any-observable": "^0.2.0",
     "del": "^2.2.0",
     "execa": "^0.4.0",
-    "listr": "^0.4.3",
+    "listr": "^0.5.0",
     "meow": "^3.7.0",
     "read-pkg-up": "^1.0.1",
     "rxjs": "^5.0.0-beta.9",
