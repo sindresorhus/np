@@ -85,7 +85,9 @@ module.exports = (input, opts) => {
 			title: 'Git',
 			task: () => gitTasks(opts)
 		}
-	]);
+	], {
+		showSubtasks: false
+	});
 
 	if (runCleanup) {
 		tasks.add([
