@@ -81,7 +81,11 @@ const prerequisiteTasks = newVersion => {
 							throw new Error(`Git tag \`v${newVersion}\` already exists.`);
 						}
 					},
-					() => { }
+					err => {
+						if (err.stdout !== '' || err.stderr !== '') {
+							throw err;
+						}
+					}
 				)
 		}
 	]);
