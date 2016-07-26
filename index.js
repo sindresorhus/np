@@ -40,10 +40,6 @@ const gitTasks = opts => {
 			})
 		},
 		{
-			title: 'Fetch remote changes',
-			task: () => execa('git', ['fetch'])
-		},
-		{
 			title: 'Check remote history',
 			task: () => execa.stdout('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']).then(result => {
 				if (result !== '0') {
@@ -60,12 +56,45 @@ const gitTasks = opts => {
 	return new Listr(tasks);
 };
 
+const prerequisiteTasks = newVersion => {
+	return new Listr([
+		{
+			title: 'Check Node.js and npm version',
+			skip: () => semver.lt(process.version, '6.0.0'),
+			task: () => execa.stdout('npm', ['version', '--json']).then(json => {
+				const versions = JSON.parse(json);
+				if (!semver.satisfies(versions.npm, '>=2.15.8 <3.0.0 || >=3.10.1')) {
+					return Promise.reject(new Error(`npm@${versions.npm} has known issues publishing when running Node.js 6. Please upgrade npm or downgrade Node and publish again. https://github.com/npm/npm/issues/5082`));
+				}
+			})
+		},
+		{
+			title: 'Fetch remote changes',
+			task: () => execa('git', ['fetch'])
+		},
+		{
+			title: 'Check git tag existance',
+			task: () => execa.stdout('git', ['rev-parse', '--quiet', '--verify', `refs/tags/v${newVersion}`])
+				.then(
+					output => {
+						if (output) {
+							throw new Error(`Git tag \`v${newVersion}\` already exists.`);
+						}
+					},
+					() => { }
+				)
+		}
+	]);
+};
+
 module.exports = (input, opts) => {
 	input = input || 'patch';
 	opts = opts || {};
 
 	const runTests = !opts.yolo;
 	const runCleanup = !opts.skipCleanup && !opts.yolo;
+	const pkg = readPkgUp.sync().pkg;
+	const newVersion = semver.inc(pkg.version, input);
 
 	if (VERSIONS.indexOf(input) === -1 && !semver.valid(input)) {
 		return Promise.reject(new Error(`Version should be either ${VERSIONS.join(', ')}, or a valid semver version.`));
@@ -74,12 +103,7 @@ module.exports = (input, opts) => {
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
-			task: () => execa.stdout('npm', ['version', '--json']).then(json => {
-				const versions = JSON.parse(json);
-				if (semver.gte(process.version, '6.0.0') && !semver.satisfies(versions.npm, '>=2.15.8 <3.0.0 || >=3.10.1')) {
-					return Promise.reject(new Error(`npm@${versions.npm} has known issues publishing when running Node.js 6. Please upgrade npm or downgrade Node and publish again. https://github.com/npm/npm/issues/5082`));
-				}
-			})
+			task: () => prerequisiteTasks(newVersion)
 		},
 		{
 			title: 'Git',
@@ -117,7 +141,7 @@ module.exports = (input, opts) => {
 		{
 			title: 'Publishing package',
 			skip: () => {
-				if (readPkgUp.sync().pkg.private) {
+				if (pkg.private) {
 					return 'Private package: not publishing to npm.';
 				}
 			},
