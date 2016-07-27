@@ -73,7 +73,7 @@ const prerequisiteTasks = newVersion => {
 			task: () => execa('git', ['fetch'])
 		},
 		{
-			title: 'Check git tag existance',
+			title: 'Check git tag existence',
 			task: () => execa.stdout('git', ['rev-parse', '--quiet', '--verify', `refs/tags/v${newVersion}`])
 				.then(
 					output => {
