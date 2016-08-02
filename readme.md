@@ -81,6 +81,10 @@ You can use `np` for packages that aren't publicly published to npm (perhaps ins
 Set `"private": true` in your `package.json` and the publish step will be skipped. All other steps
 including versioning and pushing tags will still be completed.
 
+### Initial version
+
+For new packages, start the `version` field in package.json at `0.0.0` and let `np` bump it to `1.0.0` or `0.1.0` when publishing.
+
 
 ## License
 
