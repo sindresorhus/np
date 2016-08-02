@@ -81,6 +81,16 @@ You can use `np` for packages that aren't publicly published to npm (perhaps ins
 Set `"private": true` in your `package.json` and the publish step will be skipped. All other steps
 including versioning and pushing tags will still be completed.
 
+### Public scoped packages
+
+To publish [scoped packages](https://docs.npmjs.com/misc/scope#publishing-public-scoped-packages-to-the-public-npm-registry) to the public registry, you need to set the access level to `public`. You can do that by adding the following to your `package.json`:
+
+```json
+"publishConfig": {
+	"access": "public"
+}
+```
+
 ### Initial version
 
 For new packages, start the `version` field in package.json at `0.0.0` and let `np` bump it to `1.0.0` or `0.1.0` when publishing.
