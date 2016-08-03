@@ -112,7 +112,7 @@ module.exports = (input, opts) => {
 	tasks.add([
 		{
 			title: 'Bumping version',
-			// Specify --force flag to version even if the working directory is clean - np already does a dirty check anyway
+			// Specify --force flag to proceed even if the working directory is dirty as np already does a dirty check anyway
 			task: () => exec('npm', ['version', input, '--force'])
 		},
 		{
