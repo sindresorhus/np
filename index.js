@@ -82,6 +82,14 @@ module.exports = (input, opts) => {
 			})
 		},
 		{
+			title: 'Pre-release version check',
+			task: () => {
+				if ((VERSIONS.slice(3).includes(input) || semver.prerelease(input)) && !opts.tag) {
+					return Promise.reject(new Error(`You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest".`));
+				}
+			}
+		},
+		{
 			title: 'Git',
 			task: () => gitTasks(opts)
 		}
