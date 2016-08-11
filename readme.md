@@ -12,6 +12,7 @@
 - Reinstalls dependencies to ensure your project works with the latest dependency tree
 - Runs the tests
 - Bumps the version in package.json and npm-shrinkwrap.json (if present) and creates a git tag
+- Prevents accidental publishing of pre-release versions under the `latest` [dist-tag](https://docs.npmjs.com/cli/dist-tag) [(related issue)](https://github.com/npm/npm/issues/13248)
 - Publishes the new version to npm, optionally under a [dist-tag](https://docs.npmjs.com/cli/dist-tag)
 - Pushes commits and tags to GitHub
 
