@@ -10,6 +10,7 @@ const streamToObservable = require('stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 
 const VERSIONS = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch', 'prerelease'];
+const PRERELEASE_VERSIONS = ['premajor', 'preminor', 'prepatch', 'prerelease'];
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
@@ -19,6 +20,38 @@ const exec = (cmd, args) => {
 		streamToObservable(cp.stdout.pipe(split()), {await: cp}),
 		streamToObservable(cp.stderr.pipe(split()), {await: cp})
 	).filter(Boolean);
+};
+
+const prerequisiteCheckTasks = (input, opts) => {
+	const tasks = [
+		{
+			title: 'Validate version',
+			task: () => {
+				if (VERSIONS.indexOf(input) === -1 && !semver.valid(input)) {
+					return Promise.reject(new Error(`Version should be either ${VERSIONS.join(', ')}, or a valid semver version.`));
+				}
+			}
+		},
+		{
+			title: 'Check for pre-release version',
+			task: () => {
+				if ((PRERELEASE_VERSIONS.indexOf(input) !== -1 || semver.prerelease(input)) && !opts.tag) {
+					return Promise.reject(new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag'));
+				}
+			}
+		},
+		{
+			title: 'Check npm version',
+			task: () => execa.stdout('npm', ['version', '--json']).then(json => {
+				const versions = JSON.parse(json);
+				if (semver.gte(process.version, '6.0.0') && !semver.satisfies(versions.npm, '>=2.15.8 <3.0.0 || >=3.10.1')) {
+					return Promise.reject(new Error(`npm@${versions.npm} has known issues publishing when running Node.js 6. Please upgrade npm or downgrade Node and publish again. https://github.com/npm/npm/issues/5082`));
+				}
+			})
+		}
+	];
+
+	return new Listr(tasks);
 };
 
 const gitTasks = opts => {
@@ -67,19 +100,10 @@ module.exports = (input, opts) => {
 	const runTests = !opts.yolo;
 	const runCleanup = !opts.skipCleanup && !opts.yolo;
 
-	if (VERSIONS.indexOf(input) === -1 && !semver.valid(input)) {
-		return Promise.reject(new Error(`Version should be either ${VERSIONS.join(', ')}, or a valid semver version.`));
-	}
-
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
-			task: () => execa.stdout('npm', ['version', '--json']).then(json => {
-				const versions = JSON.parse(json);
-				if (semver.gte(process.version, '6.0.0') && !semver.satisfies(versions.npm, '>=2.15.8 <3.0.0 || >=3.10.1')) {
-					return Promise.reject(new Error(`npm@${versions.npm} has known issues publishing when running Node.js 6. Please upgrade npm or downgrade Node and publish again. https://github.com/npm/npm/issues/5082`));
-				}
-			})
+			task: () => prerequisiteCheckTasks(input, opts)
 		},
 		{
 			title: 'Git',
