@@ -33,6 +33,14 @@ const prerequisiteCheckTasks = (input, opts) => {
 			}
 		},
 		{
+			title: 'Check for pre-release version',
+			task: () => {
+				if ((PRERELEASE_VERSIONS.indexOf(input) !== -1 || semver.prerelease(input)) && !opts.tag) {
+					return Promise.reject(new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag'));
+				}
+			}
+		},
+		{
 			title: 'Check npm version',
 			task: () => execa.stdout('npm', ['version', '--json']).then(json => {
 				const versions = JSON.parse(json);
@@ -40,14 +48,6 @@ const prerequisiteCheckTasks = (input, opts) => {
 					return Promise.reject(new Error(`npm@${versions.npm} has known issues publishing when running Node.js 6. Please upgrade npm or downgrade Node and publish again. https://github.com/npm/npm/issues/5082`));
 				}
 			})
-		},
-		{
-			title: 'Check for pre-release version',
-			task: () => {
-				if ((PRERELEASE_VERSIONS.indexOf(input) !== -1 || semver.prerelease(input)) && !opts.tag) {
-					return Promise.reject(new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag'));
-				}
-			}
 		}
 	];
 
