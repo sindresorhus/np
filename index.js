@@ -22,7 +22,7 @@ const exec = (cmd, args) => {
 	).filter(Boolean);
 };
 
-const versionCheckTasks = (input, opts) => {
+const prerequisiteCheckTasks = (input, opts) => {
 	const tasks = [
 		{
 			title: 'Validate version',
@@ -102,8 +102,8 @@ module.exports = (input, opts) => {
 
 	const tasks = new Listr([
 		{
-			title: 'Checking versions',
-			task: () => versionCheckTasks(input, opts)
+			title: 'Prerequisite check',
+			task: () => prerequisiteCheckTasks(input, opts)
 		},
 		{
 			title: 'Git',
