@@ -45,7 +45,7 @@ const prerequisiteCheckTasks = (input, opts) => {
 			title: 'Check for pre-release version',
 			task: () => {
 				if ((PRERELEASE_VERSIONS.indexOf(input) !== -1 || semver.prerelease(input)) && !opts.tag) {
-					return Promise.reject(new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest".'));
+					return Promise.reject(new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag'));
 				}
 			}
 		}
