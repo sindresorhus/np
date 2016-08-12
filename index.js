@@ -23,7 +23,7 @@ const exec = (cmd, args) => {
 };
 
 const prerequisiteCheckTasks = (input, pkg, opts) => {
-	const newVersion = VERSIONS.indexOf(input) ? semver.inc(pkg.version, input) : input;
+	const newVersion = VERSIONS.indexOf(input) === -1 ? input : semver.inc(pkg.version, input);
 
 	const tasks = [
 		{
@@ -33,7 +33,7 @@ const prerequisiteCheckTasks = (input, pkg, opts) => {
 					return Promise.reject(new Error(`Version should be either ${VERSIONS.join(', ')}, or a valid semver version.`));
 				}
 
-				if (semver.lte(pkg.version, newVersion)) {
+				if (semver.gte(pkg.version, newVersion)) {
 					return Promise.reject(new Error(`New version \`${newVersion}\` should be higher than current version \`${pkg.version}\``));
 				}
 			}

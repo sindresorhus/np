@@ -13,6 +13,11 @@ test('version is pre-release', t => {
 	t.throws(m('preminor'), message);
 	t.throws(m('prepatch'), message);
 	t.throws(m('prerelease'), message);
-	t.throws(m('1.0.0-0'), message);
-	t.throws(m('1.0.0-beta'), message);
+	t.throws(m('10.0.0-0'), message);
+	t.throws(m('10.0.0-beta'), message);
+});
+
+test('foo', t => {
+	t.throws(m('1.0.0'), 'New version `1.0.0` should be higher than current version `2.8.0`');
+	t.throws(m('1.0.0-beta'), 'New version `1.0.0-beta` should be higher than current version `2.8.0`');
 });
