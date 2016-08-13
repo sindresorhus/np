@@ -18,6 +18,6 @@ test('version is pre-release', t => {
 });
 
 test('foo', t => {
-	t.throws(m('1.0.0'), 'New version `1.0.0` should be higher than current version `2.8.0`');
-	t.throws(m('1.0.0-beta'), 'New version `1.0.0-beta` should be higher than current version `2.8.0`');
+	t.throws(m('1.0.0'), /New version `1\.0\.0` should be higher than current version `\d\.\d\.\d`/);
+	t.throws(m('1.0.0-beta'), /New version `1\.0\.0-beta` should be higher than current version `\d\.\d\.\d`/);
 });
