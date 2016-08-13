@@ -22,13 +22,19 @@ const exec = (cmd, args) => {
 	).filter(Boolean);
 };
 
-const prerequisiteCheckTasks = (input, opts) => {
+const prerequisiteCheckTasks = (input, pkg, opts) => {
+	const newVersion = VERSIONS.indexOf(input) === -1 ? input : semver.inc(pkg.version, input);
+
 	const tasks = [
 		{
 			title: 'Validate version',
 			task: () => {
 				if (VERSIONS.indexOf(input) === -1 && !semver.valid(input)) {
 					return Promise.reject(new Error(`Version should be either ${VERSIONS.join(', ')}, or a valid semver version.`));
+				}
+
+				if (semver.gte(pkg.version, newVersion)) {
+					return Promise.reject(new Error(`New version \`${newVersion}\` should be higher than current version \`${pkg.version}\``));
 				}
 			}
 		},
@@ -48,6 +54,25 @@ const prerequisiteCheckTasks = (input, opts) => {
 					return Promise.reject(new Error(`npm@${versions.npm} has known issues publishing when running Node.js 6. Please upgrade npm or downgrade Node and publish again. https://github.com/npm/npm/issues/5082`));
 				}
 			})
+		},
+		{
+			title: 'Check git tag existence',
+			task: () => execa('git', ['fetch'])
+				.then(() => execa.stdout('git', ['rev-parse', '--quiet', '--verify', `refs/tags/v${newVersion}`]))
+				.then(
+					output => {
+						if (output) {
+							throw new Error(`Git tag \`v${newVersion}\` already exists.`);
+						}
+					},
+					err => {
+						// Command fails with code 1 and no output if the tag does not exist, even though `--quiet` is provided
+						// https://github.com/sindresorhus/np/pull/73#discussion_r72385685
+						if (err.stdout !== '' || err.stderr !== '') {
+							throw err;
+						}
+					}
+				)
 		}
 	];
 
@@ -73,10 +98,6 @@ const gitTasks = opts => {
 			})
 		},
 		{
-			title: 'Fetch remote changes',
-			task: () => execa('git', ['fetch'])
-		},
-		{
 			title: 'Check remote history',
 			task: () => execa.stdout('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']).then(result => {
 				if (result !== '0') {
@@ -99,11 +120,12 @@ module.exports = (input, opts) => {
 
 	const runTests = !opts.yolo;
 	const runCleanup = !opts.skipCleanup && !opts.yolo;
+	const pkg = readPkgUp.sync().pkg;
 
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
-			task: () => prerequisiteCheckTasks(input, opts)
+			task: () => prerequisiteCheckTasks(input, pkg, opts)
 		},
 		{
 			title: 'Git',
@@ -142,7 +164,7 @@ module.exports = (input, opts) => {
 		{
 			title: 'Publishing package',
 			skip: () => {
-				if (readPkgUp.sync().pkg.private) {
+				if (pkg.private) {
 					return 'Private package: not publishing to npm.';
 				}
 			},
