@@ -97,6 +97,12 @@ To publish [scoped packages](https://docs.npmjs.com/misc/scope#publishing-public
 For new packages, start the `version` field in package.json at `0.0.0` and let `np` bump it to `1.0.0` or `0.1.0` when publishing.
 
 
+## Created by
+
+- [Sindre Sorhus](https://github.com/sindresorhus)
+- [Sam Verschueren](https://github.com/SamVerschueren)
+
+
 ## License
 
 MIT © [Sindre Sorhus](https://sindresorhus.com)

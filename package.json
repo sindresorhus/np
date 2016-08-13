@@ -9,6 +9,13 @@
     "email": "sindresorhus@gmail.com",
     "url": "sindresorhus.com"
   },
+  "maintainers": [
+    {
+      "name": "Sam Verschueren",
+      "email": "sam.verschueren@gmail.com",
+      "url": "github.com/SamVerschueren"
+    }
+  ],
   "bin": "cli.js",
   "engines": {
     "node": ">=4"
