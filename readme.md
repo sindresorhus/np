@@ -42,6 +42,7 @@ $ np --help
     --tag           Publish under a given dist-tag
 
   Examples
+    $ np
     $ np patch
     $ np 1.0.2
     $ np 1.0.2-beta.3 --tag=beta
