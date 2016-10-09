@@ -3,7 +3,7 @@
 const meow = require('meow');
 const updateNotifier = require('update-notifier');
 const version = require('./lib/version');
-const interactiveui = require('./lib/interactiveui');
+const ui = require('./lib/ui');
 const np = require('./');
 
 const cli = meow(`
@@ -31,13 +31,13 @@ updateNotifier({pkg: cli.pkg}).notify();
 Promise
 	.resolve()
 	.then(() => {
-		if (cli.input.length) {
+		if (cli.input.length !== 0) {
 			return Object.assign({}, cli.flags, {
 				confirm: true,
 				version: cli.input[0]
 			});
 		}
-		return interactiveui(cli.flags);
+		return ui(cli.flags);
 	})
 	.then(options => {
 		if (!options.confirm) {
