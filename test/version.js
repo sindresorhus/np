@@ -95,11 +95,13 @@ test('version.isVersionLower', t => {
 	t.true(version.isVersionLower('1.0.0', '0.1.0'));
 	t.true(version.isVersionLower('1.0.0', '1.0.0-0'));
 	t.true(version.isVersionLower('1.0.0', '1.0.0-beta'));
+	t.true(version.isVersionLower('6.0.0', '4.4.3'));
 
 	t.false(version.isVersionLower('1.0.0', '1.0.0'));
 	t.false(version.isVersionLower('1.0.0', '1.0.1'));
 	t.false(version.isVersionLower('1.0.0', '1.1.0'));
 	t.false(version.isVersionLower('1.0.0', '2.0.0'));
+	t.false(version.isVersionLower('6.0.0', '6.7.0'));
 
 	t.false(version.isVersionLower('1.0.0', '2.0.0-0'));
 	t.false(version.isVersionLower('1.0.0', '2.0.0-beta'));
