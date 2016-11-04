@@ -3,7 +3,7 @@ const execa = require('execa');
 const del = require('del');
 const Listr = require('listr');
 const split = require('split');
-require('any-observable/register/rxjs-all');
+require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
 const Observable = require('any-observable');
 const streamToObservable = require('stream-to-observable');
 const readPkgUp = require('read-pkg-up');

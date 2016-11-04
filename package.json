@@ -41,8 +41,10 @@
   ],
   "dependencies": {
     "any-observable": "^0.2.0",
+    "chalk": "^1.1.3",
     "del": "^2.2.0",
     "execa": "^0.4.0",
+    "inquirer": "^1.2.1",
     "listr": "^0.6.1",
     "meow": "^3.7.0",
     "read-pkg-up": "^1.0.1",

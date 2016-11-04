@@ -2,7 +2,7 @@ import test from 'ava';
 import m from './';
 
 test('version is invalid', t => {
-	const message = 'Version should be either major, minor, patch, premajor, preminor, prepatch, prerelease, or a valid semver version.';
+	const message = 'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid semver version.';
 	t.throws(m('foo'), message);
 	t.throws(m('4.x.3'), message);
 });
