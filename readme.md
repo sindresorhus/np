@@ -7,6 +7,7 @@
 
 ## Why
 
+- [Interative UI](#interactive-ui)
 - Ensures you are publishing from the `master` branch
 - Ensures the working directory is clean and that there are no unpulled changes
 - Reinstalls dependencies to ensure your project works with the latest dependency tree
@@ -47,6 +48,13 @@ $ np --help
     $ np 1.0.2
     $ np 1.0.2-beta.3 --tag=beta
 ```
+
+
+## Interactive UI
+
+Run `np` without arguments to launch the interactive UI that guides you through publishing a new version.
+
+<img src="screenshot-ui.png" width="1290">
 
 
 ## Tips

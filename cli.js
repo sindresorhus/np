@@ -31,23 +31,25 @@ updateNotifier({pkg: cli.pkg}).notify();
 Promise
 	.resolve()
 	.then(() => {
-		if (cli.input.length !== 0) {
+		if (cli.input.length > 0) {
 			return Object.assign({}, cli.flags, {
 				confirm: true,
 				version: cli.input[0]
 			});
 		}
+
 		return ui(cli.flags);
 	})
 	.then(options => {
 		if (!options.confirm) {
 			process.exit(0);
 		}
+
 		return options;
 	})
 	.then(options => np(options.version, options))
 	.then(pkg => {
-		console.log(`\n ${pkg.name} ${pkg.version} published`);
+		console.log(`\n ${pkg.name} ${pkg.version} published 🎉`);
 	})
 	.catch(err => {
 		console.error(`\n${err.message}`);
