@@ -101,6 +101,16 @@ To publish [scoped packages](https://docs.npmjs.com/misc/scope#publishing-public
 }
 ```
 
+### Publish to a custom registry
+
+Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in package.json to the URL of your registry:
+
+```json
+"publishConfig":{
+	"registry": "http://my-internal-registry.local"
+}
+```
+
 ### Initial version
 
 For new packages, start the `version` field in package.json at `0.0.0` and let `np` bump it to `1.0.0` or `0.1.0` when publishing.
