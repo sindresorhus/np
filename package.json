@@ -1,6 +1,6 @@
 {
   "name": "np",
-  "version": "2.10.0",
+  "version": "2.10.1",
   "description": "A better `npm publish`",
   "license": "MIT",
   "repository": "sindresorhus/np",
