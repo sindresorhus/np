@@ -7,7 +7,7 @@
 
 ## Why
 
-- [Interative UI](#interactive-ui)
+- [Interactive UI](#interactive-ui)
 - Ensures you are publishing from the `master` branch
 - Ensures the working directory is clean and that there are no unpulled changes
 - Reinstalls dependencies to ensure your project works with the latest dependency tree
