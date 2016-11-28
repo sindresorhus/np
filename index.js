@@ -20,13 +20,15 @@ const exec = (cmd, args) => {
 	).filter(Boolean);
 };
 
-module.exports = (input, opts) => {
+module.exports = (input, opts, pkg) => {
 	input = input || 'patch';
 	opts = opts || {};
+	if (typeof pkg === 'undefined') {
+		pkg = opts;
+	}
 
 	const runTests = !opts.yolo;
 	const runCleanup = !opts.skipCleanup && !opts.yolo;
-	const pkg = readPkgUp.sync().pkg;
 
 	const tasks = new Listr([
 		{

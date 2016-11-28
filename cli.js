@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 const meow = require('meow');
+const readPkgUp = require('read-pkg-up');
 const updateNotifier = require('update-notifier');
 const version = require('./lib/version');
 const ui = require('./lib/ui');
@@ -28,6 +29,12 @@ const cli = meow(`
 
 updateNotifier({pkg: cli.pkg}).notify();
 
+const pkg = readPkgUp.sync().pkg;
+if (!pkg) {
+	console.error('\nNo package.json found, are you in the correct project?');
+	process.exit(1);
+}
+
 Promise
 	.resolve()
 	.then(() => {
@@ -38,7 +45,7 @@ Promise
 			});
 		}
 
-		return ui(cli.flags);
+		return ui(cli.flags, pkg);
 	})
 	.then(options => {
 		if (!options.confirm) {
@@ -47,7 +54,7 @@ Promise
 
 		return options;
 	})
-	.then(options => np(options.version, options))
+	.then(options => np(options.version, options, pkg))
 	.then(pkg => {
 		console.log(`\n ${pkg.name} ${pkg.version} published 🎉`);
 	})
