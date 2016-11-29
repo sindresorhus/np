@@ -2,6 +2,7 @@
 const execa = require('execa');
 const del = require('del');
 const Listr = require('listr');
+const logSymbols = require('log-symbols');
 const split = require('split');
 require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
 const Observable = require('any-observable');
@@ -20,15 +21,16 @@ const exec = (cmd, args) => {
 	).filter(Boolean);
 };
 
-module.exports = (input, opts, pkg) => {
+module.exports = (input, opts) => {
 	input = input || 'patch';
 	opts = opts || {};
-	if (typeof pkg === 'undefined') {
-		pkg = opts;
-	}
 
 	const runTests = !opts.yolo;
 	const runCleanup = !opts.skipCleanup && !opts.yolo;
+	const pkg = readPkgUp.sync().pkg;
+	if (!pkg) {
+		throw new Error(`${logSymbols.error} No package.json found. Make sure you're in the correct project.`);
+	}
 
 	const tasks = new Listr([
 		{
