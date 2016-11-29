@@ -9,6 +9,7 @@ const streamToObservable = require('stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
+const util = require('./lib/util');
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
@@ -26,7 +27,7 @@ module.exports = (input, opts) => {
 
 	const runTests = !opts.yolo;
 	const runCleanup = !opts.skipCleanup && !opts.yolo;
-	const pkg = readPkgUp.sync().pkg;
+	const pkg = util.readPkg();
 
 	const tasks = new Listr([
 		{
