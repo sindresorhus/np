@@ -2,7 +2,6 @@
 const execa = require('execa');
 const del = require('del');
 const Listr = require('listr');
-const logSymbols = require('log-symbols');
 const split = require('split');
 require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
 const Observable = require('any-observable');
@@ -10,6 +9,7 @@ const streamToObservable = require('stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
+const util = require('./lib/util');
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
@@ -27,10 +27,7 @@ module.exports = (input, opts) => {
 
 	const runTests = !opts.yolo;
 	const runCleanup = !opts.skipCleanup && !opts.yolo;
-	const pkg = readPkgUp.sync().pkg;
-	if (!pkg) {
-		throw new Error(`${logSymbols.error} No package.json found. Make sure you're in the correct project.`);
-	}
+	const pkg = util.readPkg();
 
 	const tasks = new Listr([
 		{

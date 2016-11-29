@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 'use strict';
+const logSymbols = require('log-symbols');
 const meow = require('meow');
 const updateNotifier = require('update-notifier');
 const version = require('./lib/version');
@@ -52,6 +53,6 @@ Promise
 		console.log(`\n ${pkg.name} ${pkg.version} published 🎉`);
 	})
 	.catch(err => {
-		console.error(`\n${err.message}`);
+		console.error(`\n${logSymbols.error} ${err.message}`);
 		process.exit(1);
 	});
