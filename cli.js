@@ -19,6 +19,7 @@ const cli = meow(`
 	  --skip-cleanup  Skips cleanup of node_modules
 	  --yolo          Skips cleanup and testing
 	  --tag           Publish under a given dist-tag
+	  --registry      Publish to a given npm package registry
 
 	Examples
 	  $ np

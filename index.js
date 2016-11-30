@@ -75,7 +75,16 @@ module.exports = (input, opts) => {
 					return 'Private package: not publishing to npm.';
 				}
 			},
-			task: () => exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []))
+			task: () => {
+				const args = ['publish'];
+				if (opts.registry) {
+					args.push('--registry', opts.registry);
+				}
+				if (opts.tag) {
+					args.push('--tag', opts.tag);
+				}
+				return exec('npm', args);
+			}
 		},
 		{
 			title: 'Pushing tags',
