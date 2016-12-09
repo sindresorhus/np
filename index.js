@@ -23,10 +23,18 @@ const exec = (cmd, args) => {
 
 module.exports = (input, opts) => {
 	input = input || 'patch';
-	opts = opts || {};
+
+	opts = Object.assign({
+		cleanup: true
+	}, opts);
+
+	// TODO: remove sometime far in the future
+	if (opts.skipCleanup) {
+		opts.cleanup = false;
+	}
 
 	const runTests = !opts.yolo;
-	const runCleanup = !opts.skipCleanup && !opts.yolo;
+	const runCleanup = opts.cleanup && !opts.yolo;
 	const pkg = util.readPkg();
 
 	const tasks = new Listr([
