@@ -40,6 +40,7 @@ $ np --help
     --any-branch  Allow publishing from any branch
     --no-cleanup  Skips cleanup of node_modules
     --yolo        Skips cleanup and testing
+	  --no-publish  Skips publishing
     --tag         Publish under a given dist-tag
 
   Examples
@@ -110,6 +111,10 @@ Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in pack
 	"registry": "http://my-internal-registry.local"
 }
 ```
+
+### Publish with a CI
+
+If you use a Continuous Integration server to publish your tagged commits, use the `--no-publish` flag to skip the publishing step of `np`.
 
 ### Initial version
 

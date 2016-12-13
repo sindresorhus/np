@@ -25,7 +25,8 @@ module.exports = (input, opts) => {
 	input = input || 'patch';
 
 	opts = Object.assign({
-		cleanup: true
+		cleanup: true,
+		publish: true
 	}, opts);
 
 	// TODO: remove sometime far in the future
@@ -35,6 +36,7 @@ module.exports = (input, opts) => {
 
 	const runTests = !opts.yolo;
 	const runCleanup = opts.cleanup && !opts.yolo;
+	const runPublish = opts.publish;
 	const pkg = util.readPkg();
 
 	const tasks = new Listr([
@@ -70,26 +72,28 @@ module.exports = (input, opts) => {
 		});
 	}
 
-	tasks.add([
-		{
-			title: 'Bumping version',
-			// Specify --force flag to proceed even if the working directory is dirty as np already does a dirty check anyway
-			task: () => exec('npm', ['version', input, '--force'])
-		},
-		{
+	tasks.add({
+		title: 'Bumping version',
+		// Specify --force flag to proceed even if the working directory is dirty as np already does a dirty check anyway
+		task: () => exec('npm', ['version', input, '--force'])
+	});
+
+	if (runPublish) {
+		tasks.add({
 			title: 'Publishing package',
-			skip: () => {
-				if (pkg.private) {
-					return 'Private package: not publishing to npm.';
-				}
-			},
-			task: () => exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []))
-		},
-		{
-			title: 'Pushing tags',
-			task: () => exec('git', ['push', '--follow-tags'])
-		}
-	]);
+				skip: () => {
+					if (pkg.private) {
+						return 'Private package: not publishing to npm.';
+					}
+				},
+				task: () => exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []))
+		});
+	}
+
+	tasks.add({
+		title: 'Pushing tags',
+		task: () => exec('git', ['push', '--follow-tags'])
+	});
 
 	return tasks.run()
 		.then(() => readPkgUp())
