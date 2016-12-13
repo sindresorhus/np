@@ -18,6 +18,7 @@ const cli = meow(`
 	  --any-branch  Allow publishing from any branch
 	  --no-cleanup  Skips cleanup of node_modules
 	  --yolo        Skips cleanup and testing
+	  --no-publish  Skips publishing
 	  --tag         Publish under a given dist-tag
 
 	Examples
