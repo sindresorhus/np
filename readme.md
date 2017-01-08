@@ -120,6 +120,20 @@ If you use a Continuous Integration server to publish your tagged commits, use t
 
 For new packages, start the `version` field in package.json at `0.0.0` and let `np` bump it to `1.0.0` or `0.1.0` when publishing.
 
+### Prerequisite runs forever (macOS Sierra)
+
+If you're running macOS >= 10.12 and previously stored your git SSH-Key in the keychain (so you don't have to enter your password on every single git command) it happens that the `prerequisite` step runs forever, because you should type in your password when publishing a new version with `np`. Unfortunately thats not possible right now.
+
+#### Solution
+
+Open `~/.ssh/config` (if it doesn't exist create it)
+
+Add or modify:  `AddKeysToAgent yes`
+
+Save the file, and close it.
+
+To add your SSH-Key to the keychain, you have to run a simple git command like `git fetch`.
+Now your credentials should be stored in the keychain and you are able to use `np` again.
 
 ## Created by
 
