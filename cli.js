@@ -15,11 +15,12 @@ const cli = meow(`
 	    ${version.SEMVER_INCREMENTS.join(' | ')} | 1.2.3
 
 	Options
-	  --any-branch  Allow publishing from any branch
-	  --no-cleanup  Skips cleanup of node_modules
-	  --yolo        Skips cleanup and testing
-	  --no-publish  Skips publishing
-	  --tag         Publish under a given dist-tag
+	  --any-branch    Allow publishing from any branch
+	  --force-version Ignores errors from npm version
+	  --no-cleanup    Skips cleanup of node_modules
+	  --no-publish    Skips publishing
+	  --tag           Publish under a given dist-tag
+	  --yolo          Skips cleanup and testing
 
 	Examples
 	  $ np
