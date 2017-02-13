@@ -26,7 +26,8 @@ module.exports = (input, opts) => {
 
 	opts = Object.assign({
 		cleanup: true,
-		publish: true
+		publish: true,
+		forceVersion: false
 	}, opts);
 
 	// TODO: remove sometime far in the future
@@ -36,6 +37,7 @@ module.exports = (input, opts) => {
 
 	const runTests = !opts.yolo;
 	const runCleanup = opts.cleanup && !opts.yolo;
+	const forceVersion = opts.yolo || opts.forceVersion;
 	const runPublish = opts.publish;
 	const pkg = util.readPkg();
 
@@ -74,8 +76,7 @@ module.exports = (input, opts) => {
 
 	tasks.add({
 		title: 'Bumping version',
-		// Specify --force flag to proceed even if the working directory is dirty as np already does a dirty check anyway
-		task: () => exec('npm', ['version', input, '--force'])
+		task: () => exec('npm', ['version', input].concat(forceVersion ? ['--force'] : []))
 	});
 
 	if (runPublish) {
