@@ -70,7 +70,7 @@ For example, here we build the documentation before tagging the release:
 {
 	"name": "my-awesome-package",
 	"scripts": {
-		"preversion": "./build-docs"
+		"version": "./build-docs && git add docs"
 	}
 }
 ```
