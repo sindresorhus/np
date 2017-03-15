@@ -7,6 +7,7 @@ require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-un
 const Observable = require('any-observable');
 const streamToObservable = require('stream-to-observable');
 const readPkgUp = require('read-pkg-up');
+const hasYarn = require('has-yarn');
 const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
 const util = require('./lib/util');
@@ -26,8 +27,13 @@ module.exports = (input, opts) => {
 
 	opts = Object.assign({
 		cleanup: true,
-		publish: true
+		publish: true,
+		yarn: hasYarn()
 	}, opts);
+
+	if (!hasYarn() && opts.yarn) {
+		throw new Error('Could not use Yarn without yarn.lock file');
+	}
 
 	// TODO: remove sometime far in the future
 	if (opts.skipCleanup) {
@@ -59,7 +65,13 @@ module.exports = (input, opts) => {
 				task: () => del('node_modules')
 			},
 			{
-				title: 'Installing dependencies',
+				title: 'Installing dependencies using Yarn',
+				enabled: () => opts.yarn === true,
+				task: () => exec('yarn', ['install'])
+			},
+			{
+				title: 'Installing dependencies using npm',
+				enabled: () => opts.yarn === false,
 				task: () => exec('npm', ['install'])
 			}
 		]);
