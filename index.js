@@ -67,7 +67,7 @@ module.exports = (input, opts) => {
 			{
 				title: 'Installing dependencies using Yarn',
 				enabled: () => opts.yarn === true,
-				task: () => exec('yarn', ['install'])
+				task: () => exec('yarn', ['install', '--frozen-lockfile'])
 			},
 			{
 				title: 'Installing dependencies using npm',
