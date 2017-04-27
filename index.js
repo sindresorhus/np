@@ -84,10 +84,18 @@ module.exports = (input, opts) => {
 		});
 	}
 
-	tasks.add({
-		title: 'Bumping version',
-		task: () => exec('npm', ['version', input])
-	});
+	tasks.add([
+		{
+			title: 'Bumping version using Yarn',
+			enabled: () => opts.yarn === true,
+			task: () => exec('yarn', ['version', input])
+		},
+		{
+			title: 'Bumping version using npm',
+			enabled: () => opts.yarn === false,
+			task: () => exec('npm', ['version', input])
+		}
+	]);
 
 	if (runPublish) {
 		tasks.add({
