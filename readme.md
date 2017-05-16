@@ -119,14 +119,16 @@ If you use a Continuous Integration server to publish your tagged commits, use t
 
 ### Publish to gh-pages
 
-To publish to gh-pages (or any other branch that serves your static assets), install [`branchsite`](https://github.com/enriquecaballero/branchsite), an `np`-like CLI tool aimed to compliment `np`, and create an npm "post" hook that runs after `np`.
+To publish to `gh-pages` or any other branch that serves your static assets), install [`branchsite`](https://github.com/enriquecaballero/branchsite), an `np`-like CLI tool aimed to compliment `np`, and create an [npm "post" hook](https://docs.npmjs.com/misc/scripts) that runs after `np`.
+
 ```
 $ npm install --save-dev branchsite
 ```
+
 ```json
 "scripts":{
-  "deploy": "np",
-  "postdeploy": "bs"
+	"deploy": "np",
+	"postdeploy": "bs"
 }
 ```
 
