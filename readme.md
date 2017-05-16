@@ -117,6 +117,21 @@ Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in pack
 
 If you use a Continuous Integration server to publish your tagged commits, use the `--no-publish` flag to skip the publishing step of `np`.
 
+### Publish to gh-pages
+
+To publish to `gh-pages` or any other branch that serves your static assets), install [`branchsite`](https://github.com/enriquecaballero/branchsite), an `np`-like CLI tool aimed to compliment `np`, and create an [npm "post" hook](https://docs.npmjs.com/misc/scripts) that runs after `np`.
+
+```
+$ npm install --save-dev branchsite
+```
+
+```json
+"scripts":{
+	"deploy": "np",
+	"postdeploy": "bs"
+}
+```
+
 ### Initial version
 
 For new packages, start the `version` field in package.json at `0.0.0` and let `np` bump it to `1.0.0` or `0.1.0` when publishing.
