@@ -77,7 +77,7 @@ module.exports = (input, opts) => {
 			{
 				title: 'Installing dependencies using npm',
 				enabled: () => opts.yarn === false,
-				task: () => exec('npm', ['install'])
+				task: () => exec('npm', ['install', '--no-package-lock'])
 			}
 		]);
 	}
