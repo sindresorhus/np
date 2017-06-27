@@ -89,6 +89,13 @@ module.exports = (input, opts) => {
 		});
 	}
 
+	const npmArgs = ['version', input];
+
+	if ( opts.message ) {
+		npmArgs.push('-m');
+		npmArgs.push(opts.message);
+	}
+
 	tasks.add([
 		{
 			title: 'Bumping version using Yarn',
@@ -98,7 +105,7 @@ module.exports = (input, opts) => {
 		{
 			title: 'Bumping version using npm',
 			enabled: () => opts.yarn === false,
-			task: () => exec('npm', ['version', input])
+			task: () => exec('npm', npmArgs)
 		}
 	]);
 
