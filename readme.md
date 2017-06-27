@@ -84,6 +84,12 @@ Set the [`sign-git-tag`](https://docs.npmjs.com/misc/config#sign-git-tag) npm co
 $ npm config set sign-git-tag true
 ```
 
+Or set the [`version-sign-git-tag`](https://yarnpkg.com/lang/en/docs/cli/version/#toc-git-tags) Yarn config:
+
+```
+$ yarn config set version-sign-git-tag true
+```
+
 ### Private packages
 
 <img src="private-packages.png" width="260" align="right">
