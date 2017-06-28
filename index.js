@@ -12,9 +12,12 @@ const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
 const util = require('./lib/util');
 
+const defaultTimeout = 30000;
+
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
-	const cp = execa(cmd, args);
+	// It was not merged, but consider using https://github.com/paulcbetts/spawn-rx
+	const cp = execa(cmd, args, {timeout: defaultTimeout});
 
 	return Observable.merge(
 		streamToObservable(cp.stdout.pipe(split()), {await: cp}),
