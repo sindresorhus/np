@@ -21,6 +21,7 @@ const cli = meow(`
 	  --no-publish  Skips publishing
 	  --tag         Publish under a given dist-tag
 	  --no-yarn     Don't use Yarn
+	  --otp         Use a one-time password for publishing
 
 	Examples
 	  $ np
