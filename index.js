@@ -103,6 +103,16 @@ module.exports = (input, opts) => {
 	]);
 
 	if (runPublish) {
+		const publishArgs = [];
+
+		if (opts.target) {
+			publishArgs.push(opts.target);
+		}
+
+		if (opts.tag) {
+			publishArgs.push('--tag', opts.tag);
+		}
+
 		tasks.add({
 			title: 'Publishing package',
 			skip: () => {
@@ -110,7 +120,7 @@ module.exports = (input, opts) => {
 					return 'Private package: not publishing to npm.';
 				}
 			},
-			task: () => exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []))
+			task: () => exec('npm', ['publish'].concat(publishArgs))
 		});
 	}
 
