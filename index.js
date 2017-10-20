@@ -2,6 +2,7 @@
 const execa = require('execa');
 const del = require('del');
 const Listr = require('listr');
+const ansiEscapes = require('ansi-escapes');
 const split = require('split');
 require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
 const Observable = require('any-observable');
@@ -35,7 +36,6 @@ module.exports = (input, opts) => {
 		throw new Error('Could not use Yarn without yarn.lock file');
 	}
 
-	// TODO: remove sometime far in the future
 	if (opts.skipCleanup) {
 		opts.cleanup = false;
 	}
@@ -120,6 +120,8 @@ module.exports = (input, opts) => {
 	});
 
 	return tasks.run()
+        .then(() => {
+        	process.stdout.write(ansiEscapes.eraseLines(12));
+        })
 		.then(() => readPkgUp())
 		.then(result => result.pkg);
-};
