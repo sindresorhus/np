@@ -121,8 +121,8 @@ module.exports = (input, opts) => {
 
 	return tasks.run()
         .then(() => {
-        	process.stdout.write(ansiEscapes.eraseLines(12));
-        })
+			process.stdout.write(ansiEscapes.eraseLines(12));
+		})
 		.then(() => readPkgUp())
 		.then(result => result.pkg);
 };
