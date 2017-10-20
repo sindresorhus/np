@@ -125,3 +125,4 @@ module.exports = (input, opts) => {
         })
 		.then(() => readPkgUp())
 		.then(result => result.pkg);
+};
