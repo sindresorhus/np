@@ -36,6 +36,7 @@ module.exports = (input, opts) => {
 		throw new Error('Could not use Yarn without yarn.lock file');
 	}
 
+	// TODO: remove sometime far in the future
 	if (opts.skipCleanup) {
 		opts.cleanup = false;
 	}
@@ -120,9 +121,9 @@ module.exports = (input, opts) => {
 	});
 
 	return tasks.run()
-        .then(() => {
-	process.stdout.write(ansiEscapes.eraseLines(12));
-})
-		.then(() => readPkgUp())
-		.then(result => result.pkg);
+			.then(() => {
+				process.stdout.write(ansiEscapes.eraseLines(12));
+			})
+			.then(() => readPkgUp())
+			.then(result => result.pkg);
 };
