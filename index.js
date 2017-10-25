@@ -4,7 +4,6 @@ const del = require('del');
 const Listr = require('listr');
 const ansiEscapes = require('ansi-escapes');
 const split = require('split');
-require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
 const Observable = require('any-observable');
 const streamToObservable = require('stream-to-observable');
 const readPkgUp = require('read-pkg-up');
@@ -33,7 +32,7 @@ module.exports = (input, opts) => {
 	}, opts);
 
 	if (!hasYarn() && opts.yarn) {
-		throw new Error('Could not use Yarn without yarn.lock file');
+		throw new Error('CF_ould not use Yarn without yarn.lock file');
 	}
 
 	// TODO: remove sometime far in the future
@@ -56,7 +55,8 @@ module.exports = (input, opts) => {
 			task: () => gitTasks(opts)
 		}
 	], {
-		showSubtasks: false
+		showSubtasks: false,
+		clearOutput: true
 	});
 
 	if (runCleanup) {
@@ -122,7 +122,7 @@ module.exports = (input, opts) => {
 
 	return tasks.run()
 			.then(() => {
-				process.stdout.write(ansiEscapes.eraseLines(12));
+				process.stdout.write(ansiEscapes.eraseLines(4));
 			})
 			.then(() => readPkgUp())
 			.then(result => result.pkg);
