@@ -21,6 +21,7 @@ const cli = meow(`
 	  --no-publish  Skips publishing
 	  --tag         Publish under a given dist-tag
 	  --no-yarn     Don't use Yarn
+	  --target      Path to tarball or folder to publish
 
 	Examples
 	  $ np
