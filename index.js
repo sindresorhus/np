@@ -11,6 +11,7 @@ const hasYarn = require('has-yarn');
 const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
 const util = require('./lib/util');
+const publish = require('./lib/publish');
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
@@ -110,7 +111,7 @@ module.exports = (input, opts) => {
 					return 'Private package: not publishing to npm.';
 				}
 			},
-			task: () => exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []))
+			task: () => publish(opts.tag)
 		});
 	}
 
