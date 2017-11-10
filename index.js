@@ -111,7 +111,7 @@ module.exports = (input, opts) => {
 					return 'Private package: not publishing to npm.';
 				}
 			},
-			task: () => publish(opts.tag)
+			task: (ctx, task) => publish(task, opts.tag)
 		});
 	}
 
