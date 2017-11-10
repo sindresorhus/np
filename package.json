@@ -47,7 +47,7 @@
     "has-yarn": "^1.0.0",
     "inquirer": "^3.0.6",
     "listr": "^0.11.0",
-    "listr-input": "^0.1.0",
+    "listr-input": "^0.1.1",
     "log-symbols": "^1.0.2",
     "meow": "^3.7.0",
     "read-pkg-up": "^2.0.0",
