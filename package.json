@@ -49,6 +49,7 @@
     "listr": "^0.11.0",
     "log-symbols": "^1.0.2",
     "meow": "^3.7.0",
+    "p-timeout": "^1.2.0",
     "read-pkg-up": "^2.0.0",
     "rxjs": "5.4.3",
     "semver": "^5.2.0",
