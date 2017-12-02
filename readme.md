@@ -16,6 +16,7 @@
 - Prevents [accidental publishing](https://github.com/npm/npm/issues/13248) of pre-release versions under the `latest` [dist-tag](https://docs.npmjs.com/cli/dist-tag)
 - Publishes the new version to npm, optionally under a dist-tag
 - Pushes commits and tags to GitHub
+- Supports [two-factor authentication](https://docs.npmjs.com/getting-started/using-two-factor-authentication)
 
 
 ## Install
@@ -24,9 +25,7 @@
 $ npm install --global np
 ```
 
-<a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/tmkVF4Qm7RNE8e9RVwnim6gU/sindresorhus/np'>
-  <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/tmkVF4Qm7RNE8e9RVwnim6gU/sindresorhus/np.svg' />
-</a>
+*Support my open source work by buying this excellent [Node.js course](https://LearnNode.com/friend/AWESOME).*
 
 
 ## Usage

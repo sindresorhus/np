@@ -11,6 +11,7 @@ const hasYarn = require('has-yarn');
 const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
 const util = require('./lib/util');
+const publish = require('./lib/publish');
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
@@ -67,7 +68,7 @@ module.exports = (input, opts) => {
 			{
 				title: 'Installing dependencies using Yarn',
 				enabled: () => opts.yarn === true,
-				task: () => exec('yarn', ['install', '--frozen-lockfile']).catch(err => {
+				task: () => exec('yarn', ['install', '--frozen-lockfile', '--production=false']).catch(err => {
 					if (err.stderr.startsWith('error Your lockfile needs to be updated')) {
 						throw new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.');
 					}
@@ -77,7 +78,7 @@ module.exports = (input, opts) => {
 			{
 				title: 'Installing dependencies using npm',
 				enabled: () => opts.yarn === false,
-				task: () => exec('npm', ['install', '--no-package-lock'])
+				task: () => exec('npm', ['install', '--no-package-lock', '--no-production'])
 			}
 		]);
 	}
@@ -110,7 +111,7 @@ module.exports = (input, opts) => {
 					return 'Private package: not publishing to npm.';
 				}
 			},
-			task: () => exec('npm', ['publish'].concat(opts.tag ? ['--tag', opts.tag] : []))
+			task: (ctx, task) => publish(task, opts.tag)
 		});
 	}
 
