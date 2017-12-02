@@ -1,5 +1,5 @@
 import test from 'ava';
-import m from './';
+import m from '..';
 
 test('version is invalid', async t => {
 	const message = 'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid semver version.';

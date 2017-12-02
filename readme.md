@@ -158,4 +158,4 @@ If you're running macOS Sierra or higher and previously stored your Git SSH-key 
 
 ## License
 
-MIT © [Sindre Sorhus](https://sindresorhus.com)
+MIT

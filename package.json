@@ -1,69 +1,54 @@
 {
-  "name": "np",
-  "version": "2.17.0",
-  "description": "A better `npm publish`",
-  "license": "MIT",
-  "repository": "sindresorhus/np",
-  "author": {
-    "name": "Sindre Sorhus",
-    "email": "sindresorhus@gmail.com",
-    "url": "sindresorhus.com"
-  },
-  "maintainers": [
-    {
-      "name": "Sam Verschueren",
-      "email": "sam.verschueren@gmail.com",
-      "url": "github.com/SamVerschueren"
-    }
-  ],
-  "bin": "cli.js",
-  "engines": {
-    "node": ">=4"
-  },
-  "scripts": {
-    "test": "xo && ava"
-  },
-  "files": [
-    "index.js",
-    "cli.js",
-    "lib"
-  ],
-  "keywords": [
-    "cli-app",
-    "cli",
-    "npm",
-    "publish",
-    "git",
-    "push",
-    "version",
-    "bump",
-    "commit"
-  ],
-  "dependencies": {
-    "any-observable": "^0.2.0",
-    "chalk": "^1.1.3",
-    "del": "^2.2.0",
-    "execa": "^0.6.3",
-    "has-yarn": "^1.0.0",
-    "inquirer": "^3.0.6",
-    "listr": "^0.11.0",
-    "listr-input": "^0.1.1",
-    "log-symbols": "^1.0.2",
-    "meow": "^3.7.0",
-    "p-tap": "^1.0.0",
-    "p-timeout": "^1.2.0",
-    "read-pkg-up": "^2.0.0",
-    "rxjs": "5.4.3",
-    "semver": "^5.2.0",
-    "split": "^1.0.0",
-    "stream-to-observable": "^0.2.0",
-    "update-notifier": "^2.1.0"
-  },
-  "devDependencies": {
-    "ava": "*",
-    "xo": "*"
-  },
-  "xo": {
-    "esnext": true
-  }
+	"name": "np",
+	"version": "2.17.0",
+	"description": "A better `npm publish`",
+	"license": "MIT",
+	"repository": "sindresorhus/np",
+	"bin": "cli.js",
+	"engines": {
+		"node": ">=4"
+	},
+	"scripts": {
+		"test": "xo && ava"
+	},
+	"files": [
+		"index.js",
+		"cli.js",
+		"lib"
+	],
+	"keywords": [
+		"cli-app",
+		"cli",
+		"npm",
+		"publish",
+		"git",
+		"push",
+		"version",
+		"bump",
+		"commit"
+	],
+	"dependencies": {
+		"any-observable": "^0.2.0",
+		"chalk": "^1.1.3",
+		"del": "^2.2.0",
+		"execa": "^0.6.3",
+		"has-yarn": "^1.0.0",
+		"inquirer": "^3.0.6",
+		"listr": "^0.11.0",
+		"listr-input": "^0.1.1",
+		"log-symbols": "^1.0.2",
+		"meow": "^3.7.0",
+		"p-tap": "^1.0.0",
+		"p-timeout": "^1.2.0",
+		"read-pkg-up": "^2.0.0",
+		"rxjs": "5.4.3",
+		"semver": "^5.2.0",
+		"split": "^1.0.0",
+		"stream-to-observable": "^0.2.0",
+		"update-notifier": "^2.1.0"
+	},
+	"devDependencies": {
+		"ava": "*",
+		"xo": "*"
+	}
 }
