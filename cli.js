@@ -27,7 +27,28 @@ const cli = meow(`
 	  $ np patch
 	  $ np 1.0.2
 	  $ np 1.0.2-beta.3 --tag=beta
-`);
+`, {
+	flags: {
+		anyBranch: {
+			type: 'boolean'
+		},
+		cleanup: {
+			type: 'boolean'
+		},
+		yolo: {
+			type: 'boolean'
+		},
+		publish: {
+			type: 'boolean'
+		},
+		tag: {
+			type: 'string'
+		},
+		yarn: {
+			type: 'boolean'
+		}
+	}
+});
 
 updateNotifier({pkg: cli.pkg}).notify();
 
