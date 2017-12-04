@@ -33,13 +33,15 @@ const cli = meow(`
 			type: 'boolean'
 		},
 		cleanup: {
-			type: 'boolean'
+			type: 'boolean',
+			default: true
 		},
 		yolo: {
 			type: 'boolean'
 		},
 		publish: {
-			type: 'boolean'
+			type: 'boolean',
+			default: true
 		},
 		tag: {
 			type: 'string'
