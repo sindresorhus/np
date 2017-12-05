@@ -3,6 +3,7 @@
 const logSymbols = require('log-symbols');
 const meow = require('meow');
 const updateNotifier = require('update-notifier');
+const hasYarn = require('has-yarn');
 const version = require('./lib/version');
 const ui = require('./lib/ui');
 const np = require('./');
@@ -47,7 +48,8 @@ const cli = meow(`
 			type: 'string'
 		},
 		yarn: {
-			type: 'boolean'
+			type: 'boolean',
+			default: hasYarn()
 		}
 	}
 });

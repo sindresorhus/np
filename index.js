@@ -28,8 +28,7 @@ module.exports = (input, opts) => {
 
 	opts = Object.assign({
 		cleanup: true,
-		publish: true,
-		yarn: hasYarn()
+		publish: true
 	}, opts);
 
 	if (!hasYarn() && opts.yarn) {
