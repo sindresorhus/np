@@ -6,7 +6,7 @@ const updateNotifier = require('update-notifier');
 const hasYarn = require('has-yarn');
 const version = require('./lib/version');
 const ui = require('./lib/ui');
-const np = require('./');
+const np = require('.');
 
 const cli = meow(`
 	Usage
