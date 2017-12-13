@@ -40,13 +40,12 @@ $ np --help
       patch | minor | major | prepatch | preminor | premajor | prerelease | 1.2.3
 
   Options
-    --any-branch             Allow publishing from any branch
-    --no-cleanup             Skips cleanup of node_modules
-    --yolo                   Skips cleanup and testing
-    --no-publish             Skips publishing
-    --tag                    Publish under a given dist-tag
-    --no-yarn                Don't use Yarn
-    --no-npm-network-checks  Skip npm ping and authentication checks
+    --any-branch  Allow publishing from any branch
+    --no-cleanup  Skips cleanup of node_modules
+    --yolo        Skips cleanup and testing
+    --no-publish  Skips publishing
+    --tag         Publish under a given dist-tag
+    --no-yarn     Don't use Yarn
 
   Examples
     $ np
@@ -122,8 +121,6 @@ Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in pack
 	"registry": "http://my-internal-registry.local"
 }
 ```
-
-If the `Ping npm registry` or `Verify user is authenticated` checks fail when publishing, your custom registry may not support these features. Use the `--no-npm-network-checks` flag to disable these checks.
 
 ### Publish with a CI
 

@@ -16,13 +16,12 @@ const cli = meow(`
 	    ${version.SEMVER_INCREMENTS.join(' | ')} | 1.2.3
 
 	Options
-	  --any-branch             Allow publishing from any branch
-	  --no-cleanup             Skips cleanup of node_modules
-	  --yolo                   Skips cleanup and testing
-	  --no-publish             Skips publishing
-	  --tag                    Publish under a given dist-tag
-	  --no-yarn                Don't use Yarn
-	  --no-npm-network-checks  Skip npm ping and authentication checks
+	  --any-branch  Allow publishing from any branch
+	  --no-cleanup  Skips cleanup of node_modules
+	  --yolo        Skips cleanup and testing
+	  --no-publish  Skips publishing
+	  --tag         Publish under a given dist-tag
+	  --no-yarn     Don't use Yarn
 
 	Examples
 	  $ np
@@ -51,10 +50,6 @@ const cli = meow(`
 		yarn: {
 			type: 'boolean',
 			default: hasYarn()
-		},
-		'npm-network-checks': {
-			type: 'boolean',
-			default: true
 		}
 	}
 });
