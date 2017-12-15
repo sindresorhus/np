@@ -79,6 +79,20 @@ For example, here we build the documentation before tagging the release:
 }
 ```
 
+You can also add `np` to a custom script in `package.json`. However, you can't use `publish` as name of your script because it's an npm defined lifecycle hook.
+
+```json
+{
+	"name": "my-awesome-package",
+	"scripts": {
+		"release": "np"
+	},
+	"devDependency": {
+		"np": "*"
+	}
+}
+```
+
 ### Signed Git tag
 
 Set the [`sign-git-tag`](https://docs.npmjs.com/misc/config#sign-git-tag) npm config to have the Git tag signed:
