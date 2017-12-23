@@ -104,7 +104,20 @@ module.exports = (input, opts) => {
 
 	if (runPublish) {
 		tasks.add({
-			title: 'Publishing package',
+			title: 'Publishing package using Yarn',
+			enabled: () => opts.yarn === true,
+			skip: () => {
+				if (pkg.private) {
+					return 'Private package: not publishing to Yarn.';
+				}
+			},
+			task: () => exec('yarn', ['publish', '--new-version', input]).catch(err => {
+				throw new Error(err);
+			})
+		},
+		{
+			title: 'Publishing package using npm',
+			enabled: () => opts.yarn === false,
 			skip: () => {
 				if (pkg.private) {
 					return 'Private package: not publishing to npm.';
