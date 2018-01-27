@@ -40,6 +40,7 @@
     "meow": "^4.0.0",
     "p-tap": "^1.0.0",
     "p-timeout": "^2.0.1",
+    "pretty-version-diff": "^1.0.0",
     "read-pkg-up": "^3.0.0",
     "rxjs": "5.4.3",
     "semver": "^5.2.0",
