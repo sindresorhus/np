@@ -103,7 +103,7 @@ module.exports = (input, opts) => {
 	]);
 
 	if (runPublish) {
-		tasks.add(
+		tasks.add([
 			{
 				title: 'Publishing package using Yarn',
 				enabled: () => opts.yarn === true,
@@ -134,7 +134,7 @@ module.exports = (input, opts) => {
 				},
 				task: (ctx, task) => publish(task, opts.tag)
 			}
-		);
+		]);
 	}
 
 	tasks.add({
