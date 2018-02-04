@@ -103,15 +103,38 @@ module.exports = (input, opts) => {
 	]);
 
 	if (runPublish) {
-		tasks.add({
-			title: 'Publishing package',
-			skip: () => {
-				if (pkg.private) {
-					return 'Private package: not publishing to npm.';
+		tasks.add([
+			{
+				title: 'Publishing package using Yarn',
+				enabled: () => opts.yarn === true,
+				skip: () => {
+					if (pkg.private) {
+						return 'Private package: not publishing to Yarn.';
+					}
+				},
+				task: () => {
+					const args = ['publish', '--new-version', input];
+
+					if (opts.tag) {
+						args.push('--tag', opts.tag);
+					}
+
+					return exec('yarn', args).catch(err => {
+						throw new Error(err);
+					});
 				}
 			},
-			task: (ctx, task) => publish(task, opts.tag)
-		});
+			{
+				title: 'Publishing package using npm',
+				enabled: () => opts.yarn === false,
+				skip: () => {
+					if (pkg.private) {
+						return 'Private package: not publishing to npm.';
+					}
+				},
+				task: (ctx, task) => publish(task, opts.tag)
+			}
+		]);
 	}
 
 	tasks.add({
