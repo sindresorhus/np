@@ -91,11 +91,6 @@ module.exports = (input, opts) => {
 
 	tasks.add([
 		{
-			title: 'Bumping version using Yarn',
-			enabled: () => opts.yarn === true,
-			task: () => exec('yarn', ['version', '--new-version', input])
-		},
-		{
 			title: 'Bumping version using npm',
 			enabled: () => opts.yarn === false,
 			task: () => exec('npm', ['version', input])
