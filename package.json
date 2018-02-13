@@ -9,7 +9,7 @@
     "node": ">=4"
   },
   "scripts": {
-    "test": "xo && ava"
+    "test": "xo && FORCE_HYPERLINK=1 ava"
   },
   "files": [
     "index.js",
@@ -32,8 +32,11 @@
     "chalk": "^2.3.0",
     "del": "^3.0.0",
     "execa": "^0.8.0",
+    "github-url-from-git": "^1.5.0",
     "has-yarn": "^1.0.0",
+    "hyperlinker": "^1.0.0",
     "inquirer": "^3.0.6",
+    "issue-regex": "^1.0.0",
     "listr": "^0.12.0",
     "listr-input": "^0.1.1",
     "log-symbols": "^2.1.0",
@@ -45,6 +48,7 @@
     "semver": "^5.2.0",
     "split": "^1.0.0",
     "stream-to-observable": "^0.2.0",
+    "supports-hyperlinks": "^1.0.1",
     "update-notifier": "^2.1.0"
   },
   "devDependencies": {
