@@ -114,9 +114,7 @@ module.exports = (input, opts) => {
 						args.push('--tag', opts.tag);
 					}
 
-					return exec('yarn', args).catch(err => {
-						throw new Error(err);
-					});
+					return exec('yarn', args);
 				}
 			},
 			{
