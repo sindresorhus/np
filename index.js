@@ -83,10 +83,18 @@ module.exports = (input, opts) => {
 	}
 
 	if (runTests) {
-		tasks.add({
-			title: 'Running tests',
-			task: () => exec('npm', ['test'])
-		});
+		tasks.add([
+			{
+				title: 'Running tests using npm',
+				enabled: () => opts.yarn === false,
+				task: () => exec('npm', ['test'])
+			},
+			{
+				title: 'Running tests using Yarn',
+				enabled: () => opts.yarn === true,
+				task: () => exec('yarn', ['test'])
+			}
+		]);
 	}
 
 	tasks.add([
