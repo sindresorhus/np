@@ -89,7 +89,7 @@ You can also add `np` to a custom script in `package.json`. This can be useful i
 	"scripts": {
 		"release": "np"
 	},
-	"devDependency": {
+	"devDependencies": {
 		"np": "*"
 	}
 }
