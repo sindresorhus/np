@@ -101,7 +101,15 @@ module.exports = (input, opts) => {
 		{
 			title: 'Bumping version using npm',
 			enabled: () => opts.yarn === false,
-			task: () => exec('npm', ['version', input])
+			task: () => {
+				const args = ['version', input];
+
+				if (!opts.gitTagVersion) {
+					args.push('--no-git-tag-version');
+				}
+
+				return exec('npm', args);
+			}
 		}
 	]);
 
@@ -120,6 +128,10 @@ module.exports = (input, opts) => {
 
 					if (opts.tag) {
 						args.push('--tag', opts.tag);
+					}
+
+					if (!opts.gitTagVersion) {
+						args.push('--no-git-tag-version');
 					}
 
 					return exec('yarn', args);

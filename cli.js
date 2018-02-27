@@ -16,12 +16,13 @@ const cli = meow(`
 	    ${version.SEMVER_INCREMENTS.join(' | ')} | 1.2.3
 
 	Options
-	  --any-branch  Allow publishing from any branch
-	  --no-cleanup  Skips cleanup of node_modules
-	  --yolo        Skips cleanup and testing
-	  --no-publish  Skips publishing
-	  --tag         Publish under a given dist-tag
-	  --no-yarn     Don't use Yarn
+	  --any-branch          Allow publishing from any branch
+	  --no-cleanup          Skips cleanup of node_modules
+	  --yolo                Skips cleanup and testing
+	  --no-publish          Skips publishing
+	  --no-git-tag-version  Skips commit of a version tag
+	  --tag                 Publish under a given dist-tag
+	  --no-yarn             Don't use Yarn
 
 	Examples
 	  $ np
@@ -46,6 +47,10 @@ const cli = meow(`
 		},
 		tag: {
 			type: 'string'
+		},
+		gitTagVersion: {
+			type: 'boolean',
+			default: true
 		},
 		yarn: {
 			type: 'boolean',
