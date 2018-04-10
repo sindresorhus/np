@@ -99,6 +99,16 @@ module.exports = (input, opts) => {
 
 	tasks.add([
 		{
+			title: 'Bumping version using Yarn',
+			enabled: () => opts.yarn === true,
+			skip: () => {
+				if (runPublish && !pkg.private) {
+					return 'Public package: version will be bumped using yarn publish.';
+				}
+			},
+			task: () => exec('yarn', ['version', '--new-version', input])
+		},
+		{
 			title: 'Bumping version using npm',
 			enabled: () => opts.yarn === false,
 			task: () => exec('npm', ['version', input])
