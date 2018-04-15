@@ -122,6 +122,10 @@ module.exports = (input, opts) => {
 						args.push('--tag', opts.tag);
 					}
 
+					if (opts.publishScoped) {
+						args.push('--access', 'public');
+					}
+
 					return exec('yarn', args);
 				}
 			},
@@ -133,7 +137,7 @@ module.exports = (input, opts) => {
 						return 'Private package: not publishing to npm.';
 					}
 				},
-				task: (ctx, task) => publish(task, opts.tag)
+				task: (ctx, task) => publish(task, opts.tag, opts.publishScoped)
 			}
 		]);
 	}

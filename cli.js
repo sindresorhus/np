@@ -72,14 +72,12 @@ Promise
 			});
 		}
 
-		return ui(cli.flags, Object.assign({}, pkg, { exists: !available }));
+		return ui(Object.assign({}, cli.flags, { exists: !available }), pkg);
 	})
 	.then(options => {
 		if (!options.confirm) {
 			process.exit(0);
 		}
-		console.log('exiting');
-		process.exit(0);
 
 		return options;
 	})
