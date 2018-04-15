@@ -4,7 +4,9 @@ const logSymbols = require('log-symbols');
 const meow = require('meow');
 const updateNotifier = require('update-notifier');
 const hasYarn = require('has-yarn');
+const npmName = require('npm-name');
 const version = require('./lib/version');
+const util = require('./lib/util');
 const ui = require('./lib/ui');
 const np = require('.');
 
@@ -59,6 +61,10 @@ updateNotifier({pkg: cli.pkg}).notify();
 Promise
 	.resolve()
 	.then(() => {
+		const pkg = util.readPkg();
+		return Promise.all([npmName(pkg.name), pkg]);
+	})
+	.then(([available, pkg]) => {
 		if (cli.input.length > 0) {
 			return Object.assign({}, cli.flags, {
 				confirm: true,
@@ -66,12 +72,14 @@ Promise
 			});
 		}
 
-		return ui(cli.flags);
+		return ui(cli.flags, Object.assign({}, pkg, { exists: !available }));
 	})
 	.then(options => {
 		if (!options.confirm) {
 			process.exit(0);
 		}
+		console.log('exiting');
+		process.exit(0);
 
 		return options;
 	})
