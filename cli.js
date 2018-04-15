@@ -72,7 +72,7 @@ Promise
 			});
 		}
 
-		return ui(Object.assign({}, cli.flags, { exists: !available }), pkg);
+		return ui(Object.assign({}, cli.flags, {exists: !available}), pkg);
 	})
 	.then(options => {
 		if (!options.confirm) {
