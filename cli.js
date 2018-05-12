@@ -58,7 +58,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 
 process.on('SIGINT', () => {
 	console.log('\nAborted!');
-	process.exit(100);
+	process.exit(1);
 });
 
 Promise
