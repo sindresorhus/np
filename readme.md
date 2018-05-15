@@ -46,14 +46,14 @@ $ np --help
     --no-publish  Skips publishing
     --tag         Publish under a given dist-tag
     --no-yarn     Don't use Yarn
-    --content     Tarball or folder to be published
+    --contents    Subdirectory to publish
 
   Examples
     $ np
     $ np patch
     $ np 1.0.2
     $ np 1.0.2-beta.3 --tag=beta
-    $ np 1.0.2-beta.3 --tag=beta --content=dist
+    $ np 1.0.2-beta.3 --tag=beta --contents=dist
 ```
 
 

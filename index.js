@@ -118,8 +118,8 @@ module.exports = (input, opts) => {
 				task: () => {
 					const args = ['publish'];
 
-					if (opts.content) {
-						args.push(opts.content);
+					if (opts.contents) {
+						args.push(opts.contents);
 					}
 
 					args.push('--new-version', input);
