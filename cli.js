@@ -49,7 +49,7 @@ const cli = meow(`
 		tag: {
 			type: 'string'
 		},
-		content: {
+		contents: {
 			type: 'string'
 		},
 		yarn: {
