@@ -28,7 +28,7 @@
 		"commit"
 	],
 	"dependencies": {
-		"any-observable": "^0.2.0",
+		"any-observable": "^0.3.0",
 		"chalk": "^2.3.0",
 		"del": "^3.0.0",
 		"execa": "^0.10.0",
