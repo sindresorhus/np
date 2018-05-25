@@ -75,9 +75,9 @@ module.exports = (input, opts) => {
 				})
 			},
 			{
-				title: 'Installing dependencies using npm',
+				title: 'Installing dependencies using npmTool',
 				enabled: () => opts.yarn === false,
-				task: () => exec('npm', ['install', '--no-package-lock', '--no-production'])
+				task: () => exec(opts.npmTool, ['install', '--no-package-lock', '--no-production'])
 			}
 		]);
 	}
@@ -85,9 +85,9 @@ module.exports = (input, opts) => {
 	if (runTests) {
 		tasks.add([
 			{
-				title: 'Running tests using npm',
+				title: 'Running tests using npmTool',
 				enabled: () => opts.yarn === false,
-				task: () => exec('npm', ['test'])
+				task: () => exec(opts.npmTool, ['test'])
 			},
 			{
 				title: 'Running tests using Yarn',
@@ -109,9 +109,9 @@ module.exports = (input, opts) => {
 			task: () => exec('yarn', ['version', '--new-version', input])
 		},
 		{
-			title: 'Bumping version using npm',
+			title: 'Bumping version using npmTool',
 			enabled: () => opts.yarn === false,
-			task: () => exec('npm', ['version', input])
+			task: () => exec(opts.npmTool, ['version', input])
 		}
 	]);
 
@@ -131,19 +131,18 @@ module.exports = (input, opts) => {
 					if (opts.tag) {
 						args.push('--tag', opts.tag);
 					}
-
 					return exec('yarn', args);
 				}
 			},
 			{
-				title: 'Publishing package using npm',
+				title: 'Publishing package using npmTool',
 				enabled: () => opts.yarn === false,
 				skip: () => {
 					if (pkg.private) {
 						return 'Private package: not publishing to npm.';
 					}
 				},
-				task: (ctx, task) => publish(task, opts.tag)
+				task: (ctx, task) => publish(task, opts)
 			}
 		]);
 	}
