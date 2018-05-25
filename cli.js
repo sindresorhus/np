@@ -47,6 +47,10 @@ const cli = meow(`
 		tag: {
 			type: 'string'
 		},
+    npmTool: {
+      type: 'string',
+      default: 'npm'
+    },
 		yarn: {
 			type: 'boolean',
 			default: hasYarn()
