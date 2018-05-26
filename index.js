@@ -48,6 +48,7 @@ module.exports = (input, opts) => {
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
+			enabled: () => runPublish,
 			task: () => prerequisiteTasks(input, pkg, opts)
 		},
 		{
