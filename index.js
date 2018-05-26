@@ -1,11 +1,12 @@
 'use strict';
+require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
 const execa = require('execa');
 const del = require('del');
 const Listr = require('listr');
 const split = require('split');
-require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
-const Observable = require('any-observable');
-const streamToObservable = require('stream-to-observable');
+const {merge} = require('rxjs');
+const {filter} = require('rxjs/operators');
+const streamToObservable = require('@samverschueren/stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
 const prerequisiteTasks = require('./lib/prerequisite');
@@ -17,10 +18,10 @@ const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
 	const cp = execa(cmd, args);
 
-	return Observable.merge(
+	return merge(
 		streamToObservable(cp.stdout.pipe(split()), {await: cp}),
 		streamToObservable(cp.stderr.pipe(split()), {await: cp})
-	).filter(Boolean);
+	).pipe(filter(Boolean));
 };
 
 module.exports = (input, opts) => {

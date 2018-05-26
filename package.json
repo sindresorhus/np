@@ -28,6 +28,7 @@
 		"commit"
 	],
 	"dependencies": {
+		"@samverschueren/stream-to-observable": "^0.3.0",
 		"any-observable": "^0.3.0",
 		"chalk": "^2.3.0",
 		"del": "^3.0.0",
@@ -36,16 +37,15 @@
 		"has-yarn": "^1.0.0",
 		"inquirer": "^3.0.6",
 		"issue-regex": "^1.0.0",
-		"listr": "^0.12.0",
+		"listr": "^0.14.1",
 		"listr-input": "^0.1.1",
 		"log-symbols": "^2.1.0",
 		"meow": "^5.0.0",
 		"p-timeout": "^2.0.1",
 		"read-pkg-up": "^3.0.0",
-		"rxjs": "5.4.3",
+		"rxjs": "^6.2.0",
 		"semver": "^5.2.0",
 		"split": "^1.0.0",
-		"stream-to-observable": "^0.2.0",
 		"terminal-link": "^1.1.0",
 		"update-notifier": "^2.1.0"
 	},
