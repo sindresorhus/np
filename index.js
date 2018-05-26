@@ -40,6 +40,10 @@ module.exports = (input, opts) => {
 		opts.cleanup = false;
 	}
 
+	if (opts.skipPrerequisite) {
+		opts.prerequisite = false;
+	}
+
 	const runTests = !opts.yolo;
 	const runCleanup = opts.cleanup && !opts.yolo;
 	const runPublish = opts.publish;
@@ -48,6 +52,7 @@ module.exports = (input, opts) => {
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
+			skip: () => opts.skipPrerequisite,
 			task: () => prerequisiteTasks(input, pkg, opts)
 		},
 		{
