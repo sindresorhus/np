@@ -49,12 +49,12 @@ const cli = meow(`
 		tag: {
 			type: 'string'
 		},
-		contents: {
-			type: 'string'
-		},
 		yarn: {
 			type: 'boolean',
 			default: hasYarn()
+		},
+		contents: {
+			type: 'string'
 		}
 	}
 });
