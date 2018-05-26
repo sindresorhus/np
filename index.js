@@ -127,7 +127,13 @@ module.exports = (input, opts) => {
 					}
 				},
 				task: () => {
-					const args = ['publish', '--new-version', input];
+					const args = ['publish'];
+
+					if (opts.contents) {
+						args.push(opts.contents);
+					}
+
+					args.push('--new-version', input);
 
 					if (opts.tag) {
 						args.push('--tag', opts.tag);
@@ -144,7 +150,7 @@ module.exports = (input, opts) => {
 						return 'Private package: not publishing to npm.';
 					}
 				},
-				task: (ctx, task) => publish(task, opts.tag)
+				task: (ctx, task) => publish(task, opts)
 			}
 		]);
 	}
