@@ -4,8 +4,8 @@ const execa = require('execa');
 const del = require('del');
 const Listr = require('listr');
 const split = require('split');
-const {merge} = require('rxjs');
-const {filter} = require('rxjs/operators');
+const {merge, throwError} = require('rxjs');
+const {catchError, filter} = require('rxjs/operators');
 const streamToObservable = require('@samverschueren/stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
@@ -69,12 +69,14 @@ module.exports = (input, opts) => {
 			{
 				title: 'Installing dependencies using Yarn',
 				enabled: () => opts.yarn === true,
-				task: () => exec('yarn', ['install', '--frozen-lockfile', '--production=false']).catch(err => {
-					if (err.stderr.startsWith('error Your lockfile needs to be updated')) {
-						throw new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.');
-					}
-					throw err;
-				})
+				task: () => exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
+					catchError(err => {
+						if (err.stderr.startsWith('error Your lockfile needs to be updated')) {
+							throwError(new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.'));
+						}
+						throwError(err);
+					})
+				)
 			},
 			{
 				title: 'Installing dependencies using npm',
