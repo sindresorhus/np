@@ -129,7 +129,7 @@ module.exports = (input, opts) => {
 		{
 			title: 'Bumping version using npm',
 			enabled: () => opts.yarn === false && opts.contents,
-			task: () => exec('npm', ['version', input], { cwd: path.join(process.cwd(), opts.contents) })
+			task: () => exec('npm', ['version', input], {cwd: path.join(process.cwd(), opts.contents)})
 		},
 		{
 			title: 'Commiting package changes',
@@ -188,6 +188,6 @@ module.exports = (input, opts) => {
 	});
 
 	return tasks.run()
-		.then(() => readPkgUp({ cwd: path.join(process.cwd(), opts.contents) }))
+		.then(() => readPkgUp({cwd: path.join(process.cwd(), opts.contents)}))
 		.then(result => result.pkg);
 };
