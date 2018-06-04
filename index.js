@@ -1,5 +1,6 @@
 'use strict';
 require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
+const path = require('path');
 const execa = require('execa');
 const del = require('del');
 const Listr = require('listr');
@@ -14,9 +15,9 @@ const gitTasks = require('./lib/git');
 const util = require('./lib/util');
 const publish = require('./lib/publish');
 
-const exec = (cmd, args) => {
+const exec = (cmd, args, options) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
-	const cp = execa(cmd, args);
+	const cp = execa(cmd, args, options);
 
 	return merge(
 		streamToObservable(cp.stdout.pipe(split()), {await: cp}),
@@ -44,7 +45,7 @@ module.exports = (input, opts) => {
 	const runTests = !opts.yolo;
 	const runCleanup = opts.cleanup && !opts.yolo;
 	const runPublish = opts.publish;
-	const pkg = util.readPkg();
+	const pkg = util.readPkg(opts.contents);
 
 	const tasks = new Listr([
 		{
@@ -122,8 +123,23 @@ module.exports = (input, opts) => {
 		},
 		{
 			title: 'Bumping version using npm',
-			enabled: () => opts.yarn === false,
+			enabled: () => opts.yarn === false && !opts.contents,
 			task: () => exec('npm', ['version', input])
+		},
+		{
+			title: 'Bumping version using npm',
+			enabled: () => opts.yarn === false && opts.contents,
+			task: () => exec('npm', ['version', input], { cwd: path.join(process.cwd(), opts.contents) })
+		},
+		{
+			title: 'Commiting package changes',
+			enabled: () => opts.contents,
+			task: () => exec('git', ['commit', `-am ${input}`])
+		},
+		{
+			title: 'Creating git tag',
+			enabled: () => opts.contents,
+			task: () => exec('git', ['tag', '-a', `v${input}`, '-m', `"${input}"`])
 		}
 	]);
 
@@ -172,6 +188,6 @@ module.exports = (input, opts) => {
 	});
 
 	return tasks.run()
-		.then(() => readPkgUp())
+		.then(() => readPkgUp({ cwd: path.join(process.cwd(), opts.contents) }))
 		.then(result => result.pkg);
 };
