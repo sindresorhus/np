@@ -124,12 +124,7 @@ module.exports = (input, opts) => {
 		},
 		{
 			title: 'Bumping version using npm',
-			enabled: () => opts.yarn === false && !opts.contents,
-			task: () => exec('npm', ['version', input])
-		},
-		{
-			title: 'Bumping version using npm',
-			enabled: () => opts.yarn === false && opts.contents,
+			enabled: () => opts.yarn === false,
 			task: () => exec('npm', ['version', input], {cwd: workingDirectory})
 		},
 		{
