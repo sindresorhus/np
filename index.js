@@ -126,18 +126,23 @@ module.exports = (input, opts) => {
 			title: 'Bumping version using npm',
 			enabled: () => opts.yarn === false,
 			task: () => exec('npm', ['version', input], {cwd: workingDirectory})
-		},
-		{
-			title: 'Commiting package changes',
-			enabled: () => opts.contents,
-			task: () => exec('git', ['commit', `-am ${input}`])
-		},
-		{
-			title: 'Creating git tag',
-			enabled: () => opts.contents,
-			task: () => exec('git', ['tag', '-a', `v${input}`, '-m', `"${input}"`])
 		}
 	]);
+
+	if (opts.contents) {
+		tasks.add([
+			{
+				title: 'Commiting package changes',
+				enabled: () => opts.contents,
+				task: () => exec('git', ['commit', `-am ${input}`])
+			},
+			{
+				title: 'Creating git tag',
+				enabled: () => opts.contents,
+				task: () => exec('git', ['tag', '-a', `v${input}`, '-m', `"${input}"`])
+			}
+		]);
+	}
 
 	if (runPublish) {
 		tasks.add([
