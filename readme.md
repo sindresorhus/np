@@ -163,9 +163,17 @@ $ npm install --save-dev branchsite
 
 For new packages, start the `version` field in package.json at `0.0.0` and let `np` bump it to `1.0.0` or `0.1.0` when publishing.
 
-### Prerequisite step runs forever on macOS Sierra
+### Prerequisite step runs forever on macOS
 
-If you're running macOS Sierra or higher and previously stored your Git SSH-key in the keychain (So you don't have to enter your password on every single Git command), it happens that the `prerequisite` step runs forever. This is because macOS Sierra no longer stores the SSH-key in the keychain by default, so it prompts for a password during the `prerequisite` step, but you're not able to input it. The solution is to open `~/.ssh/config` (if it doesn't exist create it), add or modify `AddKeysToAgent yes`, and save the file. To add your SSH-key to the keychain, you have to run a simple Git command like `git fetch`. Your credentials should now be stored in the keychain and you're able to use `np` again.
+If you're using macOS Sierra 10.12.2 or later, your SSH key passphrase is no longer stored into the keychain by default. This may cause the `prerequisite` step to run forever because it prompts for your passphrase in the background. To fix this, add the following lines to your `~/.ssh/config` and run a simple Git command like `git fetch`.
+
+```
+Host *
+ AddKeysToAgent yes
+ UseKeychain yes
+```
+
+If you're running into other issues when using SSH, please consult [GitHub's support article](https://help.github.com/articles/connecting-to-github-with-ssh/).
 
 
 ## Created by
