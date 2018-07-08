@@ -1,11 +1,12 @@
 'use strict';
+require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
 const execa = require('execa');
 const del = require('del');
 const Listr = require('listr');
 const split = require('split');
-require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
-const Observable = require('any-observable');
-const streamToObservable = require('stream-to-observable');
+const {merge, throwError} = require('rxjs');
+const {catchError, filter} = require('rxjs/operators');
+const streamToObservable = require('@samverschueren/stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
 const prerequisiteTasks = require('./lib/prerequisite');
@@ -17,10 +18,10 @@ const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
 	const cp = execa(cmd, args);
 
-	return Observable.merge(
+	return merge(
 		streamToObservable(cp.stdout.pipe(split()), {await: cp}),
 		streamToObservable(cp.stderr.pipe(split()), {await: cp})
-	).filter(Boolean);
+	).pipe(filter(Boolean));
 };
 
 module.exports = (input, opts) => {
@@ -48,6 +49,7 @@ module.exports = (input, opts) => {
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
+			enabled: () => runPublish,
 			task: () => prerequisiteTasks(input, pkg, opts)
 		},
 		{
@@ -67,12 +69,14 @@ module.exports = (input, opts) => {
 			{
 				title: 'Installing dependencies using Yarn',
 				enabled: () => opts.yarn === true,
-				task: () => exec('yarn', ['install', '--frozen-lockfile', '--production=false']).catch(err => {
-					if (err.stderr.startsWith('error Your lockfile needs to be updated')) {
-						throw new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.');
-					}
-					throw err;
-				})
+				task: () => exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
+					catchError(err => {
+						if (err.stderr.startsWith('error Your lockfile needs to be updated')) {
+							throwError(new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.'));
+						}
+						throwError(err);
+					})
+				)
 			},
 			{
 				title: 'Installing dependencies using npm',
@@ -92,12 +96,30 @@ module.exports = (input, opts) => {
 			{
 				title: 'Running tests using Yarn',
 				enabled: () => opts.yarn === true,
-				task: () => exec('yarn', ['test'])
+				task: () => exec('yarn', ['test']).pipe(
+					catchError(err => {
+						if (err.message.includes('Command "test" not found')) {
+							return [];
+						}
+
+						throwError(err);
+					})
+				)
 			}
 		]);
 	}
 
 	tasks.add([
+		{
+			title: 'Bumping version using Yarn',
+			enabled: () => opts.yarn === true,
+			skip: () => {
+				if (runPublish && !pkg.private) {
+					return 'Public package: version will be bumped using yarn publish.';
+				}
+			},
+			task: () => exec('yarn', ['version', '--new-version', input])
+		},
 		{
 			title: 'Bumping version using npm',
 			enabled: () => opts.yarn === false,
@@ -116,7 +138,13 @@ module.exports = (input, opts) => {
 					}
 				},
 				task: () => {
-					const args = ['publish', '--new-version', input];
+					const args = ['publish'];
+
+					if (opts.contents) {
+						args.push(opts.contents);
+					}
+
+					args.push('--new-version', input);
 
 					if (opts.tag) {
 						args.push('--tag', opts.tag);

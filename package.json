@@ -1,59 +1,57 @@
 {
-  "name": "np",
-  "version": "2.20.1",
-  "description": "A better `npm publish`",
-  "license": "MIT",
-  "repository": "sindresorhus/np",
-  "bin": "cli.js",
-  "engines": {
-    "node": ">=4"
-  },
-  "scripts": {
-    "test": "xo && FORCE_HYPERLINK=1 ava"
-  },
-  "files": [
-    "index.js",
-    "cli.js",
-    "lib"
-  ],
-  "keywords": [
-    "cli-app",
-    "cli",
-    "npm",
-    "publish",
-    "git",
-    "push",
-    "version",
-    "bump",
-    "commit"
-  ],
-  "dependencies": {
-    "any-observable": "^0.2.0",
-    "chalk": "^2.3.0",
-    "del": "^3.0.0",
-    "execa": "^0.8.0",
-    "github-url-from-git": "^1.5.0",
-    "has-yarn": "^1.0.0",
-    "hyperlinker": "^1.0.0",
-    "inquirer": "^3.0.6",
-    "is-scoped": "^1.0.0",
-    "issue-regex": "^1.0.0",
-    "listr": "^0.12.0",
-    "listr-input": "^0.1.1",
-    "log-symbols": "^2.1.0",
-    "meow": "^4.0.0",
-    "npm-name": "^3.2.0",
-    "p-timeout": "^2.0.1",
-    "read-pkg-up": "^3.0.0",
-    "rxjs": "5.4.3",
-    "semver": "^5.2.0",
-    "split": "^1.0.0",
-    "stream-to-observable": "^0.2.0",
-    "supports-hyperlinks": "^1.0.1",
-    "update-notifier": "^2.1.0"
-  },
-  "devDependencies": {
-    "ava": "*",
-    "xo": "*"
-  }
+	"name": "np",
+	"version": "3.0.4",
+	"description": "A better `npm publish`",
+	"license": "MIT",
+	"repository": "sindresorhus/np",
+	"bin": "cli.js",
+	"engines": {
+		"node": ">=6"
+	},
+	"scripts": {
+		"test": "xo && FORCE_HYPERLINK=1 ava"
+	},
+	"files": [
+		"index.js",
+		"cli.js",
+		"lib"
+	],
+	"keywords": [
+		"cli-app",
+		"cli",
+		"npm",
+		"publish",
+		"git",
+		"push",
+		"version",
+		"bump",
+		"commit"
+	],
+	"dependencies": {
+		"@samverschueren/stream-to-observable": "^0.3.0",
+		"any-observable": "^0.3.0",
+		"chalk": "^2.3.0",
+		"del": "^3.0.0",
+		"execa": "^0.10.0",
+		"github-url-from-git": "^1.5.0",
+		"has-yarn": "^1.0.0",
+		"inquirer": "^5.2.0",
+		"is-scoped": "^1.0.0",
+		"issue-regex": "^2.0.0",
+		"listr": "^0.14.1",
+		"listr-input": "^0.1.1",
+		"log-symbols": "^2.1.0",
+		"meow": "^5.0.0",
+		"p-timeout": "^2.0.1",
+		"read-pkg-up": "^3.0.0",
+		"rxjs": "^6.2.0",
+		"semver": "^5.2.0",
+		"split": "^1.0.0",
+		"terminal-link": "^1.1.0",
+		"update-notifier": "^2.1.0"
+	},
+	"devDependencies": {
+		"ava": "*",
+		"xo": "*"
+	}
 }
