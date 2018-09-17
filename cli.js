@@ -89,7 +89,7 @@ Promise
 	.then(pkg => {
 		console.log(`\n ${pkg.name} ${pkg.version} published 🎉`);
 	})
-	.catch(err => {
-		console.error(`\n${logSymbols.error} ${err.message}`);
+	.catch(error => {
+		console.error(`\n${logSymbols.error} ${error.message}`);
 		process.exit(1);
 	});
