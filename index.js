@@ -168,7 +168,15 @@ module.exports = (input, opts) => {
 
 	tasks.add({
 		title: 'Pushing tags',
-		task: () => exec('git', ['push', '--follow-tags'])
+		task: () => {
+			const args = ['push', '--follow-tags'];
+
+			if (!opts.verify) {
+				args.push('--no-verify');
+			}
+
+			return exec('git', args);
+		}
 	});
 
 	return tasks.run()

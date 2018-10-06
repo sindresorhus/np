@@ -47,6 +47,7 @@ $ np --help
     --tag         Publish under a given dist-tag
     --no-yarn     Don't use Yarn
     --contents    Subdirectory to publish
+    --no-verify   Skip git hooks on push
 
   Examples
     $ np

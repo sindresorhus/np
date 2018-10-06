@@ -23,6 +23,7 @@ const cli = meow(`
 	  --tag         Publish under a given dist-tag
 	  --no-yarn     Don't use Yarn
 	  --contents    Subdirectory to publish
+	  --no-verify   Skip git hooks on push
 
 	Examples
 	  $ np
@@ -55,6 +56,10 @@ const cli = meow(`
 		},
 		contents: {
 			type: 'string'
+		},
+		verify: {
+			type: 'boolean',
+			default: true
 		}
 	}
 });
