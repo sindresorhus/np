@@ -96,15 +96,12 @@ module.exports = (input, opts) => {
 			{
 				title: 'Running tests using Yarn',
 				enabled: () => opts.yarn === true,
-				task: () => exec('yarn', ['test']).pipe(
-					catchError(err => {
-						if (err.message.includes('Command "test" not found')) {
-							return [];
-						}
-
-						throwError(err);
-					})
-				)
+				task: () => execa.shell('yarn test').then(() => {}, err => {
+					if (err.message.includes('Command "test" not found')) {
+						return [];
+					}
+					throw err;
+				})
 			}
 		]);
 	}
