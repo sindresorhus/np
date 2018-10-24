@@ -44,7 +44,7 @@
 		"log-symbols": "^2.1.0",
 		"meow": "^5.0.0",
 		"p-timeout": "^2.0.1",
-		"p-wait-for": "^1.0.0",
+		"p-wait-for": "^2.0.0",
 		"read-pkg-up": "^3.0.0",
 		"rxjs": "^6.2.0",
 		"semver": "^5.2.0",
