@@ -114,6 +114,10 @@ module.exports = (input, opts) => {
 	tasks.add([{
 		title: 'Ensure GitHub checks have passed',
 		skip: () => {
+			if (!pkg.repository) {
+				return 'No repository specified';
+			}
+
 			const {type} = hostedGitInfo.fromUrl(pkg.repository.url);
 
 			if (type !== 'github') {
