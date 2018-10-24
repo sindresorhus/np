@@ -9,6 +9,7 @@ const {catchError, filter} = require('rxjs/operators');
 const streamToObservable = require('@samverschueren/stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
+const hostedGitInfo = require('hosted-git-info');
 const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
 const util = require('./lib/util');
@@ -112,6 +113,13 @@ module.exports = (input, opts) => {
 
 	tasks.add([{
 		title: 'Ensure GitHub checks have passed',
+		skip: () => {
+			const {type} = hostedGitInfo.fromUrl(pkg.repository.url);
+
+			if (type !== 'github') {
+				return 'Not hosted on GitHub';
+			}
+		},
 		task: ghChecks
 	}]);
 
