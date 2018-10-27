@@ -31,6 +31,7 @@ module.exports = (input, opts) => {
 
 	opts = Object.assign({
 		cleanup: true,
+		checks: true,
 		publish: true
 	}, opts);
 
@@ -45,6 +46,7 @@ module.exports = (input, opts) => {
 
 	const runTests = !opts.yolo;
 	const runCleanup = opts.cleanup && !opts.yolo;
+	const runChecks = opts.checks;
 	const runPublish = opts.publish;
 	const pkg = util.readPkg();
 
@@ -111,21 +113,23 @@ module.exports = (input, opts) => {
 		]);
 	}
 
-	tasks.add([{
-		title: 'Ensure GitHub checks have passed',
-		skip: () => {
-			if (!pkg.repository) {
-				return 'No repository specified';
-			}
+	if (runChecks) {
+		tasks.add([{
+			title: 'Ensure GitHub checks have passed',
+			skip: () => {
+				if (!pkg.repository) {
+					return 'No repository specified';
+				}
 
-			const {type} = hostedGitInfo.fromUrl(pkg.repository.url);
+				const {type} = hostedGitInfo.fromUrl(pkg.repository.url);
 
-			if (type !== 'github') {
-				return 'Not hosted on GitHub';
-			}
-		},
-		task: (ctx, task) => ghChecks(task)
-	}]);
+				if (type !== 'github') {
+					return 'Not hosted on GitHub';
+				}
+			},
+			task: (ctx, task) => ghChecks(task)
+		}]);
+	}
 
 	tasks.add([
 		{
