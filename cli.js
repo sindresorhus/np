@@ -16,13 +16,15 @@ const cli = meow(`
 	    ${version.SEMVER_INCREMENTS.join(' | ')} | 1.2.3
 
 	Options
-	  --any-branch  Allow publishing from any branch
-	  --no-cleanup  Skips cleanup of node_modules
-	  --yolo        Skips cleanup and testing
-	  --no-publish  Skips publishing
-	  --tag         Publish under a given dist-tag
-	  --no-yarn     Don't use Yarn
-	  --contents    Subdirectory to publish
+	  --any-branch        Allow publishing from any branch
+	  --no-cleanup        Skips cleanup of node_modules
+	  --yolo              Skips cleanup and testing
+	  --no-publish        Skips publishing
+	  --tag               Publish under a given dist-tag
+	  --no-yarn           Don't use Yarn
+	  --contents          Subdirectory to publish
+	  --standard-version  Use standard-version
+	  --changelog-file    Changelog file to be updated by standard-version
 
 	Examples
 	  $ np
@@ -55,6 +57,12 @@ const cli = meow(`
 		},
 		contents: {
 			type: 'string'
+		},
+		standardVersion: {
+			type: 'boolean'
+		},
+		changelogFile: {
+			type: 'string'
 		}
 	}
 });
@@ -69,6 +77,12 @@ process.on('SIGINT', () => {
 Promise
 	.resolve()
 	.then(() => {
+		if (cli.flags.standardVersion) {
+			return Object.assign({}, cli.flags, {
+				confirm: true
+			});
+		}
+
 		if (cli.input.length > 0) {
 			return Object.assign({}, cli.flags, {
 				confirm: true,

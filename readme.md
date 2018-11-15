@@ -159,6 +159,10 @@ $ npm install --save-dev branchsite
 }
 ```
 
+### Publish using standard-version
+
+To publish using [`standard-version`](https://github.com/conventional-changelog/standard-version), use the `--standard-version` flag. This will update/generate the changelog file along with bumping the versions. To specify the changelog input file, use the `--changelog-file` flag.
+
 ### Initial version
 
 For new packages, start the `version` field in package.json at `0.0.0` and let `np` bump it to `1.0.0` or `0.1.0` when publishing.

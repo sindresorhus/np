@@ -1,5 +1,6 @@
 'use strict';
 require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
+const path = require('path');
 const execa = require('execa');
 const del = require('del');
 const Listr = require('listr');
@@ -112,7 +113,7 @@ module.exports = (input, opts) => {
 	tasks.add([
 		{
 			title: 'Bumping version using Yarn',
-			enabled: () => opts.yarn === true,
+			enabled: () => opts.standardVersion === false && opts.yarn === true,
 			skip: () => {
 				if (runPublish && !pkg.private) {
 					return 'Public package: version will be bumped using yarn publish.';
@@ -122,8 +123,18 @@ module.exports = (input, opts) => {
 		},
 		{
 			title: 'Bumping version using npm',
-			enabled: () => opts.yarn === false,
+			enabled: () => opts.standardVersion === false && opts.yarn === false,
 			task: () => exec('npm', ['version', input])
+		},
+		{
+			title: 'Bumping version using standard-version',
+			enabled: () => opts.standardVersion === true,
+			task: () => {
+				const standardVersion = path.join(__dirname, 'node_modules', '.bin', 'standard-version');
+				const args = opts.changelogFile ? [`--infile=${opts.changelogFile}`] : [];
+
+				return exec(standardVersion, args);
+			}
 		}
 	]);
 
@@ -144,7 +155,8 @@ module.exports = (input, opts) => {
 						args.push(opts.contents);
 					}
 
-					args.push('--new-version', input);
+					const newVersion = opts.standardVersion ? util.readPkg().version : input;
+					args.push('--new-version', newVersion);
 
 					if (opts.tag) {
 						args.push('--tag', opts.tag);
