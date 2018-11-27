@@ -150,6 +150,10 @@ module.exports = (input, opts) => {
 						args.push('--tag', opts.tag);
 					}
 
+					if (opts.otp) {
+						args.push('--otp', opts.otp);
+					}
+
 					return exec('yarn', args);
 				}
 			},
