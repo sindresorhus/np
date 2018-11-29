@@ -150,6 +150,10 @@ module.exports = (input, opts) => {
 						args.push('--tag', opts.tag);
 					}
 
+					if (opts.publishScoped) {
+						args.push('--access', 'public');
+					}
+
 					return exec('yarn', args);
 				}
 			},
