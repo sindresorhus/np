@@ -68,34 +68,25 @@ process.on('SIGINT', () => {
 	process.exit(1);
 });
 
-Promise
-	.resolve()
-	.then(() => {
-		const pkg = util.readPkg();
-		return Promise.all([npmName(pkg.name), pkg]);
-	})
-	.then(([available, pkg]) => {
-		if (cli.input.length > 0) {
-			return Object.assign({}, cli.flags, {
-				confirm: true,
-				version: cli.input[0]
-			});
-		}
+(async () => {
+	const pkg = util.readPkg();
+	const isAvailable = await npmName(pkg.name);
 
-		return ui(Object.assign({}, cli.flags, {exists: !available}), pkg);
-	})
-	.then(options => {
-		if (!options.confirm) {
-			process.exit(0);
-		}
+	const options = cli.input.length > 0 ?
+		{
+			...cli.flags,
+			confirm: true,
+			version: cli.input[0]
+		} :
+		await ui({...cli.flags, exists: !isAvailable}, pkg);
 
-		return options;
-	})
-	.then(options => np(options.version, options))
-	.then(pkg => {
-		console.log(`\n ${pkg.name} ${pkg.version} published 🎉`);
-	})
-	.catch(error => {
-		console.error(`\n${logSymbols.error} ${error.message}`);
-		process.exit(1);
-	});
+	if (!options.confirm) {
+		process.exit(0);
+	}
+
+	const newPkg = await np(options.version, options);
+	console.log(`\n ${newPkg.name} ${newPkg.version} published 🎉`);
+})().catch(error => {
+	console.error(`\n${logSymbols.error} ${error.message}`);
+	process.exit(1);
+});

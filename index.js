@@ -24,39 +24,38 @@ const exec = (cmd, args) => {
 	).pipe(filter(Boolean));
 };
 
-module.exports = (input, opts) => {
-	input = input || 'patch';
-
-	opts = Object.assign({
+module.exports = async (input = 'patch', options) => {
+	options = {
 		cleanup: true,
-		publish: true
-	}, opts);
+		publish: true,
+		...options
+	};
 
-	if (!hasYarn() && opts.yarn) {
+	if (!hasYarn() && options.yarn) {
 		throw new Error('Could not use Yarn without yarn.lock file');
 	}
 
-	// TODO: remove sometime far in the future
-	if (opts.skipCleanup) {
-		opts.cleanup = false;
+	// TODO: Remove sometime far in the future
+	if (options.skipCleanup) {
+		options.cleanup = false;
 	}
 
-	const runTests = !opts.yolo;
-	const runCleanup = opts.cleanup && !opts.yolo;
-	const runPublish = opts.publish;
+	const runTests = !options.yolo;
+	const runCleanup = options.cleanup && !options.yolo;
+	const runPublish = options.publish;
 	const pkg = util.readPkg();
-	const pkgManager = opts.yarn === true ? 'yarn' : 'npm';
-	const pkgManagerName = opts.yarn === true ? 'Yarn' : 'npm';
+	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
+	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
 			enabled: () => runPublish,
-			task: () => prerequisiteTasks(input, pkg, opts)
+			task: () => prerequisiteTasks(input, pkg, options)
 		},
 		{
 			title: 'Git',
-			task: () => gitTasks(opts)
+			task: () => gitTasks(options)
 		}
 	], {
 		showSubtasks: false
@@ -70,19 +69,20 @@ module.exports = (input, opts) => {
 			},
 			{
 				title: 'Installing dependencies using Yarn',
-				enabled: () => opts.yarn === true,
+				enabled: () => options.yarn === true,
 				task: () => exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
-					catchError(err => {
-						if (err.stderr.startsWith('error Your lockfile needs to be updated')) {
+					catchError(error => {
+						if (error.stderr.startsWith('error Your lockfile needs to be updated')) {
 							throwError(new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.'));
 						}
-						throwError(err);
+
+						throwError(error);
 					})
 				)
 			},
 			{
 				title: 'Installing dependencies using npm',
-				enabled: () => opts.yarn === false,
+				enabled: () => options.yarn === false,
 				task: () => exec('npm', ['install', '--no-package-lock', '--no-production'])
 			}
 		]);
@@ -92,19 +92,19 @@ module.exports = (input, opts) => {
 		tasks.add([
 			{
 				title: 'Running tests using npm',
-				enabled: () => opts.yarn === false,
+				enabled: () => options.yarn === false,
 				task: () => exec('npm', ['test'])
 			},
 			{
 				title: 'Running tests using Yarn',
-				enabled: () => opts.yarn === true,
+				enabled: () => options.yarn === true,
 				task: () => exec('yarn', ['test']).pipe(
-					catchError(err => {
-						if (err.message.includes('Command "test" not found')) {
+					catchError(error => {
+						if (error.message.includes('Command "test" not found')) {
 							return [];
 						}
 
-						throwError(err);
+						throwError(error);
 					})
 				)
 			}
@@ -114,12 +114,12 @@ module.exports = (input, opts) => {
 	tasks.add([
 		{
 			title: 'Bumping version using Yarn',
-			enabled: () => opts.yarn === true,
+			enabled: () => options.yarn === true,
 			task: () => exec('yarn', ['version', '--new-version', input])
 		},
 		{
 			title: 'Bumping version using npm',
-			enabled: () => opts.yarn === false,
+			enabled: () => options.yarn === false,
 			task: () => exec('npm', ['version', input])
 		}
 	]);
@@ -133,7 +133,7 @@ module.exports = (input, opts) => {
 						return `Private package: not publishing to ${pkgManagerName}.`;
 					}
 				},
-				task: (ctx, task) => publish(pkgManager, task, opts, input)
+				task: (context, task) => publish(pkgManager, task, options, input)
 			}
 		]);
 	}
@@ -143,7 +143,8 @@ module.exports = (input, opts) => {
 		task: () => exec('git', ['push', '--follow-tags'])
 	});
 
-	return tasks.run()
-		.then(() => readPkgUp())
-		.then(result => result.pkg);
+	await tasks.run();
+
+	const {pkg: newPkg} = await readPkgUp();
+	return newPkg;
 };
