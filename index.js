@@ -45,6 +45,8 @@ module.exports = (input, opts) => {
 	const runCleanup = opts.cleanup && !opts.yolo;
 	const runPublish = opts.publish;
 	const pkg = util.readPkg();
+	const pkgManager = opts.yarn === true ? 'yarn' : 'npm';
+	const pkgManagerName = opts.yarn === true ? 'Yarn' : 'npm';
 
 	const tasks = new Listr([
 		{
@@ -113,11 +115,6 @@ module.exports = (input, opts) => {
 		{
 			title: 'Bumping version using Yarn',
 			enabled: () => opts.yarn === true,
-			skip: () => {
-				if (runPublish && !pkg.private) {
-					return 'Public package: version will be bumped using yarn publish.';
-				}
-			},
 			task: () => exec('yarn', ['version', '--new-version', input])
 		},
 		{
@@ -130,42 +127,13 @@ module.exports = (input, opts) => {
 	if (runPublish) {
 		tasks.add([
 			{
-				title: 'Publishing package using Yarn',
-				enabled: () => opts.yarn === true,
+				title: `Publishing package using ${pkgManagerName}`,
 				skip: () => {
 					if (pkg.private) {
-						return 'Private package: not publishing to Yarn.';
+						return `Private package: not publishing to ${pkgManagerName}.`;
 					}
 				},
-				task: () => {
-					const args = ['publish'];
-
-					if (opts.contents) {
-						args.push(opts.contents);
-					}
-
-					args.push('--new-version', input);
-
-					if (opts.tag) {
-						args.push('--tag', opts.tag);
-					}
-
-					if (opts.publishScoped) {
-						args.push('--access', 'public');
-					}
-
-					return exec('yarn', args);
-				}
-			},
-			{
-				title: 'Publishing package using npm',
-				enabled: () => opts.yarn === false,
-				skip: () => {
-					if (pkg.private) {
-						return 'Private package: not publishing to npm.';
-					}
-				},
-				task: (ctx, task) => publish(task, opts)
+				task: (ctx, task) => publish(pkgManager, task, opts, input)
 			}
 		]);
 	}
