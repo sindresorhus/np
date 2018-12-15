@@ -127,7 +127,7 @@ module.exports = (input, opts) => {
 					return 'Not hosted on GitHub';
 				}
 			},
-			task: (ctx, task) => ghChecks(task)
+			task: (context, task) => ghChecks(task)
 		}]);
 	}
 
