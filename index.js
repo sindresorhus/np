@@ -17,6 +17,7 @@ const gitTasks = require('./lib/git');
 const util = require('./lib/util');
 const {hasUpstream} = require('./lib/git-util');
 const publish = require('./lib/publish');
+const release = require('./lib/release');
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
@@ -152,6 +153,11 @@ module.exports = async (input = 'patch', options) => {
 		title: 'Pushing tags',
 		skip: async () => !(await hasUpstream()),
 		task: () => exec('git', ['push', '--follow-tags'])
+	});
+
+	tasks.add({
+		title: 'Releasing on Github',
+		task: (context, task) => release(options)
 	});
 
 	await tasks.run();
