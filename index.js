@@ -157,7 +157,7 @@ module.exports = async (input = 'patch', options) => {
 
 	tasks.add({
 		title: 'Releasing on Github',
-		task: (context, task) => release(options)
+		task: () => release(options)
 	});
 
 	await tasks.run();
