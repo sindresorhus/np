@@ -1,5 +1,6 @@
 'use strict';
 require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
+const fs = require('fs');
 const execa = require('execa');
 const del = require('del');
 const Listr = require('listr');
@@ -46,6 +47,7 @@ module.exports = async (input = 'patch', options) => {
 	const pkg = util.readPkg();
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
+	const runCI = fs.existsSync('package-lock.json') || fs.existsSync('npm-shrinkwrap.json');
 
 	const tasks = new Listr([
 		{
@@ -65,6 +67,7 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: 'Cleanup',
+				skip: runCI,
 				task: () => del('node_modules')
 			},
 			{
@@ -83,7 +86,13 @@ module.exports = async (input = 'patch', options) => {
 			{
 				title: 'Installing dependencies using npm',
 				enabled: () => options.yarn === false,
-				task: () => exec('npm', ['install', '--no-package-lock', '--no-production'])
+				task: () => {
+					if (runCI) {
+						exec('npm', ['ci'])
+					} else {
+						exec('npm', ['install', '--no-package-lock', '--no-production'])
+					}
+				}
 			}
 		]);
 	}
