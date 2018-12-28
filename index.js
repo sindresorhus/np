@@ -49,7 +49,7 @@ module.exports = async (input = 'patch', options) => {
 	const pkg = util.readPkg();
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
-	const rootDir = await pkgDir(__dirname);
+	const rootDir = pkgDir.sync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
 
 	const tasks = new Listr([
