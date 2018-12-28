@@ -47,7 +47,7 @@ module.exports = async (input = 'patch', options) => {
 	const pkg = util.readPkg();
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
-	const runCI = fs.existsSync('package-lock.json') || fs.existsSync('npm-shrinkwrap.json');
+	const hasLockFile = fs.existsSync('package-lock.json') || fs.existsSync('npm-shrinkwrap.json');
 
 	const tasks = new Listr([
 		{
@@ -67,7 +67,7 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: 'Cleanup',
-				skip: runCI,
+				skip: hasLockFile,
 				task: () => del('node_modules')
 			},
 			{
@@ -87,11 +87,8 @@ module.exports = async (input = 'patch', options) => {
 				title: 'Installing dependencies using npm',
 				enabled: () => options.yarn === false,
 				task: () => {
-					if (runCI) {
-						exec('npm', ['ci'])
-					} else {
-						exec('npm', ['install', '--no-package-lock', '--no-production'])
-					}
+					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production'];
+					exec('npm', args);
 				}
 			}
 		]);
