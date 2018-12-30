@@ -33,7 +33,7 @@
 		"chalk": "^2.3.0",
 		"del": "^3.0.0",
 		"execa": "^1.0.0",
-		"gh-got": "^7.0.0",
+		"gh-got": "^8.0.1",
 		"github-url-from-git": "^1.5.0",
 		"has-yarn": "^1.0.0",
 		"hosted-git-info": "^2.7.1",
