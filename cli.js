@@ -18,14 +18,14 @@ const cli = meow(`
 	    ${version.SEMVER_INCREMENTS.join(' | ')} | 1.2.3
 
 	Options
-	  --any-branch  Allow publishing from any branch
-	  --no-cleanup  Skips cleanup of node_modules
-	  --yolo        Skips cleanup and testing
-	  --no-checks   Skips verifying status checks on GitHub
-	  --no-publish  Skips publishing
-	  --tag         Publish under a given dist-tag
-	  --no-yarn     Don't use Yarn
-	  --contents    Subdirectory to publish
+	  --any-branch        Allow publishing from any branch
+	  --no-cleanup        Skips cleanup of node_modules
+	  --yolo              Skips cleanup and testing
+	  --no-status-checks  Skips verifying status checks on GitHub
+	  --no-publish        Skips publishing
+	  --tag               Publish under a given dist-tag
+	  --no-yarn           Don't use Yarn
+	  --contents          Subdirectory to publish
 
 	Examples
 	  $ np
@@ -45,7 +45,7 @@ const cli = meow(`
 		yolo: {
 			type: 'boolean'
 		},
-		checks: {
+		statusChecks: {
 			type: 'boolean',
 			default: true
 		},

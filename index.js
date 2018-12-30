@@ -29,7 +29,7 @@ const exec = (cmd, args) => {
 module.exports = async (input = 'patch', options) => {
 	options = {
 		cleanup: true,
-		checks: true,
+		statusChecks: true,
 		publish: true,
 		...options
 	};
@@ -45,7 +45,7 @@ module.exports = async (input = 'patch', options) => {
 
 	const runTests = !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const runChecks = options.checks;
+	const runStatusChecks = options.statusChecks;
 	const runPublish = options.publish;
 	const pkg = util.readPkg();
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
@@ -115,7 +115,7 @@ module.exports = async (input = 'patch', options) => {
 		]);
 	}
 
-	if (runChecks) {
+	if (runStatusChecks) {
 		tasks.add([{
 			title: 'Ensure GitHub checks have passed',
 			skip: () => {
