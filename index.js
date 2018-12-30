@@ -26,39 +26,40 @@ const exec = (cmd, args) => {
 	).pipe(filter(Boolean));
 };
 
-module.exports = (input, opts) => {
-	input = input || 'patch';
-
-	opts = Object.assign({
+module.exports = async (input = 'patch', options) => {
+	options = {
 		cleanup: true,
 		checks: true,
-		publish: true
-	}, opts);
+		publish: true,
+		...options
+	};
 
-	if (!hasYarn() && opts.yarn) {
+	if (!hasYarn() && options.yarn) {
 		throw new Error('Could not use Yarn without yarn.lock file');
 	}
 
-	// TODO: remove sometime far in the future
-	if (opts.skipCleanup) {
-		opts.cleanup = false;
+	// TODO: Remove sometime far in the future
+	if (options.skipCleanup) {
+		options.cleanup = false;
 	}
 
-	const runTests = !opts.yolo;
-	const runCleanup = opts.cleanup && !opts.yolo;
-	const runChecks = opts.checks;
-	const runPublish = opts.publish;
+	const runTests = !options.yolo;
+	const runCleanup = options.cleanup && !options.yolo;
+	const runChecks = options.checks;
+	const runPublish = options.publish;
 	const pkg = util.readPkg();
+	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
+	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
 			enabled: () => runPublish,
-			task: () => prerequisiteTasks(input, pkg, opts)
+			task: () => prerequisiteTasks(input, pkg, options)
 		},
 		{
 			title: 'Git',
-			task: () => gitTasks(opts)
+			task: () => gitTasks(options)
 		}
 	], {
 		showSubtasks: false
@@ -72,19 +73,20 @@ module.exports = (input, opts) => {
 			},
 			{
 				title: 'Installing dependencies using Yarn',
-				enabled: () => opts.yarn === true,
+				enabled: () => options.yarn === true,
 				task: () => exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
-					catchError(err => {
-						if (err.stderr.startsWith('error Your lockfile needs to be updated')) {
+					catchError(error => {
+						if (error.stderr.startsWith('error Your lockfile needs to be updated')) {
 							throwError(new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.'));
 						}
-						throwError(err);
+
+						throwError(error);
 					})
 				)
 			},
 			{
 				title: 'Installing dependencies using npm',
-				enabled: () => opts.yarn === false,
+				enabled: () => options.yarn === false,
 				task: () => exec('npm', ['install', '--no-package-lock', '--no-production'])
 			}
 		]);
@@ -94,19 +96,19 @@ module.exports = (input, opts) => {
 		tasks.add([
 			{
 				title: 'Running tests using npm',
-				enabled: () => opts.yarn === false,
+				enabled: () => options.yarn === false,
 				task: () => exec('npm', ['test'])
 			},
 			{
 				title: 'Running tests using Yarn',
-				enabled: () => opts.yarn === true,
+				enabled: () => options.yarn === true,
 				task: () => exec('yarn', ['test']).pipe(
-					catchError(err => {
-						if (err.message.includes('Command "test" not found')) {
+					catchError(error => {
+						if (error.message.includes('Command "test" not found')) {
 							return [];
 						}
 
-						throwError(err);
+						throwError(error);
 					})
 				)
 			}
@@ -134,17 +136,12 @@ module.exports = (input, opts) => {
 	tasks.add([
 		{
 			title: 'Bumping version using Yarn',
-			enabled: () => opts.yarn === true,
-			skip: () => {
-				if (runPublish && !pkg.private) {
-					return 'Public package: version will be bumped using yarn publish.';
-				}
-			},
+			enabled: () => options.yarn === true,
 			task: () => exec('yarn', ['version', '--new-version', input])
 		},
 		{
 			title: 'Bumping version using npm',
-			enabled: () => opts.yarn === false,
+			enabled: () => options.yarn === false,
 			task: () => exec('npm', ['version', input])
 		}
 	]);
@@ -152,38 +149,13 @@ module.exports = (input, opts) => {
 	if (runPublish) {
 		tasks.add([
 			{
-				title: 'Publishing package using Yarn',
-				enabled: () => opts.yarn === true,
+				title: `Publishing package using ${pkgManagerName}`,
 				skip: () => {
 					if (pkg.private) {
-						return 'Private package: not publishing to Yarn.';
+						return `Private package: not publishing to ${pkgManagerName}.`;
 					}
 				},
-				task: () => {
-					const args = ['publish'];
-
-					if (opts.contents) {
-						args.push(opts.contents);
-					}
-
-					args.push('--new-version', input);
-
-					if (opts.tag) {
-						args.push('--tag', opts.tag);
-					}
-
-					return exec('yarn', args);
-				}
-			},
-			{
-				title: 'Publishing package using npm',
-				enabled: () => opts.yarn === false,
-				skip: () => {
-					if (pkg.private) {
-						return 'Private package: not publishing to npm.';
-					}
-				},
-				task: (ctx, task) => publish(task, opts)
+				task: (context, task) => publish(pkgManager, task, options, input)
 			}
 		]);
 	}
@@ -193,7 +165,8 @@ module.exports = (input, opts) => {
 		task: () => exec('git', ['push', '--follow-tags'])
 	});
 
-	return tasks.run()
-		.then(() => readPkgUp())
-		.then(result => result.pkg);
+	await tasks.run();
+
+	const {pkg: newPkg} = await readPkgUp();
+	return newPkg;
 };

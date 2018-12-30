@@ -1,12 +1,12 @@
 {
 	"name": "np",
-	"version": "3.0.4",
+	"version": "3.1.0",
 	"description": "A better `npm publish`",
 	"license": "MIT",
 	"repository": "sindresorhus/np",
 	"bin": "cli.js",
 	"engines": {
-		"node": ">=6"
+		"node": ">=8"
 	},
 	"scripts": {
 		"test": "xo && FORCE_HYPERLINK=1 ava"
@@ -32,20 +32,22 @@
 		"any-observable": "^0.3.0",
 		"chalk": "^2.3.0",
 		"del": "^3.0.0",
-		"execa": "^0.10.0",
+		"execa": "^1.0.0",
 		"gh-got": "^7.0.0",
 		"github-url-from-git": "^1.5.0",
 		"has-yarn": "^1.0.0",
 		"hosted-git-info": "^2.7.1",
-		"inquirer": "^5.2.0",
+		"inquirer": "^6.2.1",
+		"is-scoped": "^1.0.0",
 		"issue-regex": "^2.0.0",
 		"listr": "^0.14.1",
 		"listr-input": "^0.1.1",
 		"log-symbols": "^2.1.0",
 		"meow": "^5.0.0",
+		"npm-name": "^5.0.0",
 		"p-timeout": "^2.0.1",
 		"p-wait-for": "^2.0.0",
-		"read-pkg-up": "^3.0.0",
+		"read-pkg-up": "^4.0.0",
 		"rxjs": "^6.2.0",
 		"semver": "^5.2.0",
 		"split": "^1.0.0",

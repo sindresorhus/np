@@ -2,6 +2,17 @@
 
 > A better `npm publish`
 
+<div>
+	<br>
+	<br>
+	<a href="https://issuehunt.io">
+		<img src="https://user-images.githubusercontent.com/170270/50307315-5c349200-0498-11e9-95bb-e51a8cfc2b15.png" width="600">
+	</a>
+	<br>
+	<br>
+	<br>
+</div>
+
 <img src="screenshot.gif" width="688">
 
 
@@ -26,7 +37,9 @@
 $ npm install --global np
 ```
 
-*Support my open source work by buying this excellent [Node.js course](https://LearnNode.com/friend/AWESOME).*
+<a href="https://www.patreon.com/sindresorhus">
+	<img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" width="160">
+</a>
 
 
 ## Usage
