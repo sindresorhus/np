@@ -117,7 +117,7 @@ module.exports = async (input = 'patch', options) => {
 
 	if (runStatusChecks) {
 		tasks.add([{
-			title: 'Ensure GitHub checks have passed',
+			title: 'Ensure GitHub status checks have passed',
 			skip: () => {
 				if (!pkg.repository) {
 					return 'No repository specified';
