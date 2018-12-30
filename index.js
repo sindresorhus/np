@@ -14,7 +14,7 @@ const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
 const util = require('./lib/util');
 const publish = require('./lib/publish');
-const ghChecks = require('./lib/gh-checks');
+const githubChecks = require('./lib/github-checks');
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
@@ -129,7 +129,7 @@ module.exports = async (input = 'patch', options) => {
 					return 'Not hosted on GitHub';
 				}
 			},
-			task: (context, task) => ghChecks(task)
+			task: (context, task) => githubChecks(task)
 		}]);
 	}
 
