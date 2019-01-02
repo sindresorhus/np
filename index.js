@@ -120,7 +120,7 @@ module.exports = async (input = 'patch', options) => {
 			title: 'Ensure GitHub status checks have passed',
 			skip: () => {
 				if (!pkg.repository) {
-					return 'No repository specified';
+					return 'No repository specified in package.json';
 				}
 
 				const {type} = hostedGitInfo.fromUrl(pkg.repository.url);
