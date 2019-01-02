@@ -53,6 +53,7 @@ module.exports = async (input = 'patch', options) => {
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
+	const isOnGitHub = options.repoUrl.includes('github');
 
 	const tasks = new Listr([
 		{
@@ -157,6 +158,7 @@ module.exports = async (input = 'patch', options) => {
 
 	tasks.add({
 		title: 'Releasing on GitHub',
+		enabled: () => isOnGitHub === true,
 		task: () => release(options)
 	});
 
