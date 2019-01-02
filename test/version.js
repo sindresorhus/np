@@ -83,34 +83,3 @@ test('version.isVersionGreater', t => {
 	t.true(version.isVersionGreater('1.0.0', '2.0.0-0'));
 	t.true(version.isVersionGreater('1.0.0', '2.0.0-beta'));
 });
-
-test('version.isVersionLower', t => {
-	const message = 'Version should be a valid semver version.';
-
-	t.throws(() => version.isVersionLower('1.0.0', 'patch'), message);
-	t.throws(() => version.isVersionLower('1.0.0', 'patchxxx'), message);
-	t.throws(() => version.isVersionLower('1.0.0', '1.0.0.0'), message);
-
-	t.true(version.isVersionLower('1.0.0', '0.0.1'));
-	t.true(version.isVersionLower('1.0.0', '0.1.0'));
-	t.true(version.isVersionLower('1.0.0', '1.0.0-0'));
-	t.true(version.isVersionLower('1.0.0', '1.0.0-beta'));
-	t.true(version.isVersionLower('6.0.0', '4.4.3'));
-
-	t.false(version.isVersionLower('1.0.0', '1.0.0'));
-	t.false(version.isVersionLower('1.0.0', '1.0.1'));
-	t.false(version.isVersionLower('1.0.0', '1.1.0'));
-	t.false(version.isVersionLower('1.0.0', '2.0.0'));
-	t.false(version.isVersionLower('6.0.0', '6.7.0'));
-
-	t.false(version.isVersionLower('1.0.0', '2.0.0-0'));
-	t.false(version.isVersionLower('1.0.0', '2.0.0-beta'));
-});
-
-test('version.satisfies', t => {
-	t.true(version.satisfies('2.15.8', '>=2.15.8 <3.0.0 || >=3.10.1'));
-	t.true(version.satisfies('2.99.8', '>=2.15.8 <3.0.0 || >=3.10.1'));
-	t.true(version.satisfies('3.10.1', '>=2.15.8 <3.0.0 || >=3.10.1'));
-	t.false(version.satisfies('3.0.0', '>=2.15.8 <3.0.0 || >=3.10.1'));
-	t.false(version.satisfies('3.10.0', '>=2.15.8 <3.0.0 || >=3.10.1'));
-});
