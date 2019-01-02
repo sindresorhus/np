@@ -156,7 +156,7 @@ module.exports = async (input = 'patch', options) => {
 	});
 
 	tasks.add({
-		title: 'Releasing on Github',
+		title: 'Releasing on GitHub',
 		task: () => release(options)
 	});
 
