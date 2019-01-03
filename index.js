@@ -70,7 +70,7 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: 'Cleanup',
-				skip: hasLockFile,
+				skip: () => hasLockFile,
 				task: () => del('node_modules')
 			},
 			{
@@ -91,7 +91,7 @@ module.exports = async (input = 'patch', options) => {
 				enabled: () => options.yarn === false,
 				task: () => {
 					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production'];
-					exec('npm', args);
+					return exec('npm', args);
 				}
 			}
 		]);
