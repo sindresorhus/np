@@ -1,5 +1,7 @@
 'use strict';
 require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
+const fs = require('fs');
+const path = require('path');
 const execa = require('execa');
 const del = require('del');
 const Listr = require('listr');
@@ -9,6 +11,7 @@ const {catchError, filter} = require('rxjs/operators');
 const streamToObservable = require('@samverschueren/stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
+const pkgDir = require('pkg-dir');
 const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
 const util = require('./lib/util');
@@ -46,6 +49,8 @@ module.exports = async (input = 'patch', options) => {
 	const pkg = util.readPkg();
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
+	const rootDir = pkgDir.sync();
+	const hasLockFile = fs.existsSync(path.resolve(rootDir, 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
 
 	const tasks = new Listr([
 		{
@@ -65,6 +70,7 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: 'Cleanup',
+				skip: () => hasLockFile,
 				task: () => del('node_modules')
 			},
 			{
@@ -83,7 +89,10 @@ module.exports = async (input = 'patch', options) => {
 			{
 				title: 'Installing dependencies using npm',
 				enabled: () => options.yarn === false,
-				task: () => exec('npm', ['install', '--no-package-lock', '--no-production'])
+				task: () => {
+					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production'];
+					return exec('npm', args);
+				}
 			}
 		]);
 	}
