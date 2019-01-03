@@ -12,6 +12,7 @@ const streamToObservable = require('@samverschueren/stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
 const pkgDir = require('pkg-dir');
+const hostedGitInfo = require('hosted-git-info');
 const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
 const util = require('./lib/util');
@@ -53,7 +54,7 @@ module.exports = async (input = 'patch', options) => {
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
-	const isOnGitHub = options.repoUrl && options.repoUrl.includes('github');
+	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl).type === 'github';
 
 	const tasks = new Listr([
 		{

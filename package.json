@@ -35,6 +35,7 @@
 		"execa": "^1.0.0",
 		"github-url-from-git": "^1.5.0",
 		"has-yarn": "^1.0.0",
+		"hosted-git-info": "^2.7.1",
 		"inquirer": "^6.2.1",
 		"is-scoped": "^1.0.0",
 		"issue-regex": "^2.0.0",
