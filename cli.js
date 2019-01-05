@@ -25,6 +25,7 @@ const cli = meow(`
 	  --tag         Publish under a given dist-tag
 	  --no-yarn     Don't use Yarn
 	  --contents    Subdirectory to publish
+	  --skip-name-check  Skips checking repository for availability
 
 	Examples
 	  $ np
@@ -57,6 +58,10 @@ const cli = meow(`
 		},
 		contents: {
 			type: 'string'
+		},
+		skipNameCheck: {
+			type: 'boolean',
+			default: false
 		}
 	}
 });
@@ -70,7 +75,7 @@ process.on('SIGINT', () => {
 
 (async () => {
 	const pkg = util.readPkg();
-	const isAvailable = await npmName(pkg.name);
+	const isAvailable = cli.flags.skipNameCheck ? true : await npmName(pkg.name);
 
 	const options = cli.input.length > 0 ?
 		{
