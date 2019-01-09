@@ -158,7 +158,7 @@ module.exports = async (input = 'patch', options) => {
 	});
 
 	tasks.add({
-		title: 'Releasing on GitHub',
+		title: 'Creating release draft on GitHub',
 		enabled: () => isOnGitHub === true,
 		task: () => release(options)
 	});
