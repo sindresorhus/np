@@ -149,6 +149,10 @@ module.exports = async (input = 'patch', options) => {
 
 	tasks.add({
 		title: 'Pushing tags',
+		skip: async () => {
+			const {stdout} = await execa('git', ['status', '-sb']);
+			return /^##\s\w+$/.test(stdout.split('\n')[0]);
+		},
 		task: () => exec('git', ['push', '--follow-tags'])
 	});
 
