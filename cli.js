@@ -25,6 +25,7 @@ const cli = meow(`
 	  --tag         Publish under a given dist-tag
 	  --no-yarn     Don't use Yarn
 	  --contents    Subdirectory to publish
+	  --release-notes    Publish release notes
 
 	Examples
 	  $ np
@@ -57,6 +58,10 @@ const cli = meow(`
 		},
 		contents: {
 			type: 'string'
+		},
+		releaseNotes: {
+			type: 'boolean',
+			default: false
 		}
 	}
 });
