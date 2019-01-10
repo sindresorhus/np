@@ -70,8 +70,12 @@ process.on('SIGINT', () => {
 
 (async () => {
 	const pkg = util.readPkg();
-	const isAvailable = await npmName(pkg.name);
-
+	let isAvailable;
+	if (cli.flags.publish) {
+		isAvailable = await npmName(pkg.name);
+	} else {
+		isAvailable = cli.flags.publish;
+	}
 	const options = cli.input.length > 0 ?
 		{
 			...cli.flags,
