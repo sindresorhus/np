@@ -5,6 +5,8 @@ const meow = require('meow');
 const updateNotifier = require('update-notifier');
 const hasYarn = require('has-yarn');
 const npmName = require('npm-name');
+const newGithubReleaseUrl = require('new-github-release-url');
+const opn = require('opn');
 const version = require('./lib/version');
 const util = require('./lib/util');
 const ui = require('./lib/ui');
@@ -95,6 +97,9 @@ process.on('SIGINT', () => {
 
 	const newPkg = await np(options.version, options);
 	console.log(`\n ${newPkg.name} ${newPkg.version} published 🎉`);
+	if (cli.flags.releaseNotes) {
+		opn(newGithubReleaseUrl(options.releaseNotesData));
+	}
 })().catch(error => {
 	console.error(`\n${logSymbols.error} ${error.message}`);
 	process.exit(1);
