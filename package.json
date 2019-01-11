@@ -46,6 +46,8 @@
 		"new-github-release-url": "^0.1.0",
 		"npm-name": "^5.0.0",
 		"opn": "^5.4.0",
+		"ow": "^0.9.1",
+		"p-memoize": "^2.1.0",
 		"p-timeout": "^2.0.1",
 		"pkg-dir": "^3.0.0",
 		"read-pkg-up": "^4.0.0",
@@ -56,7 +58,7 @@
 		"update-notifier": "^2.1.0"
 	},
 	"devDependencies": {
-		"ava": "^0.25.0",
+		"ava": "^1.0.0",
 		"xo": "^0.23.0"
 	}
 }
