@@ -15,6 +15,7 @@ const pkgDir = require('pkg-dir');
 const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
 const util = require('./lib/util');
+const {hasUpstream} = require('./lib/git-util');
 const publish = require('./lib/publish');
 
 const exec = (cmd, args) => {
@@ -149,6 +150,7 @@ module.exports = async (input = 'patch', options) => {
 
 	tasks.add({
 		title: 'Pushing tags',
+		skip: async () => !(await hasUpstream()),
 		task: () => exec('git', ['push', '--follow-tags'])
 	});
 
