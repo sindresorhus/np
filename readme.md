@@ -28,6 +28,7 @@
 - Publishes the new version to npm, optionally under a dist-tag
 - Pushes commits and tags to GitHub/GitLab
 - Supports [two-factor authentication](https://docs.npmjs.com/getting-started/using-two-factor-authentication)
+- Support for creating release drafts on GitHub
 
 
 ## Install
