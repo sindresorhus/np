@@ -58,7 +58,7 @@
 		"update-notifier": "^2.1.0"
 	},
 	"devDependencies": {
-		"ava": "^1.0.0",
+		"ava": "^1.0.1",
 		"xo": "^0.23.0"
 	}
 }
