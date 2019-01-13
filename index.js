@@ -12,11 +12,13 @@ const streamToObservable = require('@samverschueren/stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
 const pkgDir = require('pkg-dir');
+const hostedGitInfo = require('hosted-git-info');
 const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
 const util = require('./lib/util');
 const git = require('./lib/git-util');
 const publish = require('./lib/publish');
+const release = require('./lib/release');
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
@@ -52,6 +54,7 @@ module.exports = async (input = 'patch', options) => {
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
+	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl).type === 'github';
 
 	const tasks = new Listr([
 		{
@@ -152,6 +155,12 @@ module.exports = async (input = 'patch', options) => {
 		title: 'Pushing tags',
 		skip: async () => !(await git.hasUpstream()),
 		task: () => git.push()
+	});
+
+	tasks.add({
+		title: 'Creating release draft on GitHub',
+		enabled: () => isOnGitHub === true,
+		task: () => release(options)
 	});
 
 	await tasks.run();
