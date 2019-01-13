@@ -150,7 +150,11 @@ module.exports = async (input = 'patch', options) => {
 
 	tasks.add({
 		title: 'Pushing tags',
-		skip: async () => !(await hasUpstream()),
+		skip: async () => {
+			if (!(await hasUpstream())) {
+				return 'Upstream branch not found: not pushing.';
+			}
+		},
 		task: () => exec('git', ['push', '--follow-tags'])
 	});
 
