@@ -13,12 +13,12 @@ const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
 const pkgDir = require('pkg-dir');
 const hostedGitInfo = require('hosted-git-info');
-const prerequisiteTasks = require('./lib/prerequisite');
-const gitTasks = require('./lib/git');
-const util = require('./lib/util');
-const git = require('./lib/git-util');
-const publish = require('./lib/publish');
-const release = require('./lib/release');
+const prerequisiteTasks = require('./prerequisite-tasks');
+const gitTasks = require('./git-tasks');
+const publishTaskHelper = require('./publish-task-helper');
+const releaseTaskHelper = require('./release-task-helper');
+const util = require('./util');
+const git = require('./git-util');
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
@@ -146,7 +146,7 @@ module.exports = async (input = 'patch', options) => {
 						return `Private package: not publishing to ${pkgManagerName}.`;
 					}
 				},
-				task: (context, task) => publish(pkgManager, task, options, input)
+				task: (context, task) => publishTaskHelper(pkgManager, task, options, input)
 			}
 		]);
 	}
@@ -164,7 +164,7 @@ module.exports = async (input = 'patch', options) => {
 	tasks.add({
 		title: 'Creating release draft on GitHub',
 		enabled: () => isOnGitHub === true,
-		task: () => release(options)
+		task: () => releaseTaskHelper(options)
 	});
 
 	await tasks.run();

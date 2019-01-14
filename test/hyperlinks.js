@@ -1,5 +1,5 @@
 import test from 'ava';
-import {linkifyIssues, linkifyCommit} from '../lib/util';
+import {linkifyIssues, linkifyCommit} from '../source/util';
 
 test('link issues', t => {
 	t.is(linkifyIssues('https://github.com/unicorn/rainbow', 'Commit message - fixes #4'), 'Commit message - fixes ]8;;https://github.com/unicorn/rainbow/issues/4#4]8;;');

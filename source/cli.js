@@ -5,9 +5,9 @@ const meow = require('meow');
 const updateNotifier = require('update-notifier');
 const hasYarn = require('has-yarn');
 const npmName = require('npm-name');
-const version = require('./lib/version');
-const util = require('./lib/util');
-const ui = require('./lib/ui');
+const version = require('./version');
+const util = require('./util');
+const ui = require('./ui');
 const np = require('.');
 
 const cli = meow(`

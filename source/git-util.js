@@ -2,6 +2,7 @@
 const execa = require('execa');
 
 const latestTag = () => execa.stdout('git', ['describe', '--abbrev=0']);
+
 const firstCommit = () => execa.stdout('git', ['rev-list', '--max-parents=0', 'HEAD']);
 
 exports.latestTagOrFirstCommit = async () => {

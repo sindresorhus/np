@@ -1,5 +1,5 @@
 import test from 'ava';
-import version from '../lib/version';
+import version from '../source/version';
 
 test('version.SEMVER_INCREMENTS', t => {
 	t.deepEqual(version.SEMVER_INCREMENTS, ['patch', 'minor', 'major', 'prepatch', 'preminor', 'premajor', 'prerelease']);

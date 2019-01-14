@@ -1,5 +1,5 @@
 import test from 'ava';
-import {getTagVersionPrefix} from '../lib/util';
+import {getTagVersionPrefix} from '../source/util';
 
 test('get tag prefix', async t => {
 	t.is(await getTagVersionPrefix({yarn: false}), 'v');
