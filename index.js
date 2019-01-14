@@ -16,7 +16,7 @@ const hostedGitInfo = require('hosted-git-info');
 const prerequisiteTasks = require('./lib/prerequisite');
 const gitTasks = require('./lib/git');
 const util = require('./lib/util');
-const {hasUpstream} = require('./lib/git-util');
+const git = require('./lib/git-util');
 const publish = require('./lib/publish');
 const release = require('./lib/release');
 
@@ -154,11 +154,11 @@ module.exports = async (input = 'patch', options) => {
 	tasks.add({
 		title: 'Pushing tags',
 		skip: async () => {
-			if (!(await hasUpstream())) {
+			if (!(await git.hasUpstream())) {
 				return 'Upstream branch not found: not pushing.';
 			}
 		},
-		task: () => exec('git', ['push', '--follow-tags'])
+		task: () => git.push()
 	});
 
 	tasks.add({
