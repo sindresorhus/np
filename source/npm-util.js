@@ -50,7 +50,7 @@ exports.prereleaseTags = async packageName => {
 		tags = Object.keys(JSON.parse(stdout))
 			.filter(tag => tag !== 'latest');
 	} catch (error) {
-		if (error.code === 'E404') {
+		if (/is not in the npm registry\./.test(error.details) {
 			tags = [];
 		} else {
 			throw error;
