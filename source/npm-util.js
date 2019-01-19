@@ -44,10 +44,14 @@ exports.collaborators = async packageName => {
 exports.prereleaseTags = async packageName => {
 	ow(packageName, ow.string);
 
-	const stdout = await execa.stdout('npm', ['view', '--json', packageName, 'dist-tags']);
-
-	const tags = Object.keys(JSON.parse(stdout))
-		.filter(tag => tag !== 'latest');
+	let tags;
+	try {
+		const stdout = await execa.stdout('npm', ['view', '--json', packageName, 'dist-tags']) || {};
+		tags = Object.keys(JSON.parse(stdout))
+			.filter(tag => tag !== 'latest');
+	} catch (_) {
+		tags = {};
+	}
 
 	if (tags.length === 0) {
 		tags.push('next');
