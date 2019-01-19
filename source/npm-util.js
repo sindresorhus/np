@@ -50,7 +50,7 @@ exports.prereleaseTags = async packageName => {
 		tags = Object.keys(JSON.parse(stdout))
 			.filter(tag => tag !== 'latest');
 	} catch (_) {
-		tags = {};
+		tags = [];
 	}
 
 	if (tags.length === 0) {
