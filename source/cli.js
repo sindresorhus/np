@@ -65,11 +65,6 @@ const cli = meow(`
 
 updateNotifier({pkg: cli.pkg}).notify();
 
-process.on('SIGINT', () => {
-	console.log('\nAborted!');
-	process.exit(1);
-});
-
 (async () => {
 	const pkg = util.readPkg();
 

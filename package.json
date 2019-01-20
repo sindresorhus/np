@@ -43,6 +43,7 @@
 		"meow": "^5.0.0",
 		"new-github-release-url": "^0.1.0",
 		"npm-name": "^5.0.1",
+		"onetime": "^3.0.0",
 		"opn": "^5.4.0",
 		"ow": "^0.10.0",
 		"p-memoize": "^2.1.0",

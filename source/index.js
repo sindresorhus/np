@@ -13,6 +13,7 @@ const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
 const pkgDir = require('pkg-dir');
 const hostedGitInfo = require('hosted-git-info');
+const onetime = require('onetime');
 const prerequisiteTasks = require('./prerequisite-tasks');
 const gitTasks = require('./git-tasks');
 const publishTaskHelper = require('./publish-task-helper');
@@ -56,6 +57,32 @@ module.exports = async (input = 'patch', options) => {
 	const rootDir = pkgDir.sync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
 	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl).type === 'github';
+
+	let published = false;
+
+	const rollback = onetime(async () => {
+		console.log('\nPublish failed. Rolling back to the previous state...');
+
+		const lastCommit = await execa.stdout('git', ['log', '-1', '--pretty=%B']);
+		try {
+			if (lastCommit === util.readPkg().version && lastCommit !== pkg.version) {
+				await execa('git', ['tag', '-d', options.version]);
+				await execa('git', ['reset', '--hard', 'HEAD~1']);
+			}
+
+			console.log('Successfully rolled back the project to its previous state.');
+		} catch (error) {
+			console.log(`Couldn't rollback because of the following error:\n${error}`);
+		}
+	});
+
+	process.on('SIGINT', async () => {
+		if (!published && runPublish) {
+			await rollback();
+		}
+
+		process.exit(0);
+	});
 
 	const tasks = new Listr([
 		{
@@ -147,7 +174,14 @@ module.exports = async (input = 'patch', options) => {
 						return `Private package: not publishing to ${pkgManagerName}.`;
 					}
 				},
-				task: (context, task) => publishTaskHelper(pkgManager, task, options, input)
+				task: async (context, task) => {
+					try {
+						await publishTaskHelper(pkgManager, task, options, input);
+						published = true;
+					} catch (_) {
+						rollback();
+					}
+				}
 			}
 		]);
 	}
@@ -157,6 +191,9 @@ module.exports = async (input = 'patch', options) => {
 		skip: async () => {
 			if (!(await git.hasUpstream())) {
 				return 'Upstream branch not found: not pushing.';
+			}
+			if (!published && runPublish) {
+				return 'Couldn\'t publish package to NPM: not pushing.';
 			}
 		},
 		task: () => git.push()
