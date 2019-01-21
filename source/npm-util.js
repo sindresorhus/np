@@ -46,7 +46,7 @@ exports.prereleaseTags = async packageName => {
 
 	let tags;
 	try {
-		const stdout = await execa.stdout('npm', ['view', '--json', packageName, 'dist-tags']);
+		const {stdout} = await execa('npm', ['view', '--json', packageName, 'dist-tags']);
 		tags = Object.keys(JSON.parse(stdout))
 			.filter(tag => tag !== 'latest');
 	} catch (error) {
