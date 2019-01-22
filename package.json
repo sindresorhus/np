@@ -37,27 +37,27 @@
 		"inquirer": "^6.2.1",
 		"is-scoped": "^1.0.0",
 		"issue-regex": "^2.0.0",
-		"listr": "^0.14.1",
-		"listr-input": "^0.1.1",
+		"listr": "^0.14.3",
+		"listr-input": "^0.1.3",
 		"log-symbols": "^2.1.0",
 		"meow": "^5.0.0",
 		"new-github-release-url": "^0.1.0",
-		"npm-name": "^5.0.0",
+		"npm-name": "^5.0.1",
 		"opn": "^5.4.0",
-		"ow": "^0.9.1",
+		"ow": "^0.10.0",
 		"p-memoize": "^2.1.0",
 		"p-timeout": "^2.0.1",
 		"pkg-dir": "^3.0.0",
 		"read-pkg-up": "^4.0.0",
-		"rxjs": "^6.2.0",
+		"rxjs": "^6.3.3",
 		"semver": "^5.2.0",
 		"split": "^1.0.0",
 		"symbol-observable": "^1.2.0",
-		"terminal-link": "^1.1.0",
+		"terminal-link": "^1.2.0",
 		"update-notifier": "^2.1.0"
 	},
 	"devDependencies": {
-		"ava": "^1.0.1",
-		"xo": "^0.23.0"
+		"ava": "^1.1.0",
+		"xo": "^0.24.0"
 	}
 }
