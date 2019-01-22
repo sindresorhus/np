@@ -84,10 +84,10 @@ module.exports = async (input = 'patch', options) => {
 				task: () => exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
 					catchError(error => {
 						if (error.stderr.startsWith('error Your lockfile needs to be updated')) {
-							throwError(new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.'));
+							return throwError(new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.'));
 						}
 
-						throwError(error);
+						return throwError(error);
 					})
 				)
 			},

@@ -52,6 +52,7 @@
 		"rxjs": "^6.2.0",
 		"semver": "^5.2.0",
 		"split": "^1.0.0",
+		"symbol-observable": "^1.2.0",
 		"terminal-link": "^1.1.0",
 		"update-notifier": "^2.1.0"
 	},
