@@ -58,15 +58,15 @@ module.exports = async (input = 'patch', options) => {
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
 	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl).type === 'github';
 
-	let published = false;
+	let isPublished = false;
 
 	const rollback = onetime(async () => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
 
-		const lastCommit = await execa.stdout('git', ['log', '-1', '--pretty=%B']);
+		const lastCommit = await execa.stdout('git', ['log', 'HEAD^..HEAD', '--pretty=%B']);
 		try {
 			if (lastCommit === util.readPkg().version && lastCommit !== pkg.version) {
-				await execa('git', ['tag', '-d', options.version]);
+				await execa('git', ['tag', '--delete', options.version]);
 				await execa('git', ['reset', '--hard', 'HEAD~1']);
 			}
 
@@ -77,7 +77,7 @@ module.exports = async (input = 'patch', options) => {
 	});
 
 	process.on('SIGINT', async () => {
-		if (!published && runPublish) {
+		if (!isPublished && runPublish) {
 			await rollback();
 		}
 
@@ -177,7 +177,7 @@ module.exports = async (input = 'patch', options) => {
 				task: async (context, task) => {
 					try {
 						await publishTaskHelper(pkgManager, task, options, input);
-						published = true;
+						isPublished = true;
 					} catch (_) {
 						rollback();
 					}
@@ -193,7 +193,7 @@ module.exports = async (input = 'patch', options) => {
 				return 'Upstream branch not found; not pushing.';
 			}
 
-			if (!published && runPublish) {
+			if (!isPublished && runPublish) {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
