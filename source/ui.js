@@ -33,7 +33,7 @@ const printCommitLog = async repoUrl => {
 		const commitMessage = util.linkifyIssues(repoUrl, commit.message);
 		const commitId = util.linkifyCommit(repoUrl, commit.id);
 		return `- ${commitMessage}  ${commitId}`;
-	});
+	}).join('\n');
 
 	const releaseNotes = nextTag => commits.map(commit =>
 		`- ${commit.message}  ${commit.id}`
