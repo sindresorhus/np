@@ -9,7 +9,7 @@
 		"node": ">=8"
 	},
 	"scripts": {
-		"test": "xo && FORCE_HYPERLINK=1 ava"
+		"test": "xo && cross-env FORCE_HYPERLINK=1 ava"
 	},
 	"files": [
 		"source"
@@ -58,6 +58,7 @@
 	},
 	"devDependencies": {
 		"ava": "^1.1.0",
-		"xo": "^0.24.0"
+		"xo": "^0.24.0",
+		"cross-env": "^5.2.0"
 	}
 }
