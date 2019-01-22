@@ -31,7 +31,7 @@ const exec = (cmd, args) => {
 	).pipe(filter(Boolean));
 };
 
-module.exports = async (input = 'patch', options) => {
+module.exports = async (input = 'patch', options, providedPkg = null) => {
 	options = {
 		cleanup: true,
 		publish: true,
@@ -50,7 +50,7 @@ module.exports = async (input = 'patch', options) => {
 	const runTests = !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
 	const runPublish = options.publish;
-	const pkg = util.readPkg();
+	const pkg = providedPkg || util.readPkg();
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();

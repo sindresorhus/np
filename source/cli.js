@@ -2,6 +2,7 @@
 'use strict';
 // eslint-disable-next-line import/no-unassigned-import
 require('symbol-observable'); // Important: This needs to be first to prevent weird Observable incompatibilities
+const path = require('path');
 const logSymbols = require('log-symbols');
 const meow = require('meow');
 const updateNotifier = require('update-notifier');
@@ -73,6 +74,16 @@ process.on('SIGINT', () => {
 (async () => {
 	const pkg = util.readPkg();
 
+	if (!pkg.name && (typeof cli.flags.contents === 'string')) {
+		const distPkg = util.readPkg(cli.flags.contents);
+
+		if (typeof distPkg !== 'object' || !distPkg.name) {
+			throw new Error(`Could not find a package name, searched in ${path.resolve('.')} and in ${path.resolve(cli.flags.contents)} as specified with --contents`);
+		}
+
+		pkg.name = distPkg.name;
+	}
+
 	const isAvailable = cli.flags.publish ? await npmName(pkg.name) : false;
 
 	const options = cli.input.length > 0 ?
@@ -87,7 +98,7 @@ process.on('SIGINT', () => {
 		process.exit(0);
 	}
 
-	const newPkg = await np(options.version, options);
+	const newPkg = await np(options.version, options, pkg);
 	console.log(`\n ${newPkg.name} ${newPkg.version} published 🎉`);
 })().catch(error => {
 	console.error(`\n${logSymbols.error} ${error.message}`);
