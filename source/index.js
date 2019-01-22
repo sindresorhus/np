@@ -25,8 +25,9 @@ const exec = (cmd, args) => {
 	const cp = execa(cmd, args);
 
 	return merge(
-		streamToObservable(cp.stdout.pipe(split()), {await: cp}),
-		streamToObservable(cp.stderr.pipe(split()), {await: cp})
+		streamToObservable(cp.stdout.pipe(split())),
+		streamToObservable(cp.stderr.pipe(split())),
+		cp
 	).pipe(filter(Boolean));
 };
 
@@ -117,7 +118,7 @@ module.exports = async (input = 'patch', options) => {
 							return [];
 						}
 
-						throwError(error);
+						return throwError(error);
 					})
 				)
 			}
