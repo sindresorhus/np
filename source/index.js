@@ -61,7 +61,7 @@ module.exports = async (input = 'patch', options) => {
 	let published = false;
 
 	const rollback = onetime(async () => {
-		console.log('\nPublish failed. Rolling back to the previous state...');
+		console.log('\nPublish failed. Rolling back to the previous state…');
 
 		const lastCommit = await execa.stdout('git', ['log', '-1', '--pretty=%B']);
 		try {
@@ -190,10 +190,11 @@ module.exports = async (input = 'patch', options) => {
 		title: 'Pushing tags',
 		skip: async () => {
 			if (!(await git.hasUpstream())) {
-				return 'Upstream branch not found: not pushing.';
+				return 'Upstream branch not found; not pushing.';
 			}
+
 			if (!published && runPublish) {
-				return 'Couldn\'t publish package to NPM: not pushing.';
+				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
 		task: () => git.push()
