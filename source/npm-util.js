@@ -44,15 +44,13 @@ exports.collaborators = async packageName => {
 exports.prereleaseTags = async packageName => {
 	ow(packageName, ow.string);
 
-	let tags;
+	let tags = [];
 	try {
 		const {stdout} = await execa('npm', ['view', '--json', packageName, 'dist-tags']);
 		tags = Object.keys(JSON.parse(stdout))
 			.filter(tag => tag !== 'latest');
 	} catch (error) {
-		if (JSON.parse(error.stdout).code === 'E404') {
-			tags = [];
-		} else {
+		if (JSON.parse(error.stdout).code !== 'E404') {
 			throw error;
 		}
 	}
