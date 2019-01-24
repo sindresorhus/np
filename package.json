@@ -41,7 +41,6 @@
 		"listr-input": "^0.1.3",
 		"log-symbols": "^2.1.0",
 		"meow": "^5.0.0",
-		"new-github-release-url": "^0.1.0",
 		"npm-name": "^5.0.1",
 		"opn": "^5.4.0",
 		"ow": "^0.10.0",
