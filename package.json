@@ -9,7 +9,7 @@
 		"node": ">=8"
 	},
 	"scripts": {
-		"test": "xo && FORCE_HYPERLINK=1 ava"
+		"test": "xo && FORCE_HYPERLINK=1 ava && installed-check -d -e -n"
 	},
 	"files": [
 		"source"
@@ -58,6 +58,7 @@
 	},
 	"devDependencies": {
 		"ava": "^1.1.0",
+		"installed-check": "^2.2.0",
 		"xo": "^0.24.0"
 	}
 }
