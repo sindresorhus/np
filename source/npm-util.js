@@ -26,37 +26,16 @@ exports.username = async () => {
 	}
 };
 
-const checkExistance = async packageName => {
-	ow(packageName, ow.string);
-
-	let tags = [];
-	try {
-		await execa('npm', ['view', '--json', packageName, 'name']);
-	} catch (error) {
-		if (((JSON.parse(error.stdout) || {}).error || {}).code  === 'E404') {
-			return false
-		}
-    throw error;
-	}
-
-	return true;
-};
-
-exports.checkExistance = checkExistance;
-
 exports.collaborators = async packageName => {
 	ow(packageName, ow.string);
 
 	try {
 		return await execa.stdout('npm', ['access', 'ls-collaborators', packageName]);
 	} catch (error) {
-		try {
-			const exists = await checkExistance(packageName);
-
-			if (!exists) {
-				return false;
-			}
-		} catch (error) {}
+		// Ignore non-existing package error
+		if (error.stderr.includes('code E404')) {
+			return false;
+		}
 
 		throw error;
 	}
