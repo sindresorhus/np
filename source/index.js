@@ -63,11 +63,11 @@ module.exports = async (input = 'patch', options) => {
 	const rollback = onetime(async () => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
 
-		const lastCommit = await execa.stdout('git', ['log', 'HEAD^..HEAD', '--pretty=%B']);
+		const lastCommit = await git.getLastCommit();
 		try {
-			if (lastCommit === util.readPkg().version && lastCommit !== pkg.version) {
-				await execa('git', ['tag', '--delete', options.version]);
-				await execa('git', ['reset', '--hard', 'HEAD~1']);
+			if (lastCommit === util.readPkg().version && lastCommit !== pkg.version) { // Verify that the package's version has been bumped before deleting the last tag and commit.
+				await git.deleteTag(options.version);
+				await git.removeLastCommit();
 			}
 
 			console.log('Successfully rolled back the project to its previous state.');
