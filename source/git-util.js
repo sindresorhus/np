@@ -111,6 +111,10 @@ exports.push = () => execa('git', ['push', '--follow-tags']);
 
 exports.getLastCommit = () => execa.stdout('git', ['log', '--max-count=1', '--pretty=%B']);
 
-exports.deleteTag = tagName => execa('git', ['tag', '--delete', tagName]);
+exports.deleteTag = async tagName => {
+	await execa('git', ['tag', '--delete', tagName]);
+};
 
-exports.removeLastCommit = () => execa('git', ['reset', '--hard', 'HEAD~1']);
+exports.removeLastCommit = async () => {
+	await execa('git', ['reset', '--hard', 'HEAD~1']);
+};
