@@ -1,7 +1,7 @@
 'use strict';
 const execa = require('execa');
 
-const latestTag = () => execa.stdout('git', ['describe', '--abbrev=0']);
+const latestTag = () => execa.stdout('git', ['describe', '--abbrev=0', '--tags']);
 
 const firstCommit = () => execa.stdout('git', ['rev-list', '--max-parents=0', 'HEAD']);
 
