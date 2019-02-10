@@ -7,7 +7,7 @@ const del = require('del');
 const Listr = require('listr');
 const split = require('split');
 const {merge, throwError} = require('rxjs');
-const {catchError, filter} = require('rxjs/operators');
+const {catchError, filter, finalize} = require('rxjs/operators');
 const streamToObservable = require('@samverschueren/stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
@@ -128,13 +128,36 @@ module.exports = async (input = 'patch', options) => {
 	tasks.add([
 		{
 			title: 'Bumping version using Yarn',
-			enabled: () => options.yarn === true,
+			enabled: () => options.standardVersion !== true && options.yarn === true,
 			task: () => exec('yarn', ['version', '--new-version', input])
 		},
 		{
 			title: 'Bumping version using npm',
-			enabled: () => options.yarn === false,
+			enabled: () => options.standardVersion !== true && options.yarn === false,
 			task: () => exec('npm', ['version', input])
+		},
+		{
+			title: 'Bumping version using standard-version',
+			enabled: () => options.standardVersion === true,
+			task: () => {
+				const standardVersion = path.join(__dirname, '..', 'node_modules', '.bin', 'standard-version');
+
+				const args = ['--silent'];
+
+				if (options.changelogFile) {
+					args.push(`--infile=${options.changelogFile}`);
+				}
+
+				if (options.version) {
+					args.push(`--release-as=${input}`);
+				}
+
+				return exec(standardVersion, args).pipe(finalize(() => {
+					const {version: newVersion} = util.readPkg();
+					options.version = newVersion;
+					input = newVersion;
+				}));
+			}
 		}
 	]);
 
