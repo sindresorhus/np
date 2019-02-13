@@ -16,13 +16,5 @@ const enable2fa = (packageName, options) => {
 
 module.exports = (task, packageName) =>
 	from(enable2fa(packageName)).pipe(
-		catchError(error => {
-			if (error.stderr.includes('access subcommand')) {
-				task.skip('Upgrade npm to version 6.5.0 or higher to use this feature');
-
-				return EMPTY;
-			}
-
-			return handleNpmError(error, task, otp => enable2fa(packageName, {otp}));
-		})
+		catchError(error => handleNpmError(error, task, otp => enable2fa(packageName, {otp})))
 	);
