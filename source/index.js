@@ -15,7 +15,8 @@ const pkgDir = require('pkg-dir');
 const hostedGitInfo = require('hosted-git-info');
 const prerequisiteTasks = require('./prerequisite-tasks');
 const gitTasks = require('./git-tasks');
-const publishTaskHelper = require('./publish-task-helper');
+const publish = require('./npm/publish');
+const enable2fa = require('./npm/enable-2fa');
 const releaseTaskHelper = require('./release-task-helper');
 const util = require('./util');
 const git = require('./git-util');
@@ -147,9 +148,18 @@ module.exports = async (input = 'patch', options) => {
 						return `Private package: not publishing to ${pkgManagerName}.`;
 					}
 				},
-				task: (context, task) => publishTaskHelper(pkgManager, task, options, input)
+				task: (context, task) => publish(pkgManager, task, options, input)
 			}
 		]);
+
+		if (!options.exists && !pkg.private) {
+			tasks.add([
+				{
+					title: 'Enabling two-factor authentication',
+					task: (context, task) => enable2fa(task, pkg.name)
+				}
+			]);
+		}
 	}
 
 	tasks.add({

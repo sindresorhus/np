@@ -83,3 +83,11 @@ test('version.isVersionGreater', t => {
 	t.true(version.isVersionGreater('1.0.0', '2.0.0-0'));
 	t.true(version.isVersionGreater('1.0.0', '2.0.0-beta'));
 });
+
+test('version.satisfies', t => {
+	t.true(version.satisfies('2.15.8', '>=2.15.8 <3.0.0 || >=3.10.1'));
+	t.true(version.satisfies('2.99.8', '>=2.15.8 <3.0.0 || >=3.10.1'));
+	t.true(version.satisfies('3.10.1', '>=2.15.8 <3.0.0 || >=3.10.1'));
+	t.false(version.satisfies('3.0.0', '>=2.15.8 <3.0.0 || >=3.10.1'));
+	t.false(version.satisfies('3.10.0', '>=2.15.8 <3.0.0 || >=3.10.1'));
+});

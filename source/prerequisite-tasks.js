@@ -1,5 +1,6 @@
 'use strict';
 const Listr = require('listr');
+const execa = require('execa');
 const version = require('./version');
 const git = require('./git-util');
 const npm = require('./npm-util');
@@ -14,6 +15,20 @@ module.exports = (input, pkg, options) => {
 			title: 'Ping npm registry',
 			skip: () => pkg.private || isExternalRegistry,
 			task: async () => npm.checkConnection()
+		},
+		{
+			title: 'Check npm version',
+			task: async () => {
+				const versions = JSON.parse(await execa.stdout('npm', ['version', '--json']));
+
+				if (version.satisfies(versions.npm, '<6.5.0')) {
+					throw new Error(`npm@${versions.npm} does not support enabling two-factor authentication on new repositories`);
+				}
+
+				if (version.satisfies(versions.npm, '>6.5.9 <6.8.0')) {
+					throw new Error(`npm@${versions.npm} has known issues https://github.com/sindresorhus/np/issues/339`);
+				}
+			}
 		},
 		{
 			title: 'Verify user is authenticated',
