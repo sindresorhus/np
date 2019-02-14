@@ -26,4 +26,6 @@ exports.isVersionGreater = (oldVersion, newVersion) => {
 	return semver.gt(newVersion, oldVersion);
 };
 
-exports.satisfies = (version, range) => semver.satisfies(version, range);
+exports.satisfies = (version, range) => semver.satisfies(version, range, {
+	includePrerelease: true
+});
