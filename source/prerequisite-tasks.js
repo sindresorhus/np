@@ -21,12 +21,8 @@ module.exports = (input, pkg, options) => {
 			task: async () => {
 				const versions = JSON.parse(await execa.stdout('npm', ['version', '--json']));
 
-				if (version.satisfies(versions.npm, '<6.5.0')) {
-					throw new Error(`npm@${versions.npm} does not support enabling two-factor authentication on new repositories`);
-				}
-
-				if (version.satisfies(versions.npm, '>6.5.0 <6.8.0')) {
-					throw new Error(`npm@${versions.npm} has known issues https://github.com/sindresorhus/np/issues/339`);
+				if (version.satisfies(versions.npm, '<6.8.0')) {
+					throw new Error('Please upgrade to npm@6.8.0 or newer');
 				}
 			}
 		},
