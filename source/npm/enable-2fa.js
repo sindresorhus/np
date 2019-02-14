@@ -1,6 +1,6 @@
 'use strict';
 const execa = require('execa');
-const {from, EMPTY} = require('rxjs');
+const {from} = require('rxjs');
 const {catchError} = require('rxjs/operators');
 const {handleNpmError} = require('./util');
 
