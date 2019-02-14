@@ -148,7 +148,7 @@ module.exports = async (input = 'patch', options) => {
 						return `Private package: not publishing to ${pkgManagerName}.`;
 					}
 				},
-				task: (context, task) => publish(pkgManager, task, options, input)
+				task: (context, task) => publish(context, pkgManager, task, options, input)
 			}
 		]);
 
@@ -156,7 +156,7 @@ module.exports = async (input = 'patch', options) => {
 			tasks.add([
 				{
 					title: 'Enabling two-factor authentication',
-					task: (context, task) => enable2fa(task, pkg.name)
+					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
 				}
 			]);
 		}

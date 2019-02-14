@@ -30,7 +30,11 @@ const pkgPublish = (pkgManager, options, input) => {
 	return execa(pkgManager, args);
 };
 
-module.exports = (pkgManager, task, options, input) =>
+module.exports = (context, pkgManager, task, options, input) =>
 	from(pkgPublish(pkgManager, options, input)).pipe(
-		catchError(error => handleNpmError(error, task, otp => pkgPublish(pkgManager, {...options, otp}, input)))
+		catchError(error => handleNpmError(error, task, otp => {
+			context.otp = otp;
+
+			return pkgPublish(pkgManager, {...options, otp}, input);
+		}))
 	);

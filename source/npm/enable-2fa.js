@@ -14,7 +14,7 @@ const enable2fa = (packageName, options) => {
 	return execa('npm', args);
 };
 
-module.exports = (task, packageName) =>
-	from(enable2fa(packageName)).pipe(
+module.exports = (task, packageName, options) =>
+	from(enable2fa(packageName, options)).pipe(
 		catchError(error => handleNpmError(error, task, otp => enable2fa(packageName, {otp})))
 	);
