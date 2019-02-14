@@ -174,12 +174,17 @@ module.exports = async (input = 'patch', options) => {
 						return `Private package: not publishing to ${pkgManagerName}.`;
 					}
 				},
-				task: async (context, task) => {
+				task: (context, task) => {
 					try {
-						await publishTaskHelper(pkgManager, task, options, input);
-						isPublished = true;
+						return publishTaskHelper(pkgManager, task, options, input)
+							.pipe(
+								catchError(rollback)
+							)
+							.subscribe(() => {
+								isPublished = true;
+							});
 					} catch (_) {
-						rollback();
+						return rollback();
 					}
 				}
 			}
