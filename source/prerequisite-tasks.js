@@ -25,7 +25,7 @@ module.exports = (input, pkg, options) => {
 					throw new Error(`npm@${versions.npm} does not support enabling two-factor authentication on new repositories`);
 				}
 
-				if (version.satisfies(versions.npm, '>6.5.9 <6.8.0')) {
+				if (version.satisfies(versions.npm, '>6.5.0 <6.8.0')) {
 					throw new Error(`npm@${versions.npm} has known issues https://github.com/sindresorhus/np/issues/339`);
 				}
 			}
