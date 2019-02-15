@@ -7,7 +7,7 @@ const del = require('del');
 const Listr = require('listr');
 const split = require('split');
 const {merge, throwError} = require('rxjs');
-const {catchError, filter} = require('rxjs/operators');
+const {catchError, filter, finalize} = require('rxjs/operators');
 const streamToObservable = require('@samverschueren/stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
@@ -175,17 +175,18 @@ module.exports = async (input = 'patch', options) => {
 					}
 				},
 				task: (context, task) => {
-					try {
-						return publishTaskHelper(pkgManager, task, options, input)
-							.pipe(
-								catchError(rollback)
-							)
-							.subscribe(() => {
-								isPublished = true;
-							});
-					} catch (_) {
-						return rollback();
-					}
+					let hasError = false;
+
+					return publishTaskHelper(pkgManager, task, options, input)
+						.pipe(
+							catchError(() => {
+								hasError = true;
+								return rollback();
+							}),
+							finalize(() => {
+								isPublished = !hasError;
+							})
+						);
 				}
 			}
 		]);
