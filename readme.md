@@ -190,6 +190,7 @@ Host *
 If you're running into other issues when using SSH, please consult [GitHub's support article](https://help.github.com/articles/connecting-to-github-with-ssh/).
 
 ### Minimum Required Version of `git`
+
 This package requires that you are running `git` version v2.11 or higher.
 
 ## Created by
