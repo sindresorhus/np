@@ -50,7 +50,7 @@ exports.prereleaseTags = async packageName => {
 		tags = Object.keys(JSON.parse(stdout))
 			.filter(tag => tag !== 'latest');
 	} catch (error) {
-		if (((JSON.parse(error.stdout) || {}).error || {}).code  !== 'E404') {
+		if (((JSON.parse(error.stdout) || {}).error || {}).code !== 'E404') {
 			throw error;
 		}
 	}
