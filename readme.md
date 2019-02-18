@@ -31,6 +31,13 @@
 - Opens a prefilled GitHub Releases draft after publish
 
 
+## Prerequisite
+
+- Node.js 8 or later
+- npm 6.8.0 or later
+- Git 2.11 or later
+
+
 ## Install
 
 ```
