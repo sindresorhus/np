@@ -14,6 +14,7 @@ const hasYarn = require('has-yarn');
 const pkgDir = require('pkg-dir');
 const hostedGitInfo = require('hosted-git-info');
 const onetime = require('onetime');
+const exitHook = require('async-exit-hook');
 const prerequisiteTasks = require('./prerequisite-tasks');
 const gitTasks = require('./git-tasks');
 const publishTaskHelper = require('./publish-task-helper');
@@ -76,12 +77,10 @@ module.exports = async (input = 'patch', options) => {
 		}
 	});
 
-	process.on('SIGINT', async () => {
+	exitHook(() => (error, callback) => {
 		if (!isPublished && runPublish) {
-			await rollback();
+			rollback().then(callback); // eslint-disable-line promise/prefer-await-to-then
 		}
-
-		process.exit(0);
 	});
 
 	const tasks = new Listr([

@@ -28,6 +28,7 @@
 	"dependencies": {
 		"@samverschueren/stream-to-observable": "^0.3.0",
 		"any-observable": "^0.3.0",
+		"async-exit-hook": "^2.0.1",
 		"chalk": "^2.3.0",
 		"del": "^3.0.0",
 		"execa": "^1.0.0",
