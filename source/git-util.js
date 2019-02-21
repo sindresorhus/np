@@ -1,5 +1,6 @@
 'use strict';
 const execa = require('execa');
+const semver = require('semver');
 
 const latestTag = () => execa.stdout('git', ['describe', '--abbrev=0', '--tags']);
 
@@ -108,3 +109,14 @@ exports.verifyTagDoesNotExistOnRemote = async tagName => {
 exports.commitLogFromRevision = revision => execa.stdout('git', ['log', '--format=%s %h', `${revision}..HEAD`]);
 
 exports.push = () => execa('git', ['push', '--follow-tags']);
+
+const gitVersion = async () => {
+	const {stdout} = await execa('git', ['version']);
+	return stdout.match(/git version (\d+\.\d+\.\d+).*/)[1];
+};
+
+exports.verifyRecentGitVersion = async () => {
+	if (semver.lt(await gitVersion(), '2.11.0')) {
+		throw new Error('Please upgrade git to version 2.11 or higher.');
+	}
+};

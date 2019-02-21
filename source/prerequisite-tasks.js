@@ -34,6 +34,10 @@ module.exports = (input, pkg, options) => {
 			}
 		},
 		{
+			title: 'Verify git version is recent',
+			task: async () => git.verifyRecentGitVersion()
+		},
+		{
 			title: 'Check git remote',
 			task: async () => git.verifyRemoteIsValid()
 		},
