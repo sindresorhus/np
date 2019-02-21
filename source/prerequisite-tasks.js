@@ -13,7 +13,7 @@ module.exports = (input, pkg, options) => {
 		{
 			title: 'Ping npm registry',
 			skip: () => pkg.private || isExternalRegistry,
-			task: () => npm.checkConnection()
+			task: async () => npm.checkConnection()
 		},
 		{
 			title: 'Verify user is authenticated',
@@ -35,11 +35,11 @@ module.exports = (input, pkg, options) => {
 		},
 		{
 			title: 'Verify git version is recent',
-			task: () => git.verifyRecentGitVersion()
+			task: async () => git.verifyRecentGitVersion()
 		},
 		{
 			title: 'Check git remote',
-			task: () => git.verifyRemoteIsValid()
+			task: async () => git.verifyRemoteIsValid()
 		},
 		{
 			title: 'Validate version',
