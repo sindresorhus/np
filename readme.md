@@ -197,10 +197,11 @@ Host *
 If you're running into other issues when using SSH, please consult [GitHub's support article](https://help.github.com/articles/connecting-to-github-with-ssh/).
 
 
-## Created by
+## Maintainers
 
 - [Sindre Sorhus](https://github.com/sindresorhus)
 - [Sam Verschueren](https://github.com/SamVerschueren)
+- [Itai Steinherz](https://github.com/itaisteinherz)
 
 
 ## License
