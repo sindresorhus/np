@@ -1,7 +1,8 @@
 'use strict';
 const execa = require('execa');
+const semver = require('semver');
 
-const latestTag = () => execa.stdout('git', ['describe', '--abbrev=0']);
+const latestTag = () => execa.stdout('git', ['describe', '--abbrev=0', '--tags']);
 
 const firstCommit = () => execa.stdout('git', ['rev-list', '--max-parents=0', 'HEAD']);
 
@@ -117,4 +118,15 @@ exports.deleteTag = async tagName => {
 
 exports.removeLastCommit = async () => {
 	await execa('git', ['reset', '--hard', 'HEAD~1']);
+};
+
+const gitVersion = async () => {
+	const {stdout} = await execa('git', ['version']);
+	return stdout.match(/git version (\d+\.\d+\.\d+).*/)[1];
+};
+
+exports.verifyRecentGitVersion = async () => {
+	if (semver.lt(await gitVersion(), '2.11.0')) {
+		throw new Error('Please upgrade git to version 2.11 or higher.');
+	}
 };

@@ -1,6 +1,6 @@
 'use strict';
-const newGithubReleaseUrl = require('new-github-release-url');
 const opn = require('opn');
+const newGithubReleaseUrl = require('./new-github-release-url');
 const {getTagVersionPrefix} = require('./util');
 const version = require('./version');
 
