@@ -64,10 +64,11 @@ module.exports = async (input = 'patch', options) => {
 	const rollback = onetime(async () => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
 
-		const lastCommit = await git.getLastCommit();
+		const lastCommit = (await git.getLastCommit()).trim();
+
 		try {
-			if (lastCommit === util.readPkg().version && lastCommit !== pkg.version) { // Verify that the package's version has been bumped before deleting the last tag and commit.
-				await git.deleteTag(options.version);
+			if (lastCommit.slice(1) === util.readPkg().version && lastCommit.slice(1) !== pkg.version) { // Verify that the package's version has been bumped before deleting the last tag and commit.
+				await git.deleteTag(lastCommit);
 				await git.removeLastCommit();
 			}
 
@@ -178,9 +179,10 @@ module.exports = async (input = 'patch', options) => {
 
 					return publishTaskHelper(pkgManager, task, options, input)
 						.pipe(
-							catchError(() => {
+							catchError(async error => {
 								hasError = true;
-								return rollback();
+								await rollback();
+								throw new Error(`Error publishing package:\n${error.message}`);
 							}),
 							finalize(() => {
 								isPublished = !hasError;
@@ -207,6 +209,11 @@ module.exports = async (input = 'patch', options) => {
 
 	tasks.add({
 		title: 'Creating release draft on GitHub',
+		skip: async () => {
+			if (!isPublished && runPublish) {
+				return 'Couldn\'t publish package to npm; not creating release draft.';
+			}
+		},
 		enabled: () => isOnGitHub === true,
 		task: () => releaseTaskHelper(options)
 	});
