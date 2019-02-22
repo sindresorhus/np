@@ -74,26 +74,36 @@ test('version.validateVersion', t => {
 	t.notThrows(() => version.validateVersion('1.0.0-0'));
 });
 
-test('version.isVersionGreaterThan', t => {
-	t.false(version.isVersionGreaterThan('1.0.0', '0.0.1'));
-	t.false(version.isVersionGreaterThan('1.0.0', '0.1.0'));
-	t.false(version.isVersionGreaterThan('1.0.0', '1.0.0'));
+test('version.isGreaterThanOrEqualTo', t => {
+	t.false(version.isGreaterThanOrEqualTo('1.0.0', '0.0.1'));
+	t.false(version.isGreaterThanOrEqualTo('1.0.0', '0.1.0'));
 
-	t.false(version.isVersionGreaterThan('1.0.0', '1.0.0-0'));
-	t.false(version.isVersionGreaterThan('1.0.0', '1.0.0-beta'));
+	t.false(version.isGreaterThanOrEqualTo('1.0.0', '1.0.0-0'));
+	t.false(version.isGreaterThanOrEqualTo('1.0.0', '1.0.0-beta'));
 
-	t.true(version.isVersionGreaterThan('1.0.0', '1.0.1'));
-	t.true(version.isVersionGreaterThan('1.0.0', '1.1.0'));
-	t.true(version.isVersionGreaterThan('1.0.0', '2.0.0'));
+	t.true(version.isGreaterThanOrEqualTo('1.0.0', '1.0.0'));
+	t.true(version.isGreaterThanOrEqualTo('1.0.0', '1.0.1'));
+	t.true(version.isGreaterThanOrEqualTo('1.0.0', '1.1.0'));
+	t.true(version.isGreaterThanOrEqualTo('1.0.0', '2.0.0'));
 
-	t.true(version.isVersionGreaterThan('1.0.0', '2.0.0-0'));
-	t.true(version.isVersionGreaterThan('1.0.0', '2.0.0-beta'));
+	t.true(version.isGreaterThanOrEqualTo('1.0.0', '2.0.0-0'));
+	t.true(version.isGreaterThanOrEqualTo('1.0.0', '2.0.0-beta'));
 });
 
-test('version.isVersionEqualTo', t => {
-	t.true(version.isVersionEqualTo('1.0.0', '1.0.0'));
-	t.true(version.isVersionEqualTo('1.0.0-beta', '1.0.0-beta'));
-	t.true(version.isVersionEqualTo('1.0.0-0', '1.0.0-0'));
+test('version.isLowerThanOrEqualTo', t => {
+	t.true(version.isLowerThanOrEqualTo('1.0.0', '0.0.1'));
+	t.true(version.isLowerThanOrEqualTo('1.0.0', '0.1.0'));
+
+	t.true(version.isLowerThanOrEqualTo('1.0.0', '1.0.0-0'));
+	t.true(version.isLowerThanOrEqualTo('1.0.0', '1.0.0-beta'));
+	t.true(version.isLowerThanOrEqualTo('1.0.0', '1.0.0'));
+
+	t.false(version.isLowerThanOrEqualTo('1.0.0', '1.0.1'));
+	t.false(version.isLowerThanOrEqualTo('1.0.0', '1.1.0'));
+	t.false(version.isLowerThanOrEqualTo('1.0.0', '2.0.0'));
+
+	t.false(version.isLowerThanOrEqualTo('1.0.0', '2.0.0-0'));
+	t.false(version.isLowerThanOrEqualTo('1.0.0', '2.0.0-beta'));
 });
 
 test('version.satisfies', t => {

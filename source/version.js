@@ -24,14 +24,14 @@ exports.validateVersion = version => {
 	}
 };
 
-exports.isVersionGreaterThan = (firstVersion, secondVersion) => {
+exports.isGreaterThanOrEqualTo = (firstVersion, secondVersion) => {
 	exports.validateVersion(secondVersion);
-	return semver.gt(secondVersion, firstVersion);
+	return semver.gte(secondVersion, firstVersion);
 };
 
-exports.isVersionEqualTo = (firstVersion, secondVersion) => {
+exports.isLowerThanOrEqualTo = (firstVersion, secondVersion) => {
 	exports.validateVersion(secondVersion);
-	return semver.eq(secondVersion, firstVersion);
+	return semver.lte(secondVersion, firstVersion);
 };
 
 exports.satisfies = (version, range) => semver.satisfies(version, range, {

@@ -61,7 +61,7 @@ module.exports = (input, pkg, options) => {
 
 				newVersion = version.getNewVersion(pkg.version, input);
 
-				if (!version.isVersionGreaterThan(pkg.version, newVersion)) {
+				if (version.isLowerThanOrEqualTo(pkg.version, newVersion)) {
 					throw new Error(`New version \`${newVersion}\` should be higher than current version \`${pkg.version}\``);
 				}
 			}
