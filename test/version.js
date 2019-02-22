@@ -32,7 +32,7 @@ test('version.isPrereleaseVersion', t => {
 	t.false(version('patch').isPrereleaseVersion());
 	t.false(version('minor').isPrereleaseVersion());
 	t.false(version('major').isPrereleaseVersion());
-	
+
 	t.false(version('1.0.0').isPrereleaseVersion());
 	t.false(version('1.1.0').isPrereleaseVersion());
 	t.false(version('1.0.1').isPrereleaseVersion());
