@@ -62,26 +62,38 @@ test('version.getNewVersion', t => {
 	t.is(version.getNewVersion('1.0.1-0', 'prerelease'), '1.0.1-1');
 });
 
-test('version.isVersionGreater', t => {
+test('version.validateVersion', t => {
 	const message = 'Version should be a valid semver version.';
 
-	t.throws(() => version.isVersionGreater('1.0.0', 'patch'), message);
-	t.throws(() => version.isVersionGreater('1.0.0', 'patchxxx'), message);
-	t.throws(() => version.isVersionGreater('1.0.0', '1.0.0.0'), message);
+	t.throws(() => version.validateVersion('patch'), message);
+	t.throws(() => version.validateVersion('patchxxx'), message);
+	t.throws(() => version.validateVersion('1.0.0.0'), message);
 
-	t.false(version.isVersionGreater('1.0.0', '0.0.1'));
-	t.false(version.isVersionGreater('1.0.0', '0.1.0'));
-	t.false(version.isVersionGreater('1.0.0', '1.0.0'));
+	t.notThrows(() => version.validateVersion('1.0.0'));
+	t.notThrows(() => version.validateVersion('1.0.0-beta'));
+	t.notThrows(() => version.validateVersion('1.0.0-0'));
+});
 
-	t.false(version.isVersionGreater('1.0.0', '1.0.0-0'));
-	t.false(version.isVersionGreater('1.0.0', '1.0.0-beta'));
+test('version.isVersionGreaterThan', t => {
+	t.false(version.isVersionGreaterThan('1.0.0', '0.0.1'));
+	t.false(version.isVersionGreaterThan('1.0.0', '0.1.0'));
+	t.false(version.isVersionGreaterThan('1.0.0', '1.0.0'));
 
-	t.true(version.isVersionGreater('1.0.0', '1.0.1'));
-	t.true(version.isVersionGreater('1.0.0', '1.1.0'));
-	t.true(version.isVersionGreater('1.0.0', '2.0.0'));
+	t.false(version.isVersionGreaterThan('1.0.0', '1.0.0-0'));
+	t.false(version.isVersionGreaterThan('1.0.0', '1.0.0-beta'));
 
-	t.true(version.isVersionGreater('1.0.0', '2.0.0-0'));
-	t.true(version.isVersionGreater('1.0.0', '2.0.0-beta'));
+	t.true(version.isVersionGreaterThan('1.0.0', '1.0.1'));
+	t.true(version.isVersionGreaterThan('1.0.0', '1.1.0'));
+	t.true(version.isVersionGreaterThan('1.0.0', '2.0.0'));
+
+	t.true(version.isVersionGreaterThan('1.0.0', '2.0.0-0'));
+	t.true(version.isVersionGreaterThan('1.0.0', '2.0.0-beta'));
+});
+
+test('version.isVersionEqualTo', t => {
+	t.true(version.isVersionEqualTo('1.0.0', '1.0.0'));
+	t.true(version.isVersionEqualTo('1.0.0-beta', '1.0.0-beta'));
+	t.true(version.isVersionEqualTo('1.0.0-0', '1.0.0-0'));
 });
 
 test('version.satisfies', t => {
