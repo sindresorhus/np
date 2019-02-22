@@ -87,7 +87,7 @@ module.exports = async (options, pkg) => {
 					return 'Please specify a valid semver, for example, `1.2.3`. See http://semver.org';
 				}
 
-				if (!version.isVersionGreater(oldVersion, input)) {
+				if (!version.isVersionGreaterThan(oldVersion, input)) {
 					return `Version must be greater than ${oldVersion}`;
 				}
 

@@ -18,12 +18,20 @@ exports.getNewVersion = (oldVersion, input) => {
 	return exports.SEMVER_INCREMENTS.includes(input) ? semver.inc(oldVersion, input) : input;
 };
 
-exports.isVersionGreater = (oldVersion, newVersion) => {
-	if (!isValidVersion(newVersion)) {
+const validateVersion = version => {
+	if (!isValidVersion(version)) {
 		throw new Error('Version should be a valid semver version.');
 	}
+};
 
-	return semver.gt(newVersion, oldVersion);
+exports.isVersionGreaterThan = (firstVersion, secondVersion) => {
+	validateVersion(secondVersion);
+	return semver.gt(secondVersion, firstVersion);
+};
+
+exports.isVersionEqualTo = (firstVersion, secondVersion) => {
+	validateVersion(secondVersion);
+	return semver.eq(secondVersion, firstVersion);
 };
 
 exports.satisfies = (version, range) => semver.satisfies(version, range, {
