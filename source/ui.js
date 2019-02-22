@@ -74,20 +74,20 @@ module.exports = async (options, pkg) => {
 						value: null
 					}
 				]),
-			filter: input => version.isValidVersionInput(input) ? version.getNewVersion(oldVersion, input) : input
+			filter: input => version.isValidVersionInput(input) ? version(oldVersion).getNewVersion(input) : input
 		},
 		{
 			type: 'input',
 			name: 'version',
 			message: 'Version',
 			when: answers => !answers.version,
-			filter: input => version.isValidVersionInput(input) ? version.getNewVersion(pkg.version, input) : input,
+			filter: input => version.isValidVersionInput(input) ? version(pkg.version).getNewVersion(input) : input,
 			validate: input => {
 				if (!version.isValidVersionInput(input)) {
 					return 'Please specify a valid semver, for example, `1.2.3`. See http://semver.org';
 				}
 
-				if (version.isLowerThanOrEqualTo(oldVersion, input)) {
+				if (version(oldVersion).isLowerThanOrEqualTo(input)) {
 					return `Version must be greater than ${oldVersion}`;
 				}
 
@@ -98,7 +98,7 @@ module.exports = async (options, pkg) => {
 			type: 'list',
 			name: 'tag',
 			message: 'How should this pre-release version be tagged in npm?',
-			when: answers => !pkg.private && version.isPrereleaseVersion(answers.version) && !options.tag,
+			when: answers => !pkg.private && version(answers.version).isPrereleaseVersion() && !options.tag,
 			choices: async () => {
 				const existingPrereleaseTags = await prereleaseTags(pkg.name);
 
@@ -116,7 +116,7 @@ module.exports = async (options, pkg) => {
 			type: 'input',
 			name: 'tag',
 			message: 'Tag',
-			when: answers => !pkg.private && version.isPrereleaseVersion(answers.version) && !options.tag && !answers.tag,
+			when: answers => !pkg.private && version(answers.version).isPrereleaseVersion() && !options.tag && !answers.tag,
 			validate: input => {
 				if (input.length === 0) {
 					return 'Please specify a tag, for example, `next`.';

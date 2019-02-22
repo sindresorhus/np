@@ -29,37 +29,38 @@ test('version.isValidVersionInput', t => {
 });
 
 test('version.isPrereleaseVersion', t => {
-	t.false(version.isPrereleaseVersion('patch'));
-	t.false(version.isPrereleaseVersion('minor'));
-	t.false(version.isPrereleaseVersion('major'));
-	t.false(version.isPrereleaseVersion('1.0.0'));
-	t.false(version.isPrereleaseVersion('1.1.0'));
-	t.false(version.isPrereleaseVersion('1.0.1'));
+	t.false(version('patch').isPrereleaseVersion());
+	t.false(version('minor').isPrereleaseVersion());
+	t.false(version('major').isPrereleaseVersion());
+	
+	t.false(version('1.0.0').isPrereleaseVersion());
+	t.false(version('1.1.0').isPrereleaseVersion());
+	t.false(version('1.0.1').isPrereleaseVersion());
 
-	t.true(version.isPrereleaseVersion('prepatch'));
-	t.true(version.isPrereleaseVersion('preminor'));
-	t.true(version.isPrereleaseVersion('premajor'));
-	t.true(version.isPrereleaseVersion('prerelease'));
-	t.true(version.isPrereleaseVersion('1.0.0-beta'));
-	t.true(version.isPrereleaseVersion('2.0.0-rc.2'));
+	t.true(version('prepatch').isPrereleaseVersion());
+	t.true(version('preminor').isPrereleaseVersion());
+	t.true(version('premajor').isPrereleaseVersion());
+	t.true(version('prerelease').isPrereleaseVersion());
+	t.true(version('1.0.0-beta').isPrereleaseVersion());
+	t.true(version('2.0.0-rc.2').isPrereleaseVersion());
 });
 
 test('version.getNewVersion', t => {
 	const message = 'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease or a valid semver version.';
 
-	t.throws(() => version.getNewVersion('1.0.0', 'patchxxx'), message);
-	t.throws(() => version.getNewVersion('1.0.0', '1.0.0.0'), message);
+	t.throws(() => version('1.0.0').getNewVersion('patchxxx'), message);
+	t.throws(() => version('1.0.0').getNewVersion('1.0.0.0'), message);
 
-	t.is(version.getNewVersion('1.0.0', 'patch'), '1.0.1');
-	t.is(version.getNewVersion('1.0.0', 'minor'), '1.1.0');
-	t.is(version.getNewVersion('1.0.0', 'major'), '2.0.0');
+	t.is(version('1.0.0').getNewVersion('patch'), '1.0.1');
+	t.is(version('1.0.0').getNewVersion('minor'), '1.1.0');
+	t.is(version('1.0.0').getNewVersion('major'), '2.0.0');
 
-	t.is(version.getNewVersion('1.0.0-beta', 'major'), '1.0.0');
-	t.is(version.getNewVersion('1.0.0', 'prepatch'), '1.0.1-0');
-	t.is(version.getNewVersion('1.0.1-0', 'prepatch'), '1.0.2-0');
+	t.is(version('1.0.0-beta').getNewVersion('major'), '1.0.0');
+	t.is(version('1.0.0').getNewVersion('prepatch'), '1.0.1-0');
+	t.is(version('1.0.1-0').getNewVersion('prepatch'), '1.0.2-0');
 
-	t.is(version.getNewVersion('1.0.0-0', 'prerelease'), '1.0.0-1');
-	t.is(version.getNewVersion('1.0.1-0', 'prerelease'), '1.0.1-1');
+	t.is(version('1.0.0-0').getNewVersion('prerelease'), '1.0.0-1');
+	t.is(version('1.0.1-0').getNewVersion('prerelease'), '1.0.1-1');
 });
 
 test('version.validateVersion', t => {
@@ -75,35 +76,35 @@ test('version.validateVersion', t => {
 });
 
 test('version.isGreaterThanOrEqualTo', t => {
-	t.false(version.isGreaterThanOrEqualTo('1.0.0', '0.0.1'));
-	t.false(version.isGreaterThanOrEqualTo('1.0.0', '0.1.0'));
+	t.false(version('1.0.0').isGreaterThanOrEqualTo('0.0.1'));
+	t.false(version('1.0.0').isGreaterThanOrEqualTo('0.1.0'));
 
-	t.false(version.isGreaterThanOrEqualTo('1.0.0', '1.0.0-0'));
-	t.false(version.isGreaterThanOrEqualTo('1.0.0', '1.0.0-beta'));
+	t.false(version('1.0.0').isGreaterThanOrEqualTo('1.0.0-0'));
+	t.false(version('1.0.0').isGreaterThanOrEqualTo('1.0.0-beta'));
 
-	t.true(version.isGreaterThanOrEqualTo('1.0.0', '1.0.0'));
-	t.true(version.isGreaterThanOrEqualTo('1.0.0', '1.0.1'));
-	t.true(version.isGreaterThanOrEqualTo('1.0.0', '1.1.0'));
-	t.true(version.isGreaterThanOrEqualTo('1.0.0', '2.0.0'));
+	t.true(version('1.0.0').isGreaterThanOrEqualTo('1.0.0'));
+	t.true(version('1.0.0').isGreaterThanOrEqualTo('1.0.1'));
+	t.true(version('1.0.0').isGreaterThanOrEqualTo('1.1.0'));
+	t.true(version('1.0.0').isGreaterThanOrEqualTo('2.0.0'));
 
-	t.true(version.isGreaterThanOrEqualTo('1.0.0', '2.0.0-0'));
-	t.true(version.isGreaterThanOrEqualTo('1.0.0', '2.0.0-beta'));
+	t.true(version('1.0.0').isGreaterThanOrEqualTo('2.0.0-0'));
+	t.true(version('1.0.0').isGreaterThanOrEqualTo('2.0.0-beta'));
 });
 
 test('version.isLowerThanOrEqualTo', t => {
-	t.true(version.isLowerThanOrEqualTo('1.0.0', '0.0.1'));
-	t.true(version.isLowerThanOrEqualTo('1.0.0', '0.1.0'));
+	t.true(version('1.0.0').isLowerThanOrEqualTo('0.0.1'));
+	t.true(version('1.0.0').isLowerThanOrEqualTo('0.1.0'));
 
-	t.true(version.isLowerThanOrEqualTo('1.0.0', '1.0.0-0'));
-	t.true(version.isLowerThanOrEqualTo('1.0.0', '1.0.0-beta'));
-	t.true(version.isLowerThanOrEqualTo('1.0.0', '1.0.0'));
+	t.true(version('1.0.0').isLowerThanOrEqualTo('1.0.0-0'));
+	t.true(version('1.0.0').isLowerThanOrEqualTo('1.0.0-beta'));
+	t.true(version('1.0.0').isLowerThanOrEqualTo('1.0.0'));
 
-	t.false(version.isLowerThanOrEqualTo('1.0.0', '1.0.1'));
-	t.false(version.isLowerThanOrEqualTo('1.0.0', '1.1.0'));
-	t.false(version.isLowerThanOrEqualTo('1.0.0', '2.0.0'));
+	t.false(version('1.0.0').isLowerThanOrEqualTo('1.0.1'));
+	t.false(version('1.0.0').isLowerThanOrEqualTo('1.1.0'));
+	t.false(version('1.0.0').isLowerThanOrEqualTo('2.0.0'));
 
-	t.false(version.isLowerThanOrEqualTo('1.0.0', '2.0.0-0'));
-	t.false(version.isLowerThanOrEqualTo('1.0.0', '2.0.0-beta'));
+	t.false(version('1.0.0').isLowerThanOrEqualTo('2.0.0-0'));
+	t.false(version('1.0.0').isLowerThanOrEqualTo('2.0.0-beta'));
 });
 
 test('version.satisfies', t => {
