@@ -65,22 +65,26 @@ module.exports = async (input = 'patch', options) => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
 
 		const lastCommit = (await git.getLastCommit()).trim();
+		const versionInLastCommit = lastCommit.slice(1);
 
 		try {
-			if (lastCommit.slice(1) === util.readPkg().version && lastCommit.slice(1) !== pkg.version) { // Verify that the package's version has been bumped before deleting the last tag and commit.
+			if (versionInLastCommit === util.readPkg().version && versionInLastCommit !== pkg.version) { // Verify that the package's version has been bumped before deleting the last tag and commit.
 				await git.deleteTag(lastCommit);
 				await git.removeLastCommit();
 			}
 
 			console.log('Successfully rolled back the project to its previous state.');
 		} catch (error) {
-			console.log(`Couldn't rollback because of the following error:\n${error}`);
+			console.log(`Couldn't roll back because of the following error:\n${error}`);
 		}
 	});
 
 	exitHook(() => (error, callback) => {
 		if (!isPublished && runPublish) {
-			rollback().then(callback); // eslint-disable-line promise/prefer-await-to-then
+			(async () => {
+				await rollback();
+				callback();
+			})();
 		}
 	});
 
@@ -209,11 +213,6 @@ module.exports = async (input = 'patch', options) => {
 
 	tasks.add({
 		title: 'Creating release draft on GitHub',
-		skip: async () => {
-			if (!isPublished && runPublish) {
-				return 'Couldn\'t publish package to npm; not creating release draft.';
-			}
-		},
 		enabled: () => isOnGitHub === true,
 		task: () => releaseTaskHelper(options)
 	});
