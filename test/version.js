@@ -9,23 +9,23 @@ test('version.PRERELEASE_VERSIONS', t => {
 	t.deepEqual(version.PRERELEASE_VERSIONS, ['prepatch', 'preminor', 'premajor', 'prerelease']);
 });
 
-test('version.isValidVersionInput', t => {
-	t.false(version.isValidVersionInput(null));
-	t.false(version.isValidVersionInput('foo'));
-	t.false(version.isValidVersionInput('1.0.0.0'));
+test('version.isValidInput', t => {
+	t.false(version.isValidInput(null));
+	t.false(version.isValidInput('foo'));
+	t.false(version.isValidInput('1.0.0.0'));
 
-	t.true(version.isValidVersionInput('patch'));
-	t.true(version.isValidVersionInput('minor'));
-	t.true(version.isValidVersionInput('major'));
-	t.true(version.isValidVersionInput('prepatch'));
-	t.true(version.isValidVersionInput('preminor'));
-	t.true(version.isValidVersionInput('premajor'));
-	t.true(version.isValidVersionInput('prerelease'));
-	t.true(version.isValidVersionInput('1.0.0'));
-	t.true(version.isValidVersionInput('1.1.0'));
-	t.true(version.isValidVersionInput('1.0.1'));
-	t.true(version.isValidVersionInput('1.0.0-beta'));
-	t.true(version.isValidVersionInput('2.0.0-rc.2'));
+	t.true(version.isValidInput('patch'));
+	t.true(version.isValidInput('minor'));
+	t.true(version.isValidInput('major'));
+	t.true(version.isValidInput('prepatch'));
+	t.true(version.isValidInput('preminor'));
+	t.true(version.isValidInput('premajor'));
+	t.true(version.isValidInput('prerelease'));
+	t.true(version.isValidInput('1.0.0'));
+	t.true(version.isValidInput('1.1.0'));
+	t.true(version.isValidInput('1.0.1'));
+	t.true(version.isValidInput('1.0.0-beta'));
+	t.true(version.isValidInput('2.0.0-rc.2'));
 });
 
 test('version.isPrerelease', t => {
