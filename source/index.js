@@ -17,7 +17,8 @@ const onetime = require('onetime');
 const exitHook = require('async-exit-hook');
 const prerequisiteTasks = require('./prerequisite-tasks');
 const gitTasks = require('./git-tasks');
-const publishTaskHelper = require('./publish-task-helper');
+const publish = require('./npm/publish');
+const enable2fa = require('./npm/enable-2fa');
 const releaseTaskHelper = require('./release-task-helper');
 const util = require('./util');
 const git = require('./git-util');
@@ -181,7 +182,7 @@ module.exports = async (input = 'patch', options) => {
 				task: (context, task) => {
 					let hasError = false;
 
-					return publishTaskHelper(pkgManager, task, options, input)
+					return publish(context, pkgManager, task, options, input)
 						.pipe(
 							catchError(async error => {
 								hasError = true;
@@ -195,6 +196,15 @@ module.exports = async (input = 'patch', options) => {
 				}
 			}
 		]);
+
+		if (!options.exists && !pkg.private) {
+			tasks.add([
+				{
+					title: 'Enabling two-factor authentication',
+					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
+				}
+			]);
+		}
 	}
 
 	tasks.add({

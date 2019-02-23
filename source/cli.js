@@ -74,6 +74,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 		{
 			...cli.flags,
 			confirm: true,
+			exists: !isAvailable,
 			version: cli.input[0]
 		} :
 		await ui({...cli.flags, exists: !isAvailable}, pkg);
