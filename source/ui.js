@@ -74,16 +74,16 @@ module.exports = async (options, pkg) => {
 						value: null
 					}
 				]),
-			filter: input => version.isValidVersionInput(input) ? version(oldVersion).getNewVersionFrom(input) : input
+			filter: input => version.isValidInput(input) ? version(oldVersion).getNewVersionFrom(input) : input
 		},
 		{
 			type: 'input',
 			name: 'version',
 			message: 'Version',
 			when: answers => !answers.version,
-			filter: input => version.isValidVersionInput(input) ? version(pkg.version).getNewVersionFrom(input) : input,
+			filter: input => version.isValidInput(input) ? version(pkg.version).getNewVersionFrom(input) : input,
 			validate: input => {
-				if (!version.isValidVersionInput(input)) {
+				if (!version.isValidInput(input)) {
 					return 'Please specify a valid semver, for example, `1.2.3`. See http://semver.org';
 				}
 

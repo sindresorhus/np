@@ -48,7 +48,7 @@ module.exports.PRERELEASE_VERSIONS = ['prepatch', 'preminor', 'premajor', 'prere
 
 const isValidVersion = input => Boolean(semver.valid(input));
 
-module.exports.isValidVersionInput = input => module.exports.SEMVER_INCREMENTS.includes(input) || isValidVersion(input);
+module.exports.isValidInput = input => module.exports.SEMVER_INCREMENTS.includes(input) || isValidVersion(input);
 
 module.exports.validate = version => {
 	if (!isValidVersion(version)) {

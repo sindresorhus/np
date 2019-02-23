@@ -55,7 +55,7 @@ module.exports = (input, pkg, options) => {
 		{
 			title: 'Validate version',
 			task: () => {
-				if (!version.isValidVersionInput(input)) {
+				if (!version.isValidInput(input)) {
 					throw new Error(`Version should be either ${version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`);
 				}
 
