@@ -28,51 +28,51 @@ test('version.isValidVersionInput', t => {
 	t.true(version.isValidVersionInput('2.0.0-rc.2'));
 });
 
-test('version.isPrereleaseVersion', t => {
-	t.false(version('patch').isPrereleaseVersion());
-	t.false(version('minor').isPrereleaseVersion());
-	t.false(version('major').isPrereleaseVersion());
+test('version.isPrerelease', t => {
+	t.false(version('patch').isPrerelease());
+	t.false(version('minor').isPrerelease());
+	t.false(version('major').isPrerelease());
 
-	t.false(version('1.0.0').isPrereleaseVersion());
-	t.false(version('1.1.0').isPrereleaseVersion());
-	t.false(version('1.0.1').isPrereleaseVersion());
+	t.false(version('1.0.0').isPrerelease());
+	t.false(version('1.1.0').isPrerelease());
+	t.false(version('1.0.1').isPrerelease());
 
-	t.true(version('prepatch').isPrereleaseVersion());
-	t.true(version('preminor').isPrereleaseVersion());
-	t.true(version('premajor').isPrereleaseVersion());
-	t.true(version('prerelease').isPrereleaseVersion());
-	t.true(version('1.0.0-beta').isPrereleaseVersion());
-	t.true(version('2.0.0-rc.2').isPrereleaseVersion());
+	t.true(version('prepatch').isPrerelease());
+	t.true(version('preminor').isPrerelease());
+	t.true(version('premajor').isPrerelease());
+	t.true(version('prerelease').isPrerelease());
+	t.true(version('1.0.0-beta').isPrerelease());
+	t.true(version('2.0.0-rc.2').isPrerelease());
 });
 
-test('version.getNewVersion', t => {
+test('version.getNewVersionFrom', t => {
 	const message = 'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease or a valid semver version.';
 
-	t.throws(() => version('1.0.0').getNewVersion('patchxxx'), message);
-	t.throws(() => version('1.0.0').getNewVersion('1.0.0.0'), message);
+	t.throws(() => version('1.0.0').getNewVersionFrom('patchxxx'), message);
+	t.throws(() => version('1.0.0').getNewVersionFrom('1.0.0.0'), message);
 
-	t.is(version('1.0.0').getNewVersion('patch'), '1.0.1');
-	t.is(version('1.0.0').getNewVersion('minor'), '1.1.0');
-	t.is(version('1.0.0').getNewVersion('major'), '2.0.0');
+	t.is(version('1.0.0').getNewVersionFrom('patch'), '1.0.1');
+	t.is(version('1.0.0').getNewVersionFrom('minor'), '1.1.0');
+	t.is(version('1.0.0').getNewVersionFrom('major'), '2.0.0');
 
-	t.is(version('1.0.0-beta').getNewVersion('major'), '1.0.0');
-	t.is(version('1.0.0').getNewVersion('prepatch'), '1.0.1-0');
-	t.is(version('1.0.1-0').getNewVersion('prepatch'), '1.0.2-0');
+	t.is(version('1.0.0-beta').getNewVersionFrom('major'), '1.0.0');
+	t.is(version('1.0.0').getNewVersionFrom('prepatch'), '1.0.1-0');
+	t.is(version('1.0.1-0').getNewVersionFrom('prepatch'), '1.0.2-0');
 
-	t.is(version('1.0.0-0').getNewVersion('prerelease'), '1.0.0-1');
-	t.is(version('1.0.1-0').getNewVersion('prerelease'), '1.0.1-1');
+	t.is(version('1.0.0-0').getNewVersionFrom('prerelease'), '1.0.0-1');
+	t.is(version('1.0.1-0').getNewVersionFrom('prerelease'), '1.0.1-1');
 });
 
-test('version.validateVersion', t => {
+test('version.validate', t => {
 	const message = 'Version should be a valid semver version.';
 
-	t.throws(() => version.validateVersion('patch'), message);
-	t.throws(() => version.validateVersion('patchxxx'), message);
-	t.throws(() => version.validateVersion('1.0.0.0'), message);
+	t.throws(() => version.validate('patch'), message);
+	t.throws(() => version.validate('patchxxx'), message);
+	t.throws(() => version.validate('1.0.0.0'), message);
 
-	t.notThrows(() => version.validateVersion('1.0.0'));
-	t.notThrows(() => version.validateVersion('1.0.0-beta'));
-	t.notThrows(() => version.validateVersion('1.0.0-0'));
+	t.notThrows(() => version.validate('1.0.0'));
+	t.notThrows(() => version.validate('1.0.0-beta'));
+	t.notThrows(() => version.validate('1.0.0-0'));
 });
 
 test('version.isGreaterThanOrEqualTo', t => {

@@ -6,12 +6,12 @@ class Version {
 		this.version = version;
 	}
 
-	isPrereleaseVersion() {
+	isPrerelease() {
 		return module.exports.PRERELEASE_VERSIONS.includes(this.version) || Boolean(semver.prerelease(this.version));
 	}
 
-	getNewVersion(input) {
-		module.exports.validateVersion(this.version);
+	getNewVersionFrom(input) {
+		module.exports.validate(this.version);
 		if (!module.exports.isValidVersionInput(input)) {
 			throw new Error(`Version should be either ${module.exports.SEMVER_INCREMENTS.join(', ')} or a valid semver version.`);
 		}
@@ -20,15 +20,15 @@ class Version {
 	}
 
 	isGreaterThanOrEqualTo(otherVersion) {
-		module.exports.validateVersion(this.version);
-		module.exports.validateVersion(otherVersion);
+		module.exports.validate(this.version);
+		module.exports.validate(otherVersion);
 
 		return semver.gte(otherVersion, this.version);
 	}
 
 	isLowerThanOrEqualTo(otherVersion) {
-		module.exports.validateVersion(this.version);
-		module.exports.validateVersion(otherVersion);
+		module.exports.validate(this.version);
+		module.exports.validate(otherVersion);
 
 		return semver.lte(otherVersion, this.version);
 	}
@@ -43,7 +43,7 @@ const isValidVersion = input => Boolean(semver.valid(input));
 
 module.exports.isValidVersionInput = input => module.exports.SEMVER_INCREMENTS.includes(input) || isValidVersion(input);
 
-module.exports.validateVersion = version => {
+module.exports.validate = version => {
 	if (!isValidVersion(version)) {
 		throw new Error('Version should be a valid semver version.');
 	}
