@@ -21,7 +21,7 @@ module.exports = (input, pkg, options) => {
 			task: async () => {
 				const versions = JSON.parse(await execa.stdout('npm', ['version', '--json']));
 
-				if (version.satisfies(versions.npm, '<6.8.0')) {
+				if (version(versions.npm).satisfies('<6.8.0')) {
 					throw new Error('Please upgrade to npm@6.8.0 or newer');
 				}
 			}
