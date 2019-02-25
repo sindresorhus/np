@@ -7,6 +7,7 @@ const meow = require('meow');
 const updateNotifier = require('update-notifier');
 const hasYarn = require('has-yarn');
 const npmName = require('npm-name');
+const cosmiconfig = require('cosmiconfig');
 const version = require('./version');
 const util = require('./util');
 const ui = require('./ui');
@@ -40,22 +41,19 @@ const cli = meow(`
 			type: 'boolean'
 		},
 		cleanup: {
-			type: 'boolean',
-			default: true
+			type: 'boolean'
 		},
 		yolo: {
 			type: 'boolean'
 		},
 		publish: {
-			type: 'boolean',
-			default: true
+			type: 'boolean'
 		},
 		tag: {
 			type: 'string'
 		},
 		yarn: {
-			type: 'boolean',
-			default: hasYarn()
+			type: 'boolean'
 		},
 		contents: {
 			type: 'string'
@@ -73,16 +71,32 @@ process.on('SIGINT', () => {
 (async () => {
 	const pkg = util.readPkg();
 
-	const isAvailable = cli.flags.publish ? await npmName(pkg.name) : false;
+	const explorer = cosmiconfig('np', {
+		searchPlaces: [
+			'package.json',
+			'.np-config.json'
+		]
+	});
+	const {config} = (await explorer.search()) || {};
+
+	const defaultFlags = {
+		cleanup: true,
+		publish: true,
+		yarn: hasYarn()
+	};
+
+	const flags = {...defaultFlags, ...config, ...cli.flags};
+
+	const isAvailable = flags.publish ? await npmName(pkg.name) : false;
 
 	const options = cli.input.length > 0 ?
 		{
-			...cli.flags,
+			...flags,
 			confirm: true,
 			exists: !isAvailable,
 			version: cli.input[0]
 		} :
-		await ui({...cli.flags, exists: !isAvailable}, pkg);
+		await ui({...flags, exists: !isAvailable}, pkg);
 
 	if (!options.confirm) {
 		process.exit(0);
