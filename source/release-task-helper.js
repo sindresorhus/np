@@ -10,7 +10,7 @@ module.exports = async options => {
 		repoUrl: options.repoUrl,
 		tag,
 		body: options.releaseNotes(tag),
-		isPrerelease: version.isPrereleaseVersion(options.version)
+		isPrerelease: version(options.version).isPrerelease()
 	});
 
 	opn(url, {wait: false});

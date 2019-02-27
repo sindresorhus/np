@@ -21,7 +21,7 @@ module.exports = (input, pkg, options) => {
 			task: async () => {
 				const versions = JSON.parse(await execa.stdout('npm', ['version', '--json']));
 
-				if (version.satisfies(versions.npm, '<6.8.0')) {
+				if (version(versions.npm).satisfies('<6.8.0')) {
 					throw new Error('Please upgrade to npm@6.8.0 or newer');
 				}
 			}
@@ -55,13 +55,13 @@ module.exports = (input, pkg, options) => {
 		{
 			title: 'Validate version',
 			task: () => {
-				if (!version.isValidVersionInput(input)) {
+				if (!version.isValidInput(input)) {
 					throw new Error(`Version should be either ${version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`);
 				}
 
-				newVersion = version.getNewVersion(pkg.version, input);
+				newVersion = version(pkg.version).getNewVersionFrom(input);
 
-				if (!version.isVersionGreater(pkg.version, newVersion)) {
+				if (version(pkg.version).isLowerThanOrEqualTo(newVersion)) {
 					throw new Error(`New version \`${newVersion}\` should be higher than current version \`${pkg.version}\``);
 				}
 			}
@@ -69,7 +69,7 @@ module.exports = (input, pkg, options) => {
 		{
 			title: 'Check for pre-release version',
 			task: () => {
-				if (!pkg.private && version.isPrereleaseVersion(newVersion) && !options.tag) {
+				if (!pkg.private && version(newVersion).isPrerelease() && !options.tag) {
 					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 				}
 			}

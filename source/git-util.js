@@ -1,6 +1,6 @@
 'use strict';
 const execa = require('execa');
-const semver = require('semver');
+const version = require('./version');
 
 const latestTag = () => execa.stdout('git', ['describe', '--abbrev=0', '--tags']);
 
@@ -116,7 +116,10 @@ const gitVersion = async () => {
 };
 
 exports.verifyRecentGitVersion = async () => {
-	if (semver.lt(await gitVersion(), '2.11.0')) {
+	const installedVersion = await gitVersion();
+	const minVersion = '2.11.0';
+
+	if (!version(minVersion).isGreaterThanOrEqualTo(installedVersion)) {
 		throw new Error('Please upgrade git to version 2.11 or higher.');
 	}
 };
