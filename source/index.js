@@ -80,7 +80,7 @@ module.exports = async (input = 'patch', options) => {
 		}
 	});
 
-	exitHook(() => (error, callback) => {
+	exitHook(callback => {
 		if (!isPublished && runPublish) {
 			(async () => {
 				await rollback();
@@ -187,7 +187,7 @@ module.exports = async (input = 'patch', options) => {
 							catchError(async error => {
 								hasError = true;
 								await rollback();
-								throw new Error(`Error publishing package:\n${error.message}`);
+								throw new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`);
 							}),
 							finalize(() => {
 								isPublished = !hasError;
