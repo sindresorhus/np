@@ -5,15 +5,16 @@ const version = require('./version');
 const git = require('./git-util');
 const npm = require('./npm-util');
 const {getTagVersionPrefix} = require('./util');
+const {isExternalRegistry} = require('./npm/check-name');
 
 module.exports = (input, pkg, options) => {
-	const isExternalRegistry = typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
+	const isExternal = isExternalRegistry(pkg);
 	let newVersion = null;
 
 	const tasks = [
 		{
 			title: 'Ping npm registry',
-			skip: () => pkg.private || isExternalRegistry,
+			skip: () => pkg.private || isExternal,
 			task: async () => npm.checkConnection()
 		},
 		{
@@ -28,7 +29,7 @@ module.exports = (input, pkg, options) => {
 		},
 		{
 			title: 'Verify user is authenticated',
-			skip: () => process.env.NODE_ENV === 'test' || pkg.private || isExternalRegistry,
+			skip: () => process.env.NODE_ENV === 'test' || pkg.private || isExternal,
 			task: async () => {
 				const username = await npm.username();
 
