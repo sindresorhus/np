@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for np
+about: Suggest an idea
 ---
 
 <!--- Provide a general summary of the request in the title above -->
