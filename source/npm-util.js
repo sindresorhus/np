@@ -2,6 +2,7 @@
 const execa = require('execa');
 const pTimeout = require('p-timeout');
 const ow = require('ow');
+const version = require('./version');
 
 exports.checkConnection = () => pTimeout(
 	(async () => {
@@ -60,4 +61,12 @@ exports.prereleaseTags = async packageName => {
 	}
 
 	return tags;
+};
+
+exports.verifyRecentNpmVersion = async () => {
+	const versions = JSON.parse(await execa.stdout('npm', ['version', '--json']));
+
+	if (version(versions.npm).satisfies('<6.8.0')) {
+		throw new Error('Please upgrade to npm@6.8.0 or newer');
+	}
 };

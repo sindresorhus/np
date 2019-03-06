@@ -120,6 +120,6 @@ exports.verifyRecentGitVersion = async () => {
 	const minVersion = '2.11.0';
 
 	if (!version(minVersion).isGreaterThanOrEqualTo(installedVersion)) {
-		throw new Error('Please upgrade git to version 2.11 or higher.');
+		throw new Error('Please upgrade to git@2.11.0 or newer.');
 	}
 };

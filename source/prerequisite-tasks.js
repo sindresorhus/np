@@ -18,11 +18,16 @@ module.exports = (input, pkg, options) => {
 		},
 		{
 			title: 'Check npm version',
+			task: async () => npm.verifyRecentNpmVersion()
+		},
+		{
+			title: 'Check yarn version',
+			enabled: () => options.yarn === true,
 			task: async () => {
-				const versions = JSON.parse(await execa.stdout('npm', ['version', '--json']));
+				const yarnVersion = await execa.stdout('yarn', ['--version']);
 
-				if (version(versions.npm).satisfies('<6.8.0')) {
-					throw new Error('Please upgrade to npm@6.8.0 or newer');
+				if (version(yarnVersion).satisfies('<1.7.0')) {
+					throw new Error('Please upgrade to yarn@1.7.0 or newer');
 				}
 			}
 		},
@@ -45,7 +50,7 @@ module.exports = (input, pkg, options) => {
 			}
 		},
 		{
-			title: 'Verify git version is recent',
+			title: 'Check git version',
 			task: async () => git.verifyRecentGitVersion()
 		},
 		{
