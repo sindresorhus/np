@@ -7,7 +7,7 @@ const meow = require('meow');
 const updateNotifier = require('update-notifier');
 const hasYarn = require('has-yarn');
 const npmName = require('npm-name');
-const cosmiconfig = require('cosmiconfig');
+const config = require('./config');
 const version = require('./version');
 const util = require('./util');
 const ui = require('./ui');
@@ -71,21 +71,15 @@ process.on('SIGINT', () => {
 (async () => {
 	const pkg = util.readPkg();
 
-	const explorer = cosmiconfig('np', {
-		searchPlaces: [
-			'package.json',
-			'.np-config.json'
-		]
-	});
-	const {config} = (await explorer.search()) || {};
-
 	const defaultFlags = {
 		cleanup: true,
 		publish: true,
 		yarn: hasYarn()
 	};
 
-	const flags = {...defaultFlags, ...config, ...cli.flags};
+	const localConfig = await config();
+
+	const flags = {...defaultFlags, ...localConfig, ...cli.flags};
 
 	const isAvailable = flags.publish ? await npmName(pkg.name) : false;
 

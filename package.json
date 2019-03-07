@@ -36,6 +36,7 @@
 		"has-yarn": "^1.0.0",
 		"hosted-git-info": "^2.7.1",
 		"inquirer": "^6.2.1",
+		"is-installed-globally": "^0.1.0",
 		"is-scoped": "^1.0.0",
 		"issue-regex": "^2.0.0",
 		"listr": "^0.14.3",
