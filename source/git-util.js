@@ -117,9 +117,9 @@ const gitVersion = async () => {
 
 exports.verifyRecentGitVersion = async () => {
 	const installedVersion = await gitVersion();
-	const minVersion = '2.11.0';
+	const range = require('../package.json').engines.git;
 
-	if (!version(minVersion).isGreaterThanOrEqualTo(installedVersion)) {
-		throw new Error('Please upgrade git to version 2.11 or higher.');
+	if (!version.satisfies(installedVersion, range)) {
+		throw new Error(`Please upgrade git to ${range} or higher.`);
 	}
 };

@@ -11,10 +11,7 @@ class Version {
 	}
 
 	satisfies(range) {
-		module.exports.validate(this.version);
-		return semver.satisfies(this.version, range, {
-			includePrerelease: true
-		});
+		return module.exports.satisfies(this.version, range);
 	}
 
 	getNewVersionFrom(input) {
@@ -54,4 +51,11 @@ module.exports.validate = version => {
 	if (!isValidVersion(version)) {
 		throw new Error('Version should be a valid semver version.');
 	}
+};
+
+module.exports.satisfies = (version, range) => {
+	module.exports.validate(version);
+	return semver.satisfies(version, range, {
+		includePrerelease: true
+	});
 };

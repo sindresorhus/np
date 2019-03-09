@@ -19,10 +19,11 @@ module.exports = (input, pkg, options) => {
 		{
 			title: 'Check npm version',
 			task: async () => {
-				const versions = JSON.parse(await execa.stdout('npm', ['version', '--json']));
+				const npmVersion = JSON.parse(await execa.stdout('npm', ['version', '--json'])).npm;
+				const range = require('../package.json').engines.npm;
 
-				if (version(versions.npm).satisfies('<6.8.0')) {
-					throw new Error('Please upgrade to npm@6.8.0 or newer');
+				if (!version.satisfies(npmVersion, range)) {
+					throw new Error(`Please upgrade to ${range} or newer`);
 				}
 			}
 		},

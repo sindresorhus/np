@@ -6,7 +6,10 @@
 	"repository": "sindresorhus/np",
 	"bin": "source/cli.js",
 	"engines": {
-		"node": ">=8"
+		"node": ">=8",
+		"npm": ">=6.8.0",
+		"git": ">=2.11.0",
+		"yarn": "*"
 	},
 	"scripts": {
 		"test": "xo && FORCE_HYPERLINK=1 ava"
