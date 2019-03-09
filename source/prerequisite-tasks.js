@@ -23,7 +23,7 @@ module.exports = (input, pkg, options) => {
 				const range = require('../package.json').engines.npm;
 
 				if (!version.satisfies(npmVersion, range)) {
-					throw new Error(`Please upgrade to ${range} or newer`);
+					throw new Error(`Please upgrade npm to ${range} or newer`);
 				}
 			}
 		},
