@@ -9,7 +9,7 @@
 		"node": ">=8",
 		"npm": ">=6.8.0",
 		"git": ">=2.11.0",
-		"yarn": "*"
+		"yarn": ">=1.7.0"
 	},
 	"scripts": {
 		"test": "xo && FORCE_HYPERLINK=1 ava"
