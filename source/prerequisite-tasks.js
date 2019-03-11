@@ -28,9 +28,11 @@ module.exports = (input, pkg, options) => {
 		},
 		{
 			title: 'Verify user is authenticated',
-			skip: () => process.env.NODE_ENV === 'test' || pkg.private || isExternalRegistry,
+			skip: () => process.env.NODE_ENV === 'test' || pkg.private,
 			task: async () => {
-				const username = await npm.username();
+				const username = await npm.username({
+					registry: isExternalRegistry && pkg.publishConfig.registry,
+				});
 
 				const collaborators = await npm.collaborators(pkg.name);
 				if (!collaborators) {
