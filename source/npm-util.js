@@ -16,11 +16,11 @@ exports.checkConnection = () => pTimeout(
 	'Connection to npm registry timed out'
 );
 
-exports.username = async ({ registry }) => {
+exports.username = async ({ externalRegistry }) => {
 	const args = ['whoami'];
 
-	if (registry) {
-		args.push('--registry', registry);
+	if (externalRegistry) {
+		args.push('--registry', externalRegistry);
 	}
 
 	try {
