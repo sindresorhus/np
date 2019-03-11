@@ -31,7 +31,7 @@ module.exports = (input, pkg, options) => {
 			skip: () => process.env.NODE_ENV === 'test' || pkg.private,
 			task: async () => {
 				const username = await npm.username({
-					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false,
+					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false
 				});
 
 				const collaborators = await npm.collaborators(pkg.name);
