@@ -22,7 +22,7 @@ module.exports = (input, pkg, options) => {
 				const versions = JSON.parse(await execa.stdout('npm', ['version', '--json']));
 
 				if (!version(versions.npm).satisfies('<=6.5.0 || >=6.8.0')) {
-					throw new Error('npm versions above v6.6.0 and below v6.8.0 are not supported due to a bug in npm.');
+					throw new Error('Please upgrade to npm@6.8.0 or newer');
 				}
 			}
 		},
