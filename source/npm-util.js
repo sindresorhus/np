@@ -63,7 +63,7 @@ exports.prereleaseTags = async packageName => {
 	return tags;
 };
 
-exports.checkName = async pkg => {
+exports.isPackageNameAvailable = async pkg => {
 	const isExternalRegistry = exports.isExternalRegistry(pkg);
 	if (isExternalRegistry) {
 		return true;
