@@ -63,10 +63,12 @@ exports.prereleaseTags = async packageName => {
 	return tags;
 };
 
-exports.verifyRecentNpmVersion = async () => {
-	const versions = JSON.parse(await execa.stdout('npm', ['version', '--json']));
+exports.version = () => execa.stdout('npm', ['--version']);
 
-	if (version(versions.npm).satisfies('<6.8.0')) {
+exports.verifyRecentNpmVersion = async () => {
+	const npmVersion = await exports.version();
+
+	if (version(npmVersion).satisfies('<6.8.0')) {
 		throw new Error('Please upgrade to npm@6.8.0 or newer');
 	}
 };
