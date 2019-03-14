@@ -1,6 +1,6 @@
 'use strict';
-const execa = require('execa');
 const Listr = require('listr');
+const execa = require('execa');
 const version = require('./version');
 const git = require('./git-util');
 const npm = require('./npm-util');
@@ -20,7 +20,6 @@ module.exports = (input, pkg, options) => {
 		},
 		{
 			title: 'Check npm version',
-
 			task: async () => {
 				const npmVersion = JSON.parse(await execa.stdout('npm', ['version', '--json'])).npm;
 				satisfiesRequiredVersion('npm', npmVersion);
