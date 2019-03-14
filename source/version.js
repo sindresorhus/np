@@ -1,5 +1,8 @@
 'use strict';
 const semver = require('semver');
+const pkg = require('../package.json');
+
+const requirements = pkg.engines;
 
 class Version {
 	constructor(version) {
@@ -11,7 +14,7 @@ class Version {
 	}
 
 	satisfies(range) {
-		return module.exports.satisfies(this.version, range);
+		return satisfies(this.version, range);
 	}
 
 	getNewVersionFrom(input) {
@@ -53,9 +56,23 @@ module.exports.validate = version => {
 	}
 };
 
-module.exports.satisfies = (version, range) => {
+module.exports.satisfiesRequiredVersion = async function (pkgName, installedVersion) {
+	const range = requirements[pkgName];
+	if (!satisfies(installedVersion, range)) {
+		throw new Error(`Please upgrade ${pkgName} to ${range} or higher.`);
+	}
+};
+
+/**
+ * Check whether the given version satisfies the range
+ * @private
+ * @param {string} version to check
+ * @param {string} range to check
+ * @returns {boolean} true if satisfies
+ */
+function satisfies(version, range) {
 	module.exports.validate(version);
 	return semver.satisfies(version, range, {
 		includePrerelease: true
 	});
-};
+}

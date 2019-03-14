@@ -1,10 +1,12 @@
 'use strict';
-const Listr = require('listr');
 const execa = require('execa');
+const Listr = require('listr');
 const version = require('./version');
 const git = require('./git-util');
 const npm = require('./npm-util');
 const {getTagVersionPrefix} = require('./util');
+
+const {satisfiesRequiredVersion} = version;
 
 module.exports = (input, pkg, options) => {
 	const isExternalRegistry = typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
@@ -18,14 +20,12 @@ module.exports = (input, pkg, options) => {
 		},
 		{
 			title: 'Check npm version',
+
 			task: async () => {
 				const npmVersion = JSON.parse(await execa.stdout('npm', ['version', '--json'])).npm;
-				const range = require('../package.json').engines.npm;
-
-				if (!version.satisfies(npmVersion, range)) {
-					throw new Error(`Please upgrade npm to ${range} or newer`);
-				}
+				satisfiesRequiredVersion('npm', npmVersion);
 			}
+
 		},
 		{
 			title: 'Verify user is authenticated',

@@ -2,6 +2,8 @@
 const execa = require('execa');
 const version = require('./version');
 
+const {satisfiesRequiredVersion} = version;
+
 const latestTag = () => execa.stdout('git', ['describe', '--abbrev=0', '--tags']);
 
 const firstCommit = () => execa.stdout('git', ['rev-list', '--max-parents=0', 'HEAD']);
@@ -110,16 +112,8 @@ exports.commitLogFromRevision = revision => execa.stdout('git', ['log', '--forma
 
 exports.push = () => execa('git', ['push', '--follow-tags']);
 
-const gitVersion = async () => {
-	const {stdout} = await execa('git', ['version']);
-	return stdout.match(/git version (\d+\.\d+\.\d+).*/)[1];
-};
-
 exports.verifyRecentGitVersion = async () => {
-	const installedVersion = await gitVersion();
-	const range = require('../package.json').engines.git;
-
-	if (!version.satisfies(installedVersion, range)) {
-		throw new Error(`Please upgrade git to ${range} or higher.`);
-	}
+	const {stdout} = await execa('git', ['version']);
+	const gitVersion = stdout.match(/git version (\d+\.\d+\.\d+).*/)[1];
+	satisfiesRequiredVersion('git', gitVersion);
 };
