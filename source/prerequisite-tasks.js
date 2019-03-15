@@ -7,7 +7,7 @@ const npm = require('./npm-util');
 const {getTagVersionPrefix} = require('./util');
 
 module.exports = (input, pkg, options) => {
-	const isExternalRegistry = typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
+	const isExternalRegistry = npm.isExternalRegistry(pkg);
 	let newVersion = null;
 
 	const tasks = [
@@ -33,9 +33,11 @@ module.exports = (input, pkg, options) => {
 		},
 		{
 			title: 'Verify user is authenticated',
-			skip: () => process.env.NODE_ENV === 'test' || pkg.private || isExternalRegistry,
+			skip: () => process.env.NODE_ENV === 'test' || pkg.private,
 			task: async () => {
-				const username = await npm.username();
+				const username = await npm.username({
+					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false
+				});
 
 				const collaborators = await npm.collaborators(pkg.name);
 				if (!collaborators) {

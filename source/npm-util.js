@@ -2,6 +2,7 @@
 const execa = require('execa');
 const pTimeout = require('p-timeout');
 const ow = require('ow');
+const npmName = require('npm-name');
 const version = require('./version');
 
 exports.checkConnection = () => pTimeout(
@@ -17,9 +18,15 @@ exports.checkConnection = () => pTimeout(
 	'Connection to npm registry timed out'
 );
 
-exports.username = async () => {
+exports.username = async ({externalRegistry}) => {
+	const args = ['whoami'];
+
+	if (externalRegistry) {
+		args.push('--registry', externalRegistry);
+	}
+
 	try {
-		return await execa.stdout('npm', ['whoami']);
+		return await execa.stdout('npm', args);
 	} catch (error) {
 		throw new Error(/ENEEDAUTH/.test(error.stderr) ?
 			'You must be logged in. Use `npm login` and try again.' :
@@ -62,6 +69,17 @@ exports.prereleaseTags = async packageName => {
 
 	return tags;
 };
+
+exports.isPackageNameAvailable = async pkg => {
+	const isExternalRegistry = exports.isExternalRegistry(pkg);
+	if (isExternalRegistry) {
+		return true;
+	}
+
+	return npmName(pkg.name);
+};
+
+exports.isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
 
 exports.version = () => execa.stdout('npm', ['--version']);
 
