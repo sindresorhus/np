@@ -3,7 +3,7 @@ const semver = require('semver');
 
 class Version {
 	constructor(version) {
-		this.version = semver.coerce(version);
+		this.version = version;
 	}
 
 	isPrerelease() {
