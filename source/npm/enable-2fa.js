@@ -2,7 +2,7 @@
 const execa = require('execa');
 const {from} = require('rxjs');
 const {catchError} = require('rxjs/operators');
-const {handleNpmError} = require('./util');
+const {handleNpmError} = require('./handle-npm-error');
 
 const enable2fa = (packageName, options) => {
 	const args = ['access', '2fa-required', packageName];

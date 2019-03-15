@@ -2,7 +2,7 @@
 const execa = require('execa');
 const {from} = require('rxjs');
 const {catchError} = require('rxjs/operators');
-const {handleNpmError} = require('./util');
+const {handleNpmError} = require('./handle-npm-error');
 
 const pkgPublish = (pkgManager, options, input) => {
 	const args = ['publish'];
