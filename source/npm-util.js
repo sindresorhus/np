@@ -2,6 +2,7 @@
 const execa = require('execa');
 const pTimeout = require('p-timeout');
 const ow = require('ow');
+const npmName = require('npm-name');
 
 exports.checkConnection = () => pTimeout(
 	(async () => {
@@ -67,3 +68,14 @@ exports.prereleaseTags = async packageName => {
 
 	return tags;
 };
+
+exports.isPackageNameAvailable = async pkg => {
+	const isExternalRegistry = exports.isExternalRegistry(pkg);
+	if (isExternalRegistry) {
+		return true;
+	}
+
+	return npmName(pkg.name);
+};
+
+exports.isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';

@@ -7,7 +7,7 @@ const npm = require('./npm-util');
 const {getTagVersionPrefix} = require('./util');
 
 module.exports = (input, pkg, options) => {
-	const isExternalRegistry = typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
+	const isExternalRegistry = npm.isExternalRegistry(pkg);
 	let newVersion = null;
 
 	const tasks = [
