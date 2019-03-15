@@ -65,12 +65,15 @@ module.exports = async (input = 'patch', options) => {
 	const rollback = onetime(async () => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
 
-		const lastCommit = (await git.getLastCommit()).trim();
-		const versionInLastCommit = lastCommit.slice(1);
+		const tagVersionPrefix = await util.getTagVersionPrefix(options);
+
+		const latestTag = await git.latestTag();
+		const versionInLatestTag = latestTag.slice(tagVersionPrefix.length);
 
 		try {
-			if (versionInLastCommit === util.readPkg().version && versionInLastCommit !== pkg.version) { // Verify that the package's version has been bumped before deleting the last tag and commit.
-				await git.deleteTag(lastCommit);
+			if (versionInLatestTag === util.readPkg().version &&
+				versionInLatestTag !== pkg.version) { // Verify that the package's version has been bumped before deleting the last tag and commit.
+				await git.deleteTag(latestTag);
 				await git.removeLastCommit();
 			}
 
