@@ -16,9 +16,15 @@ exports.checkConnection = () => pTimeout(
 	'Connection to npm registry timed out'
 );
 
-exports.username = async () => {
+exports.username = async ({externalRegistry}) => {
+	const args = ['whoami'];
+
+	if (externalRegistry) {
+		args.push('--registry', externalRegistry);
+	}
+
 	try {
-		return await execa.stdout('npm', ['whoami']);
+		return await execa.stdout('npm', args);
 	} catch (error) {
 		throw new Error(/ENEEDAUTH/.test(error.stderr) ?
 			'You must be logged in. Use `npm login` and try again.' :
