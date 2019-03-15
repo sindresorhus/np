@@ -26,6 +26,7 @@
 - Bumps the version in package.json and npm-shrinkwrap.json (if present) and creates a git tag
 - Prevents [accidental publishing](https://github.com/npm/npm/issues/13248) of pre-release versions under the `latest` [dist-tag](https://docs.npmjs.com/cli/dist-tag)
 - Publishes the new version to npm, optionally under a dist-tag
+- Rolls back the project to its previous state in case publishing fails
 - Pushes commits and tags to GitHub/GitLab
 - Supports [two-factor authentication](https://docs.npmjs.com/getting-started/using-two-factor-authentication)
 - Enables two-factor authentication on new repositories
