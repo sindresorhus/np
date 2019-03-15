@@ -5,7 +5,7 @@ const cosmiconfig = require('cosmiconfig');
 
 module.exports = async () => {
 	const searchDir = isInstalledGlobally ? os.homedir() : process.cwd();
-	const searchPlaces = ['.np-config.json'];
+	const searchPlaces = ['.np-config.json', '.np-config.js'];
 	if (!isInstalledGlobally) {
 		searchPlaces.push('package.json');
 	}

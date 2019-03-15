@@ -86,6 +86,22 @@ Run `np` without arguments to launch the interactive UI that guides you through 
 <img src="screenshot-ui.png" width="1290">
 
 
+## Configuration
+
+`np` can be configured locally and globally. When using the global `np` binary, you can configure any of the CLI flags in either `.np-config.js` or `.np-config.json`, in the home directory. When using the locally `np` binary (i.e. in a `npm run` script) you can configure `np` by setting the flags in either `.np-config.js`, `.np-config.json` or `package.json` (in the project directory).
+
+For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
+
+```json
+{
+	"yarn": true,
+	"contents": "dist"
+}
+```
+
+_**Note:** The global configuration only applies when using the global `np` binary, and is never inherited when using a local binary._
+
+
 ## Tips
 
 ### npm hooks
