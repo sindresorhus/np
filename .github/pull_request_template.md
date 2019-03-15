@@ -1,6 +1,6 @@
 <!--
 
-Thanks for submitting a pull request 
+Thanks for submitting a pull request 🙌
 
 **Note:** Please don't create a pull request which has significant changes (i.e. adds new functionality or modifies existing one in a non-trivial way) without creating an issue first.
 
