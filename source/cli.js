@@ -20,13 +20,14 @@ const cli = meow(`
 	    ${version.SEMVER_INCREMENTS.join(' | ')} | 1.2.3
 
 	Options
-	  --any-branch  Allow publishing from any branch
-	  --no-cleanup  Skips cleanup of node_modules
-	  --yolo        Skips cleanup and testing
-	  --no-publish  Skips publishing
-	  --tag         Publish under a given dist-tag
-	  --no-yarn     Don't use Yarn
-	  --contents    Subdirectory to publish
+	  --any-branch   Allow publishing from any branch
+	  --no-cleanup   Skips cleanup of node_modules
+	  --yolo         Skips cleanup and testing
+	  --no-publish   Skips publishing
+	  --tag          Publish under a given dist-tag
+	  --no-yarn      Don't use Yarn
+	  --contents     Subdirectory to publish
+	  --git-base-url Enterprise Github base URL
 
 	Examples
 	  $ np
@@ -58,6 +59,9 @@ const cli = meow(`
 			default: hasYarn()
 		},
 		contents: {
+			type: 'string'
+		},
+		gitBaseUrl: {
 			type: 'string'
 		}
 	}
