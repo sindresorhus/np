@@ -55,6 +55,7 @@ module.exports = async (options, pkg) => {
 	if (options.gitBaseUrl) {
 		extraBaseUrls.push(options.gitBaseUrl);
 	}
+
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 
 	console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
