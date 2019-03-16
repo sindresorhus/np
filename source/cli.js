@@ -28,6 +28,7 @@ const cli = meow(`
 	  --no-yarn      Don't use Yarn
 	  --contents     Subdirectory to publish
 	  --git-base-url Enterprise Github base URL
+	  --github       Is Hosted on Github/Github Enterprise
 
 	Examples
 	  $ np
@@ -63,6 +64,9 @@ const cli = meow(`
 		},
 		gitBaseUrl: {
 			type: 'string'
+		},
+		github: {
+			type: 'boolean'
 		}
 	}
 });

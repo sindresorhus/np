@@ -56,7 +56,10 @@ module.exports = async (input = 'patch', options) => {
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
-	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl).type === 'github';
+	const isOnGitHub = options.repoUrl && (
+		options.github ||
+		(repo => repo && repo.type ==='github')(hostedGitInfo.fromUrl(options.repoUrl))
+	);
 
 	const tasks = new Listr([
 		{
