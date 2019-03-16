@@ -6,8 +6,8 @@ const logSymbols = require('log-symbols');
 const meow = require('meow');
 const updateNotifier = require('update-notifier');
 const hasYarn = require('has-yarn');
-const npmName = require('npm-name');
 const config = require('./config');
+const {isPackageNameAvailable} = require('./npm-util');
 const version = require('./version');
 const util = require('./util');
 const ui = require('./ui');
@@ -81,7 +81,7 @@ process.on('SIGINT', () => {
 
 	const flags = {...defaultFlags, ...localConfig, ...cli.flags};
 
-	const isAvailable = flags.publish ? await npmName(pkg.name) : false;
+	const isAvailable = flags.publish ? await isPackageNameAvailable(pkg) : false;
 
 	const options = cli.input.length > 0 ?
 		{

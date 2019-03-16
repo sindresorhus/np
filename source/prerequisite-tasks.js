@@ -7,7 +7,7 @@ const npm = require('./npm-util');
 const {getTagVersionPrefix} = require('./util');
 
 module.exports = (input, pkg, options) => {
-	const isExternalRegistry = typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
+	const isExternalRegistry = npm.isExternalRegistry(pkg);
 	let newVersion = null;
 
 	const tasks = [
@@ -18,19 +18,26 @@ module.exports = (input, pkg, options) => {
 		},
 		{
 			title: 'Check npm version',
+			task: async () => npm.verifyRecentNpmVersion()
+		},
+		{
+			title: 'Check yarn version',
+			enabled: () => options.yarn === true,
 			task: async () => {
-				const versions = JSON.parse(await execa.stdout('npm', ['version', '--json']));
+				const yarnVersion = await execa.stdout('yarn', ['--version']);
 
-				if (version.satisfies(versions.npm, '<6.8.0')) {
-					throw new Error('Please upgrade to npm@6.8.0 or newer');
+				if (version(yarnVersion).satisfies('<1.7.0')) {
+					throw new Error('Please upgrade to yarn@1.7.0 or newer');
 				}
 			}
 		},
 		{
 			title: 'Verify user is authenticated',
-			skip: () => process.env.NODE_ENV === 'test' || pkg.private || isExternalRegistry,
+			skip: () => process.env.NODE_ENV === 'test' || pkg.private,
 			task: async () => {
-				const username = await npm.username();
+				const username = await npm.username({
+					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false
+				});
 
 				const collaborators = await npm.collaborators(pkg.name);
 				if (!collaborators) {
@@ -45,7 +52,7 @@ module.exports = (input, pkg, options) => {
 			}
 		},
 		{
-			title: 'Verify git version is recent',
+			title: 'Check git version',
 			task: async () => git.verifyRecentGitVersion()
 		},
 		{
@@ -55,13 +62,13 @@ module.exports = (input, pkg, options) => {
 		{
 			title: 'Validate version',
 			task: () => {
-				if (!version.isValidVersionInput(input)) {
+				if (!version.isValidInput(input)) {
 					throw new Error(`Version should be either ${version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`);
 				}
 
-				newVersion = version.getNewVersion(pkg.version, input);
+				newVersion = version(pkg.version).getNewVersionFrom(input);
 
-				if (!version.isVersionGreater(pkg.version, newVersion)) {
+				if (version(pkg.version).isLowerThanOrEqualTo(newVersion)) {
 					throw new Error(`New version \`${newVersion}\` should be higher than current version \`${pkg.version}\``);
 				}
 			}
@@ -69,7 +76,7 @@ module.exports = (input, pkg, options) => {
 		{
 			title: 'Check for pre-release version',
 			task: () => {
-				if (!pkg.private && version.isPrereleaseVersion(newVersion) && !options.tag) {
+				if (!pkg.private && version(newVersion).isPrerelease() && !options.tag) {
 					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 				}
 			}

@@ -3,7 +3,7 @@ const chalk = require('chalk');
 const version = require('./version');
 
 module.exports = (oldVersion, inc) => {
-	const newVersion = version.getNewVersion(oldVersion, inc).split('.');
+	const newVersion = version(oldVersion).getNewVersionFrom(inc).split('.');
 	oldVersion = oldVersion.split('.');
 	let firstVersionChange = false;
 	const output = [];
