@@ -3,6 +3,7 @@ const execa = require('execa');
 const pTimeout = require('p-timeout');
 const ow = require('ow');
 const npmName = require('npm-name');
+const version = require('./version');
 
 exports.checkConnection = () => pTimeout(
 	(async () => {
@@ -79,3 +80,13 @@ exports.isPackageNameAvailable = async pkg => {
 };
 
 exports.isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
+
+exports.version = () => execa.stdout('npm', ['--version']);
+
+exports.verifyRecentNpmVersion = async () => {
+	const npmVersion = await exports.version();
+
+	if (version(npmVersion).satisfies('<6.8.0')) {
+		throw new Error('Please upgrade to npm@6.8.0 or newer');
+	}
+};
