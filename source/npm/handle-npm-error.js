@@ -1,3 +1,4 @@
+'use strict';
 const listrInput = require('listr-input');
 const chalk = require('chalk');
 const {throwError} = require('rxjs');

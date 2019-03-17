@@ -71,7 +71,7 @@ module.exports = (input, pkg, options) => {
 		{
 			title: 'Check for pre-release version',
 			task: () => {
-				if (!pkg.private && version.isPrereleaseOrIncrement(newVersion) && !options.tag) {
+				if (!pkg.private && version(newVersion).isPrerelease() && !options.tag) {
 					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 				}
 			}
