@@ -187,7 +187,7 @@ For new packages, start the `version` field in package.json at `0.0.0` and let `
 
 ### Release an update to an old major version
 
-To release a minor/patch version for an old major version, create a branch from the version's git tag and run `np`:
+To release a minor/patch version for an old major version, create a branch from the major version's git tag and run `np`:
 
 ```bash
 $ git checkout -b fix-old-bug v1.0.0 # (1.0.0 being the previous major version)
