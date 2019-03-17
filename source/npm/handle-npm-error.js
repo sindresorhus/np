@@ -26,4 +26,4 @@ const handleNpmError = (error, task, message, executor) => {
 	return throwError(error);
 };
 
-exports.handleNpmError = handleNpmError;
+module.exports = handleNpmError;
