@@ -192,7 +192,7 @@ To release a minor/patch version for an old major version, create a branch from 
 ```bash
 $ git checkout -b fix-old-bug v1.0.0 # (1.0.0 being the previous major version)
 # Create some commits....
-$ git push --set-upstream origin fix-old-bug
+$ git push --set-upstream origin HEAD
 $ np patch --any-branch --tag=v1
 ```
 
