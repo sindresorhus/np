@@ -5,7 +5,7 @@ const githubUrlFromGit = require('github-url-from-git');
 const isScoped = require('is-scoped');
 const util = require('./util');
 const git = require('./git-util');
-const {prereleaseTags} = require('./npm-util');
+const {prereleaseTags} = require('./npm/util');
 const version = require('./version');
 const prettyVersionDiff = require('./pretty-version-diff');
 
@@ -98,7 +98,7 @@ module.exports = async (options, pkg) => {
 			type: 'list',
 			name: 'tag',
 			message: 'How should this pre-release version be tagged in npm?',
-			when: answers => !pkg.private && version(answers.version).isPrerelease() && !options.tag,
+			when: answers => !pkg.private && version.isPrereleaseOrIncrement(answers.version) && !options.tag,
 			choices: async () => {
 				const existingPrereleaseTags = await prereleaseTags(pkg.name);
 
@@ -116,7 +116,7 @@ module.exports = async (options, pkg) => {
 			type: 'input',
 			name: 'tag',
 			message: 'Tag',
-			when: answers => !pkg.private && version(answers.version).isPrerelease() && !options.tag && !answers.tag,
+			when: answers => !pkg.private && version.isPrereleaseOrIncrement(answers.version) && !options.tag && !answers.tag,
 			validate: input => {
 				if (input.length === 0) {
 					return 'Please specify a tag, for example, `next`.';

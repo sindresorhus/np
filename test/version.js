@@ -29,20 +29,23 @@ test('version.isValidInput', t => {
 });
 
 test('version.isPrerelease', t => {
-	t.false(version('patch').isPrerelease());
-	t.false(version('minor').isPrerelease());
-	t.false(version('major').isPrerelease());
-
 	t.false(version('1.0.0').isPrerelease());
 	t.false(version('1.1.0').isPrerelease());
 	t.false(version('1.0.1').isPrerelease());
 
-	t.true(version('prepatch').isPrerelease());
-	t.true(version('preminor').isPrerelease());
-	t.true(version('premajor').isPrerelease());
-	t.true(version('prerelease').isPrerelease());
 	t.true(version('1.0.0-beta').isPrerelease());
 	t.true(version('2.0.0-rc.2').isPrerelease());
+});
+
+test('version.isPrereleaseOrIncrement', t => {
+	t.false(version.isPrereleaseOrIncrement('patch'));
+	t.false(version.isPrereleaseOrIncrement('minor'));
+	t.false(version.isPrereleaseOrIncrement('major'));
+
+	t.true(version.isPrereleaseOrIncrement('prepatch'));
+	t.true(version.isPrereleaseOrIncrement('preminor'));
+	t.true(version.isPrereleaseOrIncrement('premajor'));
+	t.true(version.isPrereleaseOrIncrement('prerelease'));
 });
 
 test('version.getNewVersionFrom', t => {
