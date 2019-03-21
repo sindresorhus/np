@@ -185,6 +185,17 @@ $ npm install --save-dev branchsite
 
 For new packages, start the `version` field in package.json at `0.0.0` and let `np` bump it to `1.0.0` or `0.1.0` when publishing.
 
+### Release an update to an old major version
+
+To release a minor/patch version for an old major version, create a branch from the major version's git tag and run `np`:
+
+```console
+$ git checkout -b fix-old-bug v1.0.0 # Where 1.0.0 is the previous major version
+# Create some commits…
+$ git push --set-upstream origin HEAD
+$ np patch --any-branch --tag=v1
+```
+
 ### Prerequisite step runs forever on macOS
 
 If you're using macOS Sierra 10.12.2 or later, your SSH key passphrase is no longer stored into the keychain by default. This may cause the `prerequisite` step to run forever because it prompts for your passphrase in the background. To fix this, add the following lines to your `~/.ssh/config` and run a simple Git command like `git fetch`.
