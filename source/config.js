@@ -1,10 +1,11 @@
 'use strict';
 const os = require('os');
 const isInstalledGlobally = require('is-installed-globally');
+const pkgDir = require('pkg-dir');
 const cosmiconfig = require('cosmiconfig');
 
 module.exports = async () => {
-	const searchDir = isInstalledGlobally ? os.homedir() : process.cwd();
+	const searchDir = isInstalledGlobally ? os.homedir() : await pkgDir();
 	const searchPlaces = ['.np-config.json', '.np-config.js'];
 	if (!isInstalledGlobally) {
 		searchPlaces.push('package.json');
