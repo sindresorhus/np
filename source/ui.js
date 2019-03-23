@@ -60,6 +60,8 @@ module.exports = async (options, pkg) => {
 		{
 			type: 'list',
 			name: 'version',
+			when: () => !version.isValidInput(options.version),
+			default: () => options.version,
 			message: 'Select semver increment or specify new version',
 			pageSize: version.SEMVER_INCREMENTS.length + 2,
 			choices: version.SEMVER_INCREMENTS
@@ -80,7 +82,7 @@ module.exports = async (options, pkg) => {
 			type: 'input',
 			name: 'version',
 			message: 'Version',
-			when: answers => !answers.version,
+			when: answers => !answers.version && !version.isValidInput(options.version),
 			filter: input => version.isValidInput(input) ? version(pkg.version).getNewVersionFrom(input) : input,
 			validate: input => {
 				if (!version.isValidInput(input)) {
@@ -98,7 +100,12 @@ module.exports = async (options, pkg) => {
 			type: 'list',
 			name: 'tag',
 			message: 'How should this pre-release version be tagged in npm?',
-			when: answers => !pkg.private && version.isPrereleaseOrIncrement(answers.version) && !options.tag,
+			when: answers => !pkg.private &&
+				(
+					version.isPrereleaseOrIncrement(answers.version) ||
+					version.isPrereleaseOrIncrement(options.version)
+				) &&
+				!options.tag,
 			choices: async () => {
 				const existingPrereleaseTags = await prereleaseTags(pkg.name);
 

@@ -75,14 +75,12 @@ process.on('SIGINT', () => {
 
 	const isAvailable = cli.flags.publish ? await isPackageNameAvailable(pkg) : false;
 
-	const options = cli.input.length > 0 ?
-		{
-			...cli.flags,
-			confirm: true,
-			exists: !isAvailable,
-			version: cli.input[0]
-		} :
-		await ui({...cli.flags, exists: !isAvailable}, pkg);
+	const options = await ui({
+		...cli.flags,
+		confirm: true,
+		exists: !isAvailable,
+		version: cli.input[0]
+	}, pkg);
 
 	if (!options.confirm) {
 		process.exit(0);
