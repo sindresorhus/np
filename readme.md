@@ -92,20 +92,40 @@ Run `np` without arguments to launch the interactive UI that guides you through 
 
 Currently, these are the flags you can configure:
 
-- `anyBranch`
-- `cleanup` (`true` by default)
-- `yolo`
-- `publish` (`true` by default)
-- `tag`
-- `yarn` (`true` by default)
-- `contents` 
+- `anyBranch` - Allow publishing from any branch (`false` by default).
+- `cleanup` - Cleanup `node_modules` (`true` by default).
+- `yolo` - Skip cleanup and testing (`false` by default).
+- `publish` - Publish (`true` by default).
+- `tag` - Publish under a given dist-tag (`latest` by default).
+- `yarn` - Use yarn if possible (`true` by default).
+- `contents` - Subdirectory to publish (`.` by default).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
+`.np-config.json`
 ```json
 {
 	"yarn": false,
 	"contents": "dist"
+}
+```
+
+`.np-config.js`
+```js
+module.exports = {
+	yarn: false,
+	contents: 'dist'
+};
+```
+
+`package.json`
+```json
+{
+	"name": "superb-package",
+	"np": {
+		"yarn": false,
+		"contents": "dist"
+	}
 }
 ```
 
