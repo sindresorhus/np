@@ -3,7 +3,7 @@ const Listr = require('listr');
 const execa = require('execa');
 const version = require('./version');
 const git = require('./git-util');
-const npm = require('./npm-util');
+const npm = require('./npm/util');
 const {getTagVersionPrefix} = require('./util');
 
 module.exports = (input, pkg, options) => {
