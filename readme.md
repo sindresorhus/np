@@ -102,7 +102,7 @@ Currently, these are the flags you can configure:
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
-```js
+```json
 {
 	"yarn": false,
 	"contents": "dist"
