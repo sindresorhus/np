@@ -131,16 +131,6 @@ module.exports = async (options, pkg) => {
 		},
 		{
 			type: 'confirm',
-			name: 'confirm',
-			message: answers => {
-				const tag = answers.tag || options.tag;
-				const tagPart = tag ? ` and tag this release in npm as ${tag}` : '';
-
-				return `Will bump from ${chalk.cyan(oldVersion)} to ${chalk.cyan(answers.version + tagPart)}. Continue?`;
-			}
-		},
-		{
-			type: 'confirm',
 			name: 'publishScoped',
 			when: isScoped(pkg.name) && !options.exists && options.publish && !pkg.private,
 			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
