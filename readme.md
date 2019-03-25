@@ -66,7 +66,7 @@ $ np --help
     --no-cleanup  Skips cleanup of node_modules
     --yolo        Skips cleanup and testing
     --no-publish  Skips publishing
-		--no-draft    Don't open a GitHub release draft
+    --no-draft    Don't open a GitHub release draft
     --tag         Publish under a given dist-tag
     --no-yarn     Don't use Yarn
     --contents    Subdirectory to publish
