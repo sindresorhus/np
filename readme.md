@@ -102,6 +102,17 @@ Currently, these are the flags you can configure:
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
+`package.json`
+```json
+{
+	"name": "superb-package",
+	"np": {
+		"yarn": false,
+		"contents": "dist"
+	}
+}
+```
+
 `.np-config.json`
 ```json
 {
@@ -116,17 +127,6 @@ module.exports = {
 	yarn: false,
 	contents: 'dist'
 };
-```
-
-`package.json`
-```json
-{
-	"name": "superb-package",
-	"np": {
-		"yarn": false,
-		"contents": "dist"
-	}
-}
 ```
 
 _**Note:** The global config only applies when using the global `np` binary, and is never inherited when using a local binary._
