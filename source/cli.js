@@ -79,7 +79,11 @@ process.on('SIGINT', () => {
 
 	const localConfig = await config();
 
-	const flags = {...defaultFlags, ...localConfig, ...cli.flags};
+	const flags = {
+		...defaultFlags,
+		...localConfig,
+		...cli.flags
+	};
 
 	const isAvailable = flags.publish ? await isPackageNameAvailable(pkg) : false;
 
