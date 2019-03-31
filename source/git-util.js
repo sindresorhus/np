@@ -2,7 +2,7 @@
 const execa = require('execa');
 const version = require('./version');
 
-const latestTag = () => execa.stdout('git', ['describe', '--abbrev=0', '--tags']);
+exports.latestTag = () => execa.stdout('git', ['describe', '--abbrev=0', '--tags']);
 
 const firstCommit = () => execa.stdout('git', ['rev-list', '--max-parents=0', 'HEAD']);
 
@@ -10,7 +10,7 @@ exports.latestTagOrFirstCommit = async () => {
 	let latest;
 	try {
 		// In case a previous tag exists, we use it to compare the current repo status to.
-		latest = await latestTag();
+		latest = await exports.latestTag();
 	} catch (_) {
 		// Otherwise, we fallback to using the first commit for comparison.
 		latest = await firstCommit();
@@ -109,6 +109,14 @@ exports.verifyTagDoesNotExistOnRemote = async tagName => {
 exports.commitLogFromRevision = revision => execa.stdout('git', ['log', '--format=%s %h', `${revision}..HEAD`]);
 
 exports.push = () => execa('git', ['push', '--follow-tags']);
+
+exports.deleteTag = async tagName => {
+	await execa('git', ['tag', '--delete', tagName]);
+};
+
+exports.removeLastCommit = async () => {
+	await execa('git', ['reset', '--hard', 'HEAD~1']);
+};
 
 const gitVersion = async () => {
 	const {stdout} = await execa('git', ['version']);
