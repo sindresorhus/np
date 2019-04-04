@@ -6,6 +6,7 @@ const logSymbols = require('log-symbols');
 const meow = require('meow');
 const updateNotifier = require('update-notifier');
 const hasYarn = require('has-yarn');
+const config = require('./config');
 const {isPackageNameAvailable} = require('./npm/util');
 const version = require('./version');
 const util = require('./util');
@@ -40,22 +41,19 @@ const cli = meow(`
 			type: 'boolean'
 		},
 		cleanup: {
-			type: 'boolean',
-			default: true
+			type: 'boolean'
 		},
 		yolo: {
 			type: 'boolean'
 		},
 		publish: {
-			type: 'boolean',
-			default: true
+			type: 'boolean'
 		},
 		tag: {
 			type: 'string'
 		},
 		yarn: {
-			type: 'boolean',
-			default: hasYarn()
+			type: 'boolean'
 		},
 		contents: {
 			type: 'string'
@@ -65,18 +63,27 @@ const cli = meow(`
 
 updateNotifier({pkg: cli.pkg}).notify();
 
-process.on('SIGINT', () => {
-	console.log('\nAborted!');
-	process.exit(1);
-});
-
 (async () => {
 	const pkg = util.readPkg();
 
-	const isAvailable = cli.flags.publish ? await isPackageNameAvailable(pkg) : false;
+	const defaultFlags = {
+		cleanup: true,
+		publish: true,
+		yarn: hasYarn()
+	};
+
+	const localConfig = await config();
+
+	const flags = {
+		...defaultFlags,
+		...localConfig,
+		...cli.flags
+	};
+
+	const isAvailable = flags.publish ? await isPackageNameAvailable(pkg) : false;
 
 	const options = await ui({
-		...cli.flags,
+		...flags,
 		confirm: true,
 		exists: !isAvailable,
 		version: cli.input[0]

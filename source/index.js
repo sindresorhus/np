@@ -7,12 +7,14 @@ const del = require('del');
 const Listr = require('listr');
 const split = require('split');
 const {merge, throwError} = require('rxjs');
-const {catchError, filter} = require('rxjs/operators');
+const {catchError, filter, finalize} = require('rxjs/operators');
 const streamToObservable = require('@samverschueren/stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
 const pkgDir = require('pkg-dir');
 const hostedGitInfo = require('hosted-git-info');
+const onetime = require('onetime');
+const exitHook = require('async-exit-hook');
 const prerequisiteTasks = require('./prerequisite-tasks');
 const gitTasks = require('./git-tasks');
 const publish = require('./npm/publish');
@@ -57,6 +59,38 @@ module.exports = async (input = 'patch', options) => {
 	const rootDir = pkgDir.sync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
 	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl).type === 'github';
+
+	let isPublished = false;
+
+	const rollback = onetime(async () => {
+		console.log('\nPublish failed. Rolling back to the previous state…');
+
+		const tagVersionPrefix = await util.getTagVersionPrefix(options);
+
+		const latestTag = await git.latestTag();
+		const versionInLatestTag = latestTag.slice(tagVersionPrefix.length);
+
+		try {
+			if (versionInLatestTag === util.readPkg().version &&
+				versionInLatestTag !== pkg.version) { // Verify that the package's version has been bumped before deleting the last tag and commit.
+				await git.deleteTag(latestTag);
+				await git.removeLastCommit();
+			}
+
+			console.log('Successfully rolled back the project to its previous state.');
+		} catch (error) {
+			console.log(`Couldn't roll back because of the following error:\n${error}`);
+		}
+	});
+
+	exitHook(callback => {
+		if (!isPublished && runPublish) {
+			(async () => {
+				await rollback();
+				callback();
+			})();
+		}
+	});
 
 	const tasks = new Listr([
 		{
@@ -148,7 +182,21 @@ module.exports = async (input = 'patch', options) => {
 						return `Private package: not publishing to ${pkgManagerName}.`;
 					}
 				},
-				task: (context, task) => publish(context, pkgManager, task, options, input)
+				task: (context, task) => {
+					let hasError = false;
+
+					return publish(context, pkgManager, task, options, input)
+						.pipe(
+							catchError(async error => {
+								hasError = true;
+								await rollback();
+								throw new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`);
+							}),
+							finalize(() => {
+								isPublished = !hasError;
+							})
+						);
+				}
 			}
 		]);
 
@@ -166,7 +214,11 @@ module.exports = async (input = 'patch', options) => {
 		title: 'Pushing tags',
 		skip: async () => {
 			if (!(await git.hasUpstream())) {
-				return 'Upstream branch not found: not pushing.';
+				return 'Upstream branch not found; not pushing.';
+			}
+
+			if (!isPublished && runPublish) {
+				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
 		task: () => git.push()

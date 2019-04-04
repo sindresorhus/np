@@ -26,6 +26,7 @@
 - Bumps the version in package.json and npm-shrinkwrap.json (if present) and creates a git tag
 - Prevents [accidental publishing](https://github.com/npm/npm/issues/13248) of pre-release versions under the `latest` [dist-tag](https://docs.npmjs.com/cli/dist-tag)
 - Publishes the new version to npm, optionally under a dist-tag
+- Rolls back the project to its previous state in case publishing fails
 - Pushes commits and tags to GitHub/GitLab
 - Supports [two-factor authentication](https://docs.npmjs.com/getting-started/using-two-factor-authentication)
 - Enables two-factor authentication on new repositories
@@ -84,6 +85,52 @@ $ np --help
 Run `np` without arguments to launch the interactive UI that guides you through publishing a new version.
 
 <img src="screenshot-ui.png" width="1290">
+
+
+## Config
+
+`np` can be configured both locally and globally. When using the global `np` binary, you can configure any of the CLI flags in either a `.np-config.js` or `.np-config.json` file in the home directory. When using the local `np` binary, for example, in a `npm run` script, you can configure `np` by setting the flags in either a top-level `np` field in `package.json` or in a `.np-config.js` or `.np-config.json` file in the project directory.
+
+Currently, these are the flags you can configure:
+
+- `anyBranch` - Allow publishing from any branch (`false` by default).
+- `cleanup` - Cleanup `node_modules` (`true` by default).
+- `yolo` - Skip cleanup and testing (`false` by default).
+- `publish` - Publish (`true` by default).
+- `tag` - Publish under a given dist-tag (`latest` by default).
+- `yarn` - Use yarn if possible (`true` by default).
+- `contents` - Subdirectory to publish (`.` by default).
+
+For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
+
+`package.json`
+```json
+{
+	"name": "superb-package",
+	"np": {
+		"yarn": false,
+		"contents": "dist"
+	}
+}
+```
+
+`.np-config.json`
+```json
+{
+	"yarn": false,
+	"contents": "dist"
+}
+```
+
+`.np-config.js`
+```js
+module.exports = {
+	yarn: false,
+	contents: 'dist'
+};
+```
+
+_**Note:** The global config only applies when using the global `np` binary, and is never inherited when using a local binary._
 
 
 ## Tips
