@@ -36,6 +36,7 @@ const cli = meow(`
 	  $ np 1.0.2-beta.3 --tag=beta
 	  $ np 1.0.2-beta.3 --tag=beta --contents=dist
 `, {
+	booleanDefault: undefined,
 	flags: {
 		anyBranch: {
 			type: 'boolean'
@@ -95,6 +96,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 		process.exit(0);
 	}
 
+	console.log();
 	const newPkg = await np(options.version, options);
 	console.log(`\n ${newPkg.name} ${newPkg.version} published 🎉`);
 })().catch(error => {
