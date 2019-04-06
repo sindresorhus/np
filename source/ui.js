@@ -161,6 +161,7 @@ module.exports = async (options, pkg) => {
 	return {
 		...options,
 		...answers,
+		confirm: true,
 		repoUrl,
 		releaseNotes
 	};
