@@ -27,7 +27,7 @@ const cli = meow(`
 	  --tag               Publish under a given dist-tag
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
-	  --no-release-draft  Don't open a GitHub release draft
+	  --no-release-draft  Skips opening a GitHub release draft
 
 	Examples
 	  $ np
