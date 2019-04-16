@@ -63,13 +63,14 @@ $ np --help
       patch | minor | major | prepatch | preminor | premajor | prerelease | 1.2.3
 
   Options
-    --any-branch  Allow publishing from any branch
-    --no-cleanup  Skips cleanup of node_modules
-    --yolo        Skips cleanup and testing
-    --no-publish  Skips publishing
-    --tag         Publish under a given dist-tag
-    --no-yarn     Don't use Yarn
-    --contents    Subdirectory to publish
+    --any-branch        Allow publishing from any branch
+    --no-cleanup        Skips cleanup of node_modules
+    --yolo              Skips cleanup and testing
+    --no-publish        Skips publishing
+    --tag               Publish under a given dist-tag
+    --no-yarn           Don't use Yarn
+    --contents          Subdirectory to publish
+    --no-release-draft  Skips opening a GitHub release draft
 
   Examples
     $ np
