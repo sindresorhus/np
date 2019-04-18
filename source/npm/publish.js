@@ -11,10 +11,6 @@ const pkgPublish = (pkgManager, options, input) => {
 		args.push(options.contents);
 	}
 
-	if (options.yarn) {
-		args.push('--new-version', input);
-	}
-
 	if (options.tag) {
 		args.push('--tag', options.tag);
 	}
