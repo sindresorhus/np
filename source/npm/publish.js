@@ -4,15 +4,11 @@ const {from} = require('rxjs');
 const {catchError} = require('rxjs/operators');
 const handleNpmError = require('./handle-npm-error');
 
-const pkgPublish = (pkgManager, options, input) => {
+const pkgPublish = (pkgManager, options) => {
 	const args = ['publish'];
 
 	if (options.contents) {
 		args.push(options.contents);
-	}
-
-	if (options.yarn) {
-		args.push('--new-version', input);
 	}
 
 	if (options.tag) {
@@ -35,6 +31,6 @@ module.exports = (context, pkgManager, task, options, input) =>
 		catchError(error => handleNpmError(error, task, otp => {
 			context.otp = otp;
 
-			return pkgPublish(pkgManager, {...options, otp}, input);
+			return pkgPublish(pkgManager, {...options, otp});
 		}))
 	);
