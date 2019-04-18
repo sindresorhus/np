@@ -1,5 +1,5 @@
 'use strict';
-const opn = require('opn');
+const open = require('open');
 const newGithubReleaseUrl = require('./new-github-release-url');
 const {getTagVersionPrefix} = require('./util');
 const version = require('./version');
@@ -13,5 +13,5 @@ module.exports = async options => {
 		isPrerelease: version(options.version).isPrerelease()
 	});
 
-	opn(url, {wait: false});
+	await open(url);
 };
