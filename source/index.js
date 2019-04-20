@@ -95,7 +95,6 @@ module.exports = async (input = 'patch', options) => {
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
-			enabled: () => runPublish,
 			task: () => prerequisiteTasks(input, pkg, options)
 		},
 		{
