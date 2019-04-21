@@ -13,7 +13,7 @@ about: Suggest an idea
 
 <!-- Describe what the problem is (e.g. I'm always frustrated when […]) -->
 
-## Possible solution
+## Possible implementation
 
 <!-- If possible, let us know how you think the feature should be implemented -->
 
