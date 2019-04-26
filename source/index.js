@@ -50,10 +50,10 @@ module.exports = async (input = 'patch', options) => {
 		options.cleanup = false;
 	}
 
+	const pkg = util.readPkg();
 	const runTests = !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const runPublish = options.publish;
-	const pkg = util.readPkg();
+	const runPublish = options.publish && !pkg.private;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
@@ -177,11 +177,6 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: `Publishing package using ${pkgManagerName}`,
-				skip: () => {
-					if (pkg.private) {
-						return `Private package: not publishing to ${pkgManagerName}.`;
-					}
-				},
 				task: (context, task) => {
 					let hasError = false;
 
