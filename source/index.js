@@ -212,6 +212,10 @@ module.exports = async (input = 'patch', options) => {
 				return 'Upstream branch not found; not pushing.';
 			}
 
+			if (await git.upstreamAheadOfLocalBranch()) {
+				return 'Upstream branch ahead of local branch; not pushing.';
+			}
+
 			if (!isPublished && runPublish) {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}

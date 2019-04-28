@@ -1,5 +1,6 @@
 'use strict';
 const execa = require('execa');
+const escapeStringRegexp = require('escape-string-regexp');
 const version = require('./version');
 
 exports.latestTag = () => execa.stdout('git', ['describe', '--abbrev=0', '--tags']);
@@ -20,8 +21,17 @@ exports.latestTagOrFirstCommit = async () => {
 };
 
 exports.hasUpstream = async () => {
-	const {stdout} = await execa('git', ['status', '--short', '--branch', '--porcelain=2']);
-	return /^# branch\.upstream [\w\-/]+$/m.test(stdout);
+	const escapedCurrentBranch = escapeStringRegexp(await exports.currentBranch());
+	const {stdout} = await execa('git', ['status', '--short', '--branch', '--porcelain']);
+
+	return new RegExp(String.raw`^## ${escapedCurrentBranch}\.\.\..+\/${escapedCurrentBranch}`).test(stdout);
+};
+
+exports.upstreamAheadOfLocalBranch = async () => {
+	const escapedCurrentBranch = escapeStringRegexp(await exports.currentBranch());
+	const {stdout} = await execa('git', ['status', '--short', '--branch', '--porcelain']);
+
+	return new RegExp(String.raw`^## ${escapedCurrentBranch}\.\.\..+\/${escapedCurrentBranch} \[behind \d+\]`).test(stdout);
 };
 
 exports.currentBranch = () => execa.stdout('git', ['symbolic-ref', '--short', 'HEAD']);
