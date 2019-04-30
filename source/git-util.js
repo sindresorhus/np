@@ -27,13 +27,6 @@ exports.hasUpstream = async () => {
 	return new RegExp(String.raw`^## ${escapedCurrentBranch}\.\.\..+\/${escapedCurrentBranch}`).test(stdout);
 };
 
-exports.upstreamAheadOfLocalBranch = async () => {
-	const escapedCurrentBranch = escapeStringRegexp(await exports.currentBranch());
-	const {stdout} = await execa('git', ['status', '--short', '--branch', '--porcelain']);
-
-	return new RegExp(String.raw`^## ${escapedCurrentBranch}\.\.\..+\/${escapedCurrentBranch} \[behind \d+\]`).test(stdout);
-};
-
 exports.currentBranch = () => execa.stdout('git', ['symbolic-ref', '--short', 'HEAD']);
 
 exports.verifyCurrentBranchIsMaster = async () => {
