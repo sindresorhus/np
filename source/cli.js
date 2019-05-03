@@ -25,6 +25,7 @@ const cli = meow(`
 	  --no-cleanup        Skips cleanup of node_modules
 	  --yolo              Skips cleanup and testing
 	  --no-publish        Skips publishing
+	  --preview           Skips publishing and pushing
 	  --tag               Publish under a given dist-tag
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
@@ -63,6 +64,9 @@ const cli = meow(`
 		},
 		contents: {
 			type: 'string'
+		},
+		preview: {
+			type: 'boolean'
 		}
 	}
 });
@@ -75,6 +79,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 	const defaultFlags = {
 		cleanup: true,
 		publish: true,
+		preview: false,
 		yarn: hasYarn()
 	};
 

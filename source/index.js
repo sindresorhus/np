@@ -38,6 +38,7 @@ module.exports = async (input = 'patch', options) => {
 	options = {
 		cleanup: true,
 		publish: true,
+		preview: false,
 		...options
 	};
 
@@ -63,7 +64,9 @@ module.exports = async (input = 'patch', options) => {
 	let isPublished = false;
 
 	const rollback = onetime(async () => {
-		console.log('\nPublish failed. Rolling back to the previous state…');
+		if (!options.preview) {
+			console.log('\nPublish failed. Rolling back to the previous state…');
+		}
 
 		const tagVersionPrefix = await util.getTagVersionPrefix(options);
 
@@ -128,7 +131,7 @@ module.exports = async (input = 'patch', options) => {
 			},
 			{
 				title: 'Installing dependencies using npm',
-				enabled: () => options.yarn === false,
+				enabled: () => !options.yarn,
 				task: () => {
 					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production'];
 					return exec('npm', args);
@@ -141,7 +144,7 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: 'Running tests using npm',
-				enabled: () => options.yarn === false,
+				enabled: () => !options.yarn,
 				task: () => exec('npm', ['test'])
 			},
 			{
@@ -163,12 +166,12 @@ module.exports = async (input = 'patch', options) => {
 	tasks.add([
 		{
 			title: 'Bumping version using Yarn',
-			enabled: () => options.yarn === true,
+			enabled: () => options.yarn,
 			task: () => exec('yarn', ['version', '--new-version', input])
 		},
 		{
 			title: 'Bumping version using npm',
-			enabled: () => options.yarn === false,
+			enabled: () => !options.yarn,
 			task: () => exec('npm', ['version', input])
 		}
 	]);
@@ -177,6 +180,7 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: `Publishing package using ${pkgManagerName}`,
+				skip: () => options.preview,
 				task: (context, task) => {
 					let hasError = false;
 
@@ -199,6 +203,7 @@ module.exports = async (input = 'patch', options) => {
 			tasks.add([
 				{
 					title: 'Enabling two-factor authentication',
+					skip: () => options.preview,
 					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
 				}
 			]);
@@ -208,6 +213,10 @@ module.exports = async (input = 'patch', options) => {
 	tasks.add({
 		title: 'Pushing tags',
 		skip: async () => {
+			if (options.preview) {
+				return 'Preview Mode';
+			}
+
 			if (!(await git.hasUpstream())) {
 				return 'Upstream branch not found; not pushing.';
 			}
