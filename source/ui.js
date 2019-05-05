@@ -1,56 +1,52 @@
 'use strict';
-const execa = require('execa');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const githubUrlFromGit = require('github-url-from-git');
 const isScoped = require('is-scoped');
 const util = require('./util');
+const git = require('./git-util');
+const {prereleaseTags} = require('./npm/util');
 const version = require('./version');
-
-const prettyVersionDiff = (oldVersion, inc) => {
-	const newVersion = version.getNewVersion(oldVersion, inc).split('.');
-	oldVersion = oldVersion.split('.');
-	let firstVersionChange = false;
-	const output = [];
-
-	for (let i = 0; i < newVersion.length; i++) {
-		if ((newVersion[i] !== oldVersion[i] && !firstVersionChange)) {
-			output.push(`${chalk.dim.cyan(newVersion[i])}`);
-			firstVersionChange = true;
-		} else if (newVersion[i].indexOf('-') >= 1) {
-			let preVersion = [];
-			preVersion = newVersion[i].split('-');
-			output.push(`${chalk.dim.cyan(`${preVersion[0]}-${preVersion[1]}`)}`);
-		} else {
-			output.push(chalk.reset.dim(newVersion[i]));
-		}
-	}
-
-	return output.join(chalk.reset.dim('.'));
-};
+const prettyVersionDiff = require('./pretty-version-diff');
 
 const printCommitLog = async repoUrl => {
-	const {stdout: latestTag} = await execa('git', ['describe', '--abbrev=0']);
-	const {stdout: log} = await execa('git', ['log', '--format=%s %h', `${latestTag}..HEAD`]);
+	const latest = await git.latestTagOrFirstCommit();
+	const log = await git.commitLogFromRevision(latest);
 
 	if (!log) {
-		return false;
+		return {
+			hasCommits: false,
+			releaseNotes: () => {}
+		};
 	}
 
-	const history = log.split('\n')
+	const commits = log.split('\n')
 		.map(commit => {
 			const splitIndex = commit.lastIndexOf(' ');
-			const commitMessage = util.linkifyIssues(repoUrl, commit.slice(0, splitIndex));
-			const commitId = util.linkifyCommit(repoUrl, commit.slice(splitIndex + 1));
-			return `- ${commitMessage}  ${commitId}`;
-		})
-		.join('\n');
+			return {
+				message: commit.slice(0, splitIndex),
+				id: commit.slice(splitIndex + 1)
+			};
+		});
 
-	const commitRange = util.linkifyCommitRange(repoUrl, `${latestTag}...master`);
+	const history = commits.map(commit => {
+		const commitMessage = util.linkifyIssues(repoUrl, commit.message);
+		const commitId = util.linkifyCommit(repoUrl, commit.id);
+		return `- ${commitMessage}  ${commitId}`;
+	}).join('\n');
+
+	const releaseNotes = nextTag => commits.map(commit =>
+		`- ${commit.message}  ${commit.id}`
+	).join('\n') + `\n\n${repoUrl}/compare/${latest}...${nextTag}`;
+
+	const commitRange = util.linkifyCommitRange(repoUrl, `${latest}...master`);
 
 	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n`);
 
-	return true;
+	return {
+		hasCommits: true,
+		releaseNotes
+	};
 };
 
 module.exports = async (options, pkg) => {
@@ -78,20 +74,20 @@ module.exports = async (options, pkg) => {
 						value: null
 					}
 				]),
-			filter: input => version.isValidVersionInput(input) ? version.getNewVersion(oldVersion, input) : input
+			filter: input => version.isValidInput(input) ? version(oldVersion).getNewVersionFrom(input) : input
 		},
 		{
 			type: 'input',
 			name: 'version',
 			message: 'Version',
 			when: answers => !answers.version,
-			filter: input => version.isValidVersionInput(input) ? version.getNewVersion(pkg.version, input) : input,
+			filter: input => version.isValidInput(input) ? version(pkg.version).getNewVersionFrom(input) : input,
 			validate: input => {
-				if (!version.isValidVersionInput(input)) {
+				if (!version.isValidInput(input)) {
 					return 'Please specify a valid semver, for example, `1.2.3`. See http://semver.org';
 				}
 
-				if (!version.isVersionGreater(oldVersion, input)) {
+				if (version(oldVersion).isLowerThanOrEqualTo(input)) {
 					return `Version must be greater than ${oldVersion}`;
 				}
 
@@ -102,16 +98,9 @@ module.exports = async (options, pkg) => {
 			type: 'list',
 			name: 'tag',
 			message: 'How should this pre-release version be tagged in npm?',
-			when: answers => !pkg.private && version.isPrereleaseVersion(answers.version) && !options.tag,
+			when: answers => !pkg.private && version.isPrereleaseOrIncrement(answers.version) && !options.tag,
 			choices: async () => {
-				const {stdout} = await execa('npm', ['view', '--json', pkg.name, 'dist-tags']);
-
-				const existingPrereleaseTags = Object.keys(JSON.parse(stdout))
-					.filter(tag => tag !== 'latest');
-
-				if (existingPrereleaseTags.length === 0) {
-					existingPrereleaseTags.push('next');
-				}
+				const existingPrereleaseTags = await prereleaseTags(pkg.name);
 
 				return [
 					...existingPrereleaseTags,
@@ -127,7 +116,7 @@ module.exports = async (options, pkg) => {
 			type: 'input',
 			name: 'tag',
 			message: 'Tag',
-			when: answers => !pkg.private && version.isPrereleaseVersion(answers.version) && !options.tag && !answers.tag,
+			when: answers => !pkg.private && version.isPrereleaseOrIncrement(answers.version) && !options.tag && !answers.tag,
 			validate: input => {
 				if (input.length === 0) {
 					return 'Please specify a tag, for example, `next`.';
@@ -142,24 +131,14 @@ module.exports = async (options, pkg) => {
 		},
 		{
 			type: 'confirm',
-			name: 'confirm',
-			message: answers => {
-				const tag = answers.tag || options.tag;
-				const tagPart = tag ? ` and tag this release in npm as ${tag}` : '';
-
-				return `Will bump from ${chalk.cyan(oldVersion)} to ${chalk.cyan(answers.version + tagPart)}. Continue?`;
-			}
-		},
-		{
-			type: 'confirm',
 			name: 'publishScoped',
-			when: isScoped(pkg.name) && !options.exists,
+			when: isScoped(pkg.name) && !options.exists && options.publish && !pkg.private,
 			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false
 		}
 	];
 
-	const hasCommits = await printCommitLog(repoUrl);
+	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl);
 
 	if (!hasCommits) {
 		const answers = await inquirer.prompt([{
@@ -181,6 +160,9 @@ module.exports = async (options, pkg) => {
 
 	return {
 		...options,
-		...answers
+		...answers,
+		confirm: true,
+		repoUrl,
+		releaseNotes
 	};
 };
