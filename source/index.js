@@ -63,10 +63,11 @@ module.exports = async (input = 'patch', options) => {
 	let isPublished = false;
 
 	const rollback = onetime(async () => {
-		console.log(); // Newline for readability
-		if (!options.preview) {
-			console.log('Publish failed. Rolling back to the previous state…');
+		if (options.preview) {
+			return;
 		}
+
+		console.log('\nPublish failed. Rolling back to the previous state…');
 
 		const tagVersionPrefix = await util.getTagVersionPrefix(options);
 
@@ -167,11 +168,21 @@ module.exports = async (input = 'patch', options) => {
 		{
 			title: 'Bumping version using Yarn',
 			enabled: () => options.yarn === true,
+			skip: () => {
+				if (options.preview) {
+					return 'Command not executed in preview mode: yarn version…';
+				}
+			},
 			task: () => exec('yarn', ['version', '--new-version', input])
 		},
 		{
 			title: 'Bumping version using npm',
 			enabled: () => options.yarn === false,
+			skip: () => {
+				if (options.preview) {
+					return 'Command not executed in preview mode: npm version…';
+				}
+			},
 			task: () => exec('npm', ['version', input])
 		}
 	]);
@@ -180,7 +191,11 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: `Publishing package using ${pkgManagerName}`,
-				skip: () => options.preview,
+				skip: () => {
+					if (options.preview) {
+						return 'Command not executed in preview mode: npm publish…';
+					}
+				},
 				task: (context, task) => {
 					let hasError = false;
 
@@ -203,7 +218,11 @@ module.exports = async (input = 'patch', options) => {
 			tasks.add([
 				{
 					title: 'Enabling two-factor authentication',
-					skip: () => options.preview,
+					skip: () => {
+						if (options.preview) {
+							return 'Command not executed in preview mode: npm access 2fa-required…';
+						}
+					},
 					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
 				}
 			]);
@@ -218,7 +237,7 @@ module.exports = async (input = 'patch', options) => {
 			}
 
 			if (options.preview) {
-				return 'Preview Mode';
+				return 'Command not executed in preview mode: git push…';
 			}
 
 			if (!isPublished && runPublish) {
@@ -231,7 +250,13 @@ module.exports = async (input = 'patch', options) => {
 	tasks.add({
 		title: 'Creating release draft on GitHub',
 		enabled: () => isOnGitHub === true,
-		skip: () => !options.releaseDraft,
+		skip: () => {
+			if (options.preview) {
+				return 'GitHub Release page not opened in preview mode.';
+			}
+
+			return !options.releaseDraft;
+		},
 		task: () => releaseTaskHelper(options)
 	});
 
