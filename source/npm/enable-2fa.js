@@ -2,9 +2,15 @@
 const execa = require('execa');
 const {from} = require('rxjs');
 const {catchError} = require('rxjs/operators');
+const NpmUserProfile = require('npm-user-profile');
 const handleNpmError = require('./handle-npm-error');
 
-const enable2fa = (packageName, options) => {
+const enable2fa = async (packageName, options) => {
+	const profile = await NpmUserProfile.profile();
+	if (profile['two-factor auth'] !== 'enabled') {
+		return true;
+	}
+
 	const args = ['access', '2fa-required', packageName];
 
 	if (options && options.otp) {

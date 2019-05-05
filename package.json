@@ -46,6 +46,7 @@
 		"log-symbols": "^3.0.0",
 		"meow": "^5.0.0",
 		"npm-name": "^5.0.1",
+		"npm-user-profile": "^1.0.2",
 		"onetime": "^5.1.0",
 		"open": "^6.1.0",
 		"ow": "^0.12.0",
