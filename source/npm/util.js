@@ -85,8 +85,9 @@ exports.version = () => execa.stdout('npm', ['--version']);
 
 exports.verifyRecentNpmVersion = async () => {
 	const npmVersion = await exports.version();
+	const requiredNpmVersion = require('../../package.json').engines.npm;
 
-	if (version(npmVersion).satisfies('<6.8.0')) {
-		throw new Error('Please upgrade to npm@6.8.0 or newer');
+	if (!version(npmVersion).satisfies(requiredNpmVersion)) {
+		throw new Error(`Please upgrade to npm@${requiredNpmVersion}`);
 	}
 };
