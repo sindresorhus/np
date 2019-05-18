@@ -31,7 +31,7 @@
 		"any-observable": "^0.3.0",
 		"async-exit-hook": "^2.0.1",
 		"chalk": "^2.3.0",
-		"cosmiconfig": "^5.1.0",
+		"cosmiconfig": "^5.2.1",
 		"del": "^4.1.0",
 		"escape-string-regexp": "^2.0.0",
 		"execa": "^1.0.0",
