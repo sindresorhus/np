@@ -88,6 +88,6 @@ exports.verifyRecentNpmVersion = async () => {
 	const requiredNpmVersion = require('../../package.json').engines.npm;
 
 	if (!version(npmVersion).satisfies(requiredNpmVersion)) {
-		throw new Error(`Please upgrade to npm@${requiredNpmVersion}`);
+		throw new Error(`Please upgrade to npm${requiredNpmVersion}`);
 	}
 };

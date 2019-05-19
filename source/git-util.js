@@ -131,6 +131,6 @@ exports.verifyRecentGitVersion = async () => {
 	const requiredGitVersion = require('../package.json').engines.git;
 
 	if (!version(installedVersion).satisfies(requiredGitVersion)) {
-		throw new Error(`Please upgrade to git@${requiredGitVersion}`);
+		throw new Error(`Please upgrade to git${requiredGitVersion}`);
 	}
 };

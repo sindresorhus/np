@@ -27,7 +27,7 @@ module.exports = (input, pkg, options) => {
 				const yarnVersion = await execa.stdout('yarn', ['--version']);
 				const requiredYarnVersion = require('../package.json').engines.yarn;
 				if (!version(yarnVersion).satisfies(requiredYarnVersion)) {
-					throw new Error(`Please upgrade to yarn@${requiredYarnVersion}`);
+					throw new Error(`Please upgrade to yarn${requiredYarnVersion}`);
 				}
 			}
 		},
