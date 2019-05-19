@@ -5,6 +5,7 @@ const ow = require('ow');
 const npmName = require('npm-name');
 const version = require('../version');
 
+const {versionSatisfiesRequirement} = version;
 exports.checkConnection = () => pTimeout(
 	(async () => {
 		try {
@@ -85,9 +86,5 @@ exports.version = () => execa.stdout('npm', ['--version']);
 
 exports.verifyRecentNpmVersion = async () => {
 	const npmVersion = await exports.version();
-	const requiredNpmVersion = require('../../package.json').engines.npm;
-
-	if (!version(npmVersion).satisfies(requiredNpmVersion)) {
-		throw new Error(`Please upgrade to npm${requiredNpmVersion}`);
-	}
+	versionSatisfiesRequirement('npm', npmVersion);
 };

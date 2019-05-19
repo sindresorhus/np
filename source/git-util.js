@@ -3,6 +3,8 @@ const execa = require('execa');
 const escapeStringRegexp = require('escape-string-regexp');
 const version = require('./version');
 
+const {versionSatisfiesRequirement} = version;
+
 exports.latestTag = () => execa.stdout('git', ['describe', '--abbrev=0', '--tags']);
 
 const firstCommit = () => execa.stdout('git', ['rev-list', '--max-parents=0', 'HEAD']);
@@ -128,9 +130,6 @@ const gitVersion = async () => {
 
 exports.verifyRecentGitVersion = async () => {
 	const installedVersion = await gitVersion();
-	const requiredGitVersion = require('../package.json').engines.git;
 
-	if (!version(installedVersion).satisfies(requiredGitVersion)) {
-		throw new Error(`Please upgrade to git${requiredGitVersion}`);
-	}
+	versionSatisfiesRequirement('git', installedVersion);
 };
