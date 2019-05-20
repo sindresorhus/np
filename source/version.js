@@ -58,9 +58,9 @@ module.exports.validate = version => {
 	}
 };
 
-module.exports.versionSatisfiesRequirement = (dependency, v) => {
+module.exports.versionSatisfiesRequirement = (dependency, version) => {
 	const depRange = require('../package.json').engines[dependency];
-	if (!module.exports(v).satisfies(depRange)) {
-		throw new Error(`Please upgrade to${dependency}${depRange}`);
+	if (!module.exports(version).satisfies(depRange)) {
+		throw new Error(`Please upgrade to ${dependency}${depRange}`);
 	}
 };
