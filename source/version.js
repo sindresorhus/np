@@ -61,6 +61,6 @@ module.exports.validate = version => {
 module.exports.versionSatisfiesRequirement = (dependency, v) => {
 	const depRange = require('../package.json').engines[dependency];
 	if (!module.exports(v).satisfies(depRange)) {
-		throw new Error(`Please upgrade to yarn${depRange}`);
+		throw new Error(`Please upgrade to${dependency}${depRange}`);
 	}
 };
