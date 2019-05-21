@@ -1,8 +1,12 @@
 'use strict';
+const fs = require('fs');
+const path = require('path');
 const execa = require('execa');
 const pTimeout = require('p-timeout');
 const ow = require('ow');
 const npmName = require('npm-name');
+const chalk = require('chalk');
+const pkgDir = require('pkg-dir');
 const {verifyRequirementSatisfied} = require('../version');
 
 exports.checkConnection = () => pTimeout(
@@ -86,4 +90,15 @@ exports.version = () => execa.stdout('npm', ['--version']);
 exports.verifyRecentNpmVersion = async () => {
 	const npmVersion = await exports.version();
 	verifyRequirementSatisfied('npm', npmVersion);
+};
+
+exports.checkIgnoreStrategy = ({files}) => {
+	const rootDir = pkgDir.sync();
+	const npmignoreExists = fs.existsSync(path.resolve(rootDir, '.npmignore'));
+
+	if (!files && !npmignoreExists) {
+		console.log(`
+		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm. 
+		`);
+	}
 };

@@ -31,6 +31,7 @@
 - Supports [two-factor authentication](https://docs.npmjs.com/getting-started/using-two-factor-authentication)
 - Enables two-factor authentication on new repositories
 - Opens a prefilled GitHub Releases draft after publish
+- Warns about the possibility of extraneous files being published
 
 
 ## Prerequisite
