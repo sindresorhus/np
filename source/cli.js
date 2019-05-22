@@ -32,7 +32,7 @@ const cli = meow(`
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
 	  --no-release-draft  Skips opening a GitHub release draft
-		--auto							Categorize changes and determine version automatically
+	  --auto              Categorize changes and determine version automatically
 
 	Examples
 	  $ np
