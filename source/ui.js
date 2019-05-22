@@ -1,60 +1,28 @@
 'use strict';
 const inquirer = require('inquirer');
 const chalk = require('chalk');
-const githubUrlFromGit = require('github-url-from-git');
 const isScoped = require('is-scoped');
-const util = require('./util');
 const git = require('./git-util');
 const {prereleaseTags} = require('./npm/util');
 const version = require('./version');
 const prettyVersionDiff = require('./pretty-version-diff');
+const getCommits = require('./get-commits');
+const printCommitLog = require('./print-commit-log');
 
-const printCommitLog = async repoUrl => {
-	const latest = await git.latestTagOrFirstCommit();
-	const log = await git.commitLogFromRevision(latest);
-
-	if (!log) {
-		return {
-			hasCommits: false,
-			releaseNotes: () => {}
-		};
-	}
-
-	const commits = log.split('\n')
-		.map(commit => {
-			const splitIndex = commit.lastIndexOf(' ');
-			return {
-				message: commit.slice(0, splitIndex),
-				id: commit.slice(splitIndex + 1)
-			};
-		});
-
-	const history = commits.map(commit => {
-		const commitMessage = util.linkifyIssues(repoUrl, commit.message);
-		const commitId = util.linkifyCommit(repoUrl, commit.id);
-		return `- ${commitMessage}  ${commitId}`;
-	}).join('\n');
-
-	const releaseNotes = nextTag => commits.map(commit =>
-		`- ${commit.message}  ${commit.id}`
-	).join('\n') + `\n\n${repoUrl}/compare/${latest}...${nextTag}`;
-
-	const commitRange = util.linkifyCommitRange(repoUrl, `${latest}...master`);
-
-	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n`);
-
-	return {
-		hasCommits: true,
-		releaseNotes
-	};
+const generateReleaseNotes = (commits, repoUrl, latest, nextTag) => {
+	return [
+		'## Highlights',
+		'',
+		...commits.map(commit => `- ${commit.message}  ${commit.id}`),
+		'',
+		'## All changes',
+		'',
+		`${repoUrl}/compare/${latest}...${nextTag}`
+	].join('\n');
 };
 
 module.exports = async (options, pkg) => {
 	const oldVersion = pkg.version;
-	const extraBaseUrls = ['gitlab.com'];
-	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
-
-	console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 
 	const prompts = [
 		{
@@ -138,9 +106,9 @@ module.exports = async (options, pkg) => {
 		}
 	];
 
-	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl);
+	const commits = await getCommits();
 
-	if (!hasCommits) {
+	if (commits.length === 0) {
 		const answers = await inquirer.prompt([{
 			type: 'confirm',
 			name: 'confirm',
@@ -156,13 +124,16 @@ module.exports = async (options, pkg) => {
 		}
 	}
 
+	await printCommitLog(commits, options.repoUrl);
+
+	const latest = await git.latestTagOrFirstCommit();
+	const releaseNotes = nextTag => generateReleaseNotes(commits, options.repoUrl, latest, nextTag);
 	const answers = await inquirer.prompt(prompts);
 
 	return {
 		...options,
 		...answers,
 		confirm: true,
-		repoUrl,
 		releaseNotes
 	};
 };

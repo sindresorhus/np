@@ -6,10 +6,13 @@ const logSymbols = require('log-symbols');
 const meow = require('meow');
 const updateNotifier = require('update-notifier');
 const hasYarn = require('has-yarn');
+const githubUrlFromGit = require('github-url-from-git');
+const chalk = require('chalk');
 const config = require('./config');
 const {isPackageNameAvailable} = require('./npm/util');
 const version = require('./version');
 const util = require('./util');
+const detectVersion = require('./detect-version');
 const ui = require('./ui');
 const np = require('.');
 
@@ -29,6 +32,7 @@ const cli = meow(`
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
 	  --no-release-draft  Skips opening a GitHub release draft
+		--auto							Categorize changes and determine version automatically
 
 	Examples
 	  $ np
@@ -63,6 +67,9 @@ const cli = meow(`
 		},
 		contents: {
 			type: 'string'
+		},
+		auto: {
+			type: 'boolean'
 		}
 	}
 });
@@ -87,15 +94,25 @@ updateNotifier({pkg: cli.pkg}).notify();
 	};
 
 	const isAvailable = flags.publish ? await isPackageNameAvailable(pkg) : false;
+	let options = {
+		...flags,
+		confirm: true,
+		exists: !isAvailable,
+		version: cli.input[0]
+	};
 
-	const options = cli.input.length > 0 ?
-		{
-			...flags,
-			confirm: true,
-			exists: !isAvailable,
-			version: cli.input[0]
-		} :
-		await ui({...flags, exists: !isAvailable}, pkg);
+	if (cli.input.length === 0) {
+		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${pkg.version})`)}\n`);
+
+		const extraBaseUrls = ['gitlab.com'];
+		const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
+
+		if (cli.flags.auto) {
+			options = await detectVersion({...flags, exists: !isAvailable, repoUrl}, pkg);
+		} else {
+			options = await ui({...flags, exists: !isAvailable, repoUrl}, pkg);
+		}
+	}
 
 	if (!options.confirm) {
 		process.exit(0);
