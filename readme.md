@@ -46,10 +46,6 @@
 $ npm install --global np
 ```
 
-<a href="https://www.patreon.com/sindresorhus">
-	<img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" width="160">
-</a>
-
 
 ## Usage
 
@@ -262,8 +258,3 @@ If you're running into other issues when using SSH, please consult [GitHub's sup
 - [Sindre Sorhus](https://github.com/sindresorhus)
 - [Sam Verschueren](https://github.com/SamVerschueren)
 - [Itai Steinherz](https://github.com/itaisteinherz)
-
-
-## License
-
-MIT
