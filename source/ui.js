@@ -50,6 +50,8 @@ const printCommitLog = async repoUrl => {
 };
 
 module.exports = async (options, pkg) => {
+	await git.verifyRemoteHistoryIsClean();
+
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
