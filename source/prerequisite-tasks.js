@@ -6,6 +6,8 @@ const git = require('./git-util');
 const npm = require('./npm/util');
 const {getTagVersionPrefix} = require('./util');
 
+const {versionSatisfiesRequirement} = version;
+
 module.exports = (input, pkg, options) => {
 	const isExternalRegistry = npm.isExternalRegistry(pkg);
 	let newVersion = null;
@@ -25,10 +27,7 @@ module.exports = (input, pkg, options) => {
 			enabled: () => options.yarn === true,
 			task: async () => {
 				const yarnVersion = await execa.stdout('yarn', ['--version']);
-
-				if (version(yarnVersion).satisfies('<1.7.0')) {
-					throw new Error('Please upgrade to yarn@1.7.0 or newer');
-				}
+				versionSatisfiesRequirement('yarn', yarnVersion);
 			}
 		},
 		{

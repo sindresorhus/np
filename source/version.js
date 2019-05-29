@@ -57,3 +57,10 @@ module.exports.validate = version => {
 		throw new Error('Version should be a valid semver version.');
 	}
 };
+
+module.exports.versionSatisfiesRequirement = (dependency, version) => {
+	const depRange = require('../package.json').engines[dependency];
+	if (!module.exports(version).satisfies(depRange)) {
+		throw new Error(`Please upgrade to ${dependency}${depRange}`);
+	}
+};
