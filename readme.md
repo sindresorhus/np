@@ -61,6 +61,7 @@ $ np --help
   Options
     --any-branch        Allow publishing from any branch
     --no-cleanup        Skips cleanup of node_modules
+    --no-tests          Skips tests
     --yolo              Skips cleanup and testing
     --no-publish        Skips publishing
     --tag               Publish under a given dist-tag
@@ -92,6 +93,7 @@ Currently, these are the flags you can configure:
 
 - `anyBranch` - Allow publishing from any branch (`false` by default).
 - `cleanup` - Cleanup `node_modules` (`true` by default).
+- `tests` - Run `npm test` (`true` by default).
 - `yolo` - Skip cleanup and testing (`false` by default).
 - `publish` - Publish (`true` by default).
 - `tag` - Publish under a given dist-tag (`latest` by default).
