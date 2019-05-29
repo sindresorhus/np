@@ -3,9 +3,8 @@ const execa = require('execa');
 const pTimeout = require('p-timeout');
 const ow = require('ow');
 const npmName = require('npm-name');
-const version = require('../version');
+const {versionSatisfiesRequirement} = require('../version');
 
-const {versionSatisfiesRequirement} = version;
 exports.checkConnection = () => pTimeout(
 	(async () => {
 		try {
