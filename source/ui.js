@@ -140,6 +140,15 @@ module.exports = async (options, pkg) => {
 
 	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl);
 
+	if (options.version) {
+		return {
+			...options,
+			confirm: true,
+			repoUrl,
+			releaseNotes
+		};
+	}
+
 	if (!hasCommits) {
 		const answers = await inquirer.prompt([{
 			type: 'confirm',
