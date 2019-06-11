@@ -3,7 +3,7 @@ const execa = require('execa');
 const pTimeout = require('p-timeout');
 const ow = require('ow');
 const npmName = require('npm-name');
-const {versionSatisfiesRequirement} = require('../version');
+const {verifyRequirementSatisfied} = require('../version');
 
 exports.checkConnection = () => pTimeout(
 	(async () => {
@@ -85,5 +85,5 @@ exports.version = () => execa.stdout('npm', ['--version']);
 
 exports.verifyRecentNpmVersion = async () => {
 	const npmVersion = await exports.version();
-	versionSatisfiesRequirement('npm', npmVersion);
+	verifyRequirementSatisfied('npm', npmVersion);
 };

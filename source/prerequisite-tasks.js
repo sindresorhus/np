@@ -6,8 +6,6 @@ const git = require('./git-util');
 const npm = require('./npm/util');
 const {getTagVersionPrefix} = require('./util');
 
-const {versionSatisfiesRequirement} = version;
-
 module.exports = (input, pkg, options) => {
 	const isExternalRegistry = npm.isExternalRegistry(pkg);
 	let newVersion = null;
@@ -27,7 +25,7 @@ module.exports = (input, pkg, options) => {
 			enabled: () => options.yarn === true,
 			task: async () => {
 				const yarnVersion = await execa.stdout('yarn', ['--version']);
-				versionSatisfiesRequirement('yarn', yarnVersion);
+				version.verifyRequirementSatisfied('yarn', yarnVersion);
 			}
 		},
 		{

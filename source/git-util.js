@@ -1,9 +1,7 @@
 'use strict';
 const execa = require('execa');
 const escapeStringRegexp = require('escape-string-regexp');
-const version = require('./version');
-
-const {versionSatisfiesRequirement} = version;
+const {verifyRequirementSatisfied} = require('./version');
 
 exports.latestTag = () => execa.stdout('git', ['describe', '--abbrev=0', '--tags']);
 
@@ -131,5 +129,5 @@ const gitVersion = async () => {
 exports.verifyRecentGitVersion = async () => {
 	const installedVersion = await gitVersion();
 
-	versionSatisfiesRequirement('git', installedVersion);
+	verifyRequirementSatisfied('git', installedVersion);
 };
