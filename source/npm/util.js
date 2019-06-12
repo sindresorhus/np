@@ -83,7 +83,6 @@ exports.isPackageNameAvailable = async pkg => {
 
 exports.isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
 
-
 exports.version = () => execa.stdout('npm', ['--version']);
 
 exports.verifyRecentNpmVersion = async () => {
