@@ -19,6 +19,7 @@ const prerequisiteTasks = require('./prerequisite-tasks');
 const gitTasks = require('./git-tasks');
 const publish = require('./npm/publish');
 const enable2fa = require('./npm/enable-2fa');
+const npm = require('./npm/util');
 const releaseTaskHelper = require('./release-task-helper');
 const util = require('./util');
 const git = require('./git-util');
@@ -195,7 +196,8 @@ module.exports = async (input = 'patch', options) => {
 			}
 		]);
 
-		if (!options.exists && !pkg.private) {
+		const isExternalRegistry = npm.isExternalRegistry(pkg);
+		if (!options.exists && !(pkg.private || isExternalRegistry)) {
 			tasks.add([
 				{
 					title: 'Enabling two-factor authentication',
