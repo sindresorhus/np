@@ -7,6 +7,7 @@ const version = require('./version');
 module.exports = async (options, pkg) => {
 	const newVersion = version(pkg.version).getNewVersionFrom(options.version);
 	const tag = await getTagVersionPrefix(options) + newVersion;
+
 	const url = newGithubReleaseUrl({
 		repoUrl: options.repoUrl,
 		tag,
