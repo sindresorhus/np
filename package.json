@@ -48,6 +48,7 @@
 		"listr-input": "^0.1.3",
 		"log-symbols": "^3.0.0",
 		"meow": "^5.0.0",
+		"new-github-release-url": "^1.0.0",
 		"npm-name": "^5.0.1",
 		"onetime": "^5.1.0",
 		"open": "^6.1.0",
