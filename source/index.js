@@ -180,7 +180,7 @@ module.exports = async (input = 'patch', options) => {
 				task: (context, task) => {
 					let hasError = false;
 
-					return publish(context, pkgManager, task, options, input)
+					return publish(context, pkgManager, task, options)
 						.pipe(
 							catchError(async error => {
 								hasError = true;
