@@ -23,7 +23,7 @@ const pkgPublish = (pkgManager, options) => {
 		args.push('--access', 'public');
 	}
 
-	return execa(pkgManager, args);
+	return execa(pkgManager, args, {preferLocal: false});
 };
 
 module.exports = (context, pkgManager, task, options) =>

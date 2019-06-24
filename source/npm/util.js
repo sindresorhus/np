@@ -8,7 +8,7 @@ const {verifyRequirementSatisfied} = require('../version');
 exports.checkConnection = () => pTimeout(
 	(async () => {
 		try {
-			await execa('npm', ['ping']);
+			await execa('npm', ['ping'], {preferLocal: false});
 			return true;
 		} catch (_) {
 			throw new Error('Connection to npm registry failed');
@@ -54,7 +54,7 @@ exports.prereleaseTags = async packageName => {
 
 	let tags = [];
 	try {
-		const {stdout} = await execa('npm', ['view', '--json', packageName, 'dist-tags']);
+		const {stdout} = await execa('npm', ['view', '--json', packageName, 'dist-tags'], {preferLocal: false});
 		tags = Object.keys(JSON.parse(stdout))
 			.filter(tag => tag !== 'latest');
 	} catch (error) {

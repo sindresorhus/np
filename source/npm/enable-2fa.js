@@ -11,7 +11,7 @@ const enable2fa = (packageName, options) => {
 		args.push('--otp', options.otp);
 	}
 
-	return execa('npm', args);
+	return execa('npm', args, {preferLocal: false});
 };
 
 module.exports = (task, packageName, options) =>
