@@ -53,10 +53,10 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 
 	try {
 		if (options.yarn) {
-			return await execa.stdout('yarn', ['config', 'get', 'version-tag-prefix']);
+			return await execa.stdout('yarn', ['config', 'get', 'version-tag-prefix'], {preferLocal: false});
 		}
 
-		return await execa.stdout('npm', ['config', 'get', 'tag-version-prefix']);
+		return await execa.stdout('npm', ['config', 'get', 'tag-version-prefix'], {preferLocal: false});
 	} catch (_) {
 		return 'v';
 	}

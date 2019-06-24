@@ -26,7 +26,7 @@ exports.username = async ({externalRegistry}) => {
 	}
 
 	try {
-		return await execa.stdout('npm', args);
+		return await execa.stdout('npm', args, {preferLocal: false});
 	} catch (error) {
 		throw new Error(/ENEEDAUTH/.test(error.stderr) ?
 			'You must be logged in. Use `npm login` and try again.' :
@@ -38,7 +38,7 @@ exports.collaborators = async packageName => {
 	ow(packageName, ow.string);
 
 	try {
-		return await execa.stdout('npm', ['access', 'ls-collaborators', packageName]);
+		return await execa.stdout('npm', ['access', 'ls-collaborators', packageName], {preferLocal: false});
 	} catch (error) {
 		// Ignore non-existing package error
 		if (error.stderr.includes('code E404')) {

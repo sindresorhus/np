@@ -24,7 +24,7 @@ module.exports = (input, pkg, options) => {
 			title: 'Check yarn version',
 			enabled: () => options.yarn === true,
 			task: async () => {
-				const yarnVersion = await execa.stdout('yarn', ['--version']);
+				const yarnVersion = await execa.stdout('yarn', ['--version'], {preferLocal: false});
 				version.verifyRequirementSatisfied('yarn', yarnVersion);
 			}
 		},
