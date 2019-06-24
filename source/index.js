@@ -223,7 +223,7 @@ module.exports = async (input = 'patch', options) => {
 		title: 'Creating release draft on GitHub',
 		enabled: () => isOnGitHub === true,
 		skip: () => !options.releaseDraft,
-		task: () => releaseTaskHelper(options)
+		task: () => releaseTaskHelper(options, pkg)
 	});
 
 	await tasks.run();
