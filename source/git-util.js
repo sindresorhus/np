@@ -3,9 +3,15 @@ const execa = require('execa');
 const escapeStringRegexp = require('escape-string-regexp');
 const {verifyRequirementSatisfied} = require('./version');
 
-exports.latestTag = () => execa.stdout('git', ['describe', '--abbrev=0', '--tags']);
+exports.latestTag = async () => {
+	const {stdout} = await execa('git', ['describe', '--abbrev=0', '--tags']);
+	return stdout;
+};
 
-const firstCommit = () => execa.stdout('git', ['rev-list', '--max-parents=0', 'HEAD']);
+const firstCommit = async () => {
+	const {stdout} = await execa('git', ['rev-list', '--max-parents=0', 'HEAD']);
+	return stdout;
+};
 
 exports.latestTagOrFirstCommit = async () => {
 	let latest;
@@ -27,7 +33,10 @@ exports.hasUpstream = async () => {
 	return new RegExp(String.raw`^## ${escapedCurrentBranch}\.\.\..+\/${escapedCurrentBranch}`).test(stdout);
 };
 
-exports.currentBranch = () => execa.stdout('git', ['symbolic-ref', '--short', 'HEAD']);
+exports.currentBranch = async () => {
+	const {stdout} = await execa('git', ['symbolic-ref', '--short', 'HEAD']);
+	return stdout;
+};
 
 exports.verifyCurrentBranchIsMaster = async () => {
 	if (await exports.currentBranch() !== 'master') {
@@ -57,7 +66,8 @@ exports.verifyWorkingTreeIsClean = async () => {
 exports.isRemoteHistoryClean = async () => {
 	let history;
 	try { // Gracefully handle no remote set up.
-		history = await execa.stdout('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']);
+		const {stdout} = await execa('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']);
+		history = stdout;
 	} catch (_) {}
 
 	if (history && history !== '0') {
@@ -81,7 +91,9 @@ exports.verifyRemoteIsValid = async () => {
 	}
 };
 
-exports.fetch = () => execa('git', ['fetch']);
+exports.fetch = async () => {
+	await execa('git', ['fetch']);
+};
 
 exports.tagExistsOnRemote = async tagName => {
 	try {
@@ -109,9 +121,14 @@ exports.verifyTagDoesNotExistOnRemote = async tagName => {
 	}
 };
 
-exports.commitLogFromRevision = revision => execa.stdout('git', ['log', '--format=%s %h', `${revision}..HEAD`]);
+exports.commitLogFromRevision = async revision => {
+	const {stdout} = await execa('git', ['log', '--format=%s %h', `${revision}..HEAD`]);
+	return stdout;
+};
 
-exports.push = () => execa('git', ['push', '--follow-tags']);
+exports.push = async () => {
+	await execa('git', ['push', '--follow-tags']);
+};
 
 exports.deleteTag = async tagName => {
 	await execa('git', ['tag', '--delete', tagName]);

@@ -26,7 +26,8 @@ exports.username = async ({externalRegistry}) => {
 	}
 
 	try {
-		return await execa.stdout('npm', args);
+		const {stdout} = await execa('npm', args);
+		return stdout;
 	} catch (error) {
 		throw new Error(/ENEEDAUTH/.test(error.stderr) ?
 			'You must be logged in. Use `npm login` and try again.' :
@@ -38,7 +39,8 @@ exports.collaborators = async packageName => {
 	ow(packageName, ow.string);
 
 	try {
-		return await execa.stdout('npm', ['access', 'ls-collaborators', packageName]);
+		const {stdout} = await execa('npm', ['access', 'ls-collaborators', packageName]);
+		return stdout;
 	} catch (error) {
 		// Ignore non-existing package error
 		if (error.stderr.includes('code E404')) {
@@ -81,7 +83,10 @@ exports.isPackageNameAvailable = async pkg => {
 
 exports.isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
 
-exports.version = () => execa.stdout('npm', ['--version']);
+exports.version = async () => {
+	const {stdout} = await execa('npm', ['--version']);
+	return stdout;
+};
 
 exports.verifyRecentNpmVersion = async () => {
 	const npmVersion = await exports.version();

@@ -7,7 +7,7 @@ const pMemoize = require('p-memoize');
 const ow = require('ow');
 
 exports.readPkg = () => {
-	const {pkg} = readPkgUp.sync();
+	const {package: pkg} = readPkgUp.sync();
 
 	if (!pkg) {
 		throw new Error('No package.json found. Make sure you\'re in the correct project.');
@@ -53,10 +53,12 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 
 	try {
 		if (options.yarn) {
-			return await execa.stdout('yarn', ['config', 'get', 'version-tag-prefix']);
+			const {stdout} = await execa('yarn', ['config', 'get', 'version-tag-prefix']);
+			return stdout;
 		}
 
-		return await execa.stdout('npm', ['config', 'get', 'tag-version-prefix']);
+		const {stdout} = await execa('npm', ['config', 'get', 'tag-version-prefix']);
+		return stdout;
 	} catch (_) {
 		return 'v';
 	}

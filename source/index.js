@@ -228,6 +228,6 @@ module.exports = async (input = 'patch', options) => {
 
 	await tasks.run();
 
-	const {pkg: newPkg} = await readPkgUp();
+	const {package: newPkg} = await readPkgUp();
 	return newPkg;
 };
