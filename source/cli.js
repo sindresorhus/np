@@ -23,6 +23,7 @@ const cli = meow(`
 	Options
 	  --any-branch        Allow publishing from any branch
 	  --no-cleanup        Skips cleanup of node_modules
+	  --no-tests          Skips tests
 	  --yolo              Skips cleanup and testing
 	  --no-publish        Skips publishing
 	  --tag               Publish under a given dist-tag
@@ -43,6 +44,9 @@ const cli = meow(`
 			type: 'boolean'
 		},
 		cleanup: {
+			type: 'boolean'
+		},
+		tests: {
 			type: 'boolean'
 		},
 		yolo: {
@@ -74,6 +78,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 
 	const defaultFlags = {
 		cleanup: true,
+		tests: true,
 		publish: true,
 		yarn: hasYarn()
 	};

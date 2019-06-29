@@ -37,6 +37,7 @@ const exec = (cmd, args) => {
 module.exports = async (input = 'patch', options) => {
 	options = {
 		cleanup: true,
+		tests: true,
 		publish: true,
 		...options
 	};
@@ -51,7 +52,7 @@ module.exports = async (input = 'patch', options) => {
 	}
 
 	const pkg = util.readPkg();
-	const runTests = !options.yolo;
+	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
 	const runPublish = options.publish && !pkg.private;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
