@@ -1,4 +1,4 @@
-import test, {afterEach} from 'ava';
+import test from 'ava';
 import sinon from 'sinon';
 import terminalLink from 'terminal-link';
 
@@ -10,7 +10,7 @@ const MOCK_COMMIT_RANGE = `${MOCK_COMMIT_HASH}...master`;
 
 const sandbox = sinon.createSandbox();
 
-afterEach(() => {
+test.afterEach(() => {
 	sandbox.restore();
 });
 

@@ -1,11 +1,11 @@
-import test, {afterEach} from 'ava';
+import test from 'ava';
 import sinon from 'sinon';
 import execa from 'execa';
 import {getTagVersionPrefix} from '../source/util';
 
 const sandbox = sinon.createSandbox();
 
-afterEach(() => {
+test.afterEach(() => {
 	sandbox.restore();
 });
 
