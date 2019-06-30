@@ -1,7 +1,6 @@
 import test from 'ava';
 import sinon from 'sinon';
 import terminalLink from 'terminal-link';
-
 import {linkifyIssues, linkifyCommit, linkifyCommitRange} from '../source/util';
 
 const MOCK_REPO_URL = 'https://github.com/unicorn/rainbow';
