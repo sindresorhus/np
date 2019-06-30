@@ -65,6 +65,7 @@
 	},
 	"devDependencies": {
 		"ava": "^2.1.0",
+		"proxyquire": "^2.1.0",
 		"sinon": "^7.3.2",
 		"xo": "^0.24.0"
 	}

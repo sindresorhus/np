@@ -1,13 +1,6 @@
 import test from 'ava';
-import sinon from 'sinon';
-import execa from 'execa';
+import proxyquire from 'proxyquire';
 import {getTagVersionPrefix} from '../source/util';
-
-const sandbox = sinon.createSandbox();
-
-test.afterEach(() => {
-	sandbox.restore();
-});
 
 test('get tag prefix', async t => {
 	t.is(await getTagVersionPrefix({yarn: false}), 'v');
@@ -20,8 +13,6 @@ test('no options passed', async t => {
 });
 
 test.serial('defaults to "v" when command fails', async t => {
-	sandbox.stub(execa, 'stdout')
-		.onFirstCall()
-		.rejects(new Error());
+	proxyquire('../source/util', {execa: Promise.reject});
 	t.is(await getTagVersionPrefix({yarn: true}), 'v');
 });
