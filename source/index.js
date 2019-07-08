@@ -193,7 +193,7 @@ module.exports = async (input = 'patch', options) => {
 				title: `Publishing package using ${pkgManagerName}`,
 				skip: () => {
 					if (options.preview) {
-						return 'Command not executed in preview mode: npm publish…';
+						return `Command not executed in preview mode: ${pkgManager} publish…`;
 					}
 				},
 				task: (context, task) => {
