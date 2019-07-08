@@ -27,10 +27,11 @@
 - Prevents [accidental publishing](https://github.com/npm/npm/issues/13248) of pre-release versions under the `latest` [dist-tag](https://docs.npmjs.com/cli/dist-tag)
 - Publishes the new version to npm, optionally under a dist-tag
 - Rolls back the project to its previous state in case publishing fails
-- Pushes commits and tags to GitHub/GitLab
+- Pushes commits and tags (newly & previously created) to GitHub/GitLab
 - Supports [two-factor authentication](https://docs.npmjs.com/getting-started/using-two-factor-authentication)
 - Enables two-factor authentication on new repositories
 - Opens a prefilled GitHub Releases draft after publish
+- Warns about the possibility of extraneous files being published
 
 
 ## Prerequisite
@@ -45,10 +46,6 @@
 ```
 $ npm install --global np
 ```
-
-<a href="https://www.patreon.com/sindresorhus">
-	<img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" width="160">
-</a>
 
 
 ## Usage
@@ -65,6 +62,7 @@ $ np --help
   Options
     --any-branch        Allow publishing from any branch
     --no-cleanup        Skips cleanup of node_modules
+    --no-tests          Skips tests
     --yolo              Skips cleanup and testing
     --no-publish        Skips publishing
     --tag               Publish under a given dist-tag
@@ -96,11 +94,13 @@ Currently, these are the flags you can configure:
 
 - `anyBranch` - Allow publishing from any branch (`false` by default).
 - `cleanup` - Cleanup `node_modules` (`true` by default).
+- `tests` - Run `npm test` (`true` by default).
 - `yolo` - Skip cleanup and testing (`false` by default).
 - `publish` - Publish (`true` by default).
 - `tag` - Publish under a given dist-tag (`latest` by default).
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
+- `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
@@ -216,7 +216,7 @@ If you use a Continuous Integration server to publish your tagged commits, use t
 
 ### Publish to gh-pages
 
-To publish to `gh-pages` or any other branch that serves your static assets), install [`branchsite`](https://github.com/enriquecaballero/branchsite), an `np`-like CLI tool aimed to complement `np`, and create an [npm "post" hook](https://docs.npmjs.com/misc/scripts) that runs after `np`.
+To publish to `gh-pages` (or any other branch that serves your static assets), install [`branchsite`](https://github.com/enriquecaballero/branchsite), an `np`-like CLI tool aimed to complement `np`, and create an [npm "post" hook](https://docs.npmjs.com/misc/scripts) that runs after `np`.
 
 ```
 $ npm install --save-dev branchsite
@@ -262,8 +262,3 @@ If you're running into other issues when using SSH, please consult [GitHub's sup
 - [Sindre Sorhus](https://github.com/sindresorhus)
 - [Sam Verschueren](https://github.com/SamVerschueren)
 - [Itai Steinherz](https://github.com/itaisteinherz)
-
-
-## License
-
-MIT

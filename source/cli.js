@@ -23,6 +23,7 @@ const cli = meow(`
 	Options
 	  --any-branch        Allow publishing from any branch
 	  --no-cleanup        Skips cleanup of node_modules
+	  --no-tests          Skips tests
 	  --yolo              Skips cleanup and testing
 	  --no-publish        Skips publishing
 	  --preview           Only show what np is going to execute without running anything
@@ -44,6 +45,9 @@ const cli = meow(`
 			type: 'boolean'
 		},
 		cleanup: {
+			type: 'boolean'
+		},
+		tests: {
 			type: 'boolean'
 		},
 		yolo: {
@@ -78,6 +82,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 
 	const defaultFlags = {
 		cleanup: true,
+		tests: true,
 		publish: true,
 		yarn: hasYarn()
 	};
@@ -92,14 +97,9 @@ updateNotifier({pkg: cli.pkg}).notify();
 
 	const isAvailable = flags.publish ? await isPackageNameAvailable(pkg) : false;
 
-	const options = cli.input.length > 0 ?
-		{
-			...flags,
-			confirm: true,
-			exists: !isAvailable,
-			version: cli.input[0]
-		} :
-		await ui({...flags, exists: !isAvailable}, pkg);
+	const version = cli.input.length > 0 ? cli.input[0] : false;
+
+	const options = await ui({...flags, exists: !isAvailable, version}, pkg);
 
 	if (!options.confirm) {
 		process.exit(0);
