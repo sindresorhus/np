@@ -30,6 +30,7 @@
 - Pushes commits and tags (newly & previously created) to GitHub/GitLab
 - Supports [two-factor authentication](https://docs.npmjs.com/getting-started/using-two-factor-authentication)
 - Enables two-factor authentication on new repositories
+  <small>(does not apply to external registries)</small>
 - Opens a prefilled GitHub Releases draft after publish
 
 
