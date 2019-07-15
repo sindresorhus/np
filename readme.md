@@ -29,7 +29,7 @@
 - Rolls back the project to its previous state in case publishing fails
 - Pushes commits and tags (newly & previously created) to GitHub/GitLab
 - Supports [two-factor authentication](https://docs.npmjs.com/getting-started/using-two-factor-authentication)
-- Enables two-factor authentication on new repositories
+- Enables two-factor authentication on new repositories (does not apply to external registries)
 - Opens a prefilled GitHub Releases draft after publish
 
 
