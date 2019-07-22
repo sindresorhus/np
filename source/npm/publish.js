@@ -26,8 +26,8 @@ const pkgPublish = (pkgManager, options) => {
 	return execa(pkgManager, args);
 };
 
-module.exports = (context, pkgManager, task, options, input) =>
-	from(pkgPublish(pkgManager, options, input)).pipe(
+module.exports = (context, pkgManager, task, options) =>
+	from(pkgPublish(pkgManager, options)).pipe(
 		catchError(error => handleNpmError(error, task, otp => {
 			context.otp = otp;
 

@@ -37,6 +37,7 @@ const exec = (cmd, args) => {
 module.exports = async (input = 'patch', options) => {
 	options = {
 		cleanup: true,
+		tests: true,
 		publish: true,
 		...options
 	};
@@ -51,7 +52,7 @@ module.exports = async (input = 'patch', options) => {
 	}
 
 	const pkg = util.readPkg();
-	const runTests = !options.yolo;
+	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
 	const runPublish = options.publish && !pkg.private;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
@@ -199,7 +200,7 @@ module.exports = async (input = 'patch', options) => {
 				task: (context, task) => {
 					let hasError = false;
 
-					return publish(context, pkgManager, task, options, input)
+					return publish(context, pkgManager, task, options)
 						.pipe(
 							catchError(async error => {
 								hasError = true;
@@ -257,11 +258,11 @@ module.exports = async (input = 'patch', options) => {
 
 			return !options.releaseDraft;
 		},
-		task: () => releaseTaskHelper(options)
+		task: () => releaseTaskHelper(options, pkg)
 	});
 
 	await tasks.run();
 
-	const {pkg: newPkg} = await readPkgUp();
+	const {package: newPkg} = await readPkgUp();
 	return newPkg;
 };
