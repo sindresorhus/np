@@ -31,7 +31,7 @@
 - Supports [two-factor authentication](https://docs.npmjs.com/getting-started/using-two-factor-authentication)
 - Enables two-factor authentication on new repositories
 - Opens a prefilled GitHub Releases draft after publish
-
+- Dry-run mode
 
 ## Prerequisite
 
@@ -67,6 +67,7 @@ $ np --help
     --no-cleanup        Skips cleanup of node_modules
     --yolo              Skips cleanup and testing
     --no-publish        Skips publishing
+    --preview           Only show what np is going to execute without running anything
     --tag               Publish under a given dist-tag
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
@@ -101,6 +102,7 @@ Currently, these are the flags you can configure:
 - `tag` - Publish under a given dist-tag (`latest` by default).
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
+- `preview` - Only show what np is going to execute without running anything (`false` by default).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
