@@ -32,7 +32,7 @@
 - Enables two-factor authentication on new repositories
 - Opens a prefilled GitHub Releases draft after publish
 - Warns about the possibility of extraneous files being published
-- Dry-run mode
+- Can run in preview mode, only showing what is going to happen without running anything
 
 ## Prerequisite
 
