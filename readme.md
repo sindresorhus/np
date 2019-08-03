@@ -34,6 +34,7 @@
 - Warns about the possibility of extraneous files being published
 - Can run in preview mode, only showing what is going to happen without running anything
 
+
 ## Prerequisite
 
 - Node.js 8 or later
