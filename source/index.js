@@ -62,7 +62,7 @@ module.exports = async (input = 'patch', options) => {
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, options.yarn ? 'yarn.lock' : 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
 	const isOnGitHub = options.repoUrl && (hostedGitInfo.fromUrl(options.repoUrl) || {}).type === 'github';
 
-	let isPublished = false;
+	let publishStatus = 'UNKNOWN';
 
 	const rollback = onetime(async () => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
@@ -86,11 +86,14 @@ module.exports = async (input = 'patch', options) => {
 	});
 
 	exitHook(callback => {
-		if (!isPublished && runPublish) {
+		if (publishStatus === 'FAILED' && runPublish) {
 			(async () => {
 				await rollback();
 				callback();
 			})();
+		} else {
+			console.log('\nAborted!');
+			callback();
 		}
 	});
 
@@ -190,7 +193,7 @@ module.exports = async (input = 'patch', options) => {
 								throw new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`);
 							}),
 							finalize(() => {
-								isPublished = !hasError;
+								publishStatus = hasError ? 'FAILED' : 'SUCCESS';
 							})
 						);
 				}
@@ -215,7 +218,7 @@ module.exports = async (input = 'patch', options) => {
 				return 'Upstream branch not found; not pushing.';
 			}
 
-			if (!isPublished && runPublish) {
+			if (publishStatus === 'FAILED' && runPublish) {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
