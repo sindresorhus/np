@@ -85,7 +85,8 @@ module.exports = async (input = 'patch', options) => {
 		}
 	});
 
-	exitHook(callback => {
+	// The default parameter is a workaround for https://github.com/Tapppi/async-exit-hook/issues/9
+	exitHook((callback = () => {}) => {
 		if (publishStatus === 'FAILED' && runPublish) {
 			(async () => {
 				await rollback();
