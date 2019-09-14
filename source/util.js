@@ -63,3 +63,17 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 		return 'v';
 	}
 });
+
+exports.splitFileNameList(stdout) => {
+	
+	if(typeof stdout !== 'string')
+		throw new TypeError('expected parameter stdout of type string');
+
+	const rows = stdout.trim().split();
+	let result = new Array(rows.length);
+	for(let i=0;i<rows.length;i++){
+		result[i] = rows[i].substring(0, rows[i].indexOf('|')).trim();
+	}
+	return result;
+
+};

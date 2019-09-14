@@ -2,10 +2,16 @@
 const execa = require('execa');
 const escapeStringRegexp = require('escape-string-regexp');
 const {verifyRequirementSatisfied} = require('./version');
+const {splitFileNameList} = require('util');
 
 exports.latestTag = async () => {
 	const {stdout} = await execa('git', ['describe', '--abbrev=0', '--tags']);
 	return stdout;
+};
+
+exports.newFilesSinceLastRelease = async () => {
+	const {stdout} = await execa('git', ['diff','--stat', '--diff-filter=A', await latestTag(), 'HEAD']);
+	return splitFileNameList(stdout);
 };
 
 const firstCommit = async () => {

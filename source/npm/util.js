@@ -107,3 +107,18 @@ exports.checkIgnoreStrategy = ({files}) => {
 		`);
 	}
 };
+
+//new files added part of .npmignore or part of files
+exports.checkNewFiles = ({files}, newFiles) => {
+	
+}
+
+const isIgnoredByDotnpmIgnore = (file) => {
+	const roorDir = pkgDir.sync();
+	fs.readFileSync(path.resolve(rootDir, '.npmignore'),			
+};
+
+const isPartOfFileProperty = (file, fileProperty) => {
+	
+};
+
