@@ -166,7 +166,8 @@ module.exports = async (input = 'patch', options) => {
 		{
 			title: 'Bumping version using Yarn',
 			enabled: () => options.yarn === true,
-			task: () => exec('yarn', ['version', '--new-version', input])
+			task: () => exec('yarn', ['version', '--new-version', input]),
+                        options: {suspendUpdateRenderer: true}
 		},
 		{
 			title: 'Bumping version using npm',
