@@ -19,6 +19,7 @@ const prerequisiteTasks = require('./prerequisite-tasks');
 const gitTasks = require('./git-tasks');
 const publish = require('./npm/publish');
 const enable2fa = require('./npm/enable-2fa');
+const npm = require('./npm/util');
 const releaseTaskHelper = require('./release-task-helper');
 const util = require('./util');
 const git = require('./git-util');
@@ -59,9 +60,9 @@ module.exports = async (input = 'patch', options) => {
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, options.yarn ? 'yarn.lock' : 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
-	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl).type === 'github';
+	const isOnGitHub = options.repoUrl && (hostedGitInfo.fromUrl(options.repoUrl) || {}).type === 'github';
 
-	let isPublished = false;
+	let publishStatus = 'UNKNOWN';
 
 	const rollback = onetime(async () => {
 		if (options.preview) {
@@ -88,12 +89,16 @@ module.exports = async (input = 'patch', options) => {
 		}
 	});
 
-	exitHook(callback => {
-		if (!isPublished && runPublish) {
+	// The default parameter is a workaround for https://github.com/Tapppi/async-exit-hook/issues/9
+	exitHook((callback = () => {}) => {
+		if (publishStatus === 'FAILED' && runPublish) {
 			(async () => {
 				await rollback();
 				callback();
 			})();
+		} else {
+			console.log('\nAborted!');
+			callback();
 		}
 	});
 
@@ -208,14 +213,15 @@ module.exports = async (input = 'patch', options) => {
 								throw new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`);
 							}),
 							finalize(() => {
-								isPublished = !hasError;
+								publishStatus = hasError ? 'FAILED' : 'SUCCESS';
 							})
 						);
 				}
 			}
 		]);
 
-		if (!options.exists && !pkg.private) {
+		const isExternalRegistry = npm.isExternalRegistry(pkg);
+		if (!options.exists && !pkg.private && !isExternalRegistry) {
 			tasks.add([
 				{
 					title: 'Enabling two-factor authentication',
@@ -241,7 +247,7 @@ module.exports = async (input = 'patch', options) => {
 				return 'Command not executed in preview mode: git push…';
 			}
 
-			if (!isPublished && runPublish) {
+			if (publishStatus === 'FAILED' && runPublish) {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},

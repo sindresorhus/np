@@ -1,6 +1,6 @@
 {
 	"name": "np",
-	"version": "5.0.3",
+	"version": "5.1.0",
 	"description": "A better `npm publish`",
 	"license": "MIT",
 	"repository": "sindresorhus/np",
@@ -39,8 +39,8 @@
 		"execa": "^2.0.1",
 		"github-url-from-git": "^1.5.0",
 		"has-yarn": "^2.1.0",
-		"hosted-git-info": "^2.7.1",
-		"inquirer": "^6.4.1",
+		"hosted-git-info": "^3.0.0",
+		"inquirer": "^7.0.0",
 		"is-installed-globally": "^0.2.0",
 		"is-scoped": "^2.1.0",
 		"issue-regex": "^2.0.0",
@@ -60,11 +60,11 @@
 		"semver": "^6.1.2",
 		"split": "^1.0.0",
 		"symbol-observable": "^1.2.0",
-		"terminal-link": "^1.2.0",
+		"terminal-link": "^2.0.0",
 		"update-notifier": "^3.0.0"
 	},
 	"devDependencies": {
-		"ava": "^2.1.0",
+		"ava": "^2.3.0",
 		"proxyquire": "^2.1.0",
 		"sinon": "^7.3.2",
 		"xo": "^0.24.0"
