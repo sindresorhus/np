@@ -103,7 +103,20 @@ exports.checkIgnoreStrategy = ({files}) => {
 
 	if (!files && !npmignoreExists) {
 		console.log(`
-		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm. 
+		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
 		`);
 	}
+};
+
+exports.registry = async (pkgManager, pkg) => {
+	const args = ['config', 'get', 'registry'];
+	const isExternalRegistry = exports.isExternalRegistry(pkg);
+
+	const externalRegistry = isExternalRegistry ? pkg.publishConfig.registry : false;
+	if (externalRegistry) {
+		args.push('--registry', externalRegistry);
+	}
+
+	const {stdout} = await execa(pkgManager, args);
+	return stdout;
 };

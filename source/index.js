@@ -65,10 +65,6 @@ module.exports = async (input = 'patch', options) => {
 	let publishStatus = 'UNKNOWN';
 
 	const rollback = onetime(async () => {
-		if (options.preview) {
-			return;
-		}
-
 		console.log('\nPublish failed. Rolling back to the previous state…');
 
 		const tagVersionPrefix = await util.getTagVersionPrefix(options);
@@ -91,7 +87,9 @@ module.exports = async (input = 'patch', options) => {
 
 	// The default parameter is a workaround for https://github.com/Tapppi/async-exit-hook/issues/9
 	exitHook((callback = () => {}) => {
-		if (publishStatus === 'FAILED' && runPublish) {
+		if (options.preview) {
+			callback();
+		} else if (publishStatus === 'FAILED' && runPublish) {
 			(async () => {
 				await rollback();
 				callback();
@@ -186,7 +184,7 @@ module.exports = async (input = 'patch', options) => {
 			enabled: () => options.yarn === false,
 			skip: () => {
 				if (options.preview) {
-					return 'Command not executed in preview mode: npm version…';
+					return '[Preview] Command not executed npm version…';
 				}
 			},
 			task: () => exec('npm', ['version', input])
@@ -197,9 +195,9 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: `Publishing package using ${pkgManagerName}`,
-				skip: () => {
+				skip: async () => {
 					if (options.preview) {
-						return `Command not executed in preview mode: ${pkgManager} publish…`;
+						return `[Preview] Command not executed ${pkgManager} publish…`;
 					}
 				},
 				task: (context, task) => {
@@ -227,7 +225,7 @@ module.exports = async (input = 'patch', options) => {
 					title: 'Enabling two-factor authentication',
 					skip: () => {
 						if (options.preview) {
-							return 'Command not executed in preview mode: npm access 2fa-required…';
+							return '[Preview] Command not executed npm access 2fa-required…';
 						}
 					},
 					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
@@ -244,7 +242,7 @@ module.exports = async (input = 'patch', options) => {
 			}
 
 			if (options.preview) {
-				return 'Command not executed in preview mode: git push…';
+				return '[Preview] Command not executed git push…';
 			}
 
 			if (publishStatus === 'FAILED' && runPublish) {
