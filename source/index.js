@@ -253,7 +253,7 @@ module.exports = async (input = 'patch', options) => {
 		enabled: () => isOnGitHub === true,
 		skip: () => {
 			if (options.preview) {
-				return 'GitHub Release page not opened in preview mode.';
+				return 'GitHub Releases draft not opened in preview mode.';
 			}
 
 			return !options.releaseDraft;
