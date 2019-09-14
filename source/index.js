@@ -171,7 +171,7 @@ module.exports = async (input = 'patch', options) => {
 			enabled: () => options.yarn === true,
 			skip: () => {
 				if (options.preview) {
-					return 'Command not executed in preview mode: yarn version…';
+					return '[Preview] Command not executed: yarn version…';
 				}
 			},
 			task: () => exec('yarn', ['version', '--new-version', input])
