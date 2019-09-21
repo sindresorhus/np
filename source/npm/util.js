@@ -7,6 +7,7 @@ const ow = require('ow');
 const npmName = require('npm-name');
 const chalk = require('chalk');
 const pkgDir = require('pkg-dir');
+const ignoreWalker = require('ignore-walk');
 const {verifyRequirementSatisfied} = require('../version');
 
 exports.checkConnection = () => pTimeout(
@@ -108,17 +109,58 @@ exports.checkIgnoreStrategy = ({files}) => {
 	}
 };
 
-//new files added part of .npmignore or part of files
-exports.checkNewFiles = ({files}, newFiles) => {
-	
+// New files added part of .npmignore or not part of files-attribute in "package.json"
+exports.checkNewFiles = async ({filesFromPackageDotJson}, newFiles) => {
+	const rootDir = pkgDir.sync();
+	const npmignoreExists = fs.existsSync(path.resolve(rootDir, '.npmignore'));
+
+	let result = [];
+
+	if (filesFromPackageDotJson) {
+		result = getFilesNotPartOfFileAttribute(filesFromPackageDotJson, newFiles);
+	}
+
+	if (npmignoreExists) {
+		result = result.concat(await getFilesIgnoredByDotnpmignore(newFiles));
+	}
+
+	return result;
+};
+
+async function getFilesIgnoredByDotnpmignore(fileList) {
+	if (!Array.isArray(fileList)) {
+		throw new TypeError('expected array, but got {typeof fileList}');
+	}
+
+	const result = [];
+	await ignoreWalker({
+		path: pkgDir.sync(),
+		ignoreFiles: ['.npmignore']
+	})
+		.then(CommaSeparatedList => {
+			const WhiteList = CommaSeparatedList.split(',');
+			/* Every file in fileList should be part of
+		the WhiteList */
+			fileList.foreach(item => {
+				if (WhiteList.find(item) === undefined) {
+					result.push(item);
+				}
+			});
+		});
+
+	return result;
 }
 
-const isIgnoredByDotnpmIgnore = (file) => {
-	const roorDir = pkgDir.sync();
-	fs.readFileSync(path.resolve(rootDir, '.npmignore'),			
-};
+function getFilesNotPartOfFileAttribute(filesFromPackageDotJson, fileList) {
+	if (!Array.isArray(fileList)) {
+		throw new TypeError(`expected array, but got ${typeof fileList}`);
+	}
 
-const isPartOfFileProperty = (file, fileProperty) => {
-	
-};
-
+	const result = [];
+	fileList.foreach(item => {
+		if (filesFromPackageDotJson.find(item) === undefined) {
+			result.push(item);
+		}
+	});
+	return result;
+}

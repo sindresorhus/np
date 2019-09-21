@@ -40,6 +40,7 @@
 		"github-url-from-git": "^1.5.0",
 		"has-yarn": "^2.1.0",
 		"hosted-git-info": "^2.7.1",
+		"ignore-walk": "^3.0.2",
 		"inquirer": "^6.4.1",
 		"is-installed-globally": "^0.2.0",
 		"is-scoped": "^2.1.0",
@@ -66,6 +67,7 @@
 	"devDependencies": {
 		"ava": "^2.1.0",
 		"proxyquire": "^2.1.0",
+		"mockery": "^2.1.0",
 		"sinon": "^7.3.2",
 		"xo": "^0.24.0"
 	}

@@ -5,6 +5,8 @@ const terminalLink = require('terminal-link');
 const execa = require('execa');
 const pMemoize = require('p-memoize');
 const ow = require('ow');
+const gitUtil = require('./git-util');
+const npmUtil = require('./npm/util');
 
 exports.readPkg = () => {
 	const {package: pkg} = readPkgUp.sync();
@@ -64,16 +66,21 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 	}
 });
 
-exports.splitFileNameList(stdout) => {
-	
-	if(typeof stdout !== 'string')
+function splitFileNameList(stdout) {
+	if (typeof stdout !== 'string') {
 		throw new TypeError('expected parameter stdout of type string');
+	}
 
 	const rows = stdout.trim().split();
-	let result = new Array(rows.length);
-	for(let i=0;i<rows.length;i++){
+	const result = new Array(rows.length);
+	for (let i = 0; i < rows.length; i++) {
 		result[i] = rows[i].substring(0, rows[i].indexOf('|')).trim();
 	}
-	return result;
 
+	return result;
+}
+
+exports.getNewFilesIgnoredByNpm = async pkg => {
+	const ListNewFiles = splitFileNameList(await gitUtil.newFilesSinceLastRelease());
+	return npmUtil.checkNewFiles(pkg, ListNewFiles);
 };
