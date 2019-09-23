@@ -71,10 +71,10 @@ function splitFileNameList(stdout) {
 		throw new TypeError('expected parameter stdout of type string');
 	}
 
-	const rows = stdout.trim().split();
-	const result = new Array(rows.length);
+	const rows = stdout.trim().split('\n');
+	const result = [];
 	for (let i = 0; i < rows.length; i++) {
-		result[i] = rows[i].substring(0, rows[i].indexOf('|')).trim();
+		result.push(rows[i].substring(0, rows[i].indexOf('|')).trim());
 	}
 
 	return result;
@@ -82,5 +82,5 @@ function splitFileNameList(stdout) {
 
 exports.getNewFilesIgnoredByNpm = async pkg => {
 	const ListNewFiles = splitFileNameList(await gitUtil.newFilesSinceLastRelease());
-	return npmUtil.checkNewFiles(pkg, ListNewFiles);
+	return npmUtil.checkNewFiles(ListNewFiles, pkg.files);
 };

@@ -8,6 +8,7 @@ const npmName = require('npm-name');
 const chalk = require('chalk');
 const pkgDir = require('pkg-dir');
 const ignoreWalker = require('ignore-walk');
+const {Minimatch} = require('minimatch');
 const {verifyRequirementSatisfied} = require('../version');
 
 exports.checkConnection = () => pTimeout(
@@ -110,7 +111,7 @@ exports.checkIgnoreStrategy = ({files}) => {
 };
 
 // New files added part of .npmignore or not part of files-attribute in "package.json"
-exports.checkNewFiles = async ({filesFromPackageDotJson}, newFiles) => {
+exports.checkNewFiles = async (newFiles, filesFromPackageDotJson) => {
 	const rootDir = pkgDir.sync();
 	const npmignoreExists = fs.existsSync(path.resolve(rootDir, '.npmignore'));
 
@@ -137,12 +138,17 @@ async function getFilesIgnoredByDotnpmignore(fileList) {
 		path: pkgDir.sync(),
 		ignoreFiles: ['.npmignore']
 	})
-		.then(CommaSeparatedList => {
-			const WhiteList = CommaSeparatedList.split(',');
-			/* Every file in fileList should be part of
-		the WhiteList */
-			fileList.foreach(item => {
-				if (WhiteList.find(item) === undefined) {
+		.then(WhiteList => {
+			if (!Array.isArray(WhiteList)) {
+				throw new TypeError(`Expected array, but got ${typeof WhiteList} `);
+			}
+
+			// Every file in fileList should be part of the WhiteList
+			fileList.forEach(item => {
+				const found = WhiteList.find(WhiteListItem => {
+					return WhiteListItem === item;
+				});
+				if (found === undefined) {
 					result.push(item);
 				}
 			});
@@ -157,10 +163,20 @@ function getFilesNotPartOfFileAttribute(filesFromPackageDotJson, fileList) {
 	}
 
 	const result = [];
-	fileList.foreach(item => {
-		if (filesFromPackageDotJson.find(item) === undefined) {
+	const globMatcher = new Minimatch(getGlobPattern(filesFromPackageDotJson),
+		{matchBase: true});
+	fileList.forEach(item => {
+		if (!globMatcher.match(item)) {
 			result.push(item);
 		}
 	});
 	return result;
+}
+
+function getGlobPattern(filesFromPackageDotJson) {
+	if (filesFromPackageDotJson.length === 1) {
+		return filesFromPackageDotJson[0];
+	}
+
+	return '{' + filesFromPackageDotJson.join(',') + '}';
 }
