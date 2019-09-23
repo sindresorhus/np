@@ -49,12 +49,35 @@ const printCommitLog = async repoUrl => {
 	};
 };
 
+const confirmIgnoredFiles = async pkg => {
+	const ignoredFiles = await util.getNewFilesIgnoredByNpm(pkg);
+	if (ignoredFiles.length === 0) {
+		return {confirm: true};
+	}
+
+	const answers = await inquirer.prompt([{
+		type: 'confirm',
+		name: 'confirm',
+		message: `The following new files are not part of your published package ${ignoredFiles}. Continue?`,
+		default: false
+	}]);
+
+	return answers;
+};
+
 module.exports = async (options, pkg) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 
 	checkIgnoreStrategy(pkg);
+	const answerIgnoredFiles = await confirmIgnoredFiles(pkg.files);
+	if (!answerIgnoredFiles.confirm) {
+		return {
+			...options,
+			...answerIgnoredFiles
+		};
+	}
 
 	console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 
