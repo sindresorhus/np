@@ -49,6 +49,12 @@
 $ npm install --global np
 ```
 
+To support the development of `np`, please consider installing with [Scarf](https://scarf.sh).
+
+```
+$ scarf install np
+```
+
 
 ## Usage
 
