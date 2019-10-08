@@ -9,7 +9,7 @@ const handleNpmError = (error, task, message, executor) => {
 		message = undefined;
 	}
 
-	if (error.stderr.includes('one-time pass') || error.message.includes('user TTY')) {
+	if (error.stderr.includes('one-time pass') || error.stdout.includes('Two factor authentication')) {
 		const {title} = task;
 		task.title = `${title} ${chalk.yellow('(waiting for input…)')}`;
 
