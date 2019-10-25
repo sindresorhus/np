@@ -93,7 +93,7 @@ module.exports = async (input = 'patch', options) => {
 				callback();
 			})();
 		} else if (publishStatus === 'SUCCESS' && runPublish) {
-			// do nothing
+			// Do nothing
 		} else {
 			console.log('\nAborted!');
 			callback();
