@@ -92,6 +92,8 @@ module.exports = async (input = 'patch', options) => {
 				await rollback();
 				callback();
 			})();
+		} else if (publishStatus === 'SUCCESS' && runPublish) {
+			// Do nothing
 		} else {
 			console.log('\nAborted!');
 			callback();
