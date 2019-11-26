@@ -87,13 +87,13 @@ module.exports = async (input = 'patch', options) => {
 
 	// The default parameter is a workaround for https://github.com/Tapppi/async-exit-hook/issues/9
 	exitHook((callback = () => {}) => {
-		if (publishStatus === 'FAILED' && runPublish) {
+		if (publishStatus === 'FAILED') {
 			(async () => {
 				await rollback();
 				callback();
 			})();
-		} else if (publishStatus === 'SUCCESS' && runPublish) {
-			// Do nothing
+		} else if (publishStatus === 'SUCCESS') {
+			callback();
 		} else {
 			console.log('\nAborted!');
 			callback();
@@ -212,6 +212,8 @@ module.exports = async (input = 'patch', options) => {
 				}
 			]);
 		}
+	} else {
+		publishStatus = 'SUCCESS';
 	}
 
 	tasks.add({
