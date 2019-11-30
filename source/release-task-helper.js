@@ -15,5 +15,5 @@ module.exports = async (options, pkg) => {
 		isPrerelease: version(options.version).isPrerelease()
 	});
 
-	await open(url, {url: true});
+	await open(url);
 };
