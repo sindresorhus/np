@@ -8,16 +8,16 @@ module.exports = (oldVersion, inc) => {
 	let firstVersionChange = false;
 	const output = [];
 
-	for (let i = 0; i < newVersion.length; i++) {
-		if ((newVersion[i] !== oldVersion[i] && !firstVersionChange)) {
-			output.push(`${chalk.dim.cyan(newVersion[i])}`);
+	for (const [i, element] of newVersion.entries()) {
+		if ((element !== oldVersion[i] && !firstVersionChange)) {
+			output.push(`${chalk.dim.cyan(element)}`);
 			firstVersionChange = true;
-		} else if (newVersion[i].indexOf('-') >= 1) {
+		} else if (element.indexOf('-') >= 1) {
 			let preVersion = [];
-			preVersion = newVersion[i].split('-');
+			preVersion = element.split('-');
 			output.push(`${chalk.dim.cyan(`${preVersion[0]}-${preVersion[1]}`)}`);
 		} else {
-			output.push(chalk.reset.dim(newVersion[i]));
+			output.push(chalk.reset.dim(element));
 		}
 	}
 

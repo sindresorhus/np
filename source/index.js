@@ -35,6 +35,7 @@ const exec = (cmd, args) => {
 	).pipe(filter(Boolean));
 };
 
+// eslint-disable-next-line default-param-last
 module.exports = async (input = 'patch', options) => {
 	options = {
 		cleanup: true,
@@ -239,6 +240,6 @@ module.exports = async (input = 'patch', options) => {
 
 	await tasks.run();
 
-	const {package: newPkg} = await readPkgUp();
+	const {packageJson: newPkg} = await readPkgUp();
 	return newPkg;
 };
