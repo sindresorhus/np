@@ -53,8 +53,11 @@ module.exports = async (options, pkg) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
+	const runPublish = options.publish && !pkg.private;
 
-	checkIgnoreStrategy(pkg);
+	if (runPublish) {
+		checkIgnoreStrategy(pkg);
+	}
 
 	console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 
