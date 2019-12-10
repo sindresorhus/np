@@ -22,6 +22,7 @@ const cli = meow(`
 
 	Options
 	  --any-branch        Allow publishing from any branch
+	  --default-branch    Branch name to set as default branch (defaults to master)
 	  --no-cleanup        Skips cleanup of node_modules
 	  --no-tests          Skips tests
 	  --yolo              Skips cleanup and testing
@@ -42,6 +43,10 @@ const cli = meow(`
 	flags: {
 		anyBranch: {
 			type: 'boolean'
+		},
+		defaultBranch: {
+			type: 'string',
+			default: 'master'
 		},
 		cleanup: {
 			type: 'boolean'
