@@ -6,7 +6,7 @@ module.exports = options => {
 	const tasks = [
 		{
 			title: 'Check current branch',
-			task: () => git.verifyCurrentBranchIsMaster(options.defaultBranch)
+			task: () => git.verifyCurrentBranchIsDefault(options.defaultBranch)
 		},
 		{
 			title: 'Check local working tree',

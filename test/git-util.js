@@ -9,22 +9,22 @@ test.afterEach(() => {
 	sandbox.restore();
 });
 
-test('verifyCurrentBranchIsMaster doesn\'t throw if current branch is master', async t => {
+test('verifyCurrentBranchIsDefault doesn\'t throw if current branch is master', async t => {
 	currentBranchStub.returns('master');
-	await t.notThrowsAsync(gitUtil.verifyCurrentBranchIsMaster);
+	await t.notThrowsAsync(gitUtil.verifyCurrentBranchIsDefault);
 });
 
-test('verifyCurrentBranchIsMaster throws if current branch is not master', async t => {
+test('verifyCurrentBranchIsDefault throws if current branch is not master', async t => {
 	currentBranchStub.returns('not master');
-	await t.throwsAsync(gitUtil.verifyCurrentBranchIsMaster);
+	await t.throwsAsync(gitUtil.verifyCurrentBranchIsDefault);
 });
 
-test('verifyCurrentBranchIsMaster doesn\'t throw if current branch the specified default branch', async t => {
+test('verifyCurrentBranchIsDefault doesn\'t throw if current branch the specified default branch', async t => {
 	currentBranchStub.returns('bestBranch');
-	await t.notThrowsAsync(gitUtil.verifyCurrentBranchIsMaster('bestBranch'));
+	await t.notThrowsAsync(gitUtil.verifyCurrentBranchIsDefault('bestBranch'));
 });
 
-test('verifyCurrentBranchIsMaster throws if current branch is not default branch', async t => {
+test('verifyCurrentBranchIsDefault throws if current branch is not default branch', async t => {
 	currentBranchStub.returns('unicorn-wrangler');
-	await t.throwsAsync(gitUtil.verifyCurrentBranchIsMaster('unicorn'));
+	await t.throwsAsync(gitUtil.verifyCurrentBranchIsDefault('unicorn'));
 });
