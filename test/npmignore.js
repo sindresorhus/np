@@ -26,6 +26,7 @@ test.before(() => {
 
 	stubGitUtil.returns((['source/ignore.txt | ++', 'source/pay_attention.txt  | --']).join('\n'));
 	stubPkgDir.onCall(0).returns(path.resolve('test', 'ressources', 'package'));
+	stubPkgDir.onCall(1).returns(path.resolve('test', 'ressources', 'package'));
 	stubPkgDir.returns(path.resolve('test', 'ressources', 'npmignore'));
 
 	mockery.enable({
@@ -37,9 +38,14 @@ test.before(() => {
 	moduleUnderTest = require('../source/util');
 });
 
-test('ignored files using file-attribute in package.json', async t => {
+test('ignored files using file-attribute in package.json with one item', async t => {
 	t.deepEqual(await moduleUnderTest.getNewFilesIgnoredByNpm({files: ['pay_attention.txt']}),
 		['source/ignore.txt']);
+});
+
+test('ignored files using file-attribute in package.json with multiple items', async t => {
+	t.deepEqual(await moduleUnderTest.getNewFilesIgnoredByNpm(
+		{files: ['pay_attention.txt', 'ignore.txt']}), []);
 });
 
 test('ignored files using .npmignore', async t => {

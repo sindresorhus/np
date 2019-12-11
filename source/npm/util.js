@@ -8,7 +8,7 @@ const npmName = require('npm-name');
 const chalk = require('chalk');
 const pkgDir = require('pkg-dir');
 const ignoreWalker = require('ignore-walk');
-const {Minimatch} = require('minimatch');
+const minimatch = require('minimatch');
 const {verifyRequirementSatisfied} = require('../version');
 
 exports.checkConnection = () => pTimeout(
@@ -111,14 +111,14 @@ exports.checkIgnoreStrategy = ({files}) => {
 };
 
 // New files added part of .npmignore or not part of files-attribute in "package.json"
-exports.checkNewFiles = async (newFiles, filesFromPackageDotJson) => {
+exports.checkNewFiles = async (newFiles, filesFromFileAttribute) => {
 	const rootDir = pkgDir.sync();
 	const npmignoreExists = fs.existsSync(path.resolve(rootDir, '.npmignore'));
 
 	let result = [];
 
-	if (filesFromPackageDotJson) {
-		result = getFilesNotPartOfFileAttribute(filesFromPackageDotJson, newFiles);
+	if (filesFromFileAttribute) {
+		result = getFilesNotPartOfFileAttribute(filesFromFileAttribute, newFiles);
 	}
 
 	if (npmignoreExists) {
@@ -134,49 +134,35 @@ async function getFilesIgnoredByDotnpmignore(fileList) {
 	}
 
 	const result = [];
-	await ignoreWalker({
+	const whiteList = await ignoreWalker({
 		path: pkgDir.sync(),
 		ignoreFiles: ['.npmignore']
-	})
-		.then(WhiteList => {
-			if (!Array.isArray(WhiteList)) {
-				throw new TypeError(`Expected array, but got ${typeof WhiteList} `);
-			}
-
-			// Every file in fileList should be part of the WhiteList
-			fileList.forEach(item => {
-				const found = WhiteList.find(WhiteListItem => {
-					return WhiteListItem === item;
-				});
-				if (found === undefined) {
-					result.push(item);
-				}
-			});
+	});
+	for (const file of fileList) {
+		const found = whiteList.find(whiteListItem => {
+			return whiteListItem === file;
 		});
+		if (found === undefined) {
+			result.push(file);
+		}
+	}
 
 	return result;
 }
 
-function getFilesNotPartOfFileAttribute(filesFromPackageDotJson, fileList) {
+function getFilesNotPartOfFileAttribute(filesFromFileAttribute, fileList) {
 	if (!Array.isArray(fileList)) {
 		throw new TypeError(`expected array, but got ${typeof fileList}`);
 	}
 
-	const result = [];
-	const globMatcher = new Minimatch(getGlobPattern(filesFromPackageDotJson),
-		{matchBase: true});
-	fileList.forEach(item => {
-		if (!globMatcher.match(item)) {
-			result.push(item);
-		}
-	});
-	return result;
+	return fileList.filter(minimatch.filter(getGlobPattern(filesFromFileAttribute),
+		{matchBase: true}));
 }
 
-function getGlobPattern(filesFromPackageDotJson) {
-	if (filesFromPackageDotJson.length === 1) {
-		return filesFromPackageDotJson[0];
+function getGlobPattern(filesFromFileAttribute) {
+	if (filesFromFileAttribute.length === 1) {
+		return '!' + filesFromFileAttribute[0];
 	}
 
-	return '{' + filesFromPackageDotJson.join(',') + '}';
+	return '!{' + filesFromFileAttribute.join(',') + '}';
 }

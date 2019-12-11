@@ -71,7 +71,7 @@ module.exports = async (options, pkg) => {
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 
 	checkIgnoreStrategy(pkg);
-	const answerIgnoredFiles = await confirmIgnoredFiles(pkg.files);
+	const answerIgnoredFiles = await confirmIgnoredFiles(pkg);
 	if (!answerIgnoredFiles.confirm) {
 		return {
 			...options,

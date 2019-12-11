@@ -71,13 +71,7 @@ function splitFileNameList(stdout) {
 		throw new TypeError('expected parameter stdout of type string');
 	}
 
-	const rows = stdout.trim().split('\n');
-	const result = [];
-	for (let i = 0; i < rows.length; i++) {
-		result.push(rows[i].substring(0, rows[i].indexOf('|')).trim());
-	}
-
-	return result;
+	return stdout.trim().split('\n').map(row => row.replace(/[|+-]/g, '').trim());
 }
 
 exports.getNewFilesIgnoredByNpm = async pkg => {
