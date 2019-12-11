@@ -38,6 +38,11 @@ test.before(() => {
 	moduleUnderTest = require('../source/util');
 });
 
+test.after(() => {
+	mockery.deregisterAll();
+	mockery.disable();
+});
+
 test('ignored files using file-attribute in package.json with one item', async t => {
 	t.deepEqual(await moduleUnderTest.getNewFilesIgnoredByNpm({files: ['pay_attention.txt']}),
 		['source/ignore.txt']);
@@ -51,9 +56,4 @@ test('ignored files using file-attribute in package.json with multiple items', a
 test('ignored files using .npmignore', async t => {
 	t.deepEqual(await moduleUnderTest.getNewFilesIgnoredByNpm({name: 'without file-attribute'}),
 		['source/ignore.txt']);
-});
-
-test.after(() => {
-	mockery.deregisterAll();
-	mockery.disable();
 });
