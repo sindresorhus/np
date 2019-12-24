@@ -139,7 +139,7 @@ module.exports = async (input = 'patch', options) => {
 				title: 'Installing dependencies using npm',
 				enabled: () => options.yarn === false,
 				task: () => {
-					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production'];
+					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production', '--engine-strict'];
 					return exec('npm', args);
 				}
 			}
