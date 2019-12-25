@@ -77,12 +77,14 @@ exports.prereleaseTags = async packageName => {
 };
 
 exports.isPackageNameAvailable = async pkg => {
-	const isExternalRegistry = exports.isExternalRegistry(pkg);
-	if (isExternalRegistry) {
-		return true;
+	const args = [pkg.name];
+	if (exports.isExternalRegistry(pkg)) {
+		args.push({
+			registryUrl: pkg.publishConfig.registry
+		});
 	}
 
-	return npmName(pkg.name);
+	return npmName(...args);
 };
 
 exports.isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';

@@ -7,13 +7,13 @@ const pMemoize = require('p-memoize');
 const ow = require('ow');
 
 exports.readPkg = () => {
-	const {package: pkg} = readPkgUp.sync();
+	const {packageJson} = readPkgUp.sync();
 
-	if (!pkg) {
+	if (!packageJson) {
 		throw new Error('No package.json found. Make sure you\'re in the correct project.');
 	}
 
-	return pkg;
+	return packageJson;
 };
 
 exports.linkifyIssues = (url, message) => {
