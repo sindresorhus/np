@@ -34,7 +34,7 @@
   <sub>(does not apply to external registries)</sub>
 - Opens a prefilled GitHub Releases draft after publish
 - Warns about the possibility of extraneous files being published
-- Can run in preview mode, only showing what is going to happen without running anything
+- See exactly what will be executed with [preview mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
 
 
 ## Prerequisite
@@ -68,7 +68,7 @@ $ np --help
     --no-tests          Skips tests
     --yolo              Skips cleanup and testing
     --no-publish        Skips publishing
-    --preview           Only show what np is going to execute without running anything
+    --preview           Show only tasks that will be executed
     --tag               Publish under a given dist-tag
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
@@ -101,7 +101,7 @@ Currently, these are the flags you can configure:
 - `tests` - Run `npm test` (`true` by default).
 - `yolo` - Skip cleanup and testing (`false` by default).
 - `publish` - Publish (`true` by default).
-- `preview` - Only show what np is going to execute without running anything (`false` by default).
+- `preview` - Show only tasks that will be executed (`false` by default).
 - `tag` - Publish under a given dist-tag (`latest` by default).
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
