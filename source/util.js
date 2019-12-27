@@ -74,7 +74,7 @@ function splitFileNameList(stdout) {
 	return stdout.trim().split('\n').map(row => row.replace(/[|+-]/g, '').trim());
 }
 
-exports.getNewFilesIgnoredByNpm = async pkg => {
+exports.getNewAndUnpublishedFiles = async pkg => {
 	const ListNewFiles = splitFileNameList(await gitUtil.newFilesSinceLastRelease());
-	return npmUtil.checkNewFiles(ListNewFiles, pkg.files);
+	return npmUtil.getNewAndUnpublishedFiles(ListNewFiles, pkg.files);
 };

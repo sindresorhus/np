@@ -15,19 +15,17 @@ const pkgDirApi = {
 	}
 };
 
+const stubPkgDir = sinon.stub(pkgDirApi, 'sync');
+
 test.before(() => {
 	const stubGitUtil = sinon.stub(gitUtilApi, 'newFilesSinceLastRelease');
-	const stubPkgDir = sinon.stub(pkgDirApi, 'sync');
 
 	mockery.registerAllowable('../source/util');
 	mockery.registerAllowable('../source/npm/util');
 	mockery.registerMock('./git-util', gitUtilApi);
 	mockery.registerMock('pkg-dir', pkgDirApi);
 
-	stubGitUtil.returns((['source/ignore.txt | ++', 'source/pay_attention.txt  | --']).join('\n'));
-	stubPkgDir.onCall(0).returns(path.resolve('test', 'ressources', 'package'));
-	stubPkgDir.onCall(1).returns(path.resolve('test', 'ressources', 'package'));
-	stubPkgDir.returns(path.resolve('test', 'ressources', 'npmignore'));
+	stubGitUtil.returns((['source/ignore.txt | ++', 'source/pay_attention.txt  | --', '.hg | +']).join('\n'));
 
 	mockery.enable({
 		useCleanCache: true,
@@ -44,16 +42,22 @@ test.after(() => {
 });
 
 test('ignored files using file-attribute in package.json with one item', async t => {
-	t.deepEqual(await moduleUnderTest.getNewFilesIgnoredByNpm({files: ['pay_attention.txt']}),
+	t.deepEqual(await moduleUnderTest.getNewAndUnpublishedFiles({files: ['pay_attention.txt']}),
 		['source/ignore.txt']);
 });
 
 test('ignored files using file-attribute in package.json with multiple items', async t => {
-	t.deepEqual(await moduleUnderTest.getNewFilesIgnoredByNpm(
+	t.deepEqual(await moduleUnderTest.getNewAndUnpublishedFiles(
 		{files: ['pay_attention.txt', 'ignore.txt']}), []);
 });
 
-test('ignored files using .npmignore', async t => {
-	t.deepEqual(await moduleUnderTest.getNewFilesIgnoredByNpm({name: 'without file-attribute'}),
+test.serial('ignored files using .npmignore', async t => {
+	stubPkgDir.returns(path.resolve('test', 'ressources', 'npmignore'));
+	t.deepEqual(await moduleUnderTest.getNewAndUnpublishedFiles({name: 'without file-attribute'}),
 		['source/ignore.txt']);
+});
+
+test.serial('ignore strategy is not used', async t => {
+	stubPkgDir.returns(path.resolve('test', 'ressources'));
+	t.true(await moduleUnderTest.getNewAndUnpublishedFiles({name: 'without file-attribute'}) === undefined);
 });

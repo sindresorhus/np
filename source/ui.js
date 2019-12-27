@@ -50,8 +50,8 @@ const printCommitLog = async repoUrl => {
 };
 
 const confirmIgnoredFiles = async pkg => {
-	const ignoredFiles = await util.getNewFilesIgnoredByNpm(pkg);
-	if (ignoredFiles.length === 0) {
+	const ignoredFiles = await util.getNewAndUnpublishedFiles(pkg);
+	if (ignoredFiles === undefined || ignoredFiles.length === 0) {
 		return {confirm: true};
 	}
 

@@ -102,51 +102,41 @@ exports.verifyRecentNpmVersion = async () => {
 };
 
 exports.checkIgnoreStrategy = ({files}) => {
-	const rootDir = pkgDir.sync();
-	const npmignoreExists = fs.existsSync(path.resolve(rootDir, '.npmignore'));
-
-	if (!files && !npmignoreExists) {
+	if (!files && !npmignoreExistsInPackageRootDir()) {
 		console.log(`
 		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm. 
 		`);
 	}
 };
 
-// New files added part of .npmignore or not part of files-attribute in "package.json"
-exports.checkNewFiles = async (newFiles, filesFromFileAttribute) => {
-	const rootDir = pkgDir.sync();
-	const npmignoreExists = fs.existsSync(path.resolve(rootDir, '.npmignore'));
-
-	let result = [];
-
+// Get all files which will be ignored by either `.npmignore` or the `files` property in `package.json` (if defined)
+exports.getNewAndUnpublishedFiles = async (newFiles, filesFromFileAttribute) => {
 	if (filesFromFileAttribute) {
-		result = getFilesNotPartOfFileAttribute(filesFromFileAttribute, newFiles);
+		return getFilesNotPartOfFileAttribute(filesFromFileAttribute, newFiles);
 	}
 
-	if (npmignoreExists) {
-		result = result.concat(await getFilesIgnoredByDotnpmignore(newFiles));
+	if (npmignoreExistsInPackageRootDir()) {
+		return getFilesIgnoredByDotnpmignore(newFiles);
 	}
-
-	return result;
 };
+
+function npmignoreExistsInPackageRootDir() {
+	const rootDir = pkgDir.sync();
+	return fs.existsSync(path.resolve(rootDir, '.npmignore'));
+}
 
 async function getFilesIgnoredByDotnpmignore(fileList) {
 	if (!Array.isArray(fileList)) {
 		throw new TypeError('expected array, but got {typeof fileList}');
 	}
 
-	const result = [];
 	const whiteList = await ignoreWalker({
 		path: pkgDir.sync(),
 		ignoreFiles: ['.npmignore']
 	});
-	for (const file of fileList) {
-		if (!whiteList.includes(file)) {
-			result.push(file);
-		}
-	}
 
-	return result;
+	return fileList.filter(minimatch.filter(getGlobPattern(whiteList),
+		{matchBase: true}));
 }
 
 function getFilesNotPartOfFileAttribute(filesFromFileAttribute, fileList) {
@@ -159,9 +149,17 @@ function getFilesNotPartOfFileAttribute(filesFromFileAttribute, fileList) {
 }
 
 function getGlobPattern(filesFromFileAttribute) {
-	if (filesFromFileAttribute.length === 1) {
-		return '!' + filesFromFileAttribute[0];
-	}
-
-	return '!{' + filesFromFileAttribute.join(',') + '}';
+	const filesIgnoredByDefault = ['.*.swp',
+		'._*',
+		'.DS_Store',
+		'.hg',
+		'.npmrc',
+		'.lock-wscript',
+		'.svn',
+		'.wafpickle-*',
+		'config.gypi',
+		'CVS',
+		'npm-debug.log'];
+	return '!{' + filesFromFileAttribute.join(',') +
+		',' + filesIgnoredByDefault.join(',') + '}';
 }
