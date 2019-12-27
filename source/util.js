@@ -66,15 +66,7 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 	}
 });
 
-function splitFileNameList(stdout) {
-	if (typeof stdout !== 'string') {
-		throw new TypeError('expected parameter stdout of type string');
-	}
-
-	return stdout.trim().split('\n').map(row => row.replace(/[|+-]/g, '').trim());
-}
-
 exports.getNewAndUnpublishedFiles = async pkg => {
-	const ListNewFiles = splitFileNameList(await gitUtil.newFilesSinceLastRelease());
-	return npmUtil.getNewAndUnpublishedFiles(ListNewFiles, pkg.files);
+	const listNewFiles = await gitUtil.newFilesSinceLastRelease();
+	return npmUtil.getNewAndUnpublishedFiles(listNewFiles, pkg.files);
 };

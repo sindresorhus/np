@@ -25,7 +25,7 @@ test.before(() => {
 	mockery.registerMock('./git-util', gitUtilApi);
 	mockery.registerMock('pkg-dir', pkgDirApi);
 
-	stubGitUtil.returns((['source/ignore.txt | ++', 'source/pay_attention.txt  | --', '.hg | +']).join('\n'));
+	stubGitUtil.returns(['source/ignore.txt', 'source/pay_attention.txt', '.hg']);
 
 	mockery.enable({
 		useCleanCache: true,
@@ -52,12 +52,12 @@ test('ignored files using file-attribute in package.json with multiple items', a
 });
 
 test.serial('ignored files using .npmignore', async t => {
-	stubPkgDir.returns(path.resolve('test', 'ressources', 'npmignore'));
+	stubPkgDir.returns(path.resolve('test', 'fixtures', 'npmignore'));
 	t.deepEqual(await moduleUnderTest.getNewAndUnpublishedFiles({name: 'without file-attribute'}),
 		['source/ignore.txt']);
 });
 
 test.serial('ignore strategy is not used', async t => {
-	stubPkgDir.returns(path.resolve('test', 'ressources'));
+	stubPkgDir.returns(path.resolve('test', 'fixtures'));
 	t.true(await moduleUnderTest.getNewAndUnpublishedFiles({name: 'without file-attribute'}) === undefined);
 });

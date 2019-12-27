@@ -10,7 +10,10 @@ exports.latestTag = async () => {
 
 exports.newFilesSinceLastRelease = async () => {
 	const {stdout} = await execa('git', ['diff', '--stat', '--diff-filter=A', await this.latestTag(), 'HEAD']);
-	return stdout;
+	const result = stdout.trim().split('\n').map(row => row.slice(0, row.indexOf('|')).trim());
+	// Last row contains the conclusion, remove it
+	result.pop();
+	return result;
 };
 
 const firstCommit = async () => {

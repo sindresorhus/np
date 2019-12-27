@@ -110,9 +110,9 @@ exports.checkIgnoreStrategy = ({files}) => {
 };
 
 // Get all files which will be ignored by either `.npmignore` or the `files` property in `package.json` (if defined)
-exports.getNewAndUnpublishedFiles = async (newFiles, filesFromFileAttribute) => {
-	if (filesFromFileAttribute) {
-		return getFilesNotPartOfFileAttribute(filesFromFileAttribute, newFiles);
+exports.getNewAndUnpublishedFiles = async (newFiles, globArrayFromFilesProperty) => {
+	if (globArrayFromFilesProperty) {
+		return getFilesNotIncludedInTheFilesProperty(globArrayFromFilesProperty, newFiles);
 	}
 
 	if (npmignoreExistsInPackageRootDir()) {
@@ -126,29 +126,20 @@ function npmignoreExistsInPackageRootDir() {
 }
 
 async function getFilesIgnoredByDotnpmignore(fileList) {
-	if (!Array.isArray(fileList)) {
-		throw new TypeError('expected array, but got {typeof fileList}');
-	}
-
 	const whiteList = await ignoreWalker({
 		path: pkgDir.sync(),
 		ignoreFiles: ['.npmignore']
 	});
-
-	return fileList.filter(minimatch.filter(getGlobPattern(whiteList),
+	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(whiteList),
 		{matchBase: true}));
 }
 
-function getFilesNotPartOfFileAttribute(filesFromFileAttribute, fileList) {
-	if (!Array.isArray(fileList)) {
-		throw new TypeError(`expected array, but got ${typeof fileList}`);
-	}
-
-	return fileList.filter(minimatch.filter(getGlobPattern(filesFromFileAttribute),
+function getFilesNotIncludedInTheFilesProperty(globArrayFromFilesProperty, fileList) {
+	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayFromFilesProperty),
 		{matchBase: true}));
 }
 
-function getGlobPattern(filesFromFileAttribute) {
+function getIgnoredFilesGlob(globArrayFromFilesProperty) {
 	const filesIgnoredByDefault = ['.*.swp',
 		'._*',
 		'.DS_Store',
@@ -160,6 +151,5 @@ function getGlobPattern(filesFromFileAttribute) {
 		'config.gypi',
 		'CVS',
 		'npm-debug.log'];
-	return '!{' + filesFromFileAttribute.join(',') +
-		',' + filesIgnoredByDefault.join(',') + '}';
+	return `!{${globArrayFromFilesProperty.join(',')},${filesIgnoredByDefault.join(',')}}`;
 }
