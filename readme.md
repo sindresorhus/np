@@ -38,7 +38,7 @@
 
 ## Prerequisite
 
-- Node.js 8 or later
+- Node.js 10 or later
 - npm 6.8.0 or later
 - Git 2.11 or later
 

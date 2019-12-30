@@ -2,7 +2,7 @@
 const os = require('os');
 const isInstalledGlobally = require('is-installed-globally');
 const pkgDir = require('pkg-dir');
-const cosmiconfig = require('cosmiconfig');
+const {cosmiconfig} = require('cosmiconfig');
 
 module.exports = async () => {
 	const searchDir = isInstalledGlobally ? os.homedir() : await pkgDir();

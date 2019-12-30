@@ -140,7 +140,8 @@ exports.removeLastCommit = async () => {
 
 const gitVersion = async () => {
 	const {stdout} = await execa('git', ['version']);
-	return stdout.match(/git version (\d+\.\d+\.\d+).*/)[1];
+	const match = /git version (?<version>\d+\.\d+\.\d+).*/.exec(stdout);
+	return match && match.groups.version;
 };
 
 exports.verifyRecentGitVersion = async () => {
