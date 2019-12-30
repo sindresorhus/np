@@ -140,7 +140,7 @@ module.exports = async (input = 'patch', options) => {
 				enabled: () => options.yarn === false,
 				task: () => {
 					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production'];
-					return exec('npm', args);
+					return exec('npm', [...args, '--engine-strict']);
 				}
 			}
 		]);
