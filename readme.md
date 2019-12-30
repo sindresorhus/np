@@ -22,7 +22,7 @@
 - Ensures you are publishing from the `master` branch
 - Ensures the working directory is clean and that there are no unpulled changes
 - Reinstalls dependencies to ensure your project works with the latest dependency tree
-- Checks that your Node.js and npm versions are supported by the project and its dependencies
+- Ensures your Node.js and npm versions are supported by the project and its dependencies
 - Runs the tests
 - Bumps the version in package.json and npm-shrinkwrap.json (if present) and creates a git tag
 - Prevents [accidental publishing](https://github.com/npm/npm/issues/13248) of pre-release versions under the `latest` [dist-tag](https://docs.npmjs.com/cli/dist-tag)
