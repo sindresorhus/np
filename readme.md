@@ -34,6 +34,7 @@
   <sub>(does not apply to external registries)</sub>
 - Opens a prefilled GitHub Releases draft after publish
 - Warns about the possibility of extraneous files being published
+- Supports [GitHub Packages](https://github.com/features/packages)
 
 
 ## Prerequisite
