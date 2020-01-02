@@ -6,11 +6,13 @@ const execa = require('execa');
 const pMemoize = require('p-memoize');
 const ow = require('ow');
 
-exports.readPkg = () => {
-	const {packageJson} = readPkgUp.sync();
+exports.readPkg = packagePath => {
+	const {packageJson} = readPkgUp.sync({
+		cwd: packagePath
+	});
 
 	if (!packageJson) {
-		throw new Error('No package.json found. Make sure you\'re in the correct project.');
+		throw new Error(`No package.json found. Make sure ${packagePath ? `${packagePath} is a valid package` : 'you\'re in the correct project'}.`);
 	}
 
 	return packageJson;
