@@ -135,12 +135,23 @@ async function getFilesIgnoredByDotnpmignore(fileList) {
 }
 
 function getFilesNotIncludedInTheFilesProperty(globArrayFromFilesProperty, fileList) {
-	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayFromFilesProperty),
+	const globArrayForFilesAndDirs = [...globArrayFromFilesProperty];
+	const rootDir = pkgDir.sync();
+	for (const glob of globArrayFromFilesProperty) {
+		try {
+			if (fs.statSync(path.resolve(rootDir, glob)).isDirectory()) {
+				globArrayForFilesAndDirs.push(`${glob}/**/*`);
+			}
+		} catch (_) {}
+	}
+
+	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayForFilesAndDirs),
 		{matchBase: true}));
 }
 
 function getIgnoredFilesGlob(globArrayFromFilesProperty) {
 	const filesIgnoredByDefault = ['.*.swp',
+		'.npmignore',
 		'._*',
 		'.DS_Store',
 		'.hg',
