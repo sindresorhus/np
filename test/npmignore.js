@@ -41,14 +41,19 @@ test.after(() => {
 	mockery.disable();
 });
 
-test('ignored files using file-attribute in package.json with one item', async t => {
+test('ignored files using file-attribute in package.json with one file', async t => {
 	t.deepEqual(await moduleUnderTest.getNewAndUnpublishedFiles({files: ['pay_attention.txt']}),
 		['source/ignore.txt']);
 });
 
-test('ignored files using file-attribute in package.json with multiple items', async t => {
+test('ignored files using file-attribute in package.json with multiple file', async t => {
 	t.deepEqual(await moduleUnderTest.getNewAndUnpublishedFiles(
 		{files: ['pay_attention.txt', 'ignore.txt']}), []);
+});
+
+test('ignored file using file-attribute in package.json with directory', async t => {
+	t.deepEqual(await moduleUnderTest.getNewAndUnpublishedFiles(
+		{files: ['source']}), []);
 });
 
 test.serial('ignored files using .npmignore', async t => {
