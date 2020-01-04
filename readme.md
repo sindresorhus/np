@@ -22,6 +22,7 @@
 - Ensures you are publishing from the `master` branch
 - Ensures the working directory is clean and that there are no unpulled changes
 - Reinstalls dependencies to ensure your project works with the latest dependency tree
+- Ensures your Node.js and npm versions are supported by the project and its dependencies
 - Runs the tests
 - Bumps the version in package.json and npm-shrinkwrap.json (if present) and creates a git tag
 - Prevents [accidental publishing](https://github.com/npm/npm/issues/13248) of pre-release versions under the `latest` [dist-tag](https://docs.npmjs.com/cli/dist-tag)
@@ -34,11 +35,12 @@
   <sub>(does not apply to external registries)</sub>
 - Opens a prefilled GitHub Releases draft after publish
 - Warns about the possibility of extraneous files being published
+- Supports [GitHub Packages](https://github.com/features/packages)
 
 
 ## Prerequisite
 
-- Node.js 8 or later
+- Node.js 10 or later
 - npm 6.8.0 or later
 - Git 2.11 or later
 

@@ -4,9 +4,10 @@
 	"description": "A better `npm publish`",
 	"license": "MIT",
 	"repository": "sindresorhus/np",
+	"funding": "https://github.com/sindresorhus/np?sponsor=1",
 	"bin": "source/cli.js",
 	"engines": {
-		"node": ">=8",
+		"node": ">=10",
 		"npm": ">=6.8.0",
 		"git": ">=2.11.0",
 		"yarn": ">=1.7.0"
@@ -33,10 +34,10 @@
 		"any-observable": "^0.5.0",
 		"async-exit-hook": "^2.0.1",
 		"chalk": "^3.0.0",
-		"cosmiconfig": "^5.2.1",
+		"cosmiconfig": "^6.0.0",
 		"del": "^4.1.0",
 		"escape-string-regexp": "^2.0.0",
-		"execa": "^3.4.0",
+		"execa": "^4.0.0",
 		"github-url-from-git": "^1.5.0",
 		"has-yarn": "^2.1.0",
 		"hosted-git-info": "^3.0.0",
@@ -44,12 +45,13 @@
 		"inquirer": "^7.0.0",
 		"is-installed-globally": "^0.3.1",
 		"is-scoped": "^2.1.0",
-		"issue-regex": "^2.0.0",
+		"issue-regex": "^3.1.0",
 		"listr": "^0.14.3",
 		"listr-input": "^0.2.0",
 		"log-symbols": "^3.0.0",
-		"meow": "^5.0.0",
+		"meow": "^6.0.0",
 		"minimatch": "^3.0.4",
+		"new-github-release-url": "^1.0.0",
 		"npm-name": "^5.4.0",
 		"onetime": "^5.1.0",
 		"open": "^7.0.0",
@@ -58,18 +60,18 @@
 		"p-timeout": "^3.1.0",
 		"pkg-dir": "^4.1.0",
 		"read-pkg-up": "^7.0.0",
-		"rxjs": "^6.3.3",
-		"semver": "^6.1.2",
+		"rxjs": "^6.5.4",
+		"semver": "^7.1.1",
 		"split": "^1.0.0",
 		"symbol-observable": "^1.2.0",
 		"terminal-link": "^2.0.0",
-		"update-notifier": "^3.0.0"
+		"update-notifier": "^4.0.0"
 	},
 	"devDependencies": {
 		"ava": "^2.3.0",
 		"proxyquire": "^2.1.0",
 		"mockery": "^2.1.0",
-		"sinon": "^7.3.2",
+		"sinon": "^8.0.1",
 		"xo": "^0.25.3"
 	}
 }
