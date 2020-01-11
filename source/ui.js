@@ -5,11 +5,11 @@ const githubUrlFromGit = require('github-url-from-git');
 const isScoped = require('is-scoped');
 const util = require('./util');
 const git = require('./git-util');
-const {prereleaseTags, checkIgnoreStrategy, getRegistryUrl} = require('./npm/util');
+const {prereleaseTags, checkIgnoreStrategy} = require('./npm/util');
 const version = require('./version');
 const prettyVersionDiff = require('./pretty-version-diff');
 
-const printCommitLog = async (repoUrl, registryUrl) => {
+const printCommitLog = async repoUrl => {
 	const latest = await git.latestTagOrFirstCommit();
 	const log = await git.commitLogFromRevision(latest);
 
@@ -41,7 +41,7 @@ const printCommitLog = async (repoUrl, registryUrl) => {
 
 	const commitRange = util.linkifyCommitRange(repoUrl, `${latest}...master`);
 
-	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
+	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n`);
 
 	return {
 		hasCommits: true,
@@ -53,7 +53,6 @@ module.exports = async (options, pkg) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
-	const registryUrl = await getRegistryUrl(options.yarn ? 'yarn' : 'npm', pkg);
 	const runPublish = options.publish && !pkg.private;
 
 	if (runPublish) {
@@ -144,7 +143,7 @@ module.exports = async (options, pkg) => {
 		}
 	];
 
-	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl);
+	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl);
 
 	if (options.version) {
 		return {

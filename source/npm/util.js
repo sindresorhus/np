@@ -109,15 +109,3 @@ exports.checkIgnoreStrategy = ({files}) => {
 		`);
 	}
 };
-
-exports.getRegistryUrl = async (pkgManager, pkg) => {
-	const args = ['config', 'get', 'registry'];
-	if (exports.isExternalRegistry(pkg)) {
-		args.push({
-			registryUrl: pkg.publishConfig.registry
-		});
-	}
-
-	const {stdout} = await execa(pkgManager, args);
-	return stdout;
-};
