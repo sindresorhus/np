@@ -26,7 +26,7 @@ const cli = meow(`
 	  --no-tests          Skips tests
 	  --yolo              Skips cleanup and testing
 	  --no-publish        Skips publishing
-	  --preview           Show only tasks that will be executed
+	  --preview           Show tasks without actually executing them
 	  --tag               Publish under a given dist-tag
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish

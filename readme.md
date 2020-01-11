@@ -68,7 +68,7 @@ $ np --help
     --no-tests          Skips tests
     --yolo              Skips cleanup and testing
     --no-publish        Skips publishing
-    --preview           Show only tasks that will be executed
+    --preview           Show tasks without actually executing them
     --tag               Publish under a given dist-tag
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
@@ -101,7 +101,7 @@ Currently, these are the flags you can configure:
 - `tests` - Run `npm test` (`true` by default).
 - `yolo` - Skip cleanup and testing (`false` by default).
 - `publish` - Publish (`true` by default).
-- `preview` - Show only tasks that will be executed (`false` by default).
+- `preview` - Show tasks without actually executing them (`false` by default).
 - `tag` - Publish under a given dist-tag (`latest` by default).
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
