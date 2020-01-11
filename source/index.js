@@ -229,7 +229,7 @@ module.exports = async (input = 'patch', options) => {
 					title: 'Enabling two-factor authentication',
 					skip: () => {
 						if (options.preview) {
-							return `[Preview] Command not executed: npm access 2fa-required ${pkg.name} --opt …`;
+							return `[Preview] Command not executed: npm access 2fa-required ${pkg.name} …`;
 						}
 					},
 					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
