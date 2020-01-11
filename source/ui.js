@@ -5,7 +5,7 @@ const githubUrlFromGit = require('github-url-from-git');
 const isScoped = require('is-scoped');
 const util = require('./util');
 const git = require('./git-util');
-const {prereleaseTags, checkIgnoreStrategy, registry} = require('./npm/util');
+const {prereleaseTags, checkIgnoreStrategy, getRegistryUrl} = require('./npm/util');
 const version = require('./version');
 const prettyVersionDiff = require('./pretty-version-diff');
 
@@ -53,7 +53,7 @@ module.exports = async (options, pkg) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
-	const registryUrl = await registry(options.yarn ? 'yarn' : 'npm', pkg);
+	const registryUrl = await getRegistryUrl(options.yarn ? 'yarn' : 'npm', pkg);
 	const runPublish = options.publish && !pkg.private;
 
 	if (runPublish) {

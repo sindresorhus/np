@@ -177,7 +177,7 @@ module.exports = async (input = 'patch', options) => {
 			enabled: () => options.yarn === true,
 			skip: () => {
 				if (options.preview) {
-					return '[Preview] Command not executed: yarn version…';
+					return `[Preview] Command not executed: yarn version --new-version ${input}.`;
 				}
 			},
 			task: () => exec('yarn', ['version', '--new-version', input])
@@ -187,7 +187,7 @@ module.exports = async (input = 'patch', options) => {
 			enabled: () => options.yarn === false,
 			skip: () => {
 				if (options.preview) {
-					return '[Preview] Command not executed npm version…';
+					return `[Preview] Command not executed: npm version ${input}.`;
 				}
 			},
 			task: () => exec('npm', ['version', input])
@@ -198,9 +198,10 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: `Publishing package using ${pkgManagerName}`,
-				skip: async () => {
+				skip: () => {
 					if (options.preview) {
-						return `[Preview] Command not executed ${pkgManager} publish…`;
+						const args = publish.pkgPublish(pkgManager, options);
+						return `[Preview] Command not executed: ${pkgManager} ${args} …`;
 					}
 				},
 				task: (context, task) => {
@@ -228,7 +229,7 @@ module.exports = async (input = 'patch', options) => {
 					title: 'Enabling two-factor authentication',
 					skip: () => {
 						if (options.preview) {
-							return '[Preview] Command not executed npm access 2fa-required…';
+							return `[Preview] Command not executed: npm access 2fa-required ${pkg.name} --opt …`;
 						}
 					},
 					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
@@ -247,7 +248,7 @@ module.exports = async (input = 'patch', options) => {
 			}
 
 			if (options.preview) {
-				return '[Preview] Command not executed git push…';
+				return '[Preview] Command not executed git push --follow-tags.';
 			}
 
 			if (publishStatus === 'FAILED' && runPublish) {
@@ -262,7 +263,7 @@ module.exports = async (input = 'patch', options) => {
 		enabled: () => isOnGitHub === true,
 		skip: () => {
 			if (options.preview) {
-				return 'GitHub Releases draft not opened in preview mode.';
+				return '[Preview] GitHub Releases draft will not be opened in preview mode.';
 			}
 
 			return !options.releaseDraft;

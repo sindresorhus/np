@@ -23,6 +23,10 @@ const pkgPublish = (pkgManager, options) => {
 		args.push('--access', 'public');
 	}
 
+	if (options.preview) {
+		return args;
+	}
+
 	return execa(pkgManager, args);
 };
 
@@ -34,3 +38,5 @@ module.exports = (context, pkgManager, task, options) =>
 			return pkgPublish(pkgManager, {...options, otp});
 		}))
 	);
+
+module.exports.pkgPublish = pkgPublish;
