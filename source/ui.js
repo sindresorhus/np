@@ -53,7 +53,8 @@ module.exports = async (options, pkg) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
-	const registryUrl = await getRegistryUrl(options.yarn ? 'yarn' : 'npm', pkg);
+	const pkgManager = options.yarn ? 'yarn' : 'npm';
+	const registryUrl = await getRegistryUrl(pkgManager, pkg);
 	const runPublish = options.publish && !pkg.private;
 
 	if (runPublish) {
