@@ -20,8 +20,9 @@ test('verifyCurrentBranchIsDefault throws if current branch is not master', asyn
 });
 
 test('verifyCurrentBranchIsDefault doesn\'t throw if current branch the specified default branch', async t => {
-	currentBranchStub.returns('bestBranch');
-	await t.notThrowsAsync(gitUtil.verifyCurrentBranchIsDefault('bestBranch'));
+	const currentBranchName = 'bestBranch';
+	currentBranchStub.returns(currentBranchName);
+	await t.notThrowsAsync(gitUtil.verifyCurrentBranchIsDefault(currentBranchName));
 });
 
 test('verifyCurrentBranchIsDefault throws if current branch is not default branch', async t => {
