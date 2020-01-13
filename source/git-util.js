@@ -38,8 +38,8 @@ exports.currentBranch = async () => {
 	return stdout;
 };
 
-exports.verifyCurrentBranchIsDefault = async (targetBranch = 'master') => {
-	if (await exports.currentBranch() !== targetBranch) {
+exports.verifyCurrentBranchIsDefault = async (defaultBranch = 'master') => {
+	if (await exports.currentBranch() !== defaultBranch) {
 		throw new Error('Not on `master` branch. Use --any-branch to publish anyway.');
 	}
 };
