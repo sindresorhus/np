@@ -35,9 +35,8 @@ const printCommitLog = async repoUrl => {
 		return `- ${commitMessage}  ${commitId}`;
 	}).join('\n');
 
-	const releaseNotes = nextTag => commits.map(commit =>
-		`- ${commit.message}  ${commit.id}`
-	).join('\n') + `\n\n${repoUrl}/compare/${latest}...${nextTag}`;
+	const releaseNotes = () =>
+		commits.map(commit => `- ${commit.message}  ${commit.id}`).join('\n');
 
 	const commitRange = util.linkifyCommitRange(repoUrl, `${latest}...master`);
 

@@ -11,7 +11,7 @@ module.exports = async (options, pkg) => {
 	const url = newGithubReleaseUrl({
 		repoUrl: options.repoUrl,
 		tag,
-		body: options.releaseNotes(tag),
+		body: options.releaseNotes(),
 		isPrerelease: version(options.version).isPrerelease()
 	});
 
