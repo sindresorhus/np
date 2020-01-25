@@ -49,16 +49,18 @@ const printCommitLog = async repoUrl => {
 	};
 };
 
-const confirmIgnoredFiles = async pkg => {
+const checkIgnoredFiles = async pkg => {
 	const ignoredFiles = await util.getNewAndUnpublishedFiles(pkg);
 	if (ignoredFiles === undefined || ignoredFiles.length === 0) {
 		return true;
 	}
 
+	console.log(`${chalk.bold('The following new files are not part of your published package:')}`);
+	console.log(`${ignoredFiles.map(path => `- ${path}`).join('\n')}`);
 	const answers = await inquirer.prompt([{
 		type: 'confirm',
 		name: 'confirm',
-		message: `The following new files are not part of your published package:\n${ignoredFiles.join('\n')}\n Continue?`,
+		message: 'Continue?',
 		default: false
 	}]);
 
@@ -73,7 +75,7 @@ module.exports = async (options, pkg) => {
 
 	if (runPublish) {
 		checkIgnoreStrategy(pkg);
-		const answerIgnoredFiles = await confirmIgnoredFiles(pkg);
+		const answerIgnoredFiles = await checkIgnoredFiles(pkg);
 		if (answerIgnoredFiles.confirm === false) {
 			return {
 				...options,

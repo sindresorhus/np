@@ -109,17 +109,6 @@ exports.checkIgnoreStrategy = ({files}) => {
 	}
 };
 
-// Get all files which will be ignored by either `.npmignore` or the `files` property in `package.json` (if defined)
-exports.getNewAndUnpublishedFiles = async (newFiles, globArrayFromFilesProperty) => {
-	if (globArrayFromFilesProperty) {
-		return getFilesNotIncludedInTheFilesProperty(globArrayFromFilesProperty, newFiles);
-	}
-
-	if (npmignoreExistsInPackageRootDir()) {
-		return getFilesIgnoredByDotnpmignore(newFiles);
-	}
-};
-
 function npmignoreExistsInPackageRootDir() {
 	const rootDir = pkgDir.sync();
 	return fs.existsSync(path.resolve(rootDir, '.npmignore'));
@@ -130,8 +119,7 @@ async function getFilesIgnoredByDotnpmignore(fileList) {
 		path: pkgDir.sync(),
 		ignoreFiles: ['.npmignore']
 	});
-	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(whiteList),
-		{matchBase: true}));
+	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(whiteList), {matchBase: true}));
 }
 
 function getFilesNotIncludedInTheFilesProperty(globArrayFromFilesProperty, fileList) {
@@ -145,11 +133,14 @@ function getFilesNotIncludedInTheFilesProperty(globArrayFromFilesProperty, fileL
 		} catch (_) {}
 	}
 
-	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayForFilesAndDirs),
-		{matchBase: true}));
+	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayForFilesAndDirs), {matchBase: true}));
 }
 
 function getIgnoredFilesGlob(globArrayFromFilesProperty) {
+	/* According to https://docs.npmjs.com/files/package.json#files
+	   npm's default behavior is to ignore these files.
+	   They shouldn't be part of the result returned by function
+	   `getNewAndUnpublishedFiles`. */
 	const filesIgnoredByDefault = ['.*.swp',
 		'.npmignore',
 		'._*',
@@ -158,9 +149,23 @@ function getIgnoredFilesGlob(globArrayFromFilesProperty) {
 		'.npmrc',
 		'.lock-wscript',
 		'.svn',
-		'.wafpickle-*',
+		'.wafpickle-N',
+		'*.orig',
 		'config.gypi',
 		'CVS',
-		'npm-debug.log'];
+		'node_modules/**/*',
+		'npm-debug.log',
+		'package-lock.json'];
 	return `!{${globArrayFromFilesProperty.join(',')},${filesIgnoredByDefault.join(',')}}`;
 }
+
+// Get all files which will be ignored by either `.npmignore` or the `files` property in `package.json` (if defined).
+exports.getNewAndUnpublishedFiles = async (globArrayFromFilesProperty, newFiles = []) => {
+	if (globArrayFromFilesProperty) {
+		return getFilesNotIncludedInTheFilesProperty(globArrayFromFilesProperty, newFiles);
+	}
+
+	if (npmignoreExistsInPackageRootDir()) {
+		return getFilesIgnoredByDotnpmignore(newFiles);
+	}
+};
