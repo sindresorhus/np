@@ -39,11 +39,17 @@ exports.username = async ({externalRegistry}) => {
 	}
 };
 
-exports.collaborators = async packageName => {
+exports.collaborators = async pkg => {
+	const packageName = pkg.name;
 	ow(packageName, ow.string);
 
+	const args = ['access', 'ls-collaborators', packageName];
+	if (exports.isExternalRegistry(pkg)) {
+		args.push('--registry', pkg.publishConfig.registry);
+	}
+
 	try {
-		const {stdout} = await execa('npm', ['access', 'ls-collaborators', packageName]);
+		const {stdout} = await execa('npm', args);
 		return stdout;
 	} catch (error) {
 		// Ignore non-existing package error
