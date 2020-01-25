@@ -121,12 +121,7 @@ module.exports = async (options, pkg) => {
 			type: 'input',
 			name: 'tag',
 			message: 'Tag',
-			when: answers =>
-				options.publish &&
-				!pkg.private &&
-				version.isPrereleaseOrIncrement(answers.version) &&
-				!options.tag &&
-				!answers.tag,
+			when: answers => options.publish && !pkg.private && version.isPrereleaseOrIncrement(answers.version) && !options.tag && !answers.tag,
 			validate: input => {
 				if (input.length === 0) {
 					return 'Please specify a tag, for example, `next`.';
@@ -142,15 +137,8 @@ module.exports = async (options, pkg) => {
 		{
 			type: 'confirm',
 			name: 'publishScoped',
-			when:
-				isScoped(pkg.name) &&
-				!options.exists &&
-				!options.isUnknown &&
-				options.publish &&
-				!pkg.private,
-			message: `This scoped repo ${chalk.bold.magenta(
-				pkg.name
-			)} hasn't been published. Do you want to publish it publicly?`,
+			when: isScoped(pkg.name) && !options.exists && !options.isUnknown && options.publish && !pkg.private,
+			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false
 		}
 	];
@@ -167,14 +155,12 @@ module.exports = async (options, pkg) => {
 	}
 
 	if (!hasCommits) {
-		const answers = await inquirer.prompt([
-			{
-				type: 'confirm',
-				name: 'confirm',
-				message: 'No commits found since previous release, continue?',
-				default: false
-			}
-		]);
+		const answers = await inquirer.prompt([{
+			type: 'confirm',
+			name: 'confirm',
+			message: 'No commits found since previous release, continue?',
+			default: false
+		}]);
 
 		if (!answers.confirm) {
 			return {
@@ -190,9 +176,7 @@ module.exports = async (options, pkg) => {
 				type: 'confirm',
 				name: 'confirm',
 				when: isScoped(pkg.name) && options.publish && !pkg.private,
-				message: `This scoped repo ${chalk.bold.magenta(
-					pkg.name
-				)} can't be checked for availability. Do you want to try and publish anyway?`,
+				message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(pkg.name)}. Do you want to try and publish it anyway?`,
 				default: false
 			}
 		]);
