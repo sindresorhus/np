@@ -122,7 +122,7 @@ async function getFilesIgnoredByDotnpmignore(fileList) {
 	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(whiteList), {matchBase: true}));
 }
 
-function getFilesNotIncludedInTheFilesProperty(globArrayFromFilesProperty, fileList) {
+function getFilesNotIncludedInFilesProperty(globArrayFromFilesProperty, fileList) {
 	const globArrayForFilesAndDirs = [...globArrayFromFilesProperty];
 	const rootDir = pkgDir.sync();
 	for (const glob of globArrayFromFilesProperty) {
@@ -138,9 +138,7 @@ function getFilesNotIncludedInTheFilesProperty(globArrayFromFilesProperty, fileL
 
 function getIgnoredFilesGlob(globArrayFromFilesProperty) {
 	/* According to https://docs.npmjs.com/files/package.json#files
-	   npm's default behavior is to ignore these files.
-	   They shouldn't be part of the result returned by function
-	   `getNewAndUnpublishedFiles`. */
+	   npm's default behavior is to ignore these files. */
 	const filesIgnoredByDefault = ['.*.swp',
 		'.npmignore',
 		'._*',
@@ -162,7 +160,7 @@ function getIgnoredFilesGlob(globArrayFromFilesProperty) {
 // Get all files which will be ignored by either `.npmignore` or the `files` property in `package.json` (if defined).
 exports.getNewAndUnpublishedFiles = async (globArrayFromFilesProperty, newFiles = []) => {
 	if (globArrayFromFilesProperty) {
-		return getFilesNotIncludedInTheFilesProperty(globArrayFromFilesProperty, newFiles);
+		return getFilesNotIncludedInFilesProperty(globArrayFromFilesProperty, newFiles);
 	}
 
 	if (npmignoreExistsInPackageRootDir()) {
