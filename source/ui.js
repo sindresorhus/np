@@ -137,7 +137,7 @@ module.exports = async (options, pkg) => {
 		{
 			type: 'confirm',
 			name: 'publishScoped',
-			when: isScoped(pkg.name) && !options.exists && options.publish && !pkg.private,
+			when: isScoped(pkg.name) && !options.availability.isAvailable && !options.availability.isUnknown && options.publish && !pkg.private,
 			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false
 		}
@@ -159,6 +159,23 @@ module.exports = async (options, pkg) => {
 			type: 'confirm',
 			name: 'confirm',
 			message: 'No commits found since previous release, continue?',
+			default: false
+		}]);
+
+		if (!answers.confirm) {
+			return {
+				...options,
+				...answers
+			};
+		}
+	}
+
+	if (options.availability.isUnknown) {
+		const answers = await inquirer.prompt([{
+			type: 'confirm',
+			name: 'confirm',
+			when: isScoped(pkg.name) && options.publish && !pkg.private,
+			message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(pkg.name)}. Do you want to try and publish it anyway?`,
 			default: false
 		}]);
 
