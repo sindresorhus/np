@@ -4,17 +4,21 @@ const {from} = require('rxjs');
 const {catchError} = require('rxjs/operators');
 const handleNpmError = require('./handle-npm-error');
 
-const enable2fa = (packageName, options) => {
+const getEnable2faArgs = options => {
 	const args = ['access', '2fa-required', packageName];
 
 	if (options && options.otp) {
 		args.push('--otp', options.otp);
 	}
 
-	return execa('npm', args);
-};
+	return args;
+}
+
+const enable2fa = (options) => execa('npm', getEnable2faArgs(options))
 
 module.exports = (task, packageName, options) =>
-	from(enable2fa(packageName, options)).pipe(
+	from(enable2fa(options)).pipe(
 		catchError(error => handleNpmError(error, task, otp => enable2fa(packageName, {otp})))
 	);
+
+module.exports.getEnable2faArgs = getEnable2faArgs;

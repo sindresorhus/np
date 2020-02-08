@@ -200,8 +200,8 @@ module.exports = async (input = 'patch', options) => {
 				title: `Publishing package using ${pkgManagerName}`,
 				skip: () => {
 					if (options.preview) {
-						const args = publish.pkgPublish(pkgManager, options);
-						return `[Preview] Command not executed: ${pkgManager} ${args} …`;
+						const args = publish.getPkgPublishArgs(options);
+						return `[Preview] Command not executed: ${pkgManager} ${args}.`;
 					}
 				},
 				task: (context, task) => {
@@ -229,7 +229,8 @@ module.exports = async (input = 'patch', options) => {
 					title: 'Enabling two-factor authentication',
 					skip: () => {
 						if (options.preview) {
-							return `[Preview] Command not executed: npm access 2fa-required ${pkg.name} …`;
+							const args = enable2fa.getEnable2faArgs(options);
+							return `[Preview] Command not executed: npm ${args}.`;
 						}
 					},
 					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
@@ -248,7 +249,7 @@ module.exports = async (input = 'patch', options) => {
 			}
 
 			if (options.preview) {
-				return '[Preview] Command not executed git push --follow-tags.';
+				return '[Preview] Command not executed: git push --follow-tags.';
 			}
 
 			if (publishStatus === 'FAILED' && runPublish) {
