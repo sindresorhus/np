@@ -201,7 +201,7 @@ module.exports = async (input = 'patch', options) => {
 				skip: () => {
 					if (options.preview) {
 						const args = publish.getPkgPublishArgs(options);
-						return `[Preview] Command not executed: ${pkgManager} ${args}.`;
+						return `[Preview] Command not executed: ${pkgManager} ${args.join(' ')}.`;
 					}
 				},
 				task: (context, task) => {
@@ -229,8 +229,8 @@ module.exports = async (input = 'patch', options) => {
 					title: 'Enabling two-factor authentication',
 					skip: () => {
 						if (options.preview) {
-							const args = enable2fa.getEnable2faArgs(options);
-							return `[Preview] Command not executed: npm ${args}.`;
+							const args = enable2fa.getEnable2faArgs(pkg.name, options);
+							return `[Preview] Command not executed: npm ${args.join(' ')}.`;
 						}
 					},
 					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})

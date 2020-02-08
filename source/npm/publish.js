@@ -24,7 +24,7 @@ const getPkgPublishArgs = options => {
 	}
 
 	return args;
-}
+};
 
 const pkgPublish = (pkgManager, options) => execa(pkgManager, getPkgPublishArgs(options));
 
