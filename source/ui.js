@@ -5,11 +5,11 @@ const githubUrlFromGit = require('github-url-from-git');
 const isScoped = require('is-scoped');
 const util = require('./util');
 const git = require('./git-util');
-const {prereleaseTags, checkIgnoreStrategy} = require('./npm/util');
+const {prereleaseTags, checkIgnoreStrategy, getRegistryUrl} = require('./npm/util');
 const version = require('./version');
 const prettyVersionDiff = require('./pretty-version-diff');
 
-const printCommitLog = async repoUrl => {
+const printCommitLog = async (repoUrl, registryUrl) => {
 	const latest = await git.latestTagOrFirstCommit();
 	const log = await git.commitLogFromRevision(latest);
 
@@ -41,7 +41,7 @@ const printCommitLog = async repoUrl => {
 
 	const commitRange = util.linkifyCommitRange(repoUrl, `${latest}...master`);
 
-	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n`);
+	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
 
 	return {
 		hasCommits: true,
@@ -69,6 +69,8 @@ module.exports = async (options, pkg) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
+	const pkgManager = options.yarn ? 'yarn' : 'npm';
+	const registryUrl = await getRegistryUrl(pkgManager, pkg);
 	const runPublish = options.publish && !pkg.private;
 
 	if (runPublish) {
@@ -160,13 +162,13 @@ module.exports = async (options, pkg) => {
 		{
 			type: 'confirm',
 			name: 'publishScoped',
-			when: isScoped(pkg.name) && !options.exists && options.publish && !pkg.private,
+			when: isScoped(pkg.name) && !options.availability.isAvailable && !options.availability.isUnknown && options.publish && !pkg.private,
 			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false
 		}
 	];
 
-	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl);
+	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl);
 
 	if (options.version) {
 		return {
@@ -182,6 +184,23 @@ module.exports = async (options, pkg) => {
 			type: 'confirm',
 			name: 'confirm',
 			message: 'No commits found since previous release, continue?',
+			default: false
+		}]);
+
+		if (!answers.confirm) {
+			return {
+				...options,
+				...answers
+			};
+		}
+	}
+
+	if (options.availability.isUnknown) {
+		const answers = await inquirer.prompt([{
+			type: 'confirm',
+			name: 'confirm',
+			when: isScoped(pkg.name) && options.publish && !pkg.private,
+			message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(pkg.name)}. Do you want to try and publish it anyway?`,
 			default: false
 		}]);
 

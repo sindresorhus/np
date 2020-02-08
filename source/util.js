@@ -5,14 +5,17 @@ const terminalLink = require('terminal-link');
 const execa = require('execa');
 const pMemoize = require('p-memoize');
 const ow = require('ow');
+const pkgDir = require('pkg-dir');
 const gitUtil = require('./git-util');
 const npmUtil = require('./npm/util');
 
-exports.readPkg = () => {
-	const {packageJson} = readPkgUp.sync();
+exports.readPkg = (packagePath = pkgDir.sync()) => {
+	const {packageJson} = readPkgUp.sync({
+		cwd: packagePath
+	});
 
 	if (!packageJson) {
-		throw new Error('No package.json found. Make sure you\'re in the correct project.');
+		throw new Error(`No package.json found. Make sure ${packagePath} is a valid package`);
 	}
 
 	return packageJson;
