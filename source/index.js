@@ -53,7 +53,7 @@ module.exports = async (input = 'patch', options) => {
 		options.cleanup = false;
 	}
 
-	const pkg = util.readPkg();
+	const pkg = util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
 	const runPublish = options.publish && !pkg.private;
