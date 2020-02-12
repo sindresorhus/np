@@ -21,6 +21,8 @@ const pkgPublish = (pkgManager, options) => {
 
 	if (options.publishScoped) {
 		args.push('--access', 'public');
+	} else if (options.isExplicitPrivatePublish) {
+		args.push('--access', 'restricted')
 	}
 
 	return execa(pkgManager, args);

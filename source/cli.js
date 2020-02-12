@@ -91,11 +91,13 @@ updateNotifier({pkg: cli.pkg}).notify();
 		...cli.flags
 	};
 
+	const isExplicitPrivatePublish = flags.publish && pkg.private && pkg.publishConfig && pkg.publishConfig.access === 'restricted';
+
 	const availability = await isPackageNameAvailable(pkg);
 
 	const version = cli.input.length > 0 ? cli.input[0] : false;
 
-	const options = await ui({...flags, availability, version}, pkg);
+	const options = await ui({ ...flags, availability, version, isExplicitPrivatePublish }, pkg);
 
 	if (!options.confirm) {
 		process.exit(0);
