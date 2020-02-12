@@ -92,7 +92,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 	};
 
 	const isExplicitPrivatePublish = flags.publish && pkg.private && pkg.publishConfig && pkg.publishConfig.access === 'restricted';
-	const shouldRunPublish = flags.publish && !pkg.private || isExplicitPrivatePublish;
+	const shouldRunPublish = isExplicitPrivatePublish ? true : flags.publish && !pkg.private;
 
 	const availability = await isPackageNameAvailable(pkg);
 
@@ -103,7 +103,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 		availability,
 		version,
 		isExplicitPrivatePublish,
-		shouldRunPublish,
+		shouldRunPublish
 	}, pkg);
 
 	if (!options.confirm) {
