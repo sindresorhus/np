@@ -40,7 +40,6 @@ module.exports = async (input = 'patch', options) => {
 	options = {
 		cleanup: true,
 		tests: true,
-		publish: true,
 		isExplicitPrivatePublish: false,
 		shouldRunPublish: true,
 		...options
