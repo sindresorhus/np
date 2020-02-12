@@ -92,12 +92,19 @@ updateNotifier({pkg: cli.pkg}).notify();
 	};
 
 	const isExplicitPrivatePublish = flags.publish && pkg.private && pkg.publishConfig && pkg.publishConfig.access === 'restricted';
+	const shouldRunPublish = flags.publish && !pkg.private || isExplicitPrivatePublish;
 
 	const availability = await isPackageNameAvailable(pkg);
 
 	const version = cli.input.length > 0 ? cli.input[0] : false;
 
-	const options = await ui({ ...flags, availability, version, isExplicitPrivatePublish }, pkg);
+	const options = await ui({
+		...flags,
+		availability,
+		version,
+		isExplicitPrivatePublish,
+		shouldRunPublish,
+	}, pkg);
 
 	if (!options.confirm) {
 		process.exit(0);

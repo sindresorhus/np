@@ -55,9 +55,8 @@ module.exports = async (options, pkg) => {
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 	const pkgManager = options.yarn ? 'yarn' : 'npm';
 	const registryUrl = await getRegistryUrl(pkgManager, pkg);
-	const shouldRunPublish = options.publish && !pkg.private || options.isExplicitPrivatePublish;
 
-	if (shouldRunPublish) {
+	if (options.shouldRunPublish) {
 		checkIgnoreStrategy(pkg);
 	}
 
@@ -105,7 +104,7 @@ module.exports = async (options, pkg) => {
 			type: 'list',
 			name: 'tag',
 			message: 'How should this pre-release version be tagged in npm?',
-			when: answers => shouldRunPublish && version.isPrereleaseOrIncrement(answers.version) && !options.tag,
+			when: answers => options.shouldRunPublish && version.isPrereleaseOrIncrement(answers.version) && !options.tag,
 			choices: async () => {
 				const existingPrereleaseTags = await prereleaseTags(pkg.name);
 
@@ -123,7 +122,7 @@ module.exports = async (options, pkg) => {
 			type: 'input',
 			name: 'tag',
 			message: 'Tag',
-			when: answers => shouldRunPublish && version.isPrereleaseOrIncrement(answers.version) && !options.tag && !answers.tag,
+			when: answers => options.shouldRunPublish && version.isPrereleaseOrIncrement(answers.version) && !options.tag && !answers.tag,
 			validate: input => {
 				if (input.length === 0) {
 					return 'Please specify a tag, for example, `next`.';
@@ -176,7 +175,7 @@ module.exports = async (options, pkg) => {
 		const answers = await inquirer.prompt([{
 			type: 'confirm',
 			name: 'confirm',
-			when: isScoped(pkg.name) && shouldRunPublish,
+			when: isScoped(pkg.name) && options.shouldRunPublish,
 			message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(pkg.name)}. Do you want to try and publish it anyway?`,
 			default: false
 		}]);
