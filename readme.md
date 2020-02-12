@@ -204,6 +204,18 @@ To publish [scoped packages](https://docs.npmjs.com/misc/scope#publishing-public
 }
 ```
 
+### Publish private, scoped packages
+
+To publish a [private Org-scoped package](https://docs.npmjs.com/creating-and-publishing-an-org-scoped-package#publishing-a-private-org-scoped-package), you need to set the access level to `restricted`. You can do that by adding the following to your `package.json`:
+
+```json
+"publishConfig": {
+	"access": "restricted"
+}
+```
+
+Additionally, make sure you have [marked your package as private](#private-packages).
+
 ### Publish to a custom registry
 
 Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in package.json to the URL of your registry:
