@@ -91,7 +91,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 		...cli.flags
 	};
 
-	const shouldRunPublish = flags.publish && !pkg.private;
+	const runPublish = flags.publish && !pkg.private;
 
 	const availability = await isPackageNameAvailable(pkg);
 
@@ -101,7 +101,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 		...flags,
 		availability,
 		version,
-		shouldRunPublish
+		runPublish
 	}, pkg);
 
 	if (!options.confirm) {

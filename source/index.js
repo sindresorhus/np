@@ -40,7 +40,7 @@ module.exports = async (input = 'patch', options) => {
 	options = {
 		cleanup: true,
 		tests: true,
-		shouldRunPublish: true,
+		runPublish: true,
 		...options
 	};
 
@@ -103,7 +103,7 @@ module.exports = async (input = 'patch', options) => {
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
-			enabled: () => options.shouldRunPublish,
+			enabled: () => options.runPublish,
 			task: () => prerequisiteTasks(input, pkg, options)
 		},
 		{
@@ -181,7 +181,7 @@ module.exports = async (input = 'patch', options) => {
 		}
 	]);
 
-	if (options.shouldRunPublish) {
+	if (options.runPublish) {
 		tasks.add([
 			{
 				title: `Publishing package using ${pkgManagerName}`,
@@ -223,7 +223,7 @@ module.exports = async (input = 'patch', options) => {
 				return 'Upstream branch not found; not pushing.';
 			}
 
-			if (publishStatus === 'FAILED' && options.shouldRunPublish) {
+			if (publishStatus === 'FAILED' && options.runPublish) {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
