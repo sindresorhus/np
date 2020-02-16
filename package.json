@@ -36,6 +36,7 @@
 		"chalk": "^3.0.0",
 		"cosmiconfig": "^6.0.0",
 		"del": "^4.1.0",
+		"escape-goat": "^3.0.0",
 		"escape-string-regexp": "^2.0.0",
 		"execa": "^4.0.0",
 		"github-url-from-git": "^1.5.0",
