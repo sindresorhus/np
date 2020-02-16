@@ -262,22 +262,23 @@ If you're running into other issues when using SSH, please consult [GitHub's sup
 
 ## FAQ
 
-### Publishing with yarn
-#### Question
-When running `np` through yarn, i get the following error:
+### I get an error when publishing my package through Yarn
+
+If you an error like this…
+
 ```shell
 ❯ Prerequisite check
-    ✔ Ping npm registry
-    ✔ Check npm version
-    ✔ Check yarn version
-    ✖ Verify user is authenticated
+✔ Ping npm registry
+✔ Check npm version
+✔ Check yarn version
+✖ Verify user is authenticated
 
 npm ERR! code E403
-npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my_awesome_package/collaborators?format=cli - Forbidden
+npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my-awesome-package/collaborators?format=cli - Forbidden
 ```
-#### Answer
-Please check if `npm access ls-collaborators my_awesome_package` succeeds.
-If so, yarn has overwritten your registry url. Please add the correct registry url in your `package.json`.
+
+…please check whether the command `npm access ls-collaborators my-awesome-package` succeeds. If it does, Yarn has overwritten your registry URL. To fix this, add the correct registry URL to `package.json`:
+
 ```json
 "publishConfig":{
 	"registry": "https://registry.npmjs.org"
