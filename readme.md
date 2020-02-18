@@ -214,8 +214,6 @@ To publish a [private Org-scoped package](https://docs.npmjs.com/creating-and-pu
 }
 ```
 
-This will prevent a prompt asking about publically publishing the package.
-
 ### Publish to a custom registry
 
 Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in package.json to the URL of your registry:
