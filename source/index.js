@@ -37,17 +37,6 @@ const exec = (cmd, args) => {
 
 // eslint-disable-next-line default-param-last
 module.exports = async (input = 'patch', options) => {
-	options = {
-		...process.env.NODE_ENV === 'test' ? {
-			cleanup: true,
-			tests: true,
-			publish: true,
-			runPublish: true
-		} : {},
-
-		...options
-	};
-
 	if (!hasYarn() && options.yarn) {
 		throw new Error('Could not use Yarn without yarn.lock file');
 	}
