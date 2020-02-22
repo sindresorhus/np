@@ -200,7 +200,7 @@ module.exports = async (input = 'patch', options) => {
 				title: `Publishing package using ${pkgManagerName}`,
 				skip: () => {
 					if (options.preview) {
-						const args = publish.getPkgPublishArgs(options);
+						const args = publish.getPackagePublishArguments(options);
 						return `[Preview] Command not executed: ${pkgManager} ${args.join(' ')}.`;
 					}
 				},
