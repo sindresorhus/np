@@ -80,7 +80,9 @@ module.exports = async (input = 'patch', options) => {
 
 	// The default parameter is a workaround for https://github.com/Tapppi/async-exit-hook/issues/9
 	exitHook((callback = () => {}) => {
-		if (publishStatus === 'FAILED') {
+		if (options.preview) {
+			callback();
+		} else if (publishStatus === 'FAILED') {
 			(async () => {
 				await rollback();
 				callback();
@@ -165,11 +167,21 @@ module.exports = async (input = 'patch', options) => {
 		{
 			title: 'Bumping version using Yarn',
 			enabled: () => options.yarn === true,
+			skip: () => {
+				if (options.preview) {
+					return `[Preview] Command not executed: yarn version --new-version ${input}.`;
+				}
+			},
 			task: () => exec('yarn', ['version', '--new-version', input])
 		},
 		{
 			title: 'Bumping version using npm',
 			enabled: () => options.yarn === false,
+			skip: () => {
+				if (options.preview) {
+					return `[Preview] Command not executed: npm version ${input}.`;
+				}
+			},
 			task: () => exec('npm', ['version', input])
 		}
 	]);
@@ -178,6 +190,12 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: `Publishing package using ${pkgManagerName}`,
+				skip: () => {
+					if (options.preview) {
+						const args = publish.getPackagePublishArguments(options);
+						return `[Preview] Command not executed: ${pkgManager} ${args.join(' ')}.`;
+					}
+				},
 				task: (context, task) => {
 					let hasError = false;
 
@@ -201,6 +219,12 @@ module.exports = async (input = 'patch', options) => {
 			tasks.add([
 				{
 					title: 'Enabling two-factor authentication',
+					skip: () => {
+						if (options.preview) {
+							const args = enable2fa.getEnable2faArgs(pkg.name, options);
+							return `[Preview] Command not executed: npm ${args.join(' ')}.`;
+						}
+					},
 					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
 				}
 			]);
@@ -216,6 +240,10 @@ module.exports = async (input = 'patch', options) => {
 				return 'Upstream branch not found; not pushing.';
 			}
 
+			if (options.preview) {
+				return '[Preview] Command not executed: git push --follow-tags.';
+			}
+
 			if (publishStatus === 'FAILED' && options.runPublish) {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
@@ -226,7 +254,13 @@ module.exports = async (input = 'patch', options) => {
 	tasks.add({
 		title: 'Creating release draft on GitHub',
 		enabled: () => isOnGitHub === true,
-		skip: () => !options.releaseDraft,
+		skip: () => {
+			if (options.preview) {
+				return '[Preview] GitHub Releases draft will not be opened in preview mode.';
+			}
+
+			return !options.releaseDraft;
+		},
 		task: () => releaseTaskHelper(options, pkg)
 	});
 

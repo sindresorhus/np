@@ -2,6 +2,7 @@
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const githubUrlFromGit = require('github-url-from-git');
+const {htmlEscape} = require('escape-goat');
 const isScoped = require('is-scoped');
 const util = require('./util');
 const git = require('./git-util');
@@ -36,7 +37,7 @@ const printCommitLog = async (repoUrl, registryUrl) => {
 	}).join('\n');
 
 	const releaseNotes = nextTag => commits.map(commit =>
-		`- ${commit.message}  ${commit.id}`
+		`- ${htmlEscape(commit.message)}  ${commit.id}`
 	).join('\n') + `\n\n${repoUrl}/compare/${latest}...${nextTag}`;
 
 	const commitRange = util.linkifyCommitRange(repoUrl, `${latest}...master`);
