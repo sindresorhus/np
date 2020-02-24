@@ -35,6 +35,7 @@
   <sub>(does not apply to external registries)</sub>
 - Opens a prefilled GitHub Releases draft after publish
 - Warns about the possibility of extraneous files being published
+- See exactly what will be executed with [preview mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
 - Supports [GitHub Packages](https://github.com/features/packages)
 
 
@@ -69,6 +70,7 @@ $ np --help
     --no-tests          Skips tests
     --yolo              Skips cleanup and testing
     --no-publish        Skips publishing
+    --preview           Show tasks without actually executing them
     --tag               Publish under a given dist-tag
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
@@ -101,6 +103,7 @@ Currently, these are the flags you can configure:
 - `tests` - Run `npm test` (`true` by default).
 - `yolo` - Skip cleanup and testing (`false` by default).
 - `publish` - Publish (`true` by default).
+- `preview` - Show tasks without actually executing them (`false` by default).
 - `tag` - Publish under a given dist-tag (`latest` by default).
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
@@ -201,6 +204,16 @@ To publish [scoped packages](https://docs.npmjs.com/misc/scope#publishing-public
 ```json
 "publishConfig": {
 	"access": "public"
+}
+```
+
+### Publish private, scoped packages in CI/CD
+
+To publish a [private Org-scoped package](https://docs.npmjs.com/creating-and-publishing-an-org-scoped-package#publishing-a-private-org-scoped-package), you need to set the access level to `restricted`. You can do that by adding the following to your `package.json`:
+
+```json
+"publishConfig": {
+	"access": "restricted"
 }
 ```
 

@@ -37,13 +37,6 @@ const exec = (cmd, args) => {
 
 // eslint-disable-next-line default-param-last
 module.exports = async (input = 'patch', options) => {
-	options = {
-		cleanup: true,
-		tests: true,
-		publish: true,
-		...options
-	};
-
 	if (!hasYarn() && options.yarn) {
 		throw new Error('Could not use Yarn without yarn.lock file');
 	}
@@ -56,7 +49,6 @@ module.exports = async (input = 'patch', options) => {
 	const pkg = util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const runPublish = options.publish && !pkg.private;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
@@ -88,7 +80,9 @@ module.exports = async (input = 'patch', options) => {
 
 	// The default parameter is a workaround for https://github.com/Tapppi/async-exit-hook/issues/9
 	exitHook((callback = () => {}) => {
-		if (publishStatus === 'FAILED') {
+		if (options.preview) {
+			callback();
+		} else if (publishStatus === 'FAILED') {
 			(async () => {
 				await rollback();
 				callback();
@@ -104,7 +98,7 @@ module.exports = async (input = 'patch', options) => {
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
-			enabled: () => runPublish,
+			enabled: () => options.runPublish,
 			task: () => prerequisiteTasks(input, pkg, options)
 		},
 		{
@@ -173,19 +167,35 @@ module.exports = async (input = 'patch', options) => {
 		{
 			title: 'Bumping version using Yarn',
 			enabled: () => options.yarn === true,
+			skip: () => {
+				if (options.preview) {
+					return `[Preview] Command not executed: yarn version --new-version ${input}.`;
+				}
+			},
 			task: () => exec('yarn', ['version', '--new-version', input])
 		},
 		{
 			title: 'Bumping version using npm',
 			enabled: () => options.yarn === false,
+			skip: () => {
+				if (options.preview) {
+					return `[Preview] Command not executed: npm version ${input}.`;
+				}
+			},
 			task: () => exec('npm', ['version', input])
 		}
 	]);
 
-	if (runPublish) {
+	if (options.runPublish) {
 		tasks.add([
 			{
 				title: `Publishing package using ${pkgManagerName}`,
+				skip: () => {
+					if (options.preview) {
+						const args = publish.getPackagePublishArguments(options);
+						return `[Preview] Command not executed: ${pkgManager} ${args.join(' ')}.`;
+					}
+				},
 				task: (context, task) => {
 					let hasError = false;
 
@@ -209,6 +219,12 @@ module.exports = async (input = 'patch', options) => {
 			tasks.add([
 				{
 					title: 'Enabling two-factor authentication',
+					skip: () => {
+						if (options.preview) {
+							const args = enable2fa.getEnable2faArgs(pkg.name, options);
+							return `[Preview] Command not executed: npm ${args.join(' ')}.`;
+						}
+					},
 					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
 				}
 			]);
@@ -224,7 +240,11 @@ module.exports = async (input = 'patch', options) => {
 				return 'Upstream branch not found; not pushing.';
 			}
 
-			if (publishStatus === 'FAILED' && runPublish) {
+			if (options.preview) {
+				return '[Preview] Command not executed: git push --follow-tags.';
+			}
+
+			if (publishStatus === 'FAILED' && options.runPublish) {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
@@ -234,7 +254,13 @@ module.exports = async (input = 'patch', options) => {
 	tasks.add({
 		title: 'Creating release draft on GitHub',
 		enabled: () => isOnGitHub === true,
-		skip: () => !options.releaseDraft,
+		skip: () => {
+			if (options.preview) {
+				return '[Preview] GitHub Releases draft will not be opened in preview mode.';
+			}
+
+			return !options.releaseDraft;
+		},
 		task: () => releaseTaskHelper(options, pkg)
 	});
 
