@@ -236,12 +236,12 @@ module.exports = async (input = 'patch', options) => {
 	tasks.add({
 		title: 'Pushing tags',
 		skip: async () => {
-			if (!(await git.hasUpstream())) {
-				return 'Upstream branch not found; not pushing.';
-			}
-
 			if (options.preview) {
 				return '[Preview] Command not executed: git push --follow-tags.';
+			}
+
+			if (!(await git.hasUpstream())) {
+				return 'Upstream branch not found; not pushing.';
 			}
 
 			if (publishStatus === 'FAILED' && options.runPublish) {
