@@ -95,11 +95,18 @@ updateNotifier({pkg: cli.pkg}).notify();
 		...cli.flags
 	};
 
+	const runPublish = flags.publish && !pkg.private;
+
 	const availability = await isPackageNameAvailable(pkg);
 
 	const version = cli.input.length > 0 ? cli.input[0] : false;
 
-	const options = await ui({...flags, availability, version}, pkg);
+	const options = await ui({
+		...flags,
+		availability,
+		version,
+		runPublish
+	}, pkg);
 
 	if (!options.confirm) {
 		process.exit(0);

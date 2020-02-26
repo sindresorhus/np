@@ -56,9 +56,8 @@ module.exports = async (options, pkg) => {
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 	const pkgManager = options.yarn ? 'yarn' : 'npm';
 	const registryUrl = await getRegistryUrl(pkgManager, pkg);
-	const runPublish = options.publish && !pkg.private;
 
-	if (runPublish) {
+	if (options.runPublish) {
 		checkIgnoreStrategy(pkg);
 	}
 
@@ -106,7 +105,7 @@ module.exports = async (options, pkg) => {
 			type: 'list',
 			name: 'tag',
 			message: 'How should this pre-release version be tagged in npm?',
-			when: answers => options.publish && !pkg.private && version.isPrereleaseOrIncrement(answers.version) && !options.tag,
+			when: answers => options.runPublish && version.isPrereleaseOrIncrement(answers.version) && !options.tag,
 			choices: async () => {
 				const existingPrereleaseTags = await prereleaseTags(pkg.name);
 
@@ -124,7 +123,7 @@ module.exports = async (options, pkg) => {
 			type: 'input',
 			name: 'tag',
 			message: 'Tag',
-			when: answers => options.publish && !pkg.private && version.isPrereleaseOrIncrement(answers.version) && !options.tag && !answers.tag,
+			when: answers => options.runPublish && version.isPrereleaseOrIncrement(answers.version) && !options.tag && !answers.tag,
 			validate: input => {
 				if (input.length === 0) {
 					return 'Please specify a tag, for example, `next`.';
@@ -140,7 +139,7 @@ module.exports = async (options, pkg) => {
 		{
 			type: 'confirm',
 			name: 'publishScoped',
-			when: isScoped(pkg.name) && !options.availability.isAvailable && !options.availability.isUnknown && options.publish && !pkg.private,
+			when: isScoped(pkg.name) && !options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted'),
 			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false
 		}
@@ -177,7 +176,7 @@ module.exports = async (options, pkg) => {
 		const answers = await inquirer.prompt([{
 			type: 'confirm',
 			name: 'confirm',
-			when: isScoped(pkg.name) && options.publish && !pkg.private,
+			when: isScoped(pkg.name) && options.runPublish,
 			message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(pkg.name)}. Do you want to try and publish it anyway?`,
 			default: false
 		}]);

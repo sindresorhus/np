@@ -37,13 +37,6 @@ const exec = (cmd, args) => {
 
 // eslint-disable-next-line default-param-last
 module.exports = async (input = 'patch', options) => {
-	options = {
-		cleanup: true,
-		tests: true,
-		publish: true,
-		...options
-	};
-
 	if (!hasYarn() && options.yarn) {
 		throw new Error('Could not use Yarn without yarn.lock file');
 	}
@@ -56,7 +49,6 @@ module.exports = async (input = 'patch', options) => {
 	const pkg = util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const runPublish = options.publish && !pkg.private;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
@@ -106,7 +98,7 @@ module.exports = async (input = 'patch', options) => {
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
-			enabled: () => runPublish,
+			enabled: () => options.runPublish,
 			task: () => prerequisiteTasks(input, pkg, options)
 		},
 		{
@@ -194,7 +186,7 @@ module.exports = async (input = 'patch', options) => {
 		}
 	]);
 
-	if (runPublish) {
+	if (options.runPublish) {
 		tasks.add([
 			{
 				title: `Publishing package using ${pkgManagerName}`,
@@ -252,7 +244,7 @@ module.exports = async (input = 'patch', options) => {
 				return '[Preview] Command not executed: git push --follow-tags.';
 			}
 
-			if (publishStatus === 'FAILED' && runPublish) {
+			if (publishStatus === 'FAILED' && options.runPublish) {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
