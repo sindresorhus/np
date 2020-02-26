@@ -207,7 +207,7 @@ To publish [scoped packages](https://docs.npmjs.com/misc/scope#publishing-public
 }
 ```
 
-### Publish scoped packages privately
+### Private scoped packages
 
 To publish a [private Org-scoped package](https://docs.npmjs.com/creating-and-publishing-an-org-scoped-package#publishing-a-private-org-scoped-package), you need to set the access level to `restricted`. You can do that by adding the following to your `package.json`:
 
