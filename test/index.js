@@ -35,15 +35,16 @@ test('errors on too low version', async t => {
 	await t.throwsAsync(np('1.0.0-beta', defaultOptions), /New version `1\.0\.0-beta` should be higher than current version `\d+\.\d+\.\d+`/);
 });
 
-test('should not enable 2fa if the package is existed', async t => {
-	const getEnable2faArgsStub = sinon.stub().returns([]);
+test('should not enable 2fa if the package exists', async t => {
+	const enable2faStub = sinon.stub();
 	const np = proxyquire('../source', {
 		del: sinon.stub(),
+		execa: sinon.stub().returns({pipe: sinon.stub()}),
 		'./prerequisite-tasks': sinon.stub(),
 		'./git-tasks': sinon.stub(),
-		'./npm/enable-2fa': {
-			getEnable2faArgs: getEnable2faArgsStub
-		}
+		'./git-util': sinon.stub().returns({push: sinon.stub()}),
+		'./npm/enable-2fa': enable2faStub,
+		'./npm/publish': sinon.stub().returns({pipe: sinon.stub()})
 	});
 
 	await t.notThrowsAsync(np('1.0.0', {
@@ -51,8 +52,7 @@ test('should not enable 2fa if the package is existed', async t => {
 		availability: {
 			isAvailable: true,
 			isUnknown: false
-		},
-		preview: true
+		}
 	}));
-	t.is(getEnable2faArgsStub.notCalled, true);
+	t.is(enable2faStub.notCalled, true);
 });
