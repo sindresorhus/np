@@ -1,4 +1,3 @@
 module.exports = {
-	yarn: true,
-	contents: 'dist'
-}
+	source: 'homedir/.np-config.js'
+};
