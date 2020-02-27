@@ -95,11 +95,12 @@ updateNotifier({pkg: cli.pkg}).notify();
 		...cli.flags
 	};
 
+  const runPublish = flags.publish && !pkg.private;
+
 	const availability = flags.publish ? await isPackageNameAvailable(pkg) : {
 		isAvailable: false,
 		isUnknown: false
 	};
-	const runPublish = flags.publish && !pkg.private;
 
 	const version = cli.input.length > 0 ? cli.input[0] : false;
 
