@@ -212,7 +212,7 @@ test.serial('should not fail when prerelease version of public package with dist
 	t.pass();
 });
 
-test.serial('should not fail when prerelease version of private package with dist tag given', async t => {
+test.serial('should not fail when prerelease version of private package without dist tag given', async t => {
 	execaStub.createStub([
 		{
 			command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',

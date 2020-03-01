@@ -37,7 +37,7 @@ test.serial('should fail when current branch not master and publishing from any 
 	t.true(tasks.some(task => task.title === 'Check current branch' && task.hasFailed()));
 });
 
-test.serial('should not fail when current branch not master and publishing from any permitted', async t => {
+test.serial('should not fail when current branch not master and publishing from any branch permitted', async t => {
 	execaStub.createStub([
 		{
 			command: 'git symbolic-ref --short HEAD',
