@@ -2,26 +2,9 @@ import test from 'ava';
 import execaStub from 'execa_test_double';
 import mockery from 'mockery';
 import version from '../source/version';
+import {tasks, SilentRenderer} from './fixtures/listr-renderer';
 
 let testedModule;
-let tasks;
-
-class SilentRenderer {
-	constructor(_tasks) {
-		tasks = _tasks;
-	}
-
-	static get nonTTY() {
-		return true;
-	}
-
-	render() {
-	}
-
-	end() {
-
-	}
-}
 
 const run = async listr => {
 	listr.setRenderer(SilentRenderer);
@@ -252,7 +235,7 @@ test.serial('should fail when git tag already exists', async t => {
 	t.true(tasks.some(task => task.title === 'Check git tag existence' && task.hasFailed()));
 });
 
-test.serial('no failures should be found', async t => {
+test.serial('checks should pass', async t => {
 	execaStub.createStub([
 		{
 			command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',

@@ -72,5 +72,22 @@
 		"proxyquire": "^2.1.0",
 		"sinon": "^8.0.1",
 		"xo": "^0.25.3"
+	},
+        "xo": {
+		"rules": {
+			"ava/no-import-test-files": [
+				"off",
+				{
+					"files": [
+						"test/*"
+					]
+				}
+			]
+		}
+	},
+	"ava": {
+		"files": [
+			"!test/fixtures"
+		]
 	}
 }
