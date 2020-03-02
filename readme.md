@@ -222,7 +222,7 @@ To publish a [private Org-scoped package](https://docs.npmjs.com/creating-and-pu
 Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in package.json to the URL of your registry:
 
 ```json
-"publishConfig":{
+"publishConfig": {
 	"registry": "http://my-internal-registry.local"
 }
 ```
@@ -240,7 +240,7 @@ $ npm install --save-dev branchsite
 ```
 
 ```json
-"scripts":{
+"scripts": {
 	"deploy": "np",
 	"postdeploy": "bs"
 }
@@ -293,7 +293,7 @@ npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my-awesome-p
 …please check whether the command `npm access ls-collaborators my-awesome-package` succeeds. If it does, Yarn has overwritten your registry URL. To fix this, add the correct registry URL to `package.json`:
 
 ```json
-"publishConfig":{
+"publishConfig": {
 	"registry": "https://registry.npmjs.org"
 }
 ```
