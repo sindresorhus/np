@@ -50,7 +50,7 @@ module.exports = async (input = 'patch', options) => {
 	const pkg = util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const runStatusChecks = options.statusChecks;
+	const runStatusChecks = options.statusChecks && !options.yolo;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
