@@ -169,7 +169,7 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([{
 			title: 'Ensuring GitHub status checks have passed',
 			enabled: () => isOnGitHub === true,
-			task: (context, task) => githubChecks(task, pkg)
+			task: (context, task) => githubChecks(task, pkg, options)
 		}]);
 	}
 

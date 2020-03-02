@@ -10,8 +10,12 @@ const git = require('./git-util');
 const THIRTY_SECONDS = 1000 * 30;
 const THIRTY_MINUTES = 1000 * 60 * 30;
 
-module.exports = async (task, pkg) => {
+module.exports = async (task, pkg, options) => {
 	if (await git.hasUnpushedCommits()) {
+		if (options.preview) {
+			return task.skip('[Preview] Will not ensure checks have passed because there are unpushed commits.');
+		}
+
 		await git.push();
 	}
 
