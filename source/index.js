@@ -179,7 +179,7 @@ module.exports = async (input = 'patch', options) => {
 					return 'Not hosted on GitHub';
 				}
 			},
-			task: (context, task) => githubChecks(task)
+			task: (context, task) => githubChecks(task, pkg)
 		}]);
 	}
 
