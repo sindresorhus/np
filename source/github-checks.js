@@ -51,7 +51,7 @@ module.exports = async (task, pkg, options) => {
 		} catch (error) {
 			const {rateLimit} = error;
 
-			if (rateLimit.remaining === 0) {
+			if (rateLimit && rateLimit.remaining === 0) {
 				throw new Error('Exceeded API rate limit');
 			}
 
