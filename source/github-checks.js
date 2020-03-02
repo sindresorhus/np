@@ -6,15 +6,14 @@ const hostedGitInfo = require('hosted-git-info');
 const pTimeout = require('p-timeout');
 const pWaitFor = require('p-wait-for');
 const terminalLink = require('terminal-link');
+const git = require('./git-util');
 const util = require('./util');
 
 const THIRTY_SECONDS = 1000 * 30;
 const THIRTY_MINUTES = 1000 * 60 * 30;
 
 module.exports = async task => {
-	const hasUnpushedCommits = await execa.stdout('git', ['cherry']) !== '';
-
-	if (hasUnpushedCommits) {
+	if (await git.hasUnpushedCommits()) {
 		await execa('git', ['push']);
 	}
 

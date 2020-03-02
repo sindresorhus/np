@@ -149,3 +149,8 @@ exports.verifyRecentGitVersion = async () => {
 
 	verifyRequirementSatisfied('git', installedVersion);
 };
+
+exports.hasUnpushedCommits = async () => {
+	const stdout = await execa.stdout('git', ['cherry']);
+	return stdout !== '';
+};
