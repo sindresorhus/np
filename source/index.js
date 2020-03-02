@@ -173,9 +173,7 @@ module.exports = async (input = 'patch', options) => {
 					return 'No repository specified in package.json';
 				}
 
-				const {type} = hostedGitInfo.fromUrl(pkg.repository.url);
-
-				if (type !== 'github') {
+				if (!isOnGitHub) {
 					return 'Not hosted on GitHub';
 				}
 			},
