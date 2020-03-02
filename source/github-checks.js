@@ -14,7 +14,7 @@ const THIRTY_MINUTES = 1000 * 60 * 30;
 
 module.exports = async task => {
 	if (await git.hasUnpushedCommits()) {
-		await execa('git', ['push']);
+		await git.push();
 	}
 
 	const latestCommit = execa.stdout('git', ['rev-parse', 'HEAD']);
