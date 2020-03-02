@@ -1,5 +1,6 @@
 'use strict';
 const chalk = require('chalk');
+const delay = require('delay');
 const ghGot = require('gh-got');
 const pTimeout = require('p-timeout');
 const pWaitFor = require('p-wait-for');
@@ -11,16 +12,22 @@ const THIRTY_SECONDS = 1000 * 30;
 const THIRTY_MINUTES = 1000 * 60 * 30;
 
 module.exports = async (task, pkg, options) => {
+	const {title} = task;
+
 	if (await git.hasUnpushedCommits()) {
 		if (options.preview) {
 			return task.skip('[Preview] Will not ensure checks have passed because there are unpushed commits.');
 		}
 
 		await git.push();
+
+		// It might take a bit for the status checks to be created.
+		// Even if, it probably takes at least a few seconds for them to pass.
+		task.title = `${title} ${chalk.yellow('(waiting for checks to start…)')}`;
+		await delay(THIRTY_SECONDS);
 	}
 
 	const latestCommit = await git.latestCommit();
-	const {title} = task;
 	const {user, project} = util.hostedGitInfo(pkg.repository.url);
 
 	const checkState = async () => {
