@@ -9,7 +9,8 @@ exports.latestTag = async () => {
 };
 
 exports.latestCommit = async () => {
-	return execa.stdout('git', ['rev-parse', 'HEAD']);
+	const {stdout} = await execa('git', ['rev-parse', 'HEAD']);
+	return stdout;
 };
 
 const firstCommit = async () => {
@@ -155,6 +156,6 @@ exports.verifyRecentGitVersion = async () => {
 };
 
 exports.hasUnpushedCommits = async () => {
-	const stdout = await execa.stdout('git', ['cherry']);
+	const {stdout} = await execa('git', ['cherry']);
 	return stdout !== '';
 };
