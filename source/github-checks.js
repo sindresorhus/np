@@ -1,6 +1,5 @@
 'use strict';
 const chalk = require('chalk');
-const execa = require('execa');
 const ghGot = require('gh-got');
 const hostedGitInfo = require('hosted-git-info');
 const pTimeout = require('p-timeout');
@@ -17,7 +16,7 @@ module.exports = async task => {
 		await git.push();
 	}
 
-	const latestCommit = execa.stdout('git', ['rev-parse', 'HEAD']);
+	const latestCommit = await git.latestCommit();
 	const {title} = task;
 	const pkg = util.readPkg();
 	const {user, project} = hostedGitInfo.fromUrl(pkg.repository.url);

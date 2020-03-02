@@ -8,6 +8,10 @@ exports.latestTag = async () => {
 	return stdout;
 };
 
+exports.latestCommit = async () => {
+	return execa.stdout('git', ['rev-parse', 'HEAD']);
+};
+
 const firstCommit = async () => {
 	const {stdout} = await execa('git', ['rev-list', '--max-parents=0', 'HEAD']);
 	return stdout;
