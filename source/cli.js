@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 'use strict';
+// eslint-disable-next-line import/no-unassigned-import
+require('symbol-observable'); // Important: This needs to be first to prevent weird Observable incompatibilities
 const logSymbols = require('log-symbols');
 const meow = require('meow');
 const updateNotifier = require('update-notifier');
 const hasYarn = require('has-yarn');
-const npmName = require('npm-name');
-const version = require('./lib/version');
-const util = require('./lib/util');
-const ui = require('./lib/ui');
+const config = require('./config');
+const {isPackageNameAvailable} = require('./npm/util');
+const version = require('./version');
+const util = require('./util');
+const ui = require('./ui');
 const np = require('.');
 
 const cli = meow(`
@@ -20,12 +23,15 @@ const cli = meow(`
 	Options
 	  --any-branch        Allow publishing from any branch
 	  --no-cleanup        Skips cleanup of node_modules
+	  --no-tests          Skips tests
 	  --yolo              Skips cleanup and testing
-	  --no-status-checks  Skips verifying status checks on GitHub
 	  --no-publish        Skips publishing
+	  --preview           Show tasks without actually executing them
 	  --tag               Publish under a given dist-tag
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
+	  --no-release-draft  Skips opening a GitHub release draft
+	  --no-status-checks  Skips verifying status checks on GitHub
 
 	Examples
 	  $ np
@@ -34,22 +40,28 @@ const cli = meow(`
 	  $ np 1.0.2-beta.3 --tag=beta
 	  $ np 1.0.2-beta.3 --tag=beta --contents=dist
 `, {
+	booleanDefault: undefined,
 	flags: {
 		anyBranch: {
 			type: 'boolean'
 		},
 		cleanup: {
-			type: 'boolean',
-			default: true
+			type: 'boolean'
+		},
+		tests: {
+			type: 'boolean'
 		},
 		yolo: {
 			type: 'boolean'
 		},
-		statusChecks: {
+		publish: {
+			type: 'boolean'
+		},
+		releaseDraft: {
 			type: 'boolean',
 			default: true
 		},
-		publish: {
+		statusChecks: {
 			type: 'boolean',
 			default: true
 		},
@@ -57,39 +69,62 @@ const cli = meow(`
 			type: 'string'
 		},
 		yarn: {
-			type: 'boolean',
-			default: hasYarn()
+			type: 'boolean'
 		},
 		contents: {
 			type: 'string'
+		},
+		preview: {
+			type: 'boolean'
 		}
 	}
 });
 
 updateNotifier({pkg: cli.pkg}).notify();
 
-process.on('SIGINT', () => {
-	console.log('\nAborted!');
-	process.exit(1);
-});
-
 (async () => {
 	const pkg = util.readPkg();
-	const isAvailable = await npmName(pkg.name);
 
-	const options = cli.input.length > 0 ?
-		{
-			...cli.flags,
-			confirm: true,
-			version: cli.input[0]
-		} :
-		await ui({...cli.flags, exists: !isAvailable}, pkg);
+	const defaultFlags = {
+		cleanup: true,
+		statusChecks: true,
+		tests: true,
+		publish: true,
+		yarn: hasYarn()
+	};
+
+	const localConfig = await config();
+
+	const flags = {
+		...defaultFlags,
+		...localConfig,
+		...cli.flags
+	};
+
+	const runPublish = flags.publish && !pkg.private;
+
+	const availability = await isPackageNameAvailable(pkg);
+
+	const version = cli.input.length > 0 ? cli.input[0] : false;
+
+	const options = await ui({
+		...flags,
+		availability,
+		version,
+		runPublish
+	}, pkg);
 
 	if (!options.confirm) {
 		process.exit(0);
 	}
 
+	console.log(); // Prints a newline for readability
 	const newPkg = await np(options.version, options);
+
+	if (options.preview) {
+		return;
+	}
+
 	console.log(`\n ${newPkg.name} ${newPkg.version} published 🎉`);
 })().catch(error => {
 	console.error(`\n${logSymbols.error} ${error.message}`);

@@ -22,13 +22,29 @@
 - Ensures you are publishing from the `master` branch
 - Ensures the working directory is clean and that there are no unpulled changes
 - Reinstalls dependencies to ensure your project works with the latest dependency tree
+- Ensures your Node.js and npm versions are supported by the project and its dependencies
 - Runs the tests
 - Ensures [GitHub status checks](https://help.github.com/articles/about-status-checks/) have passed
 - Bumps the version in package.json and npm-shrinkwrap.json (if present) and creates a git tag
 - Prevents [accidental publishing](https://github.com/npm/npm/issues/13248) of pre-release versions under the `latest` [dist-tag](https://docs.npmjs.com/cli/dist-tag)
 - Publishes the new version to npm, optionally under a dist-tag
-- Pushes commits and tags to GitHub/GitLab
+- Rolls back the project to its previous state in case publishing fails
+- Pushes commits and tags (newly & previously created) to GitHub/GitLab
 - Supports [two-factor authentication](https://docs.npmjs.com/getting-started/using-two-factor-authentication)
+- Enables two-factor authentication on new repositories
+  <br>
+  <sub>(does not apply to external registries)</sub>
+- Opens a prefilled GitHub Releases draft after publish
+- Warns about the possibility of extraneous files being published
+- See exactly what will be executed with [preview mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
+- Supports [GitHub Packages](https://github.com/features/packages)
+
+
+## Prerequisite
+
+- Node.js 10 or later
+- npm 6.8.0 or later
+- Git 2.11 or later
 
 
 ## Install
@@ -36,10 +52,6 @@
 ```
 $ npm install --global np
 ```
-
-<a href="https://www.patreon.com/sindresorhus">
-	<img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" width="160">
-</a>
 
 
 ## Usage
@@ -56,12 +68,15 @@ $ np --help
   Options
     --any-branch        Allow publishing from any branch
     --no-cleanup        Skips cleanup of node_modules
+    --no-tests          Skips tests
     --yolo              Skips cleanup and testing
-    --no-status-checks  Skips verifying status checks on GitHub
     --no-publish        Skips publishing
+    --preview           Show tasks without actually executing them
     --tag               Publish under a given dist-tag
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
+    --no-release-draft  Skips opening a GitHub release draft
+    --no-status-checks  Skips verifying status checks on GitHub
 
   Examples
     $ np
@@ -77,6 +92,55 @@ $ np --help
 Run `np` without arguments to launch the interactive UI that guides you through publishing a new version.
 
 <img src="screenshot-ui.png" width="1290">
+
+
+## Config
+
+`np` can be configured both locally and globally. When using the global `np` binary, you can configure any of the CLI flags in either a `.np-config.js` or `.np-config.json` file in the home directory. When using the local `np` binary, for example, in a `npm run` script, you can configure `np` by setting the flags in either a top-level `np` field in `package.json` or in a `.np-config.js` or `.np-config.json` file in the project directory.
+
+Currently, these are the flags you can configure:
+
+- `anyBranch` - Allow publishing from any branch (`false` by default).
+- `cleanup` - Cleanup `node_modules` (`true` by default).
+- `tests` - Run `npm test` (`true` by default).
+- `yolo` - Skip cleanup and testing (`false` by default).
+- `publish` - Publish (`true` by default).
+- `preview` - Show tasks without actually executing them (`false` by default).
+- `tag` - Publish under a given dist-tag (`latest` by default).
+- `yarn` - Use yarn if possible (`true` by default).
+- `contents` - Subdirectory to publish (`.` by default).
+- `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
+
+For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
+
+`package.json`
+```json
+{
+	"name": "superb-package",
+	"np": {
+		"yarn": false,
+		"contents": "dist"
+	}
+}
+```
+
+`.np-config.json`
+```json
+{
+	"yarn": false,
+	"contents": "dist"
+}
+```
+
+`.np-config.js`
+```js
+module.exports = {
+	yarn: false,
+	contents: 'dist'
+};
+```
+
+_**Note:** The global config only applies when using the global `np` binary, and is never inherited when using a local binary._
 
 
 ## Tips
@@ -145,6 +209,16 @@ To publish [scoped packages](https://docs.npmjs.com/misc/scope#publishing-public
 }
 ```
 
+### Private Org-scoped packages
+
+To publish a [private Org-scoped package](https://docs.npmjs.com/creating-and-publishing-an-org-scoped-package#publishing-a-private-org-scoped-package), you need to set the access level to `restricted`. You can do that by adding the following to your `package.json`:
+
+```json
+"publishConfig": {
+	"access": "restricted"
+}
+```
+
 ### Publish to a custom registry
 
 Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in package.json to the URL of your registry:
@@ -161,7 +235,7 @@ If you use a Continuous Integration server to publish your tagged commits, use t
 
 ### Publish to gh-pages
 
-To publish to `gh-pages` or any other branch that serves your static assets), install [`branchsite`](https://github.com/enriquecaballero/branchsite), an `np`-like CLI tool aimed to compliment `np`, and create an [npm "post" hook](https://docs.npmjs.com/misc/scripts) that runs after `np`.
+To publish to `gh-pages` (or any other branch that serves your static assets), install [`branchsite`](https://github.com/enriquecaballero/branchsite), an `np`-like CLI tool aimed to complement `np`, and create an [npm "post" hook](https://docs.npmjs.com/misc/scripts) that runs after `np`.
 
 ```
 $ npm install --save-dev branchsite
@@ -178,6 +252,17 @@ $ npm install --save-dev branchsite
 
 For new packages, start the `version` field in package.json at `0.0.0` and let `np` bump it to `1.0.0` or `0.1.0` when publishing.
 
+### Release an update to an old major version
+
+To release a minor/patch version for an old major version, create a branch from the major version's git tag and run `np`:
+
+```console
+$ git checkout -b fix-old-bug v1.0.0 # Where 1.0.0 is the previous major version
+# Create some commits…
+$ git push --set-upstream origin HEAD
+$ np patch --any-branch --tag=v1
+```
+
 ### Prerequisite step runs forever on macOS
 
 If you're using macOS Sierra 10.12.2 or later, your SSH key passphrase is no longer stored into the keychain by default. This may cause the `prerequisite` step to run forever because it prompts for your passphrase in the background. To fix this, add the following lines to your `~/.ssh/config` and run a simple Git command like `git fetch`.
@@ -190,13 +275,33 @@ Host *
 
 If you're running into other issues when using SSH, please consult [GitHub's support article](https://help.github.com/articles/connecting-to-github-with-ssh/).
 
+## FAQ
 
-## Created by
+### I get an error when publishing my package through Yarn
+
+If you an error like this…
+
+```shell
+❯ Prerequisite check
+✔ Ping npm registry
+✔ Check npm version
+✔ Check yarn version
+✖ Verify user is authenticated
+
+npm ERR! code E403
+npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my-awesome-package/collaborators?format=cli - Forbidden
+```
+
+…please check whether the command `npm access ls-collaborators my-awesome-package` succeeds. If it does, Yarn has overwritten your registry URL. To fix this, add the correct registry URL to `package.json`:
+
+```json
+"publishConfig":{
+	"registry": "https://registry.npmjs.org"
+}
+```
+
+## Maintainers
 
 - [Sindre Sorhus](https://github.com/sindresorhus)
 - [Sam Verschueren](https://github.com/SamVerschueren)
-
-
-## License
-
-MIT
+- [Itai Steinherz](https://github.com/itaisteinherz)

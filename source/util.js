@@ -2,15 +2,21 @@
 const readPkgUp = require('read-pkg-up');
 const issueRegex = require('issue-regex');
 const terminalLink = require('terminal-link');
+const execa = require('execa');
+const pMemoize = require('p-memoize');
+const ow = require('ow');
+const pkgDir = require('pkg-dir');
 
-exports.readPkg = () => {
-	const {pkg} = readPkgUp.sync();
+exports.readPkg = (packagePath = pkgDir.sync()) => {
+	const {packageJson} = readPkgUp.sync({
+		cwd: packagePath
+	});
 
-	if (!pkg) {
-		throw new Error('No package.json found. Make sure you\'re in the correct project.');
+	if (!packageJson) {
+		throw new Error(`No package.json found. Make sure ${packagePath} is a valid package`);
 	}
 
-	return pkg;
+	return packageJson;
 };
 
 exports.linkifyIssues = (url, message) => {
@@ -44,3 +50,19 @@ exports.linkifyCommitRange = (url, commitRange) => {
 
 	return terminalLink(commitRange, `${url}/compare/${commitRange}`);
 };
+
+exports.getTagVersionPrefix = pMemoize(async options => {
+	ow(options, ow.object.hasKeys('yarn'));
+
+	try {
+		if (options.yarn) {
+			const {stdout} = await execa('yarn', ['config', 'get', 'version-tag-prefix']);
+			return stdout;
+		}
+
+		const {stdout} = await execa('npm', ['config', 'get', 'tag-version-prefix']);
+		return stdout;
+	} catch (_) {
+		return 'v';
+	}
+});
