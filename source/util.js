@@ -6,6 +6,7 @@ const execa = require('execa');
 const pMemoize = require('p-memoize');
 const ow = require('ow');
 const pkgDir = require('pkg-dir');
+const hostedGitInfo = require('hosted-git-info');
 
 exports.readPkg = (packagePath = pkgDir.sync()) => {
 	const {packageJson} = readPkgUp.sync({
@@ -66,3 +67,7 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 		return 'v';
 	}
 });
+
+exports.hostedGitInfo = repoUrl => {
+	return hostedGitInfo.fromUrl(repoUrl) || {};
+};

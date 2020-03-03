@@ -1,11 +1,11 @@
 'use strict';
 const chalk = require('chalk');
 const ghGot = require('gh-got');
-const hostedGitInfo = require('hosted-git-info');
 const pTimeout = require('p-timeout');
 const pWaitFor = require('p-wait-for');
 const terminalLink = require('terminal-link');
 const git = require('./git-util');
+const util = require('./util');
 
 const THIRTY_SECONDS = 1000 * 30;
 const THIRTY_MINUTES = 1000 * 60 * 30;
@@ -21,7 +21,7 @@ module.exports = async (task, pkg, options) => {
 
 	const latestCommit = await git.latestCommit();
 	const {title} = task;
-	const {user, project} = hostedGitInfo.fromUrl(pkg.repository.url);
+	const {user, project} = util.hostedGitInfo(pkg.repository.url);
 
 	const checkState = async () => {
 		try {
