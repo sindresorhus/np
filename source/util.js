@@ -9,9 +9,9 @@ const pkgDir = require('pkg-dir');
 
 exports.readPkg = (packagePath = pkgDir.sync()) => {
 	if (!packagePath) {
-		throw new Error(`No \`package.json\` found. Make sure the current directory is a valid package.`);
+		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
 	}
-	
+
 	const {packageJson} = readPkgUp.sync({
 		cwd: packagePath
 	});
