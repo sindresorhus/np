@@ -31,7 +31,7 @@ const cli = meow(`
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
 	  --no-release-draft  Skips opening a GitHub release draft
-	  --no-status-checks  Skips verifying status checks on GitHub
+	  --no-status-checks  Skips verifying GitHub status checks
 
 	Examples
 	  $ np
