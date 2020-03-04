@@ -251,18 +251,18 @@ module.exports = async (input = 'patch', options) => {
 		task: () => git.push()
 	});
 
-	tasks.add({
-		title: 'Creating release draft on GitHub',
-		enabled: () => isOnGitHub === true,
-		skip: () => {
-			if (options.preview) {
-				return '[Preview] GitHub Releases draft will not be opened in preview mode.';
-			}
-
-			return !options.releaseDraft;
-		},
-		task: () => releaseTaskHelper(options, pkg)
-	});
+	if (options.releaseDraft) {
+		tasks.add({
+			title: 'Creating release draft on GitHub',
+			enabled: () => isOnGitHub === true,
+			skip: () => {
+				if (options.preview) {
+					return '[Preview] GitHub Releases draft will not be opened in preview mode.';
+				}
+			},
+			task: () => releaseTaskHelper(options, pkg)
+		});
+	}
 
 	await tasks.run();
 
