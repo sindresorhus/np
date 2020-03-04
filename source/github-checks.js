@@ -26,7 +26,12 @@ module.exports = async (task, pkg, options) => {
 	const checkState = async () => {
 		try {
 			const response = await ghGot(`repos/${user}/${project}/commits/${latestCommit}/status`);
-			const {state, statuses} = response.body;
+			const {state, statuses, total_count: totalCount} = response.body;
+
+			if (totalCount === 0) {
+				task.skip('No status checks found');
+				return true;
+			}
 
 			if (state === 'failure') {
 				task.title = title;
