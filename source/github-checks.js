@@ -55,11 +55,13 @@ module.exports = async (task, pkg, options) => {
 				task.title = `${title} ${chalk.yellow('(waiting for pending checks…)')}`;
 
 				return false;
+			} else if (state === 'success') {
+				task.title = title;
+
+				return true;
+			} else {
+				throw new Error(`Unknown state: ${state}`);
 			}
-
-			task.title = title;
-
-			return true;
 		} catch (error) {
 			const {rateLimit} = error;
 
