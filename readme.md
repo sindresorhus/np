@@ -75,6 +75,7 @@ $ np --help
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
     --no-release-draft  Skips opening a GitHub release draft
+    --no-2fa            Don't enable 2FA on new packages
 
   Examples
     $ np
