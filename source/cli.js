@@ -73,8 +73,7 @@ const cli = meow(`
 			type: 'boolean'
 		},
 		'2fa': {
-			type: 'boolean',
-			default: true
+			type: 'boolean'
 		}
 	}
 });
@@ -89,7 +88,8 @@ updateNotifier({pkg: cli.pkg}).notify();
 		tests: true,
 		publish: true,
 		releaseDraft: true,
-		yarn: hasYarn()
+		yarn: hasYarn(),
+		'2Fa': true
 	};
 
 	const localConfig = await config();
