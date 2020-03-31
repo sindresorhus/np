@@ -73,7 +73,7 @@ const cli = meow(`
 		preview: {
 			type: 'boolean'
 		},
-		"2fa": {
+		'2fa': {
 			type: 'boolean',
 			default: true
 		}
