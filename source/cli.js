@@ -31,6 +31,7 @@ const cli = meow(`
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
 	  --no-release-draft  Skips opening a GitHub release draft
+	  --no-2fa            Don't try to enable 2fa on the published package
 
 	Examples
 	  $ np
@@ -71,6 +72,10 @@ const cli = meow(`
 		},
 		preview: {
 			type: 'boolean'
+		},
+		"2fa": {
+			type: 'boolean',
+			default: true
 		}
 	}
 });
