@@ -8,14 +8,16 @@ const ow = require('ow');
 const pkgDir = require('pkg-dir');
 const hostedGitInfo = require('hosted-git-info');
 
-exports.readPkg = (packagePath = pkgDir.sync()) => {
+exports.readPkg = packagePath => {
+	packagePath = packagePath ? pkgDir.sync(packagePath) : pkgDir.sync();
+
+	if (!packagePath) {
+		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
+	}
+
 	const {packageJson} = readPkgUp.sync({
 		cwd: packagePath
 	});
-
-	if (!packageJson) {
-		throw new Error(`No package.json found. Make sure ${packagePath} is a valid package`);
-	}
 
 	return packageJson;
 };
