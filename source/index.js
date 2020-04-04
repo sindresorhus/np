@@ -49,7 +49,6 @@ module.exports = async (input = 'patch', options) => {
 	const pkg = util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const runStatusChecks = options.statusChecks && !options.yolo;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
@@ -164,13 +163,12 @@ module.exports = async (input = 'patch', options) => {
 		]);
 	}
 
-	if (runStatusChecks) {
-		tasks.add([{
-			title: 'Ensuring GitHub status checks have passed',
-			enabled: () => isOnGitHub === true,
-			task: (context, task) => githubChecks(task, pkg, options)
-		}]);
-	}
+	tasks.add([{
+		title: 'Ensuring GitHub status checks have passed',
+		enabled: () => isOnGitHub === true,
+		skip: () => !options.statusChecks || options.yolo,
+		task: (context, task) => githubChecks(task, pkg, options)
+	}]);
 
 	tasks.add([
 		{
