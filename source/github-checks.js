@@ -46,11 +46,8 @@ module.exports = async (task, pkg, options) => {
 				const failures = statuses.filter(status => status.state === 'error' || status.state === 'failure');
 				const contexts = failures.map(status => terminalLink(status.context, status.target_url));
 
-				if (failures.length === statuses.length) {
-					throw new Error(`All checks have failed: ${contexts.join(', ')}`);
-				} else {
-					throw new Error(`Some checks were not successful: ${contexts.join(', ')}`);
-				}
+				const errorMessage = failures.length === statuses.length ? 'All checks have failed' : 'Some checks were not successful';
+				throw new Error(`${errorMessage}: ${contexts.join(', ')}`);
 			} else if (state === 'pending') {
 				task.title = `${title} ${chalk.yellow('(waiting for pending checks…)')}`;
 				return false;
