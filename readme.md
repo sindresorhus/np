@@ -290,7 +290,7 @@ npm ERR! code E403
 npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my-awesome-package/collaborators?format=cli - Forbidden
 ```
 
-…please check whether the command `npm access ls-collaborators my-awesome-package` succeeds. If it does, Yarn has overwritten your registry URL. To fix this, add the correct registry URL to `package.json`:
+…please check whether the command `npm access ls-collaborators my-awesome-package` succeeds. If it doesn't, Yarn has overwritten your registry URL. To fix this, add the correct registry URL to `package.json`:
 
 ```json
 "publishConfig": {
