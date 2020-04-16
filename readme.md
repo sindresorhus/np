@@ -223,7 +223,7 @@ Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in pack
 
 ```json
 "publishConfig": {
-	"registry": "http://my-internal-registry.local"
+	"registry": "https://my-internal-registry.local"
 }
 ```
 

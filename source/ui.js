@@ -91,7 +91,7 @@ module.exports = async (options, pkg) => {
 			filter: input => version.isValidInput(input) ? version(pkg.version).getNewVersionFrom(input) : input,
 			validate: input => {
 				if (!version.isValidInput(input)) {
-					return 'Please specify a valid semver, for example, `1.2.3`. See http://semver.org';
+					return 'Please specify a valid semver, for example, `1.2.3`. See https://semver.org';
 				}
 
 				if (version(oldVersion).isLowerThanOrEqualTo(input)) {
