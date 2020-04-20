@@ -110,6 +110,7 @@ Currently, these are the flags you can configure:
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
+- `statusChecks` - Ensure GitHub status checks have passed (`true` by default).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
