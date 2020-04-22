@@ -26,6 +26,7 @@ const cli = meow(`
 	  --no-tests          Skips tests
 	  --yolo              Skips cleanup and testing
 	  --no-publish        Skips publishing
+	  --preview           Show tasks without actually executing them
 	  --tag               Publish under a given dist-tag
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
@@ -67,6 +68,9 @@ const cli = meow(`
 		},
 		contents: {
 			type: 'string'
+		},
+		preview: {
+			type: 'boolean'
 		}
 	}
 });
@@ -91,11 +95,18 @@ updateNotifier({pkg: cli.pkg}).notify();
 		...cli.flags
 	};
 
+	const runPublish = flags.publish && !pkg.private;
+
 	const availability = await isPackageNameAvailable(pkg);
 
 	const version = cli.input.length > 0 ? cli.input[0] : false;
 
-	const options = await ui({...flags, availability, version}, pkg);
+	const options = await ui({
+		...flags,
+		availability,
+		version,
+		runPublish
+	}, pkg);
 
 	if (!options.confirm) {
 		process.exit(0);
@@ -103,6 +114,11 @@ updateNotifier({pkg: cli.pkg}).notify();
 
 	console.log(); // Prints a newline for readability
 	const newPkg = await np(options.version, options);
+
+	if (options.preview) {
+		return;
+	}
+
 	console.log(`\n ${newPkg.name} ${newPkg.version} published 🎉`);
 })().catch(error => {
 	console.error(`\n${logSymbols.error} ${error.message}`);

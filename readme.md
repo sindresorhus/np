@@ -35,6 +35,7 @@
   <sub>(does not apply to external registries)</sub>
 - Opens a prefilled GitHub Releases draft after publish
 - Warns about the possibility of extraneous files being published
+- See exactly what will be executed with [preview mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
 - Supports [GitHub Packages](https://github.com/features/packages)
 
 
@@ -69,6 +70,7 @@ $ np --help
     --no-tests          Skips tests
     --yolo              Skips cleanup and testing
     --no-publish        Skips publishing
+    --preview           Show tasks without actually executing them
     --tag               Publish under a given dist-tag
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
@@ -101,6 +103,7 @@ Currently, these are the flags you can configure:
 - `tests` - Run `npm test` (`true` by default).
 - `yolo` - Skip cleanup and testing (`false` by default).
 - `publish` - Publish (`true` by default).
+- `preview` - Show tasks without actually executing them (`false` by default).
 - `tag` - Publish under a given dist-tag (`latest` by default).
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
@@ -204,13 +207,23 @@ To publish [scoped packages](https://docs.npmjs.com/misc/scope#publishing-public
 }
 ```
 
+### Private Org-scoped packages
+
+To publish a [private Org-scoped package](https://docs.npmjs.com/creating-and-publishing-an-org-scoped-package#publishing-a-private-org-scoped-package), you need to set the access level to `restricted`. You can do that by adding the following to your `package.json`:
+
+```json
+"publishConfig": {
+	"access": "restricted"
+}
+```
+
 ### Publish to a custom registry
 
 Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in package.json to the URL of your registry:
 
 ```json
-"publishConfig":{
-	"registry": "http://my-internal-registry.local"
+"publishConfig": {
+	"registry": "https://my-internal-registry.local"
 }
 ```
 
@@ -227,7 +240,7 @@ $ npm install --save-dev branchsite
 ```
 
 ```json
-"scripts":{
+"scripts": {
 	"deploy": "np",
 	"postdeploy": "bs"
 }
@@ -260,6 +273,30 @@ Host *
 
 If you're running into other issues when using SSH, please consult [GitHub's support article](https://help.github.com/articles/connecting-to-github-with-ssh/).
 
+## FAQ
+
+### I get an error when publishing my package through Yarn
+
+If you an error like this…
+
+```shell
+❯ Prerequisite check
+✔ Ping npm registry
+✔ Check npm version
+✔ Check yarn version
+✖ Verify user is authenticated
+
+npm ERR! code E403
+npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my-awesome-package/collaborators?format=cli - Forbidden
+```
+
+…please check whether the command `npm access ls-collaborators my-awesome-package` succeeds. If it doesn't, Yarn has overwritten your registry URL. To fix this, add the correct registry URL to `package.json`:
+
+```json
+"publishConfig": {
+	"registry": "https://registry.npmjs.org"
+}
+```
 
 ## Maintainers
 
