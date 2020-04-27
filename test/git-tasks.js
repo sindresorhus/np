@@ -1,7 +1,7 @@
 import test from 'ava';
 import execaStub from 'execa_test_double';
 import mockery from 'mockery';
-import {tasks, SilentRenderer} from './fixtures/listr-renderer';
+import {SilentRenderer} from './fixtures/listr-renderer';
 
 let testedModule;
 
@@ -34,7 +34,7 @@ test.serial('should fail when current branch not master and publishing from any 
 	]);
 	await t.throwsAsync(run(testedModule({})),
 		{message: 'Not on `master` branch. Use --any-branch to publish anyway.'});
-	t.true(tasks.some(task => task.title === 'Check current branch' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Check current branch' && task.hasFailed()));
 });
 
 test.serial('should not fail when current branch not master and publishing from any branch permitted', async t => {
@@ -56,7 +56,7 @@ test.serial('should not fail when current branch not master and publishing from 
 		}
 	]);
 	await run(testedModule({anyBranch: true}));
-	t.false(tasks.some(task => task.title === 'Check current branch'));
+	t.false(SilentRenderer.tasks.some(task => task.title === 'Check current branch'));
 });
 
 test.serial('should fail when local working tree modified', async t => {
@@ -73,7 +73,7 @@ test.serial('should fail when local working tree modified', async t => {
 		}
 	]);
 	await t.throwsAsync(run(testedModule({})), {message: 'Unclean working tree. Commit or stash changes first.'});
-	t.true(tasks.some(task => task.title === 'Check local working tree' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Check local working tree' && task.hasFailed()));
 });
 
 test.serial('should fail when remote history differs', async t => {
@@ -95,7 +95,7 @@ test.serial('should fail when remote history differs', async t => {
 		}
 	]);
 	await t.throwsAsync(run(testedModule({})), {message: 'Remote history differs. Please pull changes.'});
-	t.true(tasks.some(task => task.title === 'Check remote history' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Check remote history' && task.hasFailed()));
 });
 
 test.serial('checks should pass when publishing from master, working tree is clean and remote history not different', async t => {
@@ -116,6 +116,5 @@ test.serial('checks should pass when publishing from master, working tree is cle
 			stdout: ''
 		}
 	]);
-	await run(testedModule({}));
-	t.pass();
+	await t.notThrowsAsync(run(testedModule({})));
 });

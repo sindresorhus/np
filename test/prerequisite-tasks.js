@@ -2,7 +2,7 @@ import test from 'ava';
 import execaStub from 'execa_test_double';
 import mockery from 'mockery';
 import version from '../source/version';
-import {tasks, SilentRenderer} from './fixtures/listr-renderer';
+import {SilentRenderer} from './fixtures/listr-renderer';
 
 let testedModule;
 
@@ -35,7 +35,7 @@ test.serial('public-package published on npm registry: should fail when npm regi
 	}]);
 	await t.throwsAsync(run(testedModule('1.0.0', {name: 'test'}, {})),
 		{message: 'Connection to npm registry failed'});
-	t.true(tasks.some(task => task.title === 'Ping npm registry' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Ping npm registry' && task.hasFailed()));
 });
 
 test.serial('private package: should skip task pinging npm registry', async t => {
@@ -47,7 +47,7 @@ test.serial('private package: should skip task pinging npm registry', async t =>
 		}
 	]);
 	await run(testedModule('2.0.0', {name: 'test', version: '1.0.0', private: true}, {yarn: false}));
-	t.true(tasks.some(task => task.title === 'Ping npm registry' && task.isSkipped()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Ping npm registry' && task.isSkipped()));
 });
 
 test.serial('external registry: should skip task pinging npm registry', async t => {
@@ -60,7 +60,7 @@ test.serial('external registry: should skip task pinging npm registry', async t 
 	]);
 	await run(testedModule('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}},
 		{yarn: false}));
-	t.true(tasks.some(task => task.title === 'Ping npm registry' && task.isSkipped()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Ping npm registry' && task.isSkipped()));
 });
 
 test.serial('should fail when npm version does not match range in `package.json`', async t => {
@@ -79,7 +79,7 @@ test.serial('should fail when npm version does not match range in `package.json`
 	const depRange = require('../package.json').engines.npm;
 	await t.throwsAsync(run(testedModule('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
 		{message: `Please upgrade to npm${depRange}`});
-	t.true(tasks.some(task => task.title === 'Check npm version' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Check npm version' && task.hasFailed()));
 });
 
 test.serial('should fail when yarn version does not match range in `package.json`', async t => {
@@ -98,7 +98,7 @@ test.serial('should fail when yarn version does not match range in `package.json
 	const depRange = require('../package.json').engines.yarn;
 	await t.throwsAsync(run(testedModule('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: true})),
 		{message: `Please upgrade to yarn${depRange}`});
-	t.true(tasks.some(task => task.title === 'Check yarn version' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Check yarn version' && task.hasFailed()));
 });
 
 test.serial('should fail when user is not authenticated at npm registry', async t => {
@@ -118,7 +118,7 @@ test.serial('should fail when user is not authenticated at npm registry', async 
 	await t.throwsAsync(run(testedModule('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
 		{message: 'You do not have write permissions required to publish this package.'});
 	process.env.NODE_ENV = 'test';
-	t.true(tasks.some(task => task.title === 'Verify user is authenticated' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Verify user is authenticated' && task.hasFailed()));
 });
 
 test.serial('should fail when user is not authenticated at external registry', async t => {
@@ -138,7 +138,7 @@ test.serial('should fail when user is not authenticated at external registry', a
 	await t.throwsAsync(run(testedModule('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {yarn: false})),
 		{message: 'You do not have write permissions required to publish this package.'});
 	process.env.NODE_ENV = 'test';
-	t.true(tasks.some(task => task.title === 'Verify user is authenticated' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Verify user is authenticated' && task.hasFailed()));
 });
 
 test.serial('private package: should skip task `verify user is authenticated`', async t => {
@@ -152,7 +152,7 @@ test.serial('private package: should skip task `verify user is authenticated`', 
 	process.env.NODE_ENV = 'P';
 	await run(testedModule('2.0.0', {name: 'test', version: '1.0.0', private: true}, {yarn: false}));
 	process.env.NODE_ENV = 'test';
-	t.true(tasks.some(task => task.title === 'Verify user is authenticated' && task.isSkipped()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Verify user is authenticated' && task.isSkipped()));
 });
 
 test.serial('should fail when git version does not match range in `package.json`', async t => {
@@ -166,7 +166,7 @@ test.serial('should fail when git version does not match range in `package.json`
 	const depRange = require('../package.json').engines.git;
 	await t.throwsAsync(run(testedModule('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
 		{message: `Please upgrade to git${depRange}`});
-	t.true(tasks.some(task => task.title === 'Check git version' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Check git version' && task.hasFailed()));
 });
 
 test.serial('should fail when git remote does not exists', async t => {
@@ -180,25 +180,25 @@ test.serial('should fail when git remote does not exists', async t => {
 	]);
 	await t.throwsAsync(run(testedModule('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
 		{message: 'not found'});
-	t.true(tasks.some(task => task.title === 'Check git remote' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Check git remote' && task.hasFailed()));
 });
 
 test.serial('should fail when version is invalid', async t => {
 	await t.throwsAsync(run(testedModule('DDD', {name: 'test', version: '1.0.0'}, {yarn: false})),
 		{message: `Version should be either ${version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`});
-	t.true(tasks.some(task => task.title === 'Validate version' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Validate version' && task.hasFailed()));
 });
 
 test.serial('should fail when version is lower as latest version', async t => {
 	await t.throwsAsync(run(testedModule('0.1.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
 		{message: 'New version `0.1.0` should be higher than current version `1.0.0`'});
-	t.true(tasks.some(task => task.title === 'Validate version' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Validate version' && task.hasFailed()));
 });
 
 test.serial('should fail when prerelease version of public package without dist tag given', async t => {
 	await t.throwsAsync(run(testedModule('2.0.0-1', {name: 'test', version: '1.0.0'}, {yarn: false})),
 		{message: 'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag'});
-	t.true(tasks.some(task => task.title === 'Check for pre-release version' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Check for pre-release version' && task.hasFailed()));
 });
 
 test.serial('should not fail when prerelease version of public package with dist tag given', async t => {
@@ -208,8 +208,7 @@ test.serial('should not fail when prerelease version of public package with dist
 			stdout: ''
 		}
 	]);
-	await run(testedModule('2.0.0-1', {name: 'test', version: '1.0.0'}, {yarn: false, tag: 'pre'}));
-	t.pass();
+	await t.notThrowsAsync(run(testedModule('2.0.0-1', {name: 'test', version: '1.0.0'}, {yarn: false, tag: 'pre'})));
 });
 
 test.serial('should not fail when prerelease version of private package without dist tag given', async t => {
@@ -219,8 +218,7 @@ test.serial('should not fail when prerelease version of private package without 
 			stdout: ''
 		}
 	]);
-	await run(testedModule('2.0.0-1', {name: 'test', version: '1.0.0', private: true}, {yarn: false}));
-	t.pass();
+	await t.notThrowsAsync(run(testedModule('2.0.0-1', {name: 'test', version: '1.0.0', private: true}, {yarn: false})));
 });
 
 test.serial('should fail when git tag already exists', async t => {
@@ -232,7 +230,7 @@ test.serial('should fail when git tag already exists', async t => {
 	]);
 	await t.throwsAsync(run(testedModule('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
 		{message: 'Git tag `v2.0.0` already exists.'});
-	t.true(tasks.some(task => task.title === 'Check git tag existence' && task.hasFailed()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Check git tag existence' && task.hasFailed()));
 });
 
 test.serial('checks should pass', async t => {
@@ -242,6 +240,5 @@ test.serial('checks should pass', async t => {
 			stdout: ''
 		}
 	]);
-	await run(testedModule('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false}));
-	t.pass();
+	await t.notThrowsAsync(run(testedModule('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})));
 });

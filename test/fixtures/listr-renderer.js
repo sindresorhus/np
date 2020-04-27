@@ -1,20 +1,21 @@
+let tasks;
 
 class SilentRenderer {
 	constructor(_tasks) {
-		module.exports.tasks = _tasks;
+		tasks = _tasks;
+	}
+
+	static get tasks() {
+		return tasks;
 	}
 
 	static get nonTTY() {
 		return true;
 	}
 
-	render() {
-	}
+	render() { }
 
-	end() {
-
-	}
+	end() { }
 }
 
 module.exports.SilentRenderer = SilentRenderer;
-
