@@ -37,6 +37,7 @@ test('errors on too low version', async t => {
 
 test('skip enabling 2FA if the package exists', async t => {
 	const enable2faStub = sinon.stub();
+
 	const np = proxyquire('../source', {
 		del: sinon.stub(),
 		execa: sinon.stub().returns({pipe: sinon.stub()}),
@@ -57,5 +58,6 @@ test('skip enabling 2FA if the package exists', async t => {
 			isUnknown: false
 		}
 	}));
-	t.is(enable2faStub.notCalled, true);
+
+	t.true(enable2faStub.notCalled);
 });
