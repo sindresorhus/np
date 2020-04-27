@@ -97,7 +97,10 @@ updateNotifier({pkg: cli.pkg}).notify();
 
 	const runPublish = flags.publish && !pkg.private;
 
-	const availability = await isPackageNameAvailable(pkg);
+	const availability = flags.publish ? await isPackageNameAvailable(pkg) : {
+		isAvailable: false,
+		isUnknown: false
+	};
 
 	const version = cli.input.length > 0 ? cli.input[0] : false;
 
