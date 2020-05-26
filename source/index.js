@@ -222,7 +222,7 @@ module.exports = async (input = 'patch', options) => {
 		]);
 
 		const isExternalRegistry = npm.isExternalRegistry(pkg);
-		if (!options.exists && !pkg.private && !isExternalRegistry) {
+		if (options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !isExternalRegistry) {
 			tasks.add([
 				{
 					title: 'Enabling two-factor authentication',
