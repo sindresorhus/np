@@ -70,6 +70,4 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 	}
 });
 
-exports.hostedGitInfo = repoUrl => {
-	return hostedGitInfo.fromUrl(repoUrl) || {};
-};
+exports.hostedGitInfo = repoUrl => hostedGitInfo.fromUrl(repoUrl) || {};
