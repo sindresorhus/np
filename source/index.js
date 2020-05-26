@@ -22,7 +22,7 @@ const npm = require('./npm/util');
 const releaseTaskHelper = require('./release-task-helper');
 const util = require('./util');
 const git = require('./git-util');
-const githubChecks = require('./github-checks');
+const verifyCommitStatusChecks = require('./verify-commit-status-checks');
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
@@ -167,7 +167,7 @@ module.exports = async (input = 'patch', options) => {
 		title: 'Ensuring GitHub status checks have passed',
 		enabled: () => isOnGitHub === true,
 		skip: () => !options.statusChecks || options.yolo,
-		task: (context, task) => githubChecks(task, pkg, options)
+		task: (context, task) => verifyCommitStatusChecks(task, pkg, options)
 	}]);
 
 	tasks.add([
