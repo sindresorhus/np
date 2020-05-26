@@ -8,6 +8,7 @@ const terminalLink = require('terminal-link');
 const git = require('./git-util');
 const util = require('./util');
 
+const TEN_SECONDS = 1000 * 10;
 const THIRTY_SECONDS = 1000 * 30;
 const THIRTY_MINUTES = 1000 * 60 * 30;
 
@@ -24,7 +25,7 @@ module.exports = async (task, pkg, options) => {
 		// It might take a bit for the status checks to be created.
 		// Even if, it probably takes at least a few seconds for them to pass.
 		task.title = `${title} ${chalk.yellow('(waiting for checks to start…)')}`;
-		await delay(THIRTY_SECONDS);
+		await delay(TEN_SECONDS);
 	}
 
 	const latestCommit = await git.latestCommit();
