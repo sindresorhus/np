@@ -57,8 +57,7 @@ const cli = meow(`
 			type: 'boolean'
 		},
 		releaseDraft: {
-			type: 'boolean',
-			default: true
+			type: 'boolean'
 		},
 		tag: {
 			type: 'string'
@@ -84,6 +83,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 		cleanup: true,
 		tests: true,
 		publish: true,
+		releaseDraft: true,
 		yarn: hasYarn()
 	};
 
