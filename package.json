@@ -51,7 +51,7 @@
 		"log-symbols": "^3.0.0",
 		"meow": "^6.0.0",
 		"new-github-release-url": "^1.0.0",
-		"npm-name": "^5.4.0",
+		"npm-name": "^6.0.0",
 		"onetime": "^5.1.0",
 		"open": "^7.0.0",
 		"ow": "^0.15.0",
