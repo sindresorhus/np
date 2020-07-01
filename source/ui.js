@@ -121,7 +121,7 @@ module.exports = async (options, pkg) => {
 		},
 		{
 			type: 'input',
-			name: 'customtag',
+			name: 'customTag',
 			message: 'Tag',
 			when: answers => options.runPublish && (version.isPrereleaseOrIncrement(answers.customVersion) || version.isPrereleaseOrIncrement(answers.version)) && !options.tag && !answers.tag,
 			validate: input => {
