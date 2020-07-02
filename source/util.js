@@ -70,23 +70,25 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 });
 
 exports.getPreId = pMemoize(async options => {
-    ow(options, ow.object.hasKeys('yarn'));
+	ow(options, ow.object.hasKeys('yarn'));
 
-    try {
-        if (options.yarn) {
-            const { stdout } = await execa('yarn', ['config', 'get', 'preId']);
-            if (stdout !== 'undefined') {
-                return stdout;
-            }
-            return '';
-        }
+	try {
+		if (options.yarn) {
+			const {stdout} = await execa('yarn', ['config', 'get', 'preId']);
+			if (stdout !== 'undefined') {
+				return stdout;
+			}
 
-        const { stdout } = await execa('npm', ['config', 'get', 'preId']);
-        if (stdout !== 'undefined') {
-            return stdout;
-        }
-        return '';
-    } catch (_) {
-        return '';
-    }
-})
+			return '';
+		}
+
+		const {stdout} = await execa('npm', ['config', 'get', 'preId']);
+		if (stdout !== 'undefined') {
+			return stdout;
+		}
+
+		return '';
+	} catch (_) {
+		return '';
+	}
+});
