@@ -1,12 +1,12 @@
 import test from 'ava';
-import {getPreId} from '../source/util';
+import {getPreReleasePrefix} from '../source/util';
 
-test('get preId prefix', async t => {
-	t.is(await getPreId({yarn: false}), '');
-	t.is(await getPreId({yarn: true}), '');
+test('get preId postfix', async t => {
+	t.is(await getPreReleasePrefix({yarn: false}), '');
+	t.is(await getPreReleasePrefix({yarn: true}), '');
 });
 
 test('no options passed', async t => {
-	await t.throwsAsync(getPreId(), {message: 'Expected `options` to be of type `object` but received type `undefined`'});
-	await t.throwsAsync(getPreId({}), {message: 'Expected object `options` to have keys `["yarn"]`'});
+	await t.throwsAsync(getPreReleasePrefix(), {message: 'Expected `options` to be of type `object` but received type `undefined`'});
+	await t.throwsAsync(getPreReleasePrefix({}), {message: 'Expected object `options` to have keys `["yarn"]`'});
 });

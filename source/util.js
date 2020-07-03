@@ -69,7 +69,7 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 	}
 });
 
-exports.getPreId = pMemoize(async options => {
+exports.getPreReleasePrefix = pMemoize(async options => {
 	ow(options, ow.object.hasKeys('yarn'));
 
 	try {
