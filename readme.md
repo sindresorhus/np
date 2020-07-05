@@ -1,20 +1,8 @@
-# np [![Build Status](https://travis-ci.org/sindresorhus/np.svg?branch=master)](https://travis-ci.org/sindresorhus/np) [![XO code style](https://img.shields.io/badge/code_style-XO-5ed9c7.svg)](https://github.com/xojs/xo)
+# np [![Build Status](https://travis-ci.com/sindresorhus/np.svg?branch=master)](https://travis-ci.com/github/sindresorhus/np) [![XO code style](https://img.shields.io/badge/code_style-XO-5ed9c7.svg)](https://github.com/xojs/xo)
 
 > A better `npm publish`
 
-<div>
-	<br>
-	<br>
-	<a href="https://issuehunt.io">
-		<img src="https://user-images.githubusercontent.com/170270/50307315-5c349200-0498-11e9-95bb-e51a8cfc2b15.png" width="600">
-	</a>
-	<br>
-	<br>
-	<br>
-</div>
-
 <img src="screenshot.gif" width="688">
-
 
 ## Why
 
@@ -38,20 +26,17 @@
 - See exactly what will be executed with [preview mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
 - Supports [GitHub Packages](https://github.com/features/packages)
 
-
 ## Prerequisite
 
 - Node.js 10 or later
 - npm 6.8.0 or later
 - Git 2.11 or later
 
-
 ## Install
 
 ```
 $ npm install --global np
 ```
-
 
 ## Usage
 
@@ -84,13 +69,11 @@ $ np --help
     $ np 1.0.2-beta.3 --tag=beta --contents=dist
 ```
 
-
 ## Interactive UI
 
 Run `np` without arguments to launch the interactive UI that guides you through publishing a new version.
 
 <img src="screenshot-ui.png" width="1290">
-
 
 ## Config
 
@@ -139,7 +122,6 @@ module.exports = {
 ```
 
 _**Note:** The global config only applies when using the global `np` binary, and is never inherited when using a local binary._
-
 
 ## Tips
 
