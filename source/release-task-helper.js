@@ -9,7 +9,7 @@ module.exports = async (options, pkg) => {
 	let tag = await getTagVersionPrefix(options) + newVersion;
 	const isPreRelease = version(options.version).isPrerelease();
 	if (isPreRelease) {
-		tag += await getPreReleasePrefix();
+		tag += await getPreReleasePrefix(options);
 	}
 
 	const url = newGithubReleaseUrl({
