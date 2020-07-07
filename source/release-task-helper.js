@@ -5,11 +5,12 @@ const {getTagVersionPrefix, getPreReleasePrefix} = require('./util');
 const version = require('./version');
 
 module.exports = async (options, pkg) => {
+
 	const newVersion = version(pkg.version).getNewVersionFrom(options.version);
 	let tag = await getTagVersionPrefix(options) + newVersion;
 	const isPreRelease = version(options.version).isPrerelease();
 	if (isPreRelease) {
-		tag += await getPreReleasePrefix();
+		tag += await getPreReleasePrefix(options);
 	}
 
 	const url = newGithubReleaseUrl({
