@@ -51,7 +51,7 @@ const printCommitLog = async (repoUrl, registryUrl) => {
 
 const checkIgnoredFiles = async pkg => {
 	const ignoredFiles = await util.getNewAndUnpublishedFiles(pkg);
-	if (ignoredFiles === undefined || ignoredFiles.length === 0) {
+	if (!ignoredFiles || ignoredFiles.length === 0) {
 		return true;
 	}
 
@@ -76,7 +76,7 @@ module.exports = async (options, pkg) => {
 	if (runPublish) {
 		checkIgnoreStrategy(pkg);
 		const answerIgnoredFiles = await checkIgnoredFiles(pkg);
-		if (answerIgnoredFiles.confirm === false) {
+		if (!answerIgnoredFiles.confirm) {
 			return {
 				...options,
 				...answerIgnoredFiles
