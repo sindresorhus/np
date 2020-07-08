@@ -9,14 +9,16 @@ const pkgDir = require('pkg-dir');
 const gitUtil = require('./git-util');
 const npmUtil = require('./npm/util');
 
-exports.readPkg = (packagePath = pkgDir.sync()) => {
+exports.readPkg = packagePath => {
+	packagePath = packagePath ? pkgDir.sync(packagePath) : pkgDir.sync();
+
+	if (!packagePath) {
+		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
+	}
+
 	const {packageJson} = readPkgUp.sync({
 		cwd: packagePath
 	});
-
-	if (!packageJson) {
-		throw new Error(`No package.json found. Make sure ${packagePath} is a valid package`);
-	}
 
 	return packageJson;
 };
@@ -73,3 +75,27 @@ exports.getNewAndUnpublishedFiles = async pkg => {
 	const listNewFiles = await gitUtil.newFilesSinceLastRelease();
 	return npmUtil.getNewAndUnpublishedFiles(pkg.files, listNewFiles);
 };
+
+exports.getPreReleasePrefix = pMemoize(async options => {
+	ow(options, ow.object.hasKeys('yarn'));
+
+	try {
+		if (options.yarn) {
+			const {stdout} = await execa('yarn', ['config', 'get', 'preId']);
+			if (stdout !== 'undefined') {
+				return stdout;
+			}
+
+			return '';
+		}
+
+		const {stdout} = await execa('npm', ['config', 'get', 'preId']);
+		if (stdout !== 'undefined') {
+			return stdout;
+		}
+
+		return '';
+	} catch (_) {
+		return '';
+	}
+});

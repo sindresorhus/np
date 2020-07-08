@@ -1,18 +1,22 @@
 'use strict';
 const open = require('open');
 const newGithubReleaseUrl = require('new-github-release-url');
-const {getTagVersionPrefix} = require('./util');
+const {getTagVersionPrefix, getPreReleasePrefix} = require('./util');
 const version = require('./version');
 
 module.exports = async (options, pkg) => {
 	const newVersion = version(pkg.version).getNewVersionFrom(options.version);
-	const tag = await getTagVersionPrefix(options) + newVersion;
+	let tag = await getTagVersionPrefix(options) + newVersion;
+	const isPreRelease = version(options.version).isPrerelease();
+	if (isPreRelease) {
+		tag += await getPreReleasePrefix(options);
+	}
 
 	const url = newGithubReleaseUrl({
 		repoUrl: options.repoUrl,
 		tag,
 		body: options.releaseNotes(tag),
-		isPrerelease: version(options.version).isPrerelease()
+		isPrerelease: isPreRelease
 	});
 
 	await open(url);
