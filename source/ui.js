@@ -193,8 +193,8 @@ module.exports = async (options, pkg) => {
 
 	return {
 		...options,
-		version: answers.version || answers.customVersion,
-		tag: answers.tag || answers.customTag,
+		version: answers.version || answers.customVersion || options.version,
+		tag: answers.tag || answers.customTag || options.tag,
 		confirm: true,
 		repoUrl,
 		releaseNotes
