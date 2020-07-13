@@ -1,6 +1,6 @@
 {
 	"name": "np",
-	"version": "6.3.0",
+	"version": "6.3.2",
 	"description": "A better `npm publish`",
 	"license": "MIT",
 	"repository": "sindresorhus/np",
@@ -68,8 +68,15 @@
 	},
 	"devDependencies": {
 		"ava": "^2.3.0",
+		"execa_test_double": "^4.0.0",
+		"mockery": "^2.1.0",
 		"proxyquire": "^2.1.0",
 		"sinon": "^8.0.1",
 		"xo": "^0.25.3"
+	},
+	"ava": {
+		"files": [
+			"!test/fixtures"
+		]
 	}
 }
