@@ -77,8 +77,6 @@ const cli = meow(`
 updateNotifier({pkg: cli.pkg}).notify();
 
 (async () => {
-	const pkg = util.readPkg();
-
 	const defaultFlags = {
 		cleanup: true,
 		tests: true,
@@ -94,6 +92,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 		...localConfig,
 		...cli.flags
 	};
+	const pkg = util.readPkg(flags.contents);
 
 	const runPublish = flags.publish && !pkg.private;
 
