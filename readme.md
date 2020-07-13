@@ -89,7 +89,8 @@ Currently, these are the flags you can configure:
 - `preview` - Show tasks without actually executing them (`false` by default).
 - `tag` - Publish under a given dist-tag (`latest` by default).
 - `yarn` - Use yarn if possible (`true` by default).
-- `contents` - Subdirectory to publish (`.` by default).
+- `contents` - Subdirectory to publish (`.` by default). (This will only publish from the specified subdirectory, `np` root will still be `.` , this flag works
+just like the `folder` option in [npm publish](https://docs.npmjs.com/cli/publish).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
