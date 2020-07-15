@@ -47,6 +47,8 @@ module.exports = async (input = 'patch', options) => {
 	}
 	const pkg = util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
+	let testCommand = [];
+	options.testScript ? testCommand.push('run', options.testScript) : testCommand.push('test');
 	const runCleanup = options.cleanup && !options.yolo;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
@@ -144,14 +146,14 @@ module.exports = async (input = 'patch', options) => {
 			{
 				title: 'Running tests using npm',
 				enabled: () => options.yarn === false,
-				task: () => exec('npm', ['test'])
+				task: () => exec('npm', testCommand)
 			},
 			{
 				title: 'Running tests using Yarn',
 				enabled: () => options.yarn === true,
-				task: () => exec('yarn', ['test']).pipe(
+				task: () => exec('yarn', testCommand).pipe(
 					catchError(error => {
-						if (error.message.includes('Command "test" not found')) {
+						if (error.message.includes(`Command ${testCommand} not found`)) {
 							return [];
 						}
 

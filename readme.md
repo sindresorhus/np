@@ -60,6 +60,7 @@ $ np --help
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
     --no-release-draft  Skips opening a GitHub release draft
+	--test-script		Custom test to run before publish
 
   Examples
     $ np
@@ -67,6 +68,7 @@ $ np --help
     $ np 1.0.2
     $ np 1.0.2-beta.3 --tag=beta
     $ np 1.0.2-beta.3 --tag=beta --contents=dist
+	$ np 1.0.3 --test-script=custom
 ```
 
 ## Interactive UI
@@ -92,6 +94,7 @@ Currently, these are the flags you can configure:
 - `contents` - Subdirectory to publish (`.` by default). (This will only publish from the specified subdirectory, `np` root will still be `.` , this flag works
 just like the `folder` option in [npm publish](https://docs.npmjs.com/cli/publish)).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
+- `testScript` - Run a custom test script before publish(`test` by default).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 

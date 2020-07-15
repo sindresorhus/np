@@ -31,6 +31,7 @@ const cli = meow(`
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
 	  --no-release-draft  Skips opening a GitHub release draft
+	  --test-script	  	  Runs a custom test instead of default npm test
 
 	Examples
 	  $ np
@@ -38,6 +39,7 @@ const cli = meow(`
 	  $ np 1.0.2
 	  $ np 1.0.2-beta.3 --tag=beta
 	  $ np 1.0.2-beta.3 --tag=beta --contents=dist
+	  $ np 1.0.3 --test-script=custom
 `, {
 	booleanDefault: undefined,
 	flags: {
@@ -70,7 +72,10 @@ const cli = meow(`
 		},
 		preview: {
 			type: 'boolean'
-		}
+		},
+		testScript: {
+			type: 'string'
+		}	
 	}
 });
 
