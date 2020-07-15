@@ -2,7 +2,12 @@ import path from 'path';
 import test from 'ava';
 import proxyquire from 'proxyquire';
 
-const newFiles = ['source/ignore.txt', 'source/pay_attention.txt', '.hg', 'test/file.txt'];
+const newFiles = [
+	'source/ignore.txt',
+	'source/pay_attention.txt',
+	'.hg',
+	'test/file.txt'
+];
 
 test('ignored files using file-attribute in package.json with one file', async t => {
 	const testedModule = proxyquire('../source/npm/util', {
