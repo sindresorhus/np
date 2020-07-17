@@ -60,7 +60,7 @@ $ np --help
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
     --no-release-draft  Skips opening a GitHub release draft
-	--test-script		Custom test to run before publish
+    --test-script	Custom test to run before publish
 
   Examples
     $ np
@@ -68,7 +68,7 @@ $ np --help
     $ np 1.0.2
     $ np 1.0.2-beta.3 --tag=beta
     $ np 1.0.2-beta.3 --tag=beta --contents=dist
-	$ np 1.0.3 --test-script=custom
+    $ np 1.0.3 --test-script=custom
 ```
 
 ## Interactive UI
@@ -163,7 +163,7 @@ You can also add `np` to a custom script in `package.json`. This can be useful i
 
 In case you want to run a custom user-defined test before publishing instead of the normal `npm test` or `yarn test`, you can configure this custom test using `--test-script` option. This is useful in case your normal test is running with a `--watch` mode or in case you want to run some specific tests(maybe on the packaged files) before publishing.
 
-For example, `np --test-script=publish-test` would run the `publish-test` script instead of the default `test`
+For example, `np --test-script=publish-test` would run the `publish-test` script instead of the default `test`.
 
 ```json
 {
