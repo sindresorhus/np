@@ -68,7 +68,7 @@ $ np --help
     $ np 1.0.2
     $ np 1.0.2-beta.3 --tag=beta
     $ np 1.0.2-beta.3 --tag=beta --contents=dist
-	$ np 1.0.3 --test-script=custom
+    $ np 1.0.3 --test-script=custom
 ```
 
 ## Interactive UI
