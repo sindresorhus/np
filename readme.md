@@ -60,7 +60,7 @@ $ np --help
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
     --no-release-draft  Skips opening a GitHub release draft
-    --test-script	Custom test to run before publish
+    --test-script       Custom test to run before publish
 
   Examples
     $ np
