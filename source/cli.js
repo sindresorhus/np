@@ -75,7 +75,7 @@ const cli = meow(`
 		},
 		testScript: {
 			type: 'string'
-		}	
+		}
 	}
 });
 

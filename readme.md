@@ -91,8 +91,7 @@ Currently, these are the flags you can configure:
 - `preview` - Show tasks without actually executing them (`false` by default).
 - `tag` - Publish under a given dist-tag (`latest` by default).
 - `yarn` - Use yarn if possible (`true` by default).
-- `contents` - Subdirectory to publish (`.` by default). (This will only publish from the specified subdirectory, `np` root will still be `.` , this flag works
-just like the `folder` option in [npm publish](https://docs.npmjs.com/cli/publish)).
+- `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
 - `testScript` - Run a custom test script before publish(`test` by default).
 
@@ -153,6 +152,25 @@ You can also add `np` to a custom script in `package.json`. This can be useful i
 	"name": "my-awesome-package",
 	"scripts": {
 		"release": "np"
+	},
+	"devDependencies": {
+		"np": "*"
+	}
+}
+```
+
+### Custom Tests
+
+In case you want to run a custom user-defined test before publishing instead of the normal `npm test` or `yarn test`, you can configure this custom test using `--test-script` option. This is useful in case your normal test is running with a `--watch` mode or in case you want to run some specific tests(maybe on the packaged files) before publishing.
+
+For example, `np --test-script=publish-test` would run the `publish-test` script instead of the default `test`
+
+```json
+{
+	"name": "my-awesome-package",
+	"scripts": {
+		"test": "ava --watch",
+		"publish-test": "ava"
 	},
 	"devDependencies": {
 		"np": "*"

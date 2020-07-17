@@ -45,16 +45,16 @@ module.exports = async (input = 'patch', options) => {
 	if (options.skipCleanup) {
 		options.cleanup = false;
 	}
+
 	const pkg = util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
-	let testCommand = [];
-	options.testScript ? testCommand.push('run', options.testScript) : testCommand.push('test');
 	const runCleanup = options.cleanup && !options.yolo;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, options.yarn ? 'yarn.lock' : 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
 	const isOnGitHub = options.repoUrl && (hostedGitInfo.fromUrl(options.repoUrl) || {}).type === 'github';
+	const testCommand = options.testScript ? ['run', options.testScript] : ['test'];
 
 	let publishStatus = 'UNKNOWN';
 
