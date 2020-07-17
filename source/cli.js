@@ -31,7 +31,7 @@ const cli = meow(`
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
 	  --no-release-draft  Skips opening a GitHub release draft
-	  --test-script	  	  Runs a custom test instead of default npm test
+	  --test-script       Runs a custom test instead of default test
 
 	Examples
 	  $ np
@@ -82,6 +82,8 @@ const cli = meow(`
 updateNotifier({pkg: cli.pkg}).notify();
 
 (async () => {
+	const pkg = util.readPkg();
+
 	const defaultFlags = {
 		cleanup: true,
 		tests: true,
@@ -97,7 +99,6 @@ updateNotifier({pkg: cli.pkg}).notify();
 		...localConfig,
 		...cli.flags
 	};
-	const pkg = util.readPkg(flags.contents);
 
 	const runPublish = flags.publish && !pkg.private;
 
