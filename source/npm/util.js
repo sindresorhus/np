@@ -39,11 +39,17 @@ exports.username = async ({externalRegistry}) => {
 	}
 };
 
-exports.collaborators = async packageName => {
+exports.collaborators = async pkg => {
+	const packageName = pkg.name;
 	ow(packageName, ow.string);
 
+	const args = ['access', 'ls-collaborators', packageName];
+	if (exports.isExternalRegistry(pkg)) {
+		args.push('--registry', pkg.publishConfig.registry);
+	}
+
 	try {
-		const {stdout} = await execa('npm', ['access', 'ls-collaborators', packageName]);
+		const {stdout} = await execa('npm', args);
 		return stdout;
 	} catch (error) {
 		// Ignore non-existing package error
@@ -77,12 +83,25 @@ exports.prereleaseTags = async packageName => {
 };
 
 exports.isPackageNameAvailable = async pkg => {
-	const isExternalRegistry = exports.isExternalRegistry(pkg);
-	if (isExternalRegistry) {
-		return true;
+	const args = [pkg.name];
+	const availability = {
+		isAvailable: false,
+		isUnknown: false
+	};
+
+	if (exports.isExternalRegistry(pkg)) {
+		args.push({
+			registryUrl: pkg.publishConfig.registry
+		});
 	}
 
-	return npmName(pkg.name);
+	try {
+		availability.isAvailable = await npmName(...args) || false;
+	} catch {
+		availability.isUnknown = true;
+	}
+
+	return availability;
 };
 
 exports.isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
@@ -103,7 +122,18 @@ exports.checkIgnoreStrategy = ({files}) => {
 
 	if (!files && !npmignoreExists) {
 		console.log(`
-		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm. 
+		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
 		`);
 	}
+};
+
+exports.getRegistryUrl = async (pkgManager, pkg) => {
+	const args = ['config', 'get', 'registry'];
+	if (exports.isExternalRegistry(pkg)) {
+		args.push('--registry');
+		args.push(pkg.publishConfig.registry);
+	}
+
+	const {stdout} = await execa(pkgManager, args);
+	return stdout;
 };

@@ -2,14 +2,15 @@
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const githubUrlFromGit = require('github-url-from-git');
+const {htmlEscape} = require('escape-goat');
 const isScoped = require('is-scoped');
 const util = require('./util');
 const git = require('./git-util');
-const {prereleaseTags, checkIgnoreStrategy} = require('./npm/util');
+const {prereleaseTags, checkIgnoreStrategy, getRegistryUrl, isExternalRegistry} = require('./npm/util');
 const version = require('./version');
 const prettyVersionDiff = require('./pretty-version-diff');
 
-const printCommitLog = async repoUrl => {
+const printCommitLog = async (repoUrl, registryUrl) => {
 	const latest = await git.latestTagOrFirstCommit();
 	const log = await git.commitLogFromRevision(latest);
 
@@ -36,12 +37,12 @@ const printCommitLog = async repoUrl => {
 	}).join('\n');
 
 	const releaseNotes = nextTag => commits.map(commit =>
-		`- ${commit.message}  ${commit.id}`
+		`- ${htmlEscape(commit.message)}  ${commit.id}`
 	).join('\n') + `\n\n${repoUrl}/compare/${latest}...${nextTag}`;
 
 	const commitRange = util.linkifyCommitRange(repoUrl, `${latest}...master`);
 
-	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n`);
+	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
 
 	return {
 		hasCommits: true,
@@ -53,8 +54,12 @@ module.exports = async (options, pkg) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
+	const pkgManager = options.yarn ? 'yarn' : 'npm';
+	const registryUrl = await getRegistryUrl(pkgManager, pkg);
 
-	checkIgnoreStrategy(pkg);
+	if (options.runPublish) {
+		checkIgnoreStrategy(pkg);
+	}
 
 	console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 
@@ -80,13 +85,13 @@ module.exports = async (options, pkg) => {
 		},
 		{
 			type: 'input',
-			name: 'version',
+			name: 'customVersion',
 			message: 'Version',
 			when: answers => !answers.version,
 			filter: input => version.isValidInput(input) ? version(pkg.version).getNewVersionFrom(input) : input,
 			validate: input => {
 				if (!version.isValidInput(input)) {
-					return 'Please specify a valid semver, for example, `1.2.3`. See http://semver.org';
+					return 'Please specify a valid semver, for example, `1.2.3`. See https://semver.org';
 				}
 
 				if (version(oldVersion).isLowerThanOrEqualTo(input)) {
@@ -100,7 +105,7 @@ module.exports = async (options, pkg) => {
 			type: 'list',
 			name: 'tag',
 			message: 'How should this pre-release version be tagged in npm?',
-			when: answers => !pkg.private && version.isPrereleaseOrIncrement(answers.version) && !options.tag,
+			when: answers => options.runPublish && (version.isPrereleaseOrIncrement(answers.customVersion) || version.isPrereleaseOrIncrement(answers.version)) && !options.tag,
 			choices: async () => {
 				const existingPrereleaseTags = await prereleaseTags(pkg.name);
 
@@ -116,9 +121,9 @@ module.exports = async (options, pkg) => {
 		},
 		{
 			type: 'input',
-			name: 'tag',
+			name: 'customTag',
 			message: 'Tag',
-			when: answers => !pkg.private && version.isPrereleaseOrIncrement(answers.version) && !options.tag && !answers.tag,
+			when: answers => options.runPublish && (version.isPrereleaseOrIncrement(answers.customVersion) || version.isPrereleaseOrIncrement(answers.version)) && !options.tag && !answers.tag,
 			validate: input => {
 				if (input.length === 0) {
 					return 'Please specify a tag, for example, `next`.';
@@ -134,13 +139,13 @@ module.exports = async (options, pkg) => {
 		{
 			type: 'confirm',
 			name: 'publishScoped',
-			when: isScoped(pkg.name) && !options.exists && options.publish && !pkg.private,
+			when: isScoped(pkg.name) && options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted') && !isExternalRegistry(pkg),
 			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false
 		}
 	];
 
-	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl);
+	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl);
 
 	if (options.version) {
 		return {
@@ -167,11 +172,29 @@ module.exports = async (options, pkg) => {
 		}
 	}
 
+	if (options.availability.isUnknown) {
+		const answers = await inquirer.prompt([{
+			type: 'confirm',
+			name: 'confirm',
+			when: isScoped(pkg.name) && options.runPublish,
+			message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(pkg.name)}. Do you want to try and publish it anyway?`,
+			default: false
+		}]);
+
+		if (!answers.confirm) {
+			return {
+				...options,
+				...answers
+			};
+		}
+	}
+
 	const answers = await inquirer.prompt(prompts);
 
 	return {
 		...options,
-		...answers,
+		version: answers.version || answers.customVersion || options.version,
+		tag: answers.tag || answers.customTag || options.tag,
 		confirm: true,
 		repoUrl,
 		releaseNotes

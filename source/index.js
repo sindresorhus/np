@@ -35,14 +35,8 @@ const exec = (cmd, args) => {
 	).pipe(filter(Boolean));
 };
 
+// eslint-disable-next-line default-param-last
 module.exports = async (input = 'patch', options) => {
-	options = {
-		cleanup: true,
-		tests: true,
-		publish: true,
-		...options
-	};
-
 	if (!hasYarn() && options.yarn) {
 		throw new Error('Could not use Yarn without yarn.lock file');
 	}
@@ -52,17 +46,16 @@ module.exports = async (input = 'patch', options) => {
 		options.cleanup = false;
 	}
 
-	const pkg = util.readPkg();
+	const pkg = util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const runPublish = options.publish && !pkg.private;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, options.yarn ? 'yarn.lock' : 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
 	const isOnGitHub = options.repoUrl && (hostedGitInfo.fromUrl(options.repoUrl) || {}).type === 'github';
 
-	let isPublished = false;
+	let publishStatus = 'UNKNOWN';
 
 	const rollback = onetime(async () => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
@@ -85,19 +78,27 @@ module.exports = async (input = 'patch', options) => {
 		}
 	});
 
-	exitHook(callback => {
-		if (!isPublished && runPublish) {
+	// The default parameter is a workaround for https://github.com/Tapppi/async-exit-hook/issues/9
+	exitHook((callback = () => {}) => {
+		if (options.preview) {
+			callback();
+		} else if (publishStatus === 'FAILED') {
 			(async () => {
 				await rollback();
 				callback();
 			})();
+		} else if (publishStatus === 'SUCCESS') {
+			callback();
+		} else {
+			console.log('\nAborted!');
+			callback();
 		}
 	});
 
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
-			enabled: () => runPublish,
+			enabled: () => options.runPublish,
 			task: () => prerequisiteTasks(input, pkg, options)
 		},
 		{
@@ -133,7 +134,7 @@ module.exports = async (input = 'patch', options) => {
 				enabled: () => options.yarn === false,
 				task: () => {
 					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production'];
-					return exec('npm', args);
+					return exec('npm', [...args, '--engine-strict']);
 				}
 			}
 		]);
@@ -166,6 +167,11 @@ module.exports = async (input = 'patch', options) => {
 		{
 			title: 'Bumping version using Yarn',
 			enabled: () => options.yarn === true,
+			skip: () => {
+				if (options.preview) {
+					return `[Preview] Command not executed: yarn version --new-version ${input}.`;
+				}
+			},
 			task: () => exec('yarn', ['version', '--new-version', input]),
 			options: {
 				suspendUpdateRenderer: true
@@ -174,6 +180,11 @@ module.exports = async (input = 'patch', options) => {
 		{
 			title: 'Bumping version using npm',
 			enabled: () => options.yarn === false,
+			skip: () => {
+				if (options.preview) {
+					return `[Preview] Command not executed: npm version ${input}.`;
+				}
+			},
 			task: () => exec('npm', ['version', input]),
 			options: {
 				suspendUpdateRenderer: true
@@ -181,10 +192,16 @@ module.exports = async (input = 'patch', options) => {
 		}
 	]);
 
-	if (runPublish) {
+	if (options.runPublish) {
 		tasks.add([
 			{
 				title: `Publishing package using ${pkgManagerName}`,
+				skip: () => {
+					if (options.preview) {
+						const args = publish.getPackagePublishArguments(options);
+						return `[Preview] Command not executed: ${pkgManager} ${args.join(' ')}.`;
+					}
+				},
 				task: (context, task) => {
 					let hasError = false;
 
@@ -196,7 +213,7 @@ module.exports = async (input = 'patch', options) => {
 								throw new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`);
 							}),
 							finalize(() => {
-								isPublished = !hasError;
+								publishStatus = hasError ? 'FAILED' : 'SUCCESS';
 							})
 						);
 				}
@@ -204,14 +221,22 @@ module.exports = async (input = 'patch', options) => {
 		]);
 
 		const isExternalRegistry = npm.isExternalRegistry(pkg);
-		if (!options.exists && !pkg.private && !isExternalRegistry) {
+		if (options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !isExternalRegistry) {
 			tasks.add([
 				{
 					title: 'Enabling two-factor authentication',
+					skip: () => {
+						if (options.preview) {
+							const args = enable2fa.getEnable2faArgs(pkg.name, options);
+							return `[Preview] Command not executed: npm ${args.join(' ')}.`;
+						}
+					},
 					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
 				}
 			]);
 		}
+	} else {
+		publishStatus = 'SUCCESS';
 	}
 
 	tasks.add({
@@ -221,7 +246,11 @@ module.exports = async (input = 'patch', options) => {
 				return 'Upstream branch not found; not pushing.';
 			}
 
-			if (!isPublished && runPublish) {
+			if (options.preview) {
+				return '[Preview] Command not executed: git push --follow-tags.';
+			}
+
+			if (publishStatus === 'FAILED' && options.runPublish) {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
@@ -231,12 +260,18 @@ module.exports = async (input = 'patch', options) => {
 	tasks.add({
 		title: 'Creating release draft on GitHub',
 		enabled: () => isOnGitHub === true,
-		skip: () => !options.releaseDraft,
+		skip: () => {
+			if (options.preview) {
+				return '[Preview] GitHub Releases draft will not be opened in preview mode.';
+			}
+
+			return !options.releaseDraft;
+		},
 		task: () => releaseTaskHelper(options, pkg)
 	});
 
 	await tasks.run();
 
-	const {package: newPkg} = await readPkgUp();
+	const {packageJson: newPkg} = await readPkgUp();
 	return newPkg;
 };

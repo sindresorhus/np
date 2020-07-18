@@ -4,7 +4,7 @@ const {from} = require('rxjs');
 const {catchError} = require('rxjs/operators');
 const handleNpmError = require('./handle-npm-error');
 
-const pkgPublish = (pkgManager, options) => {
+const getPackagePublishArguments = options => {
 	const args = ['publish'];
 
 	if (options.contents) {
@@ -23,8 +23,10 @@ const pkgPublish = (pkgManager, options) => {
 		args.push('--access', 'public');
 	}
 
-	return execa(pkgManager, args);
+	return args;
 };
+
+const pkgPublish = (pkgManager, options) => execa(pkgManager, getPackagePublishArguments(options));
 
 module.exports = (context, pkgManager, task, options) =>
 	from(pkgPublish(pkgManager, options)).pipe(
@@ -34,3 +36,5 @@ module.exports = (context, pkgManager, task, options) =>
 			return pkgPublish(pkgManager, {...options, otp});
 		}))
 	);
+
+module.exports.getPackagePublishArguments = getPackagePublishArguments;

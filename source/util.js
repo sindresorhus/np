@@ -5,15 +5,20 @@ const terminalLink = require('terminal-link');
 const execa = require('execa');
 const pMemoize = require('p-memoize');
 const ow = require('ow');
+const pkgDir = require('pkg-dir');
 
-exports.readPkg = () => {
-	const {package: pkg} = readPkgUp.sync();
+exports.readPkg = packagePath => {
+	packagePath = packagePath ? pkgDir.sync(packagePath) : pkgDir.sync();
 
-	if (!pkg) {
-		throw new Error('No package.json found. Make sure you\'re in the correct project.');
+	if (!packagePath) {
+		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
 	}
 
-	return pkg;
+	const {packageJson} = readPkgUp.sync({
+		cwd: packagePath
+	});
+
+	return packageJson;
 };
 
 exports.linkifyIssues = (url, message) => {
@@ -61,5 +66,29 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 		return stdout;
 	} catch (_) {
 		return 'v';
+	}
+});
+
+exports.getPreReleasePrefix = pMemoize(async options => {
+	ow(options, ow.object.hasKeys('yarn'));
+
+	try {
+		if (options.yarn) {
+			const {stdout} = await execa('yarn', ['config', 'get', 'preId']);
+			if (stdout !== 'undefined') {
+				return stdout;
+			}
+
+			return '';
+		}
+
+		const {stdout} = await execa('npm', ['config', 'get', 'preId']);
+		if (stdout !== 'undefined') {
+			return stdout;
+		}
+
+		return '';
+	} catch (_) {
+		return '';
 	}
 });

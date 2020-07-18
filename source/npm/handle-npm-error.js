@@ -9,7 +9,8 @@ const handleNpmError = (error, task, message, executor) => {
 		message = undefined;
 	}
 
-	if (error.stderr.includes('one-time pass') || error.message.includes('user TTY')) {
+	// `one-time pass` is for npm and `Two factor authentication` is for Yarn.
+	if (error.stderr.includes('one-time pass') || error.stdout.includes('Two factor authentication')) {
 		const {title} = task;
 		task.title = `${title} ${chalk.yellow('(waiting for input…)')}`;
 
@@ -17,7 +18,8 @@ const handleNpmError = (error, task, message, executor) => {
 			done: otp => {
 				task.title = title;
 				return executor(otp);
-			}
+			},
+			autoSubmit: value => value.length === 6
 		}).pipe(
 			catchError(error => handleNpmError(error, task, 'OTP was incorrect, try again:', executor))
 		);
