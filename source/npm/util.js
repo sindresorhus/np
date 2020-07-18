@@ -140,7 +140,7 @@ async function getFilesIgnoredByDotnpmignore(fileList) {
 }
 
 function getFilesNotIncludedInFilesProperty(globArrayFromFilesProperty, fileList) {
-	const globArrayForFilesAndDirs = [...globArrayFromFilesProperty];
+	const globArrayForFilesAndDirectories = [...globArrayFromFilesProperty];
 	const rootDir = pkgDir.sync();
 	for (const glob of globArrayFromFilesProperty) {
 		try {
@@ -154,9 +154,10 @@ function getFilesNotIncludedInFilesProperty(globArrayFromFilesProperty, fileList
 }
 
 function getIgnoredFilesGlob(globArrayFromFilesProperty) {
-	/* According to https://docs.npmjs.com/files/package.json#files
-	   npm's default behavior is to ignore these files. */
-	const filesIgnoredByDefault = ['.*.swp',
+	// According to https://docs.npmjs.com/files/package.json#files
+	// npm's default behavior is to ignore these files.
+	const filesIgnoredByDefault = [
+		'.*.swp',
 		'.npmignore',
 		'._*',
 		'.DS_Store',
@@ -170,7 +171,9 @@ function getIgnoredFilesGlob(globArrayFromFilesProperty) {
 		'CVS',
 		'node_modules/**/*',
 		'npm-debug.log',
-		'package-lock.json'];
+		'package-lock.json'
+	];
+
 	return `!{${globArrayFromFilesProperty.join(',')},${filesIgnoredByDefault.join(',')}}`;
 }
 

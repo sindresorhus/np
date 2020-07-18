@@ -47,5 +47,5 @@ test('ignore strategy is not used', async t => {
 				sync: () => path.resolve('test', 'fixtures')
 			}
 	});
-	t.true(await testedModule.getNewAndUnpublishedFiles(undefined, newFiles) === undefined);
+	t.is(await testedModule.getNewAndUnpublishedFiles(undefined, newFiles), undefined);
 });

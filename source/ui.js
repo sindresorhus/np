@@ -59,7 +59,7 @@ const checkIgnoredFiles = async pkg => {
 	const answers = await inquirer.prompt([{
 		type: 'confirm',
 		name: 'confirm',
-		message: `The following new files are not part of your published package:\n${chalk.reset(ignoredFiles.map(path => `- ${path}`).join('\n'))}\nContinue?`,
+		message: `The following new files are not already part of your published package:\n${chalk.reset(ignoredFiles.map(path => `- ${path}`).join('\n'))}\nContinue?`,
 		default: false
 	}]);
 
