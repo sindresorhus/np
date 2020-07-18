@@ -73,7 +73,7 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 
 exports.getNewAndUnpublishedFiles = async pkg => {
 	const listNewFiles = await gitUtil.newFilesSinceLastRelease();
-	return npmUtil.getNewAndUnpublishedFiles(pkg.files, listNewFiles);
+	return npmUtil.getNewAndUnpublishedFiles(pkg, listNewFiles);
 };
 
 exports.getPreReleasePrefix = pMemoize(async options => {

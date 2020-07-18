@@ -42,7 +42,7 @@
 		"github-url-from-git": "^1.5.0",
 		"has-yarn": "^2.1.0",
 		"hosted-git-info": "^3.0.0",
-		"ignore-walk": "^3.0.2",
+		"ignore-walk": "^3.0.3",
 		"inquirer": "^7.0.0",
 		"is-installed-globally": "^0.3.1",
 		"is-scoped": "^2.1.0",
