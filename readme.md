@@ -183,6 +183,8 @@ Or set the [`version-sign-git-tag`](https://yarnpkg.com/lang/en/docs/cli/version
 $ yarn config set version-sign-git-tag true
 ```
 
+`np` supports all kinds of GPG password prompts (console or GUI prompt).
+
 ### Private packages
 
 <img src="private-packages.png" width="260" align="right">
