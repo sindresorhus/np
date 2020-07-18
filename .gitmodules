@@ -1,0 +1,3 @@
+[submodule "integration-test"]
+	path = integration-test
+	url = https://github.com/bunysae/np_integration_test
