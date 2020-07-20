@@ -38,9 +38,9 @@ exports.currentBranch = async () => {
 	return stdout;
 };
 
-exports.verifyCurrentBranchIsMaster = async () => {
-	if (await exports.currentBranch() !== 'master') {
-		throw new Error('Not on `master` branch. Use --any-branch to publish anyway.');
+exports.verifyCurrentBranchIsReleaseBranch = async (releaseBranch = 'master') => {
+	if (await exports.currentBranch() !== releaseBranch) {
+		throw new Error(`Not on \`${releaseBranch}\` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
 	}
 };
 
