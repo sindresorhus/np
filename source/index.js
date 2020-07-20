@@ -154,7 +154,7 @@ module.exports = async (input = 'patch', options) => {
 				enabled: () => options.yarn === true,
 				task: () => exec('yarn', testCommand).pipe(
 					catchError(error => {
-						if (error.message.includes(`Command ${testScript} not found`)) {
+						if (error.message.includes(`Command “${testScript}” not found`)) {
 							return [];
 						}
 
