@@ -38,9 +38,11 @@ exports.currentBranch = async () => {
 	return stdout;
 };
 
-exports.verifyCurrentBranchIsReleaseBranch = async (releaseBranch = 'master') => {
-	if (await exports.currentBranch() !== releaseBranch) {
-		throw new Error(`Not on \`${releaseBranch}\` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
+exports.verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
+	const allowedBranches = releaseBranch ? [releaseBranch] : ['main', 'master'];
+	const currentBranch = await exports.currentBranch();
+	if (!allowedBranches.includes(currentBranch)) {
+		throw new Error(`Not on ${allowedBranches.map(branch => `\`${branch}\``).join('/')} branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
 	}
 };
 

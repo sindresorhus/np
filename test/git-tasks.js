@@ -24,6 +24,19 @@ test.beforeEach(() => {
 	execaStub.resetStub();
 });
 
+test.serial('should fail when release branch is not specified, current branch is not main/master and publishing from any branch not permitted', async t => {
+	execaStub.createStub([
+		{
+			command: 'git symbolic-ref --short HEAD',
+			exitCode: 0,
+			stdout: 'feature'
+		}
+	]);
+	await t.throwsAsync(run(testedModule({})),
+		{message: 'Not on `main`/`master` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'});
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Check current branch' && task.hasFailed()));
+});
+
 test.serial('should fail when current branch is not the specified release branch and publishing from any branch not permitted', async t => {
 	execaStub.createStub([
 		{
@@ -32,8 +45,8 @@ test.serial('should fail when current branch is not the specified release branch
 			stdout: 'feature'
 		}
 	]);
-	await t.throwsAsync(run(testedModule({branch: 'main'})),
-		{message: 'Not on `main` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'});
+	await t.throwsAsync(run(testedModule({branch: 'release'})),
+		{message: 'Not on `release` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'});
 	t.true(SilentRenderer.tasks.some(task => task.title === 'Check current branch' && task.hasFailed()));
 });
 

@@ -7,7 +7,7 @@
 ## Why
 
 - [Interactive UI](#interactive-ui)
-- Ensures you are publishing from your release branch (`master` by default)
+- Ensures you are publishing from your release branch (`main` and `master` by default)
 - Ensures the working directory is clean and that there are no unpulled changes
 - Reinstalls dependencies to ensure your project works with the latest dependency tree
 - Ensures your Node.js and npm versions are supported by the project and its dependencies
