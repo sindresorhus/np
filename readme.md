@@ -60,7 +60,7 @@ $ np --help
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
     --no-release-draft  Skips opening a GitHub release draft
-    --test-script       Custom test to run before publish
+    --test-script       User defined test to run before publish
 
   Examples
     $ np
@@ -68,7 +68,6 @@ $ np --help
     $ np 1.0.2
     $ np 1.0.2-beta.3 --tag=beta
     $ np 1.0.2-beta.3 --tag=beta --contents=dist
-    $ np 1.0.3 --test-script=custom
 ```
 
 ## Interactive UI
@@ -93,7 +92,7 @@ Currently, these are the flags you can configure:
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
-- `testScript` - Run a custom test script before publish(`test` by default).
+- `testScript` - Run a user defined test script before publish(`test` by default).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
@@ -159,9 +158,9 @@ You can also add `np` to a custom script in `package.json`. This can be useful i
 }
 ```
 
-### Custom Tests
+### User Defined Tests
 
-In case you want to run a custom user-defined test before publishing instead of the normal `npm test` or `yarn test`, you can configure this custom test using `--test-script` option. This is useful in case your normal test is running with a `--watch` mode or in case you want to run some specific tests(maybe on the packaged files) before publishing.
+In case you want to run a user defined test before publishing instead of the normal `npm test` or `yarn test`, you can configure this custom test using `--test-script` option. This is useful in case your normal test is running with a `--watch` mode or in case you want to run some specific tests(maybe on the packaged files) before publishing.
 
 For example, `np --test-script=publish-test` would run the `publish-test` script instead of the default `test`.
 
