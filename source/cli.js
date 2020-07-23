@@ -31,7 +31,7 @@ const cli = meow(`
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
 	  --no-release-draft  Skips opening a GitHub release draft
-	  --test-script       Run a user defined test script before publish
+	  --test-script       User defined test to run before publish
 
 	Examples
 	  $ np
