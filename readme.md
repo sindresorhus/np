@@ -51,7 +51,7 @@ $ np --help
 
   Options
     --any-branch        Allow publishing from any branch
-    --branch            Name of the release branch (default: `master`)
+    --branch            Name of the release branch (default: master)
     --no-cleanup        Skips cleanup of node_modules
     --no-tests          Skips tests
     --yolo              Skips cleanup and testing
