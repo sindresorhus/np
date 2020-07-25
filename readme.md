@@ -60,7 +60,7 @@ $ np --help
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
     --no-release-draft  Skips opening a GitHub release draft
-    --test-script       User defined test to run before publish
+    --test-script       User-defined script to replace default test before publish
 
   Examples
     $ np
@@ -92,7 +92,7 @@ Currently, these are the flags you can configure:
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
-- `testScript` - Run a user defined test script before publish(`test` by default).
+- `testScript` - Run a user-defined test script before publish(`test` by default).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
