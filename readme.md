@@ -158,7 +158,7 @@ You can also add `np` to a custom script in `package.json`. This can be useful i
 }
 ```
 
-### User Defined Tests
+### User-defined tests
 
 If you want to run a user-defined test script before publishing instead of the normal `npm test` or `yarn test`, you can use `--test-script` flag or the `testScript` config. This is can be useful when your normal test script is running with a `--watch` mode or in case you want to run some specific tests (maybe on the packaged files) before publishing.
 
