@@ -92,7 +92,7 @@ Currently, these are the flags you can configure:
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
-- `testScript` - Run a user-defined test script before publish(`test` by default).
+- `testScript` - Name of npm run script to run tests before publishing(`test` by default).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
