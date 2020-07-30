@@ -62,7 +62,7 @@ test('skip enabling 2FA if the package exists', async t => {
 	t.true(enable2faStub.notCalled);
 });
 
-test('skip enabling 2FA if the "2fa" option is false', async t => {
+test('skip enabling 2FA if the `2fa` option is false', async t => {
 	const enable2faStub = sinon.stub();
 
 	const np = proxyquire('../source', {
