@@ -94,7 +94,7 @@ Currently, these are the flags you can configure:
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
-- `2fa` - Enable 2FA on new packages (`true` by default) (not recommended).
+- `2fa` - Enable 2FA on new packages (`true` by default) (it's not recommended to set this to `false`).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
