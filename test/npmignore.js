@@ -6,7 +6,9 @@ const newFiles = [
 	'source/ignore.txt',
 	'source/pay_attention.txt',
 	'.hg',
-	'test/file.txt'
+	'test/file.txt',
+	'readme.md',
+	'README.txt'
 ];
 
 test('ignored files using file-attribute in package.json with one file', async t => {

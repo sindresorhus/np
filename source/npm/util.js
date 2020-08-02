@@ -150,7 +150,7 @@ function getFilesNotIncludedInFilesProperty(pkg, fileList) {
 		} catch (_) {}
 	}
 
-	let result = fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayForFilesAndDirectories, pkg.directories), {matchBase: true}));
+	const result = fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayForFilesAndDirectories, pkg.directories), {matchBase: true}));
 	return result.filter(minimatch.filter(getDefaultIncludedFilesGlob(pkg.main), {nocase: true, matchBase: true}));
 }
 
@@ -170,6 +170,7 @@ function getDefaultIncludedFilesGlob(mainFile) {
 	if (mainFile) {
 		filesAlwaysIncluded.push(mainFile);
 	}
+
 	return `!{${filesAlwaysIncluded}}`;
 }
 
@@ -193,7 +194,8 @@ function getIgnoredFilesGlob(globArrayFromFilesProperty, packageDirectories) {
 		'node_modules/**/*',
 		'npm-debug.log',
 		'package-lock.json',
-		'.git/**/*'
+		'.git/**/*',
+		'.git'
 	];
 
 	// Test files are assumed not to be part of the package
