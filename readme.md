@@ -61,6 +61,7 @@ $ np --help
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
     --no-release-draft  Skips opening a GitHub release draft
+    --no-2fa            Don't enable 2FA on new packages (not recommended)
 
   Examples
     $ np
@@ -93,6 +94,7 @@ Currently, these are the flags you can configure:
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
+- `2fa` - Enable 2FA on new packages (`true` by default) (it's not recommended to set this to `false`).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 

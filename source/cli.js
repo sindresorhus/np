@@ -32,6 +32,7 @@ const cli = meow(`
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
 	  --no-release-draft  Skips opening a GitHub release draft
+	  --no-2fa            Don't enable 2FA on new packages (not recommended)
 
 	Examples
 	  $ np
@@ -74,6 +75,9 @@ const cli = meow(`
 		},
 		preview: {
 			type: 'boolean'
+		},
+		'2fa': {
+			type: 'boolean'
 		}
 	}
 });
@@ -88,7 +92,8 @@ updateNotifier({pkg: cli.pkg}).notify();
 		tests: true,
 		publish: true,
 		releaseDraft: true,
-		yarn: hasYarn()
+		yarn: hasYarn(),
+		'2fa': true
 	};
 
 	const localConfig = await config();
@@ -98,6 +103,11 @@ updateNotifier({pkg: cli.pkg}).notify();
 		...localConfig,
 		...cli.flags
 	};
+
+	// Workaround for unintended auto-casing behavior from `meow`.
+	if ('2Fa' in flags) {
+		flags['2fa'] = flags['2Fa'];
+	}
 
 	const runPublish = flags.publish && !pkg.private;
 
