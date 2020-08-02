@@ -104,6 +104,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 		...cli.flags
 	};
 
+	// Workaround for unintended auto-casing behavior from `meow`.
 	if ('2Fa' in flags) {
 		flags['2fa'] = flags['2Fa'];
 	}
