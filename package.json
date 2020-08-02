@@ -76,6 +76,11 @@
 		"sinon": "^8.0.1",
 		"xo": "^0.25.3"
 	},
+	"xo": {
+		"ignores": [
+			"integration-test"
+		]
+	},
 	"ava": {
 		"files": [
 			"!test/fixtures"
