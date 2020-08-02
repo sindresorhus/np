@@ -83,7 +83,8 @@
 	},
 	"ava": {
 		"files": [
-			"!test/fixtures"
+			"!test/fixtures",
+			"!integration-test"
 		]
 	}
 }
