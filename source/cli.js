@@ -79,7 +79,7 @@ const cli = meow(`
 		},
 		testScript: {
 			type: 'string'
-    },
+		},
 		'2fa': {
 			type: 'boolean'
 		}
