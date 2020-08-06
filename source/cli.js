@@ -22,6 +22,7 @@ const cli = meow(`
 
 	Options
 	  --any-branch        Allow publishing from any branch
+	  --branch            Name of the release branch (default: master)
 	  --no-cleanup        Skips cleanup of node_modules
 	  --no-tests          Skips tests
 	  --yolo              Skips cleanup and testing
@@ -32,6 +33,7 @@ const cli = meow(`
 	  --contents          Subdirectory to publish
 	  --no-release-draft  Skips opening a GitHub release draft
 	  --test-script       Name of npm run script to run tests before publishing [default: test]
+	  --no-2fa            Don't enable 2FA on new packages (not recommended)
 
 	Examples
 	  $ np
@@ -44,6 +46,9 @@ const cli = meow(`
 	flags: {
 		anyBranch: {
 			type: 'boolean'
+		},
+		branch: {
+			type: 'string'
 		},
 		cleanup: {
 			type: 'boolean'
@@ -74,6 +79,9 @@ const cli = meow(`
 		},
 		testScript: {
 			type: 'string'
+		},
+		'2fa': {
+			type: 'boolean'
 		}
 	}
 });
@@ -88,7 +96,8 @@ updateNotifier({pkg: cli.pkg}).notify();
 		tests: true,
 		publish: true,
 		releaseDraft: true,
-		yarn: hasYarn()
+		yarn: hasYarn(),
+		'2fa': true
 	};
 
 	const localConfig = await config();
@@ -98,6 +107,11 @@ updateNotifier({pkg: cli.pkg}).notify();
 		...localConfig,
 		...cli.flags
 	};
+
+	// Workaround for unintended auto-casing behavior from `meow`.
+	if ('2Fa' in flags) {
+		flags['2fa'] = flags['2Fa'];
+	}
 
 	const runPublish = flags.publish && !pkg.private;
 
