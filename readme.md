@@ -60,7 +60,7 @@ $ np --help
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
     --no-release-draft  Skips opening a GitHub release draft
-    --test-script       Name of npm run script to run tests before publishing [default: test]
+    --test-script       Name of npm run script to run tests before publishing (default: test)
 
   Examples
     $ np
