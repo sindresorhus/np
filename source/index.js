@@ -54,6 +54,8 @@ module.exports = async (input = 'patch', options) => {
 	const rootDir = pkgDir.sync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, options.yarn ? 'yarn.lock' : 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
 	const isOnGitHub = options.repoUrl && (hostedGitInfo.fromUrl(options.repoUrl) || {}).type === 'github';
+	const testScript = options.testScript || 'test';
+	const testCommand = options.testScript ? ['run', testScript] : [testScript];
 
 	let publishStatus = 'UNKNOWN';
 
@@ -145,14 +147,14 @@ module.exports = async (input = 'patch', options) => {
 			{
 				title: 'Running tests using npm',
 				enabled: () => options.yarn === false,
-				task: () => exec('npm', ['test'])
+				task: () => exec('npm', testCommand)
 			},
 			{
 				title: 'Running tests using Yarn',
 				enabled: () => options.yarn === true,
-				task: () => exec('yarn', ['test']).pipe(
+				task: () => exec('yarn', testCommand).pipe(
 					catchError(error => {
-						if (error.message.includes('Command "test" not found')) {
+						if (error.message.includes(`Command “${testScript}” not found`)) {
 							return [];
 						}
 

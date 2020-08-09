@@ -32,6 +32,7 @@ const cli = meow(`
 	  --no-yarn           Don't use Yarn
 	  --contents          Subdirectory to publish
 	  --no-release-draft  Skips opening a GitHub release draft
+	  --test-script       Name of npm run script to run tests before publishing (default: test)
 	  --no-2fa            Don't enable 2FA on new packages (not recommended)
 
 	Examples
@@ -75,6 +76,9 @@ const cli = meow(`
 		},
 		preview: {
 			type: 'boolean'
+		},
+		testScript: {
+			type: 'string'
 		},
 		'2fa': {
 			type: 'boolean'
