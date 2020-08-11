@@ -123,6 +123,15 @@ module.exports = {
 
 _**Note:** The global config only applies when using the global `np` binary, and is never inherited when using a local binary._
 
+### Select published files
+You can select the published files with the `files` property in `package.json`
+or you can use the `.npmignore`-file, to exclude unnecessary stuff.
+The selection may exclude some necessary files or vice versa.
+To avoid these mistakes, `np` reports all new files added to git, which are not published.
+Test files and other [obvious stuff](https://docs.npmjs.com/files/package.json#files) is excluded by default from this report.
+`np` assumes either a standard directory layout or a customized layout
+depict in the `directories` property (`package.json`).
+
 ## Tips
 
 ### npm hooks
