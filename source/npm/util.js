@@ -136,7 +136,7 @@ async function getFilesIgnoredByDotnpmignore(pkg, fileList) {
 		path: pkgDir.sync(),
 		ignoreFiles: ['.npmignore']
 	});
-	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(whiteList, pkg.directories), {matchBase: true}));
+	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(whiteList, pkg.directories), {matchBase: true, dot: true}));
 }
 
 function getFilesNotIncludedInFilesProperty(pkg, fileList) {
@@ -150,7 +150,7 @@ function getFilesNotIncludedInFilesProperty(pkg, fileList) {
 		} catch (_) {}
 	}
 
-	const result = fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayForFilesAndDirectories, pkg.directories), {matchBase: true}));
+	const result = fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayForFilesAndDirectories, pkg.directories), {matchBase: true, dot: true}));
 	return result.filter(minimatch.filter(getDefaultIncludedFilesGlob(pkg.main), {nocase: true, matchBase: true}));
 }
 

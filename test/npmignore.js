@@ -63,6 +63,26 @@ test('ignored test files using files attribute and .npmignore', async t => {
 	t.deepEqual(await testedModule.getNewAndUnpublishedFiles({directories: {test: ['test-tap']}}, newFiles), ['source/ignore.txt', 'test/file.txt']);
 });
 
+test('dot files using files attribute', async t => {
+	const testedModule = proxyquire('../source/npm/util', {
+		'pkg-dir':
+			{
+				sync: () => path.resolve('test', 'fixtures', 'package')
+			}
+	});
+	t.deepEqual(await testedModule.getNewAndUnpublishedFiles({files: ['source']}, ['test/.dotfile']), []);
+});
+
+test('dot files using .npmignore', async t => {
+	const testedModule = proxyquire('../source/npm/util', {
+		'pkg-dir':
+			{
+				sync: () => path.resolve('test', 'fixtures', 'npmignore')
+			}
+	});
+	t.deepEqual(await testedModule.getNewAndUnpublishedFiles({}, ['test/.dot']), []);
+});
+
 test('ignore strategy is not used', async t => {
 	const testedModule = proxyquire('../source/npm/util', {
 		'pkg-dir':
