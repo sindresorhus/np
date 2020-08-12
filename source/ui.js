@@ -63,7 +63,7 @@ const checkIgnoredFiles = async pkg => {
 		default: false
 	}]);
 
-	return answers;
+	return answers.confirm;
 };
 
 module.exports = async (options, pkg) => {
@@ -76,10 +76,10 @@ module.exports = async (options, pkg) => {
 	if (options.runPublish) {
 		checkIgnoreStrategy(pkg);
 		const answerIgnoredFiles = await checkIgnoredFiles(pkg);
-		if (!answerIgnoredFiles.confirm) {
+		if (!answerIgnoredFiles) {
 			return {
 				...options,
-				...answerIgnoredFiles
+				confirm: answerIgnoredFiles
 			};
 		}
 	}
