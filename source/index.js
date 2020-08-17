@@ -248,7 +248,7 @@ module.exports = async (input = 'patch', options) => {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
-		task: () => git.push()
+		task: () => git.push(isOnGitHub)
 	});
 
 	tasks.add({
