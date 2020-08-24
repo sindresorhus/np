@@ -126,18 +126,22 @@ exports.commitLogFromRevision = async revision => {
 	return stdout;
 };
 
-exports.push = async remoteIsOnGitHub => {
+exports.pushGraceful = async remoteIsOnGitHub => {
 	try {
-		await execa('git', ['push', '--follow-tags']);
+		await exports.push();
 	} catch (error) {
-		if (remoteIsOnGitHub && error.stderr && error.stderr.indexOf('remote: error: GH006: Protected branch update failed') === 0) {
+		if (remoteIsOnGitHub && error.stderr && error.stderr.includes('GH006')) {
 			// Try to push tags only, when commits can't be pushed due to branch protection
 			await execa('git', ['push', '--tags']);
-			return;
+			return {pushed: 'tags', reason: 'Branch protection: np can`t push the commits. Push them manually.'};
 		}
 
 		throw error;
 	}
+};
+
+exports.push = async () => {
+	await execa('git', ['push', '--follow-tags']);
 };
 
 exports.deleteTag = async tagName => {
