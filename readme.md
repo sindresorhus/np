@@ -7,7 +7,7 @@
 ## Why
 
 - [Interactive UI](#interactive-ui)
-- Ensures you are publishing from the `master` branch
+- Ensures you are publishing from your release branch (`main` and `master` by default)
 - Ensures the working directory is clean and that there are no unpulled changes
 - Reinstalls dependencies to ensure your project works with the latest dependency tree
 - Ensures your Node.js and npm versions are supported by the project and its dependencies
@@ -51,6 +51,7 @@ $ np --help
 
   Options
     --any-branch        Allow publishing from any branch
+    --branch            Name of the release branch (default: master)
     --no-cleanup        Skips cleanup of node_modules
     --no-tests          Skips tests
     --yolo              Skips cleanup and testing
@@ -60,6 +61,8 @@ $ np --help
     --no-yarn           Don't use Yarn
     --contents          Subdirectory to publish
     --no-release-draft  Skips opening a GitHub release draft
+    --test-script       Name of npm run script to run tests before publishing (default: test)
+    --no-2fa            Don't enable 2FA on new packages (not recommended)
 
   Examples
     $ np
@@ -82,6 +85,7 @@ Run `np` without arguments to launch the interactive UI that guides you through 
 Currently, these are the flags you can configure:
 
 - `anyBranch` - Allow publishing from any branch (`false` by default).
+- `branch` - Name of the release branch (`master` by default).
 - `cleanup` - Cleanup `node_modules` (`true` by default).
 - `tests` - Run `npm test` (`true` by default).
 - `yolo` - Skip cleanup and testing (`false` by default).
@@ -91,6 +95,8 @@ Currently, these are the flags you can configure:
 - `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
+- `testScript` - Name of npm run script to run tests before publishing (`test` by default).
+- `2fa` - Enable 2FA on new packages (`true` by default) (it's not recommended to set this to `false`).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
@@ -149,6 +155,25 @@ You can also add `np` to a custom script in `package.json`. This can be useful i
 	"name": "my-awesome-package",
 	"scripts": {
 		"release": "np"
+	},
+	"devDependencies": {
+		"np": "*"
+	}
+}
+```
+
+### User-defined tests
+
+If you want to run a user-defined test script before publishing instead of the normal `npm test` or `yarn test`, you can use `--test-script` flag or the `testScript` config. This is can be useful when your normal test script is running with a `--watch` mode or in case you want to run some specific tests (maybe on the packaged files) before publishing.
+
+For example, `np --test-script=publish-test` would run the `publish-test` script instead of the default `test`.
+
+```json
+{
+	"name": "my-awesome-package",
+	"scripts": {
+		"test": "ava --watch",
+		"publish-test": "ava"
 	},
 	"devDependencies": {
 		"np": "*"
