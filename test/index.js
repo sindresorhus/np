@@ -45,7 +45,7 @@ test('skip enabling 2FA if the package exists', async t => {
 		'./git-tasks': sinon.stub(),
 		'./git-util': {
 			hasUpstream: sinon.stub().returns(true),
-			push: sinon.stub()
+			pushGraceful: sinon.stub()
 		},
 		'./npm/enable-2fa': enable2faStub,
 		'./npm/publish': sinon.stub().returns({pipe: sinon.stub()})
