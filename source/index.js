@@ -15,6 +15,7 @@ const pkgDir = require('pkg-dir');
 const hostedGitInfo = require('hosted-git-info');
 const onetime = require('onetime');
 const exitHook = require('async-exit-hook');
+const logSymbols = require('log-symbols');
 const prerequisiteTasks = require('./prerequisite-tasks');
 const gitTasks = require('./git-tasks');
 const publish = require('./npm/publish');
@@ -58,6 +59,7 @@ module.exports = async (input = 'patch', options) => {
 	const testCommand = options.testScript ? ['run', testScript] : [testScript];
 
 	let publishStatus = 'UNKNOWN';
+	let pushedObjects;
 
 	const rollback = onetime(async () => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
@@ -250,7 +252,9 @@ module.exports = async (input = 'patch', options) => {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
-		task: () => git.push()
+		task: async () => {
+			pushedObjects = await git.pushGraceful(isOnGitHub);
+		}
 	});
 
 	tasks.add({
@@ -267,6 +271,10 @@ module.exports = async (input = 'patch', options) => {
 	});
 
 	await tasks.run();
+
+	if (pushedObjects) {
+		console.error(`\n${logSymbols.error} ${pushedObjects.reason}`);
+	}
 
 	const {packageJson: newPkg} = await readPkgUp();
 	return newPkg;

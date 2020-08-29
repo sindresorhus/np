@@ -128,6 +128,20 @@ exports.commitLogFromRevision = async revision => {
 	return stdout;
 };
 
+exports.pushGraceful = async remoteIsOnGitHub => {
+	try {
+		await exports.push();
+	} catch (error) {
+		if (remoteIsOnGitHub && error.stderr && error.stderr.includes('GH006')) {
+			// Try to push tags only, when commits can't be pushed due to branch protection
+			await execa('git', ['push', '--tags']);
+			return {pushed: 'tags', reason: 'Branch protection: np can`t push the commits. Push them manually.'};
+		}
+
+		throw error;
+	}
+};
+
 exports.push = async () => {
 	await execa('git', ['push', '--follow-tags']);
 };
