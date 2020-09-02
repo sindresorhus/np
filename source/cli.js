@@ -12,6 +12,8 @@ const version = require('./version');
 const util = require('./util');
 const ui = require('./ui');
 const np = require('.');
+const Listr = require('listr');
+const gitTasks = require('./git-tasks');
 
 const cli = meow(`
 	Usage
@@ -121,6 +123,15 @@ updateNotifier({pkg: cli.pkg}).notify();
 	};
 
 	const version = cli.input.length > 0 ? cli.input[0] : false;
+
+	const tasks = new Listr([
+		{
+			title: 'Git initial tasks',
+			task: () => gitTasks()
+		}
+	]);
+
+	await tasks.run();
 
 	const options = await ui({
 		...flags,

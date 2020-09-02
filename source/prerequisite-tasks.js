@@ -53,8 +53,8 @@ module.exports = (input, pkg, options) => {
 			task: async () => git.verifyRecentGitVersion()
 		},
 		{
-			title: 'Check git remote',
-			task: async () => git.verifyRemoteIsValid()
+			title: 'Check current branch',
+			task: () => git.verifyCurrentBranchIsReleaseBranch(options.branch)
 		},
 		{
 			title: 'Validate version',

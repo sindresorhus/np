@@ -2,11 +2,11 @@
 const Listr = require('listr');
 const git = require('./git-util');
 
-module.exports = options => {
+module.exports = () => {
 	const tasks = [
 		{
-			title: 'Check current branch',
-			task: () => git.verifyCurrentBranchIsReleaseBranch(options.branch)
+			title: 'Check git remote',
+			task: async () => git.verifyRemoteIsValid()
 		},
 		{
 			title: 'Check local working tree',
@@ -17,10 +17,6 @@ module.exports = options => {
 			task: () => git.verifyRemoteHistoryIsClean()
 		}
 	];
-
-	if (options.anyBranch) {
-		tasks.shift();
-	}
 
 	return new Listr(tasks);
 };

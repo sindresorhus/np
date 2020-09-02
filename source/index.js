@@ -17,7 +17,6 @@ const onetime = require('onetime');
 const exitHook = require('async-exit-hook');
 const logSymbols = require('log-symbols');
 const prerequisiteTasks = require('./prerequisite-tasks');
-const gitTasks = require('./git-tasks');
 const publish = require('./npm/publish');
 const enable2fa = require('./npm/enable-2fa');
 const npm = require('./npm/util');
@@ -104,10 +103,6 @@ module.exports = async (input = 'patch', options) => {
 			title: 'Prerequisite check',
 			enabled: () => options.runPublish,
 			task: () => prerequisiteTasks(input, pkg, options)
-		},
-		{
-			title: 'Git',
-			task: () => gitTasks(options)
 		}
 	], {
 		showSubtasks: false
