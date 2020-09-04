@@ -24,52 +24,19 @@ test.beforeEach(() => {
 	execaStub.resetStub();
 });
 
-test.serial('should fail when release branch is not specified, current branch is not main/master and publishing from any branch not permitted', async t => {
-	execaStub.createStub([
-		{
-			command: 'git symbolic-ref --short HEAD',
-			exitCode: 0,
-			stdout: 'feature'
-		}
-	]);
-	await t.throwsAsync(run(testedModule({})),
-		{message: 'Not on `main`/`master` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'});
-	t.true(SilentRenderer.tasks.some(task => task.title === 'Check current branch' && task.hasFailed()));
-});
 
-test.serial('should fail when current branch is not the specified release branch and publishing from any branch not permitted', async t => {
+test.serial('should fail when git remote does not exists', async t => {
 	execaStub.createStub([
 		{
-			command: 'git symbolic-ref --short HEAD',
-			exitCode: 0,
-			stdout: 'feature'
+			command: 'git ls-remote origin HEAD',
+			exitCode: 1,
+			exitCodeName: 'EPERM',
+			stderr: 'not found'
 		}
 	]);
-	await t.throwsAsync(run(testedModule({branch: 'release'})),
-		{message: 'Not on `release` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'});
-	t.true(SilentRenderer.tasks.some(task => task.title === 'Check current branch' && task.hasFailed()));
-});
-
-test.serial('should not fail when current branch not master and publishing from any branch permitted', async t => {
-	execaStub.createStub([
-		{
-			command: 'git symbolic-ref --short HEAD',
-			exitCode: 0,
-			stdout: 'feature'
-		},
-		{
-			command: 'git status --porcelain',
-			exitCode: 0,
-			stdout: ''
-		},
-		{
-			command: 'git rev-list --count --left-only @{u}...HEAD',
-			exitCode: 0,
-			stdout: ''
-		}
-	]);
-	await run(testedModule({anyBranch: true}));
-	t.false(SilentRenderer.tasks.some(task => task.title === 'Check current branch'));
+	await t.throwsAsync(run(testedModule('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
+		{message: 'not found'});
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Check git remote' && task.hasFailed()));
 });
 
 test.serial('should fail when local working tree modified', async t => {
