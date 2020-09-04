@@ -177,7 +177,7 @@ test.serial('should fail when release branch is not specified, current branch is
 			stdout: 'feature'
 		}
 	]);
-	await t.throwsAsync(run(testedModule({})),
+	await t.throwsAsync(run(testedModule('2.0.0', {name: 'test', version: '1.0.0', private: true}, {yarn: false})),
 		{message: 'Not on `main`/`master` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'});
 	t.true(SilentRenderer.tasks.some(task => task.title === 'Check current branch' && task.hasFailed()));
 });
@@ -190,7 +190,7 @@ test.serial('should fail when current branch is not the specified release branch
 			stdout: 'feature'
 		}
 	]);
-	await t.throwsAsync(run(testedModule({branch: 'release'})),
+	await t.throwsAsync(run(testedModule('2.0.0', {name: 'test', version: '1.0.0', private: true}, {yarn: false, branch: 'release'})),
 		{message: 'Not on `release` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'});
 	t.true(SilentRenderer.tasks.some(task => task.title === 'Check current branch' && task.hasFailed()));
 });
@@ -213,7 +213,7 @@ test.serial('should not fail when current branch not master and publishing from 
 			stdout: ''
 		}
 	]);
-	await run(testedModule({anyBranch: true}));
+	await run(testedModule('2.0.0', {name: 'test', version: '1.0.0', private: true}, {yarn: false, anyBranch: true}));
 	t.false(SilentRenderer.tasks.some(task => task.title === 'Check current branch'));
 });
 

@@ -54,6 +54,7 @@ module.exports = (input, pkg, options) => {
 		},
 		{
 			title: 'Check current branch',
+			skip: () => options.anyBranch,
 			task: () => git.verifyCurrentBranchIsReleaseBranch(options.branch)
 		},
 		{
