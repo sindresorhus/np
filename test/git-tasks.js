@@ -134,7 +134,7 @@ test.serial('should fail when git version does not match range in `package.json`
 		}
 	]);
 	const depRange = require('../package.json').engines.git;
-	await t.throwsAsync(run(testedModule()),
+	await t.throwsAsync(run(testedModule({})),
 		{message: `Please upgrade to git${depRange}`});
 	t.true(SilentRenderer.tasks.some(task => task.title === 'Check git version' && task.hasFailed()));
 });
