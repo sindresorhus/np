@@ -49,15 +49,6 @@ module.exports = (input, pkg, options) => {
 			}
 		},
 		{
-			title: 'Check git version',
-			task: async () => git.verifyRecentGitVersion()
-		},
-		{
-			title: 'Check current branch',
-			skip: () => options.anyBranch,
-			task: () => git.verifyCurrentBranchIsReleaseBranch(options.branch)
-		},
-		{
 			title: 'Validate version',
 			task: () => {
 				if (!version.isValidInput(input)) {

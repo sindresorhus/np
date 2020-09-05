@@ -127,7 +127,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 	const tasks = new Listr([
 		{
 			title: 'Git initial tasks',
-			task: () => gitTasks()
+			task: () => gitTasks(flags)
 		}
 	]);
 
