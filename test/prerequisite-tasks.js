@@ -211,10 +211,14 @@ test.serial('should not fail when current branch not master and publishing from 
 			command: 'git rev-list --count --left-only @{u}...HEAD',
 			exitCode: 0,
 			stdout: ''
+		},
+		{
+			command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+			stdout: ''
 		}
 	]);
 	await run(testedModule('2.0.0', {name: 'test', version: '1.0.0', private: true}, {yarn: false, anyBranch: true}));
-	t.false(SilentRenderer.tasks.some(task => task.title === 'Check current branch'));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Check current branch' && task.isSkipped()));
 });
 
 test.serial('should fail when version is invalid', async t => {

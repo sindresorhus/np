@@ -24,7 +24,6 @@ test.beforeEach(() => {
 	execaStub.resetStub();
 });
 
-
 test.serial('should fail when git remote does not exists', async t => {
 	execaStub.createStub([
 		{
