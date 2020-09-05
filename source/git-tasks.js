@@ -13,16 +13,16 @@ module.exports = options => {
 			task: async () => git.verifyRemoteIsValid()
 		},
 		{
+			title: 'Check git version',
+			task: async () => git.verifyRecentGitVersion()
+		},
+		{
 			title: 'Check local working tree',
 			task: () => git.verifyWorkingTreeIsClean()
 		},
 		{
 			title: 'Check remote history',
 			task: () => git.verifyRemoteHistoryIsClean()
-		},
-		{
-			title: 'Check git version',
-			task: async () => git.verifyRecentGitVersion()
 		}
 	];
 
