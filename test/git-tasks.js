@@ -27,6 +27,11 @@ test.beforeEach(() => {
 test.serial('should fail when git remote does not exists', async t => {
 	execaStub.createStub([
 		{
+			command: 'git symbolic-ref --short HEAD',
+			exitCode: 0,
+			stdout: 'master'
+		},
+		{
 			command: 'git ls-remote origin HEAD',
 			exitCode: 1,
 			exitCodeName: 'EPERM',
@@ -127,6 +132,11 @@ test.serial('should not fail when current branch not master and publishing from 
 
 test.serial('should fail when git version does not match range in `package.json`', async t => {
 	execaStub.createStub([
+		{
+			command: 'git symbolic-ref --short HEAD',
+			exitCode: 0,
+			stdout: 'master'
+		},
 		{
 			command: 'git version',
 			exitCode: 0,
