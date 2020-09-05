@@ -214,6 +214,7 @@ test.serial('should not fail when current branch not master and publishing from 
 		},
 		{
 			command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+			exitCode: 0,
 			stdout: ''
 		}
 	]);
