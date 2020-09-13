@@ -148,4 +148,3 @@ test.serial('should fail when git version does not match range in `package.json`
 		{message: `Please upgrade to git${depRange}`});
 	t.true(SilentRenderer.tasks.some(task => task.title === 'Check git version' && task.hasFailed()));
 });
-
