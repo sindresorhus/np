@@ -96,7 +96,7 @@ Currently, these are the flags you can configure:
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
 - `testScript` - Name of npm run script to run tests before publishing (`test` by default).
-- `2fa` - Enable 2FA on new packages (`true` by default) (it's not recommended to set this to `false`).
+- `2fa` - Enable 2FA on new packages (`true` by default) (it's not recommended setting this to `false`).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
@@ -164,7 +164,7 @@ You can also add `np` to a custom script in `package.json`. This can be useful i
 
 ### User-defined tests
 
-If you want to run a user-defined test script before publishing instead of the normal `npm test` or `yarn test`, you can use `--test-script` flag or the `testScript` config. This is can be useful when your normal test script is running with a `--watch` mode or in case you want to run some specific tests (maybe on the packaged files) before publishing.
+If you want to run a user-defined test script before publishing instead of the normal `npm test` or `yarn test`, you can use `--test-script` flag or the `testScript` config. This can be useful when your normal test script is running with a `--watch` flag or in case you want to run some specific tests (maybe on the packaged files) before publishing.
 
 For example, `np --test-script=publish-test` would run the `publish-test` script instead of the default `test`.
 
@@ -201,7 +201,7 @@ $ yarn config set version-sign-git-tag true
 
 You can use `np` for packages that aren't publicly published to npm (perhaps installed from a private git repo).
 
-Set `"private": true` in your `package.json` and the publish step will be skipped. All other steps
+Set `"private": true` in your `package.json` and the publishing step will be skipped. All other steps
 including versioning and pushing tags will still be completed.
 
 ### Public scoped packages
@@ -268,7 +268,7 @@ $ git push --set-upstream origin HEAD
 $ np patch --any-branch --tag=v1
 ```
 
-### Prerequisite step runs forever on macOS
+### The prerequisite step runs forever on macOS
 
 If you're using macOS Sierra 10.12.2 or later, your SSH key passphrase is no longer stored into the keychain by default. This may cause the `prerequisite` step to run forever because it prompts for your passphrase in the background. To fix this, add the following lines to your `~/.ssh/config` and run a simple Git command like `git fetch`.
 
