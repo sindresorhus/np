@@ -96,7 +96,7 @@ Currently, these are the flags you can configure:
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
 - `testScript` - Name of npm run script to run tests before publishing (`test` by default).
-- `2fa` - Enable 2FA on new packages (`true` by default) (it's not recommended setting this to `false`).
+- `2fa` - Enable 2FA on new packages (`true` by default) (setting this to `false` is not recommended).
 
 For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
 
