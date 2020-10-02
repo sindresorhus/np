@@ -284,7 +284,7 @@ If you're running into other issues when using SSH, please consult [GitHub's sup
 
 ### I get an error when publishing my package through Yarn
 
-If you an error like this…
+If you get an error like this…
 
 ```shell
 ❯ Prerequisite check
