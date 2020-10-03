@@ -256,9 +256,10 @@ Host *
 If you're running into other issues when using SSH, please consult [GitHub's support article](https://help.github.com/articles/connecting-to-github-with-ssh/).
 
 ### Ignore strategy
-The [ignore strategy](https://docs.npmjs.com/files/package.json#files) either maintained in the `files`-property (`package.json`) or in the `.npmignore`-file should minify your packages.
-To ensure package consistency `np` reports all new files added to git, which are not published. Test files and other [obvious stuff](https://docs.npmjs.com/files/package.json#files) isn't considered.
-`np` assumes either a standard directory layout or a customized layout depict in the `directories` property (`package.json`).
+
+The [ignore strategy](https://docs.npmjs.com/files/package.json#files) either maintained in the `files`-property (`package.json`) or in the `.npmignore`-file should reduce the package size.
+To avoid broken packages `np` reports all the new and unpublished files added to git. Test files and other [common files](https://docs.npmjs.com/files/package.json#files), that are never published, aren't considered.
+`np` assumes either a standard directory layout or a customized layout represented in the `directories` property (`package.json`).
 
 ## FAQ
 
