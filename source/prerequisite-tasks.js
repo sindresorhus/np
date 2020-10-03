@@ -13,7 +13,7 @@ module.exports = (input, pkg, options) => {
 	const tasks = [
 		{
 			title: 'Ping npm registry',
-			skip: () => pkg.private || isExternalRegistry,
+			enabled: () => !pkg.private && !isExternalRegistry,
 			task: async () => npm.checkConnection()
 		},
 		{
@@ -30,7 +30,7 @@ module.exports = (input, pkg, options) => {
 		},
 		{
 			title: 'Verify user is authenticated',
-			skip: () => process.env.NODE_ENV === 'test' || pkg.private,
+			enabled: () => process.env.NODE_ENV !== 'test' && !pkg.private,
 			task: async () => {
 				const username = await npm.username({
 					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false
