@@ -38,7 +38,7 @@ test.serial('public-package published on npm registry: should fail when npm regi
 	t.true(SilentRenderer.tasks.some(task => task.title === 'Ping npm registry' && task.hasFailed()));
 });
 
-test.serial('private package: should skip task pinging npm registry', async t => {
+test.serial('private package: should disable task pinging npm registry', async t => {
 	execaStub.createStub([
 		{
 			command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
@@ -47,10 +47,10 @@ test.serial('private package: should skip task pinging npm registry', async t =>
 		}
 	]);
 	await run(testedModule('2.0.0', {name: 'test', version: '1.0.0', private: true}, {yarn: false}));
-	t.true(SilentRenderer.tasks.some(task => task.title === 'Ping npm registry' && task.isSkipped()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Ping npm registry' && !task.isEnabled()));
 });
 
-test.serial('external registry: should skip task pinging npm registry', async t => {
+test.serial('external registry: should disable task pinging npm registry', async t => {
 	execaStub.createStub([
 		{
 			command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
@@ -60,7 +60,7 @@ test.serial('external registry: should skip task pinging npm registry', async t 
 	]);
 	await run(testedModule('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}},
 		{yarn: false}));
-	t.true(SilentRenderer.tasks.some(task => task.title === 'Ping npm registry' && task.isSkipped()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Ping npm registry' && !task.isEnabled()));
 });
 
 test.serial('should fail when npm version does not match range in `package.json`', async t => {
@@ -141,7 +141,7 @@ test.serial('should fail when user is not authenticated at external registry', a
 	t.true(SilentRenderer.tasks.some(task => task.title === 'Verify user is authenticated' && task.hasFailed()));
 });
 
-test.serial('private package: should skip task `verify user is authenticated`', async t => {
+test.serial('private package: should disable task `verify user is authenticated`', async t => {
 	execaStub.createStub([
 		{
 			command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
@@ -152,7 +152,7 @@ test.serial('private package: should skip task `verify user is authenticated`', 
 	process.env.NODE_ENV = 'P';
 	await run(testedModule('2.0.0', {name: 'test', version: '1.0.0', private: true}, {yarn: false}));
 	process.env.NODE_ENV = 'test';
-	t.true(SilentRenderer.tasks.some(task => task.title === 'Verify user is authenticated' && task.isSkipped()));
+	t.true(SilentRenderer.tasks.some(task => task.title === 'Verify user is authenticated' && !task.isEnabled()));
 });
 
 test.serial('should fail when git version does not match range in `package.json`', async t => {
