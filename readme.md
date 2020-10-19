@@ -80,7 +80,7 @@ Run `np` without arguments to launch the interactive UI that guides you through 
 
 ## Config
 
-`np` can be configured both locally and globally. When using the global `np` binary, you can configure any of the CLI flags in either a `.np-config.js` or `.np-config.json` file in the home directory. When using the local `np` binary, for example, in a `npm run` script, you can configure `np` by setting the flags in either a top-level `np` field in `package.json` or in a `.np-config.js` or `.np-config.json` file in the project directory.
+`np` can be configured both locally and globally. When using the global `np` binary, you can configure any of the CLI flags in either a `.np-config.js` or `.np-config.json` file in the home directory. When using the local `np` binary, for example, in a `npm run` script, you can configure `np` by setting the flags in either a top-level `np` field in `package.json` or in a `.np-config.js` or `.np-config.json` file in the project directory. If it exists, the local installation will always take precedence. This ensures any local config matches the version of `np` it was designed for.
 
 Currently, these are the flags you can configure:
 
