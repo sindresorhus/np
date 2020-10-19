@@ -8,5 +8,7 @@ if (!importLocal(__filename)) {
 	if (isInstalledGlobally) {
 		console.log('Using global install of np.');
 	}
+
+	// eslint-disable-next-line import/no-unassigned-import
 	require('./cli-implementation');
 }
