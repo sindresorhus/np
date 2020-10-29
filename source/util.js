@@ -6,6 +6,8 @@ const execa = require('execa');
 const pMemoize = require('p-memoize');
 const ow = require('ow');
 const pkgDir = require('pkg-dir');
+const gitUtil = require('./git-util');
+const npmUtil = require('./npm/util');
 
 exports.readPkg = packagePath => {
 	packagePath = packagePath ? pkgDir.sync(packagePath) : pkgDir.sync();
@@ -68,6 +70,11 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 		return 'v';
 	}
 });
+
+exports.getNewAndUnpublishedFiles = async pkg => {
+	const listNewFiles = await gitUtil.newFilesSinceLastRelease();
+	return npmUtil.getNewAndUnpublishedFiles(pkg, listNewFiles);
+};
 
 exports.getPreReleasePrefix = pMemoize(async options => {
 	ow(options, ow.object.hasKeys('yarn'));

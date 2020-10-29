@@ -280,6 +280,10 @@ Host *
 
 If you're running into other issues when using SSH, please consult [GitHub's support article](https://help.github.com/articles/connecting-to-github-with-ssh/).
 
+### Ignore strategy
+
+The [ignore strategy](https://docs.npmjs.com/files/package.json#files), either maintained in the `files`-property in `package.json` or in `.npmignore`, is meant to help reduce the package size. To avoid broken packages caused by essential files being accidentally ignored, `np` prints out all the new and unpublished files added to Git. Test files and other [common files](https://docs.npmjs.com/files/package.json#files) that are never published are not considered. `np` assumes either a standard directory layout or a customized layout represented in the `directories` property in `package.json`.
+
 ## FAQ
 
 ### I get an error when publishing my package through Yarn

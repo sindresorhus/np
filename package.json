@@ -42,6 +42,7 @@
 		"github-url-from-git": "^1.5.0",
 		"has-yarn": "^2.1.0",
 		"hosted-git-info": "^3.0.0",
+		"ignore-walk": "^3.0.3",
 		"import-local": "^3.0.2",
 		"inquirer": "^7.0.0",
 		"is-installed-globally": "^0.3.1",
@@ -51,6 +52,7 @@
 		"listr-input": "^0.2.1",
 		"log-symbols": "^3.0.0",
 		"meow": "^6.0.0",
+		"minimatch": "^3.0.4",
 		"new-github-release-url": "^1.0.0",
 		"npm-name": "^6.0.0",
 		"onetime": "^5.1.0",
@@ -77,7 +79,8 @@
 	},
 	"ava": {
 		"files": [
-			"!test/fixtures"
+			"!test/fixtures",
+			"!integration-test"
 		]
 	}
 }

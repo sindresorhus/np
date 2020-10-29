@@ -50,6 +50,22 @@ const printCommitLog = async (repoUrl, registryUrl) => {
 	};
 };
 
+const checkIgnoredFiles = async pkg => {
+	const ignoredFiles = await util.getNewAndUnpublishedFiles(pkg);
+	if (!ignoredFiles || ignoredFiles.length === 0) {
+		return true;
+	}
+
+	const answers = await inquirer.prompt([{
+		type: 'confirm',
+		name: 'confirm',
+		message: `The following new files are not already part of your published package:\n${chalk.reset(ignoredFiles.map(path => `- ${path}`).join('\n'))}\nContinue?`,
+		default: false
+	}]);
+
+	return answers.confirm;
+};
+
 module.exports = async (options, pkg) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
@@ -59,6 +75,14 @@ module.exports = async (options, pkg) => {
 
 	if (options.runPublish) {
 		checkIgnoreStrategy(pkg);
+
+		const answerIgnoredFiles = await checkIgnoredFiles(pkg);
+		if (!answerIgnoredFiles) {
+			return {
+				...options,
+				confirm: answerIgnoredFiles
+			};
+		}
 	}
 
 	console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);

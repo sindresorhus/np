@@ -1,11 +1,27 @@
 'use strict';
 const execa = require('execa');
 const escapeStringRegexp = require('escape-string-regexp');
+const ignoreWalker = require('ignore-walk');
+const pkgDir = require('pkg-dir');
 const {verifyRequirementSatisfied} = require('./version');
 
 exports.latestTag = async () => {
 	const {stdout} = await execa('git', ['describe', '--abbrev=0', '--tags']);
 	return stdout;
+};
+
+exports.newFilesSinceLastRelease = async () => {
+	try {
+		const {stdout} = await execa('git', ['diff', '--stat', '--diff-filter=A', await this.latestTag(), 'HEAD']);
+		const result = stdout.trim().split('\n').slice(0, -1).map(row => row.slice(0, row.indexOf('|')).trim());
+		return result;
+	} catch (_) {
+		// Get all files under version control
+		return ignoreWalker({
+			path: pkgDir.sync(),
+			ignoreFiles: ['.gitignore']
+		});
+	}
 };
 
 const firstCommit = async () => {
