@@ -75,6 +75,7 @@ module.exports = async (options, pkg) => {
 
 	if (options.runPublish) {
 		checkIgnoreStrategy(pkg);
+
 		const answerIgnoredFiles = await checkIgnoredFiles(pkg);
 		if (!answerIgnoredFiles) {
 			return {
