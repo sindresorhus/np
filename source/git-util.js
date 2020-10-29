@@ -54,9 +54,11 @@ exports.currentBranch = async () => {
 	return stdout;
 };
 
-exports.verifyCurrentBranchIsMaster = async () => {
-	if (await exports.currentBranch() !== 'master') {
-		throw new Error('Not on `master` branch. Use --any-branch to publish anyway.');
+exports.verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
+	const allowedBranches = releaseBranch ? [releaseBranch] : ['main', 'master'];
+	const currentBranch = await exports.currentBranch();
+	if (!allowedBranches.includes(currentBranch)) {
+		throw new Error(`Not on ${allowedBranches.map(branch => `\`${branch}\``).join('/')} branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
 	}
 };
 
@@ -140,6 +142,20 @@ exports.verifyTagDoesNotExistOnRemote = async tagName => {
 exports.commitLogFromRevision = async revision => {
 	const {stdout} = await execa('git', ['log', '--format=%s %h', `${revision}..HEAD`]);
 	return stdout;
+};
+
+exports.pushGraceful = async remoteIsOnGitHub => {
+	try {
+		await exports.push();
+	} catch (error) {
+		if (remoteIsOnGitHub && error.stderr && error.stderr.includes('GH006')) {
+			// Try to push tags only, when commits can't be pushed due to branch protection
+			await execa('git', ['push', '--tags']);
+			return {pushed: 'tags', reason: 'Branch protection: np can`t push the commits. Push them manually.'};
+		}
+
+		throw error;
+	}
 };
 
 exports.push = async () => {

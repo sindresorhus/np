@@ -1,6 +1,6 @@
 {
 	"name": "np",
-	"version": "6.3.1",
+	"version": "6.5.0",
 	"description": "A better `npm publish`",
 	"license": "MIT",
 	"repository": "sindresorhus/np",
@@ -43,6 +43,7 @@
 		"has-yarn": "^2.1.0",
 		"hosted-git-info": "^3.0.0",
 		"ignore-walk": "^3.0.3",
+		"import-local": "^3.0.2",
 		"inquirer": "^7.0.0",
 		"is-installed-globally": "^0.3.1",
 		"is-scoped": "^2.1.0",

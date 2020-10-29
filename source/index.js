@@ -15,6 +15,7 @@ const pkgDir = require('pkg-dir');
 const hostedGitInfo = require('hosted-git-info');
 const onetime = require('onetime');
 const exitHook = require('async-exit-hook');
+const logSymbols = require('log-symbols');
 const prerequisiteTasks = require('./prerequisite-tasks');
 const gitTasks = require('./git-tasks');
 const publish = require('./npm/publish');
@@ -54,8 +55,11 @@ module.exports = async (input = 'patch', options) => {
 	const rootDir = pkgDir.sync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, options.yarn ? 'yarn.lock' : 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
 	const isOnGitHub = options.repoUrl && (hostedGitInfo.fromUrl(options.repoUrl) || {}).type === 'github';
+	const testScript = options.testScript || 'test';
+	const testCommand = options.testScript ? ['run', testScript] : [testScript];
 
 	let publishStatus = 'UNKNOWN';
+	let pushedObjects;
 
 	const rollback = onetime(async () => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
@@ -113,7 +117,7 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: 'Cleanup',
-				skip: () => hasLockFile,
+				enabled: () => !hasLockFile,
 				task: () => del('node_modules')
 			},
 			{
@@ -145,14 +149,14 @@ module.exports = async (input = 'patch', options) => {
 			{
 				title: 'Running tests using npm',
 				enabled: () => options.yarn === false,
-				task: () => exec('npm', ['test'])
+				task: () => exec('npm', testCommand)
 			},
 			{
 				title: 'Running tests using Yarn',
 				enabled: () => options.yarn === true,
-				task: () => exec('yarn', ['test']).pipe(
+				task: () => exec('yarn', testCommand).pipe(
 					catchError(error => {
-						if (error.message.includes('Command "test" not found')) {
+						if (error.message.includes(`Command "${testScript}" not found`)) {
 							return [];
 						}
 
@@ -215,7 +219,7 @@ module.exports = async (input = 'patch', options) => {
 		]);
 
 		const isExternalRegistry = npm.isExternalRegistry(pkg);
-		if (options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !isExternalRegistry) {
+		if (options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !isExternalRegistry) {
 			tasks.add([
 				{
 					title: 'Enabling two-factor authentication',
@@ -248,23 +252,29 @@ module.exports = async (input = 'patch', options) => {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
-		task: () => git.push()
+		task: async () => {
+			pushedObjects = await git.pushGraceful(isOnGitHub);
+		}
 	});
 
-	tasks.add({
-		title: 'Creating release draft on GitHub',
-		enabled: () => isOnGitHub === true,
-		skip: () => {
-			if (options.preview) {
-				return '[Preview] GitHub Releases draft will not be opened in preview mode.';
-			}
-
-			return !options.releaseDraft;
-		},
-		task: () => releaseTaskHelper(options, pkg)
-	});
+	if (options.releaseDraft) {
+		tasks.add({
+			title: 'Creating release draft on GitHub',
+			enabled: () => isOnGitHub === true,
+			skip: () => {
+				if (options.preview) {
+					return '[Preview] GitHub Releases draft will not be opened in preview mode.';
+				}
+			},
+			task: () => releaseTaskHelper(options, pkg)
+		});
+	}
 
 	await tasks.run();
+
+	if (pushedObjects) {
+		console.error(`\n${logSymbols.error} ${pushedObjects.reason}`);
+	}
 
 	const {packageJson: newPkg} = await readPkgUp();
 	return newPkg;

@@ -45,7 +45,7 @@ test('skip enabling 2FA if the package exists', async t => {
 		'./git-tasks': sinon.stub(),
 		'./git-util': {
 			hasUpstream: sinon.stub().returns(true),
-			push: sinon.stub()
+			pushGraceful: sinon.stub()
 		},
 		'./npm/enable-2fa': enable2faStub,
 		'./npm/publish': sinon.stub().returns({pipe: sinon.stub()})
@@ -57,6 +57,34 @@ test('skip enabling 2FA if the package exists', async t => {
 			isAvailable: false,
 			isUnknown: false
 		}
+	}));
+
+	t.true(enable2faStub.notCalled);
+});
+
+test('skip enabling 2FA if the `2fa` option is false', async t => {
+	const enable2faStub = sinon.stub();
+
+	const np = proxyquire('../source', {
+		del: sinon.stub(),
+		execa: sinon.stub().returns({pipe: sinon.stub()}),
+		'./prerequisite-tasks': sinon.stub(),
+		'./git-tasks': sinon.stub(),
+		'./git-util': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub()
+		},
+		'./npm/enable-2fa': enable2faStub,
+		'./npm/publish': sinon.stub().returns({pipe: sinon.stub()})
+	});
+
+	await t.notThrowsAsync(np('1.0.0', {
+		...defaultOptions,
+		availability: {
+			isAvailable: true,
+			isUnknown: false
+		},
+		'2fa': false
 	}));
 
 	t.true(enable2faStub.notCalled);
