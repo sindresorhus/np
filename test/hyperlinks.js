@@ -23,14 +23,14 @@ test('linkifyIssues correctly links issues', t => {
 });
 
 test('linkifyIssues returns raw message if url is not provided', t => {
-	const msg = 'Commit message - fixes #5';
-	t.is(linkifyIssues(undefined, msg), msg);
+	const message = 'Commit message - fixes #5';
+	t.is(linkifyIssues(undefined, message), message);
 });
 
 test.serial('linkifyIssues returns raw message if terminalLink is not supported', t => {
 	mockTerminalLinkUnsupported();
-	const msg = 'Commit message - fixes #6';
-	t.is(linkifyIssues(MOCK_REPO_URL, msg), msg);
+	const message = 'Commit message - fixes #6';
+	t.is(linkifyIssues(MOCK_REPO_URL, message), message);
 });
 
 test('linkifyCommit correctly links commits', t => {

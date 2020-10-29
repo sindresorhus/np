@@ -16,7 +16,7 @@ exports.checkConnection = () => pTimeout(
 		try {
 			await execa('npm', ['ping']);
 			return true;
-		} catch (_) {
+		} catch {
 			throw new Error('Connection to npm registry failed');
 		}
 	})(),
@@ -147,7 +147,7 @@ function getFilesNotIncludedInFilesProperty(pkg, fileList) {
 			if (fs.statSync(path.resolve(rootDir, glob)).isDirectory()) {
 				globArrayForFilesAndDirectories.push(`${glob}/**/*`);
 			}
-		} catch (_) {}
+		} catch {}
 	}
 
 	const result = fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayForFilesAndDirectories, pkg.directories), {matchBase: true, dot: true}));

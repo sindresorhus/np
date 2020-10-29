@@ -1,5 +1,5 @@
 'use strict';
-require('any-observable/register/rxjs-all'); // eslint-disable-line import/no-unassigned-import
+require('any-observable/register/rxjs-all');
 const fs = require('fs');
 const path = require('path');
 const execa = require('execa');

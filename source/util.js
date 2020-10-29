@@ -66,7 +66,7 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 
 		const {stdout} = await execa('npm', ['config', 'get', 'tag-version-prefix']);
 		return stdout;
-	} catch (_) {
+	} catch {
 		return 'v';
 	}
 });
@@ -95,7 +95,7 @@ exports.getPreReleasePrefix = pMemoize(async options => {
 		}
 
 		return '';
-	} catch (_) {
+	} catch {
 		return '';
 	}
 });

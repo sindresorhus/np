@@ -15,7 +15,7 @@ exports.newFilesSinceLastRelease = async () => {
 		const {stdout} = await execa('git', ['diff', '--stat', '--diff-filter=A', await this.latestTag(), 'HEAD']);
 		const result = stdout.trim().split('\n').slice(0, -1).map(row => row.slice(0, row.indexOf('|')).trim());
 		return result;
-	} catch (_) {
+	} catch {
 		// Get all files under version control
 		return ignoreWalker({
 			path: pkgDir.sync(),
@@ -34,7 +34,7 @@ exports.latestTagOrFirstCommit = async () => {
 	try {
 		// In case a previous tag exists, we use it to compare the current repo status to.
 		latest = await exports.latestTag();
-	} catch (_) {
+	} catch {
 		// Otherwise, we fallback to using the first commit for comparison.
 		latest = await firstCommit();
 	}
@@ -70,7 +70,7 @@ exports.isWorkingTreeClean = async () => {
 		}
 
 		return true;
-	} catch (_) {
+	} catch {
 		return false;
 	}
 };
@@ -86,7 +86,7 @@ exports.isRemoteHistoryClean = async () => {
 	try { // Gracefully handle no remote set up.
 		const {stdout} = await execa('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']);
 		history = stdout;
-	} catch (_) {}
+	} catch {}
 
 	if (history && history !== '0') {
 		return false;
