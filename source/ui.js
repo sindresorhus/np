@@ -11,9 +11,14 @@ const {prereleaseTags, checkIgnoreStrategy, getRegistryUrl, isExternalRegistry} 
 const version = require('./version');
 const prettyVersionDiff = require('./pretty-version-diff');
 
-const printCommitLog = async (repoUrl, registryUrl) => {
-	const latest = await git.latestTagOrFirstCommit();
-	const log = await git.commitLogFromRevision(latest);
+const printCommitLog = async (repoUrl, registryUrl, latestTag) => {
+	const revision = latestTag ? await git.latestTagOrFirstCommit() : await git.tagBeforeCurrentOrFirstCommit();
+	if (revision === null) {
+		console.error(`The package hasn't been published yet.`);
+		process.exit(1);
+	}
+
+	const log = await git.commitLogFromRevision(revision);
 
 	if (!log) {
 		return {
@@ -22,7 +27,7 @@ const printCommitLog = async (repoUrl, registryUrl) => {
 		};
 	}
 
-	const commits = log.split('\n')
+	let commits = log.split('\n')
 		.map(commit => {
 			const splitIndex = commit.lastIndexOf(' ');
 			return {
@@ -30,6 +35,14 @@ const printCommitLog = async (repoUrl, registryUrl) => {
 				id: commit.slice(splitIndex + 1)
 			};
 		});
+
+	if (!latestTag) {
+		// Remove the version bump commit from the commit list.
+		const latestTag = await git.latestTag();
+		if (latestTag.match(commits[0].message)) {
+			commits = commits.slice(1);
+		}
+	}
 
 	const history = commits.map(commit => {
 		const commitMessage = util.linkifyIssues(repoUrl, commit.message);
@@ -39,9 +52,9 @@ const printCommitLog = async (repoUrl, registryUrl) => {
 
 	const releaseNotes = nextTag => commits.map(commit =>
 		`- ${htmlEscape(commit.message)}  ${commit.id}`
-	).join('\n') + `\n\n${repoUrl}/compare/${latest}...${nextTag}`;
+	).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 
-	const commitRange = util.linkifyCommitRange(repoUrl, `${latest}...master`);
+	const commitRange = util.linkifyCommitRange(repoUrl, `${revision}...master`);
 
 	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
 
@@ -92,7 +105,11 @@ module.exports = async (options, pkg) => {
 		}
 	}
 
-	console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
+	if (options.releaseDraftOnly) {
+		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
+	} else {
+		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
+	}
 
 	const prompts = [
 		{
@@ -176,7 +193,8 @@ module.exports = async (options, pkg) => {
 		}
 	];
 
-	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl);
+	const useLatestTag = !options.releaseDraftOnly;
+	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag);
 
 	if (options.version) {
 		return {

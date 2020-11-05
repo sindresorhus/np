@@ -48,8 +48,8 @@ module.exports = async (input = 'patch', options) => {
 	}
 
 	const pkg = util.readPkg(options.contents);
-	const runTests = options.tests && !options.yolo;
-	const runCleanup = options.cleanup && !options.yolo;
+	const runTests = options.tests && !options.yolo && !options.releaseDraftOnly;
+	const runCleanup = options.cleanup && !options.yolo && !options.releaseDraftOnly;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
 	const rootDir = pkgDir.sync();
@@ -107,6 +107,7 @@ module.exports = async (input = 'patch', options) => {
 		},
 		{
 			title: 'Git',
+			enabled: () => !options.releaseDraftOnly,
 			task: () => gitTasks(options)
 		}
 	], {
@@ -167,28 +168,30 @@ module.exports = async (input = 'patch', options) => {
 		]);
 	}
 
-	tasks.add([
-		{
-			title: 'Bumping version using Yarn',
-			enabled: () => options.yarn === true,
-			skip: () => {
-				if (options.preview) {
-					return `[Preview] Command not executed: yarn version --new-version ${input}.`;
-				}
+	if (!options.releaseDraftOnly) {
+		tasks.add([
+			{
+				title: 'Bumping version using Yarn',
+				enabled: () => options.yarn === true,
+				skip: () => {
+					if (options.preview) {
+						return `[Preview] Command not executed: yarn version --new-version ${input}.`;
+					}
+				},
+				task: () => exec('yarn', ['version', '--new-version', input])
 			},
-			task: () => exec('yarn', ['version', '--new-version', input])
-		},
-		{
-			title: 'Bumping version using npm',
-			enabled: () => options.yarn === false,
-			skip: () => {
-				if (options.preview) {
-					return `[Preview] Command not executed: npm version ${input}.`;
-				}
-			},
-			task: () => exec('npm', ['version', input])
-		}
-	]);
+			{
+				title: 'Bumping version using npm',
+				enabled: () => options.yarn === false,
+				skip: () => {
+					if (options.preview) {
+						return `[Preview] Command not executed: npm version ${input}.`;
+					}
+				},
+				task: () => exec('npm', ['version', input])
+			}
+		]);
+	}
 
 	if (options.runPublish) {
 		tasks.add([
@@ -257,7 +260,7 @@ module.exports = async (input = 'patch', options) => {
 		}
 	});
 
-	if (options.releaseDraft) {
+	if (options.releaseDraft || options.releaseDraftOnly) {
 		tasks.add({
 			title: 'Creating release draft on GitHub',
 			enabled: () => isOnGitHub === true,
