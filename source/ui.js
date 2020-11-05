@@ -14,8 +14,7 @@ const prettyVersionDiff = require('./pretty-version-diff');
 const printCommitLog = async (repoUrl, registryUrl, latestTag) => {
 	const revision = latestTag ? await git.latestTagOrFirstCommit() : await git.tagBeforeCurrentOrFirstCommit();
 	if (revision === null) {
-		console.error(`The package hasn't been published yet.`);
-		process.exit(1);
+		throw new Error('The package hasn\'t been published yet.');
 	}
 
 	const log = await git.commitLogFromRevision(revision);

@@ -42,7 +42,7 @@ exports.tagBeforeCurrentOrFirstCommit = async () => {
 	}
 
 	return tags[tags.length - 2];
-}
+};
 
 exports.latestTagOrFirstCommit = async () => {
 	let latest;
