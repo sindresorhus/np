@@ -28,7 +28,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
 	}
 
 	let hasUnreleasedCommits = false;
-	let commitRangeText = `${revision}...master`;
+	let commitRangeText = `${revision}...${releaseBranch}`;
 
 	let commits = log.split('\n')
 		.map(commit => {
@@ -63,8 +63,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
 		`- ${htmlEscape(commit.message)}  ${commit.id}`
 	).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 
-	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText);
-
+	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText); 
 	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
 
 	return {
@@ -204,7 +203,7 @@ module.exports = async (options, pkg) => {
 	];
 
 	const useLatestTag = !options.releaseDraftOnly;
-	const {hasCommits, hasUnreleasedCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag);
+	const {hasCommits, hasUnreleasedCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, options.branch || master);
 
 	if (hasUnreleasedCommits && options.releaseDraftOnly) {
 		const answers = await inquirer.prompt([{
