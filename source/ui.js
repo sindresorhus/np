@@ -203,7 +203,8 @@ module.exports = async (options, pkg) => {
 	];
 
 	const useLatestTag = !options.releaseDraftOnly;
-	const {hasCommits, hasUnreleasedCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, options.branch || master);
+	const releaseBranch = await git.defaultBranch(options.releaseBranch);
+	const {hasCommits, hasUnreleasedCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
 
 	if (hasUnreleasedCommits && options.releaseDraftOnly) {
 		const answers = await inquirer.prompt([{

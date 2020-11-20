@@ -74,10 +74,10 @@ exports.currentBranch = async () => {
 };
 
 exports.verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
-	const allowedBranches = releaseBranch ? [releaseBranch] : ['main', 'master'];
+	const expectedBranch = await exports.defaultBranch();
 	const currentBranch = await exports.currentBranch();
-	if (!allowedBranches.includes(currentBranch)) {
-		throw new Error(`Not on ${allowedBranches.map(branch => `\`${branch}\``).join('/')} branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
+	if (!expectedBranch === currentBranch) {
+		throw new Error(`Not on \`${expectedBranch}\` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
 	}
 };
 
@@ -151,6 +151,27 @@ exports.tagExistsOnRemote = async tagName => {
 		throw error;
 	}
 };
+
+exports.defaultBranch = async options => {
+	if (options.releaseBranch) {
+		return releaseBranch;
+	}
+
+	for (branch of ['main', 'master', 'gh-pages']) {
+		try {
+			await execa("git", [
+				"show-ref",
+				"--verify",
+				"--quiet",
+				`refs/heads/${branch}`,
+			]);
+			return branch;
+		} catch (err) {}
+	}
+	throw new Error(
+		"Could not determine a default branch. Please specify one via --branch."
+	);
+}
 
 exports.verifyTagDoesNotExistOnRemote = async tagName => {
 	if (await exports.tagExistsOnRemote(tagName)) {
