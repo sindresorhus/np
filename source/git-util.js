@@ -74,10 +74,9 @@ exports.currentBranch = async () => {
 };
 
 exports.verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
-	const expectedBranch = await exports.defaultBranch(releaseBranch);
 	const currentBranch = await exports.currentBranch();
-	if (!expectedBranch === currentBranch) {
-		throw new Error(`Not on \`${expectedBranch}\` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
+	if (currentBranch !== releaseBranch) {
+		throw new Error(`Not on \`${releaseBranch}\` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
 	}
 };
 
@@ -152,26 +151,30 @@ exports.tagExistsOnRemote = async tagName => {
 	}
 };
 
-exports.defaultBranch = async options => {
-	if (options.releaseBranch) {
-		return options.releaseBranch;
+async function hasLocalBranch(branch) {
+	try {
+		await execa('git', [
+			'show-ref',
+			'--verify',
+			'--quiet',
+			`refs/heads/${branch}`
+		]);
+		return true;
+	} catch {
+		return false;
 	}
+}
 
+exports.defaultBranch = async () => {
 	for (const branch of ['main', 'master', 'gh-pages']) {
-		try {
-			// eslint-disable-next-line no-await-in-loop
-			await execa('git', [
-				'show-ref',
-				'--verify',
-				'--quiet',
-				`refs/heads/${branch}`
-			]);
+		// eslint-disable-next-line no-await-in-loop
+		if (await hasLocalBranch(branch)) {
 			return branch;
-		} catch {}
+		}
 	}
 
 	throw new Error(
-		'Could not determine a default branch. Please specify one via --branch.'
+		'Could not infer the default Git branch. Please specify one with the --branch flag or with an .np-config file.'
 	);
 };
 

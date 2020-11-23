@@ -47,6 +47,8 @@ module.exports = async (input = 'patch', options) => {
 		options.cleanup = false;
 	}
 
+	options.releaseBranch = options.releaseBranch || git.defaultBranch();
+
 	const pkg = util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
