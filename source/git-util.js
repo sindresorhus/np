@@ -181,3 +181,21 @@ exports.verifyRecentGitVersion = async () => {
 
 	verifyRequirementSatisfied('git', installedVersion);
 };
+
+exports.checkIfFileGitIgnored = async pathToFile => {
+	try {
+		const {stdout} = await execa('git', ['check-ignore', pathToFile]);
+
+		if (stdout) {
+			return true;
+		}
+
+		return false;
+	} catch (error) {
+		if (error.stdout === '' && error.stderr === '') {
+			return false;
+		}
+
+		throw error;
+	}
+};
