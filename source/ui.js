@@ -1,7 +1,6 @@
 'use strict';
 const inquirer = require('inquirer');
 const chalk = require('chalk');
-const ciInfo = require('ci-info');
 const githubUrlFromGit = require('github-url-from-git');
 const {htmlEscape} = require('escape-goat');
 const isScoped = require('is-scoped');
@@ -57,16 +56,10 @@ const checkIgnoredFiles = async pkg => {
 		return true;
 	}
 
-	const message = `The following new files are not already part of your published package:\n${chalk.reset(ignoredFiles.map(path => `- ${path}`).join('\n'))}`;
-	if (ciInfo.isCI) {
-		console.log(message);
-		return true;
-	}
-
 	const answers = await inquirer.prompt([{
 		type: 'confirm',
 		name: 'confirm',
-		message: `${message}\nContinue?`,
+		message: `The following new files are not already part of your published package:\n${chalk.reset(ignoredFiles.map(path => `- ${path}`).join('\n'))}\nContinue?`,
 		default: false
 	}]);
 
