@@ -34,7 +34,7 @@ exports.tagBeforeCurrentOrFirstCommit = async () => {
 	const tags = stdout.split('\n');
 
 	if (tags.length === 0) {
-		return null;
+		return;
 	}
 
 	if (tags.length === 1) {
