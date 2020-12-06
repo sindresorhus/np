@@ -6,7 +6,6 @@ test.before(async () => {
 		console.log('running on Github actions');
 		await execa('git', ['config', '--global', 'user.name', 'Github actions']);
 		await execa('git', ['config', '--global', 'user.email', 'actions@github.com']);
-		await execa('git', ['submodule', 'update', '--init', '--recursive']);
 	}
 });
 
