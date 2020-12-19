@@ -1,14 +1,6 @@
 const test = require('ava');
 const execa = require('execa');
 
-test.before(async () => {
-	if (process.env.GITHUB_ACTIONS) {
-		console.log('running on Github actions');
-		await execa('git', ['config', '--global', 'user.name', 'Github actions']);
-		await execa('git', ['config', '--global', 'user.email', 'actions@github.com']);
-	}
-});
-
 test.after.always(async () => {
 	await execa('git', ['submodule', 'update', '--remote']);
 });

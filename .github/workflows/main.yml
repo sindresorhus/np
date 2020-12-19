@@ -20,5 +20,6 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
+      - uses: fregante/setup-git-user@v1
       - run: npm install
       - run: npm test
