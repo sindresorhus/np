@@ -15,8 +15,12 @@ jobs:
           - 10
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: true
       - uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
+      - run: git config --global user.name "Github Actions"
+      - run: git config --global user.email "actions@users.noreply.github.com"
       - run: npm install
       - run: npm test
