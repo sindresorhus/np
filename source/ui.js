@@ -11,8 +11,8 @@ const {prereleaseTags, checkIgnoreStrategy, getRegistryUrl, isExternalRegistry} 
 const version = require('./version');
 const prettyVersionDiff = require('./pretty-version-diff');
 
-const printCommitLog = async (repoUrl, registryUrl, latestTag) => {
-	const revision = latestTag ? await git.latestTagOrFirstCommit() : await git.tagBeforeCurrentOrFirstCommit();
+const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
+	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
 	if (!revision) {
 		throw new Error('The package hasn\'t been published yet.');
 	}
@@ -35,12 +35,13 @@ const printCommitLog = async (repoUrl, registryUrl, latestTag) => {
 			};
 		});
 
-	if (!latestTag) {
-		// Remove the version bump commit from the commit list.
+	if (!fromLatestTag) {
 		const latestTag = await git.latestTag();
-		if (latestTag.match(commits[0].message)) {
-			commits = commits.slice(1);
-		}
+		const versionBumpCommitName = latestTag.slice(1); // Name v1.0.1 becomes 1.0.1
+		const versionBumpCommitIndex = commits.findIndex(commit => commit.message === versionBumpCommitName);
+
+		// Get rid of unreleased commits and of the version bump commit.
+		commits = commits.slice(versionBumpCommitIndex + 1);
 	}
 
 	const history = commits.map(commit => {

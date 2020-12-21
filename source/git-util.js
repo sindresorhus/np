@@ -29,7 +29,7 @@ const firstCommit = async () => {
 	return stdout;
 };
 
-exports.tagBeforeCurrentOrFirstCommit = async () => {
+exports.previousTagOrFirstCommit = async () => {
 	const {stdout} = await execa('git', ['tag']);
 	const tags = stdout.split('\n');
 
