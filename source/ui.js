@@ -4,6 +4,7 @@ const chalk = require('chalk');
 const githubUrlFromGit = require('github-url-from-git');
 const {htmlEscape} = require('escape-goat');
 const isScoped = require('is-scoped');
+const isInteractive = require('is-interactive');
 const util = require('./util');
 const git = require('./git-util');
 const {prereleaseTags, checkIgnoreStrategy, getRegistryUrl, isExternalRegistry} = require('./npm/util');
@@ -56,10 +57,16 @@ const checkIgnoredFiles = async pkg => {
 		return true;
 	}
 
+	const message = `The following new files are not already part of your published package:\n${chalk.reset(ignoredFiles.map(path => `- ${path}`).join('\n'))}`;
+	if (!isInteractive()) {
+		console.log(message);
+		return true;
+	}
+
 	const answers = await inquirer.prompt([{
 		type: 'confirm',
 		name: 'confirm',
-		message: `The following new files are not already part of your published package:\n${chalk.reset(ignoredFiles.map(path => `- ${path}`).join('\n'))}\nContinue?`,
+		message: `${message}\nContinue?`,
 		default: false
 	}]);
 
