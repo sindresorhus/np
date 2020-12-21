@@ -196,6 +196,22 @@ module.exports = async (options, pkg) => {
 	const useLatestTag = !options.releaseDraftOnly;
 	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag);
 
+	if (hasCommits && options.releaseDraftOnly) {
+		const answers = await inquirer.prompt([{
+			type: 'confirm',
+			name: 'confirm',
+			message: 'Unreleased commits found. They won\'t be included in the release draft, continue?',
+			default: false
+		}]);
+
+		if (!answers.confirm) {
+			return {
+				...options,
+				...answers
+			};
+		}
+	}
+
 	if (options.version) {
 		return {
 			...options,
