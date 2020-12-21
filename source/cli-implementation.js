@@ -141,7 +141,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 	console.log(); // Prints a newline for readability
 	const newPkg = await np(options.version, options);
 
-	if (options.preview) {
+	if (options.preview || options.releaseDraftOnly) {
 		return;
 	}
 
