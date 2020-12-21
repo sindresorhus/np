@@ -26,6 +26,8 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
 		};
 	}
 
+	let commitRangeText = `${revision}...master`;
+
 	let commits = log.split('\n')
 		.map(commit => {
 			const splitIndex = commit.lastIndexOf(' ');
@@ -37,6 +39,8 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
 
 	if (!fromLatestTag) {
 		const latestTag = await git.latestTag();
+		commitRangeText = `${revision}...${latestTag}`;
+
 		const versionBumpCommitName = latestTag.slice(1); // Name v1.0.1 becomes 1.0.1
 		const versionBumpCommitIndex = commits.findIndex(commit => commit.message === versionBumpCommitName);
 
@@ -54,7 +58,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
 		`- ${htmlEscape(commit.message)}  ${commit.id}`
 	).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 
-	const commitRange = util.linkifyCommitRange(repoUrl, `${revision}...master`);
+	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText);
 
 	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
 
