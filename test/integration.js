@@ -6,6 +6,6 @@ test.after.always(async () => {
 });
 
 test('Integration tests', async t => {
-	await execa('ava', {cwd: 'integration-test'});
+	await execa('npx', ['ava'], {cwd: 'integration-test'});
 	t.pass();
 });
