@@ -1,6 +1,0 @@
-language: node_js
-node_js:
-  - '12'
-  - '10'
-before_script:
-  - npm install --global npm@6.8.0
