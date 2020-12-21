@@ -185,12 +185,7 @@ exports.verifyRecentGitVersion = async () => {
 exports.checkIfFileGitIgnored = async pathToFile => {
 	try {
 		const {stdout} = await execa('git', ['check-ignore', pathToFile]);
-
-		if (stdout) {
-			return true;
-		}
-
-		return false;
+		return Boolean(stdout);
 	} catch (error) {
 		if (error.stdout === '' && error.stderr === '') {
 			return false;
