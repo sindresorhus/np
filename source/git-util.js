@@ -12,8 +12,8 @@ exports.latestTag = async () => {
 
 exports.newFilesSinceLastRelease = async () => {
 	try {
-		const {stdout} = await execa('git', ['diff', '--stat', '--diff-filter=A', await this.latestTag(), 'HEAD']);
-		const result = stdout.trim().split('\n').slice(0, -1).map(row => row.slice(0, row.indexOf('|')).trim());
+		const {stdout} = await execa('git', ['diff', '--name-only', '--diff-filter=A', await this.latestTag(), 'HEAD']);
+		const result = stdout.trim().split('\n').map(row => row.trim());
 		return result;
 	} catch {
 		// Get all files under version control
