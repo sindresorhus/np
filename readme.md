@@ -61,7 +61,7 @@ $ np --help
     --no-yarn               Don't use Yarn
     --contents              Subdirectory to publish
     --no-release-draft      Skips opening a GitHub release draft
-    --release-draft-only    Only opens a GitHub release draft for the latest published version
+    --release-draft-only    Only opens a GitHub release draft
     --test-script           Name of npm run script to run tests before publishing (default: test)
     --no-2fa                Don't enable 2FA on new packages (not recommended)
 
