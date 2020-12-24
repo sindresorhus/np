@@ -14,7 +14,7 @@ const prettyVersionDiff = require('./pretty-version-diff');
 const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
 	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
 	if (!revision) {
-		throw new Error('The package hasn\'t been published yet.');
+		throw new Error('The package has not been published yet.');
 	}
 
 	const log = await git.commitLogFromRevision(revision);
@@ -204,7 +204,7 @@ module.exports = async (options, pkg) => {
 		const answers = await inquirer.prompt([{
 			type: 'confirm',
 			name: 'confirm',
-			message: 'Unreleased commits found. They won\'t be included in the release draft, continue?',
+			message: 'Unreleased commits found. They won\'t be included in the release draft. Continue?',
 			default: false
 		}]);
 
