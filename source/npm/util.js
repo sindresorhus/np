@@ -132,11 +132,11 @@ function npmignoreExistsInPackageRootDir() {
 }
 
 async function getFilesIgnoredByDotnpmignore(pkg, fileList) {
-	const whiteList = await ignoreWalker({
+	const allowList = await ignoreWalker({
 		path: pkgDir.sync(),
 		ignoreFiles: ['.npmignore']
 	});
-	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(whiteList, pkg.directories), {matchBase: true, dot: true}));
+	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(allowList, pkg.directories), {matchBase: true, dot: true}));
 }
 
 function getFilesNotIncludedInFilesProperty(pkg, fileList) {
