@@ -22,10 +22,12 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
 	if (!log) {
 		return {
 			hasCommits: false,
+			hasUnreleasedCommits: false,
 			releaseNotes: () => {}
 		};
 	}
 
+	let hasUnreleasedCommits = false;
 	let commitRangeText = `${revision}...master`;
 
 	let commits = log.split('\n')
@@ -39,10 +41,13 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
 
 	if (!fromLatestTag) {
 		const latestTag = await git.latestTag();
-		commitRangeText = `${revision}...${latestTag}`;
-
 		const versionBumpCommitName = latestTag.slice(1); // Name v1.0.1 becomes 1.0.1
 		const versionBumpCommitIndex = commits.findIndex(commit => commit.message === versionBumpCommitName);
+
+		if (versionBumpCommitIndex > 0) {
+			commitRangeText = `${revision}...${latestTag}`;
+			hasUnreleasedCommits = true;
+		}
 
 		// Get rid of unreleased commits and of the version bump commit.
 		commits = commits.slice(versionBumpCommitIndex + 1);
@@ -64,6 +69,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
 
 	return {
 		hasCommits: true,
+		hasUnreleasedCommits,
 		releaseNotes
 	};
 };
@@ -198,9 +204,9 @@ module.exports = async (options, pkg) => {
 	];
 
 	const useLatestTag = !options.releaseDraftOnly;
-	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag);
+	const {hasCommits, hasUnreleasedCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag);
 
-	if (hasCommits && options.releaseDraftOnly) {
+	if (hasUnreleasedCommits && options.releaseDraftOnly) {
 		const answers = await inquirer.prompt([{
 			type: 'confirm',
 			name: 'confirm',
