@@ -58,6 +58,11 @@ module.exports = async (input = 'patch', options) => {
 	const testScript = options.testScript || 'test';
 	const testCommand = options.testScript ? ['run', testScript] : [testScript];
 
+	if (options.releaseDraftOnly) {
+		await releaseTaskHelper(options, pkg);
+		return pkg;
+	}
+
 	let publishStatus = 'UNKNOWN';
 	let pushedObjects;
 

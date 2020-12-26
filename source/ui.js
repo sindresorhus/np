@@ -11,18 +11,26 @@ const {prereleaseTags, checkIgnoreStrategy, getRegistryUrl, isExternalRegistry} 
 const version = require('./version');
 const prettyVersionDiff = require('./pretty-version-diff');
 
-const printCommitLog = async (repoUrl, registryUrl) => {
-	const latest = await git.latestTagOrFirstCommit();
-	const log = await git.commitLogFromRevision(latest);
+const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
+	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
+	if (!revision) {
+		throw new Error('The package has not been published yet.');
+	}
+
+	const log = await git.commitLogFromRevision(revision);
 
 	if (!log) {
 		return {
 			hasCommits: false,
+			hasUnreleasedCommits: false,
 			releaseNotes: () => {}
 		};
 	}
 
-	const commits = log.split('\n')
+	let hasUnreleasedCommits = false;
+	let commitRangeText = `${revision}...master`;
+
+	let commits = log.split('\n')
 		.map(commit => {
 			const splitIndex = commit.lastIndexOf(' ');
 			return {
@@ -30,6 +38,20 @@ const printCommitLog = async (repoUrl, registryUrl) => {
 				id: commit.slice(splitIndex + 1)
 			};
 		});
+
+	if (!fromLatestTag) {
+		const latestTag = await git.latestTag();
+		const versionBumpCommitName = latestTag.slice(1); // Name v1.0.1 becomes 1.0.1
+		const versionBumpCommitIndex = commits.findIndex(commit => commit.message === versionBumpCommitName);
+
+		if (versionBumpCommitIndex > 0) {
+			commitRangeText = `${revision}...${latestTag}`;
+			hasUnreleasedCommits = true;
+		}
+
+		// Get rid of unreleased commits and of the version bump commit.
+		commits = commits.slice(versionBumpCommitIndex + 1);
+	}
 
 	const history = commits.map(commit => {
 		const commitMessage = util.linkifyIssues(repoUrl, commit.message);
@@ -39,14 +61,15 @@ const printCommitLog = async (repoUrl, registryUrl) => {
 
 	const releaseNotes = nextTag => commits.map(commit =>
 		`- ${htmlEscape(commit.message)}  ${commit.id}`
-	).join('\n') + `\n\n${repoUrl}/compare/${latest}...${nextTag}`;
+	).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 
-	const commitRange = util.linkifyCommitRange(repoUrl, `${latest}...master`);
+	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText);
 
 	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
 
 	return {
 		hasCommits: true,
+		hasUnreleasedCommits,
 		releaseNotes
 	};
 };
@@ -92,7 +115,11 @@ module.exports = async (options, pkg) => {
 		}
 	}
 
-	console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
+	if (options.releaseDraftOnly) {
+		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
+	} else {
+		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
+	}
 
 	const prompts = [
 		{
@@ -176,7 +203,24 @@ module.exports = async (options, pkg) => {
 		}
 	];
 
-	const {hasCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl);
+	const useLatestTag = !options.releaseDraftOnly;
+	const {hasCommits, hasUnreleasedCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag);
+
+	if (hasUnreleasedCommits && options.releaseDraftOnly) {
+		const answers = await inquirer.prompt([{
+			type: 'confirm',
+			name: 'confirm',
+			message: 'Unreleased commits found. They won\'t be included in the release draft. Continue?',
+			default: false
+		}]);
+
+		if (!answers.confirm) {
+			return {
+				...options,
+				...answers
+			};
+		}
+	}
 
 	if (options.version) {
 		return {
