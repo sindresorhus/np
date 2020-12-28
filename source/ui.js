@@ -101,7 +101,7 @@ module.exports = async (options, pkg) => {
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 	const pkgManager = options.yarn ? 'yarn' : 'npm';
 	const registryUrl = await getRegistryUrl(pkgManager, pkg);
-	const {releaseBranch} = options;
+	const releaseBranch = options.branch;
 
 	if (options.runPublish) {
 		checkIgnoreStrategy(pkg);

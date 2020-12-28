@@ -128,13 +128,13 @@ updateNotifier({pkg: cli.pkg}).notify();
 	// Use current (latest) version when 'releaseDraftOnly', otherwise use the first argument.
 	const version = flags.releaseDraftOnly ? pkg.version : (cli.input.length > 0 ? cli.input[0] : false);
 
-	const releaseBranch = flags.releaseBranch || await git.defaultBranch();
+	const branch = flags.branch || await git.defaultBranch();
 	const options = await ui({
 		...flags,
 		availability,
 		version,
 		runPublish,
-		releaseBranch
+		branch
 	}, pkg);
 
 	if (!options.confirm) {
