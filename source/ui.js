@@ -11,7 +11,7 @@ const {prereleaseTags, checkIgnoreStrategy, getRegistryUrl, isExternalRegistry} 
 const version = require('./version');
 const prettyVersionDiff = require('./pretty-version-diff');
 
-const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
+const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch) => {
 	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
 	if (!revision) {
 		throw new Error('The package has not been published yet.');
@@ -63,7 +63,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
 		`- ${htmlEscape(commit.message)}  ${commit.id}`
 	).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 
-	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText); 
+	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText);
 	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
 
 	return {
@@ -101,7 +101,7 @@ module.exports = async (options, pkg) => {
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 	const pkgManager = options.yarn ? 'yarn' : 'npm';
 	const registryUrl = await getRegistryUrl(pkgManager, pkg);
-	const releaseBranch = options.releaseBranch || await git.defaultBranch();
+	const {releaseBranch} = options;
 
 	if (options.runPublish) {
 		checkIgnoreStrategy(pkg);
@@ -204,7 +204,6 @@ module.exports = async (options, pkg) => {
 	];
 
 	const useLatestTag = !options.releaseDraftOnly;
-	const releaseBranch = await git.defaultBranch(options.releaseBranch);
 	const {hasCommits, hasUnreleasedCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
 
 	if (hasUnreleasedCommits && options.releaseDraftOnly) {

@@ -7,6 +7,7 @@ const meow = require('meow');
 const updateNotifier = require('update-notifier');
 const hasYarn = require('has-yarn');
 const config = require('./config');
+const git = require('./git');
 const {isPackageNameAvailable} = require('./npm/util');
 const version = require('./version');
 const util = require('./util');
@@ -127,11 +128,13 @@ updateNotifier({pkg: cli.pkg}).notify();
 	// Use current (latest) version when 'releaseDraftOnly', otherwise use the first argument.
 	const version = flags.releaseDraftOnly ? pkg.version : (cli.input.length > 0 ? cli.input[0] : false);
 
+	const releaseBranch = flags.releaseBranch || await git.defaultBranch();
 	const options = await ui({
 		...flags,
 		availability,
 		version,
-		runPublish
+		runPublish,
+		releaseBranch
 	}, pkg);
 
 	if (!options.confirm) {
