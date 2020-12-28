@@ -174,7 +174,7 @@ exports.defaultBranch = async () => {
 	}
 
 	throw new Error(
-		'Could not infer the default Git branch. Please specify one with the --branch flag or with an .np-config file.'
+		'Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.'
 	);
 };
 
