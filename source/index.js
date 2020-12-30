@@ -129,6 +129,7 @@ module.exports = async (input = 'patch', options) => {
 							if ((!error.stderr.startsWith('error Your lockfile needs to be updated'))) {
 								return;
 							}
+
 							if (await git.checkIfFileGitIgnored('yarn.lock')) {
 								return;
 							}
