@@ -126,12 +126,14 @@ module.exports = async (input = 'patch', options) => {
 				task: () => {
 					return exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
 						catchError(async error => {
-							if (error.stderr.startsWith('error Your lockfile needs to be updated')) {
-								const isIgnored = await git.checkIfFileGitIgnored('yarn.lock');
-								if (!isIgnored) {
-									throw new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.');
-								}
+							if ((!error.stderr.startsWith('error Your lockfile needs to be updated'))) {
+								return;
 							}
+							if (await git.checkIfFileGitIgnored('yarn.lock')) {
+								return;
+							}
+
+							throw new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.');
 						})
 					);
 				}
