@@ -24,7 +24,7 @@ test.beforeEach(() => {
 	execaStub.resetStub();
 });
 
-test.serial('should fail when release branch is not specified, current branch is not main/master and publishing from any branch not permitted', async t => {
+test.serial('should fail when release branch is not specified, current branch is not the release branch, and publishing from any branch not permitted', async t => {
 	execaStub.createStub([
 		{
 			command: 'git symbolic-ref --short HEAD',
@@ -32,8 +32,8 @@ test.serial('should fail when release branch is not specified, current branch is
 			stdout: 'feature'
 		}
 	]);
-	await t.throwsAsync(run(testedModule({})),
-		{message: 'Not on `main`/`master` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'});
+	await t.throwsAsync(run(testedModule({branch: 'master'})),
+		{message: 'Not on `master` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'});
 	t.true(SilentRenderer.tasks.some(task => task.title === 'Check current branch' && task.hasFailed()));
 });
 
@@ -85,7 +85,7 @@ test.serial('should fail when local working tree modified', async t => {
 			stdout: 'M source/git-tasks.js'
 		}
 	]);
-	await t.throwsAsync(run(testedModule({})), {message: 'Unclean working tree. Commit or stash changes first.'});
+	await t.throwsAsync(run(testedModule({branch: 'master'})), {message: 'Unclean working tree. Commit or stash changes first.'});
 	t.true(SilentRenderer.tasks.some(task => task.title === 'Check local working tree' && task.hasFailed()));
 });
 
@@ -107,7 +107,7 @@ test.serial('should fail when remote history differs', async t => {
 			stdout: '1'
 		}
 	]);
-	await t.throwsAsync(run(testedModule({})), {message: 'Remote history differs. Please pull changes.'});
+	await t.throwsAsync(run(testedModule({branch: 'master'})), {message: 'Remote history differs. Please pull changes.'});
 	t.true(SilentRenderer.tasks.some(task => task.title === 'Check remote history' && task.hasFailed()));
 });
 
@@ -129,5 +129,5 @@ test.serial('checks should pass when publishing from master, working tree is cle
 			stdout: ''
 		}
 	]);
-	await t.notThrowsAsync(run(testedModule({})));
+	await t.notThrowsAsync(run(testedModule({branch: 'master'})));
 });

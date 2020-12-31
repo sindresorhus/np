@@ -74,10 +74,9 @@ exports.currentBranch = async () => {
 };
 
 exports.verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
-	const allowedBranches = releaseBranch ? [releaseBranch] : ['main', 'master'];
 	const currentBranch = await exports.currentBranch();
-	if (!allowedBranches.includes(currentBranch)) {
-		throw new Error(`Not on ${allowedBranches.map(branch => `\`${branch}\``).join('/')} branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
+	if (currentBranch !== releaseBranch) {
+		throw new Error(`Not on \`${releaseBranch}\` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
 	}
 };
 
@@ -150,6 +149,33 @@ exports.tagExistsOnRemote = async tagName => {
 
 		throw error;
 	}
+};
+
+async function hasLocalBranch(branch) {
+	try {
+		await execa('git', [
+			'show-ref',
+			'--verify',
+			'--quiet',
+			`refs/heads/${branch}`
+		]);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+exports.defaultBranch = async () => {
+	for (const branch of ['main', 'master', 'gh-pages']) {
+		// eslint-disable-next-line no-await-in-loop
+		if (await hasLocalBranch(branch)) {
+			return branch;
+		}
+	}
+
+	throw new Error(
+		'Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.'
+	);
 };
 
 exports.verifyTagDoesNotExistOnRemote = async tagName => {
