@@ -128,15 +128,21 @@ module.exports = async (input = 'patch', options) => {
 			{
 				title: 'Installing dependencies using Yarn',
 				enabled: () => options.yarn === true,
-				task: () => exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
-					catchError(error => {
-						if (error.stderr.startsWith('error Your lockfile needs to be updated')) {
-							return throwError(new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.'));
-						}
+				task: () => {
+					return exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
+						catchError(async error => {
+							if ((!error.stderr.startsWith('error Your lockfile needs to be updated'))) {
+								return;
+							}
 
-						return throwError(error);
-					})
-				)
+							if (await git.checkIfFileGitIgnored('yarn.lock')) {
+								return;
+							}
+
+							throw new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.');
+						})
+					);
+				}
 			},
 			{
 				title: 'Installing dependencies using npm',
