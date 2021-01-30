@@ -30,7 +30,7 @@ const firstCommit = async () => {
 };
 
 exports.previousTagOrFirstCommit = async () => {
-	const {stdout} = await execa('git', ['tag']);
+	const {stdout} = await execa('git', ['for-each-ref', '--sort=creatordate', '--format', '%(refname:strip=2)', 'refs/tags']);
 	const tags = stdout.split('\n');
 
 	if (tags.length === 0) {
@@ -41,7 +41,15 @@ exports.previousTagOrFirstCommit = async () => {
 		return firstCommit();
 	}
 
-	return tags[tags.length - 2];
+	try {
+		// Return the tag before the latest one.
+		const latest = await exports.latestTag();
+		const index = tags.indexOf(latest);
+		return tags[index - 1];
+	} catch {
+		// Fallback to the first commit.
+		return firstCommit();
+	}
 };
 
 exports.latestTagOrFirstCommit = async () => {
