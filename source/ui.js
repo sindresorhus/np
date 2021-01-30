@@ -41,7 +41,9 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
 
 	if (!fromLatestTag) {
 		const latestTag = await git.latestTag();
-		const versionBumpCommitName = latestTag.slice(1); // Name v1.0.1 becomes 1.0.1
+
+		// Version bump commit created by np, following the semver specification.
+		const versionBumpCommitName = latestTag.match(/v\d+\.\d+\.\d+/) && latestTag.slice(1); // Name v1.0.1 becomes 1.0.1
 		const versionBumpCommitIndex = commits.findIndex(commit => commit.message === versionBumpCommitName);
 
 		if (versionBumpCommitIndex > 0) {
