@@ -85,6 +85,15 @@ exports.verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
 	}
 };
 
+exports.isHeadDetached = async () => {
+	try {
+		await execa('git', ['symbolic-ref', '-q', 'HEAD']);
+		return false;
+	} catch {
+		return true;
+	}
+}
+
 exports.isWorkingTreeClean = async () => {
 	try {
 		const {stdout: status} = await execa('git', ['status', '--porcelain']);

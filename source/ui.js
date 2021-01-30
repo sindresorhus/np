@@ -51,6 +51,10 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag) => {
 			hasUnreleasedCommits = true;
 		}
 
+		if (await git.isHeadDetached()) {
+			commitRangeText = `${revision}...${latestTag}`;
+		}
+
 		// Get rid of unreleased commits and of the version bump commit.
 		commits = commits.slice(versionBumpCommitIndex + 1);
 	}
