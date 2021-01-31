@@ -11,6 +11,29 @@ const ignoreWalker = require('ignore-walk');
 const minimatch = require('minimatch');
 const {verifyRequirementSatisfied} = require('../version');
 
+// According to https://docs.npmjs.com/files/package.json#files
+// npm's default behavior is to ignore these files.
+const filesIgnoredByDefault = [
+	'.*.swp',
+	'.npmignore',
+	'.gitignore',
+	'._*',
+	'.DS_Store',
+	'.hg',
+	'.npmrc',
+	'.lock-wscript',
+	'.svn',
+	'.wafpickle-N',
+	'*.orig',
+	'config.gypi',
+	'CVS',
+	'node_modules/**/*',
+	'npm-debug.log',
+	'package-lock.json',
+	'.git/**/*',
+	'.git'
+];
+
 exports.checkConnection = () => pTimeout(
 	(async () => {
 		try {
@@ -139,6 +162,19 @@ async function getFilesIgnoredByDotnpmignore(pkg, fileList) {
 	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(allowList, pkg.directories), {matchBase: true, dot: true}));
 }
 
+function filterFileList(globArray, fileList) {
+	const globString = globArray.length > 1 ? `{${globArray}}` : globArray[0];
+	return fileList.filter(minimatch.filter(globString, {matchBase: true, dot: true})); // eslint-disable-line unicorn/no-fn-reference-in-iterator
+}
+
+async function getFilesIncludedByDotnpmignore(pkg, fileList) {
+	const allowList = await ignoreWalker({
+		path: pkgDir.sync(),
+		ignoreFiles: ['.npmignore']
+	});
+	return filterFileList(allowList, fileList);
+}
+
 function getFilesNotIncludedInFilesProperty(pkg, fileList) {
 	const globArrayForFilesAndDirectories = [...pkg.files];
 	const rootDir = pkgDir.sync();
@@ -152,6 +188,20 @@ function getFilesNotIncludedInFilesProperty(pkg, fileList) {
 
 	const result = fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayForFilesAndDirectories, pkg.directories), {matchBase: true, dot: true}));
 	return result.filter(minimatch.filter(getDefaultIncludedFilesGlob(pkg.main), {nocase: true, matchBase: true}));
+}
+
+function getFilesIncludedInFilesProperty(pkg, fileList) {
+	const globArrayForFilesAndDirectories = [...pkg.files];
+	const rootDir = pkgDir.sync();
+	for (const glob of pkg.files) {
+		try {
+			if (fs.statSync(path.resolve(rootDir, glob)).isDirectory()) {
+				globArrayForFilesAndDirectories.push(`${glob}/**/*`);
+			}
+		} catch {}
+	}
+
+	return filterFileList(globArrayForFilesAndDirectories, fileList);
 }
 
 function getDefaultIncludedFilesGlob(mainFile) {
@@ -175,29 +225,6 @@ function getDefaultIncludedFilesGlob(mainFile) {
 }
 
 function getIgnoredFilesGlob(globArrayFromFilesProperty, packageDirectories) {
-	// According to https://docs.npmjs.com/files/package.json#files
-	// npm's default behavior is to ignore these files.
-	const filesIgnoredByDefault = [
-		'.*.swp',
-		'.npmignore',
-		'.gitignore',
-		'._*',
-		'.DS_Store',
-		'.hg',
-		'.npmrc',
-		'.lock-wscript',
-		'.svn',
-		'.wafpickle-N',
-		'*.orig',
-		'config.gypi',
-		'CVS',
-		'node_modules/**/*',
-		'npm-debug.log',
-		'package-lock.json',
-		'.git/**/*',
-		'.git'
-	];
-
 	// Test files are assumed not to be part of the package
 	let testDirectoriesGlob = '';
 	if (packageDirectories && Array.isArray(packageDirectories.test)) {
@@ -221,6 +248,19 @@ exports.getNewAndUnpublishedFiles = async (pkg, newFiles = []) => {
 	if (npmignoreExistsInPackageRootDir()) {
 		return getFilesIgnoredByDotnpmignore(pkg, newFiles);
 	}
+};
+
+exports.getFirstTimePublishedFiles = async (pkg, newFiles = []) => {
+	let result;
+	if (pkg.files) {
+		result = getFilesIncludedInFilesProperty(pkg, newFiles);
+	} else if (npmignoreExistsInPackageRootDir()) {
+		result = await getFilesIncludedByDotnpmignore(pkg, newFiles);
+	} else {
+		result = newFiles;
+	}
+
+	return result.filter(minimatch.filter(`!{${filesIgnoredByDefault}}`, {matchBase: true, dot: true})).filter(minimatch.filter(getDefaultIncludedFilesGlob(pkg.main), {nocase: true, matchBase: true}));
 };
 
 exports.getRegistryUrl = async (pkgManager, pkg) => {
