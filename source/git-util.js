@@ -30,8 +30,7 @@ const firstCommit = async () => {
 };
 
 exports.previousTagOrFirstCommit = async () => {
-	const {stdout} = await execa('git', ['for-each-ref', '--sort=creatordate', '--format', '%(refname:strip=2)', 'refs/tags']);
-	const tags = stdout.split('\n');
+	const tags = await exports.tagList();
 
 	if (tags.length === 0) {
 		return;
@@ -44,7 +43,7 @@ exports.previousTagOrFirstCommit = async () => {
 	try {
 		// Return the tag before the latest one.
 		const latest = await exports.latestTag();
-		const index = tags.indexOf(latest);
+		const index = tags.findIndex(tag => tag === latest);
 		return tags[index - 1];
 	} catch {
 		// Fallback to the first commit.
@@ -85,14 +84,20 @@ exports.verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
 	}
 };
 
+exports.tagList = async () => {
+	const {stdout} = await execa('git', ['tag', '--sort=creatordate']);
+	return stdout.split('\n');
+};
+
 exports.isHeadDetached = async () => {
 	try {
-		await execa('git', ['symbolic-ref', '-q', 'HEAD']);
+		// Command will fail with code 1 if the HEAD is detached.
+		await execa('git', ['symbolic-ref', 'HEAD']);
 		return false;
 	} catch {
 		return true;
 	}
-}
+};
 
 exports.isWorkingTreeClean = async () => {
 	try {
