@@ -43,7 +43,7 @@ exports.previousTagOrFirstCommit = async () => {
 	try {
 		// Return the tag before the latest one.
 		const latest = await exports.latestTag();
-		const index = tags.findIndex(tag => tag === latest);
+		const index = tags.indexOf(latest);
 		return tags[index - 1];
 	} catch {
 		// Fallback to the first commit.
@@ -85,6 +85,7 @@ exports.verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
 };
 
 exports.tagList = async () => {
+	// Returns the list of tags, sorted by creation date in ascending order.
 	const {stdout} = await execa('git', ['tag', '--sort=creatordate']);
 	return stdout.split('\n');
 };
@@ -92,7 +93,7 @@ exports.tagList = async () => {
 exports.isHeadDetached = async () => {
 	try {
 		// Command will fail with code 1 if the HEAD is detached.
-		await execa('git', ['symbolic-ref', 'HEAD']);
+		await execa('git', ['symbolic-ref', '--quiet', 'HEAD']);
 		return false;
 	} catch {
 		return true;
