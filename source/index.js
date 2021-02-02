@@ -187,7 +187,14 @@ module.exports = async (input = 'patch', options) => {
 					return `[Preview] Command not executed: yarn version --new-version ${input}.`;
 				}
 			},
-			task: () => exec('yarn', ['version', '--new-version', input])
+			task: () => {
+				const args = ['version', '--new-version', input];
+
+				if (options.message) {
+					args.push('-m', options.message);
+				}
+				return exec('yarn', args)
+			}
 		},
 		{
 			title: 'Bumping version using npm',
@@ -197,7 +204,15 @@ module.exports = async (input = 'patch', options) => {
 					return `[Preview] Command not executed: npm version ${input}.`;
 				}
 			},
-			task: () => exec('npm', ['version', input])
+			task: () => {
+				const args = ['version', input];
+
+				if (options.message) {
+					args.push('-m', options.message);
+				}
+
+				return exec('npm', args)
+			}
 		}
 	]);
 
