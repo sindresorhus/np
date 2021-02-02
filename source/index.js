@@ -187,7 +187,7 @@ module.exports = async (input = 'patch', options) => {
 					let previewText = `[Preview] Command not executed: yarn version --new-version ${input}.`;
 
 					if (options.message) {
-						previewText += `-m '${options.message.replace(/%s/g, input)}'`;
+						previewText += ` -m '${options.message.replace(/%s/g, input)}'`;
 					}
 
 					return previewText;
@@ -211,7 +211,7 @@ module.exports = async (input = 'patch', options) => {
 					let previewText = `[Preview] Command not executed: npm version ${input}.`;
 
 					if (options.message) {
-						previewText += `-m '${options.message.replace(/%s/g, input)}'`;
+						previewText += ` -m '${options.message.replace(/%s/g, input)}'`;
 					}
 
 					return previewText;
