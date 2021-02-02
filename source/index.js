@@ -184,7 +184,13 @@ module.exports = async (input = 'patch', options) => {
 			enabled: () => options.yarn === true,
 			skip: () => {
 				if (options.preview) {
-					return `[Preview] Command not executed: yarn version --new-version ${input}.`;
+					let previewText = `[Preview] Command not executed: yarn version --new-version ${input}.`;
+
+					if (options.message) {
+						previewText += `-m '${options.message.replace(/%s/g, input)}'`
+					}
+
+					return previewText;
 				}
 			},
 			task: () => {
@@ -201,7 +207,12 @@ module.exports = async (input = 'patch', options) => {
 			enabled: () => options.yarn === false,
 			skip: () => {
 				if (options.preview) {
-					return `[Preview] Command not executed: npm version ${input}.`;
+					let previewText = `[Preview] Command not executed: npm version ${input}.`;
+
+					if (options.message) {
+						previewText += `-m '${options.message.replace(/%s/g, input)}'`
+					}
+					return previewText;
 				}
 			},
 			task: () => {
