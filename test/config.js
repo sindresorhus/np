@@ -8,7 +8,8 @@ const fixtureBasePath = path.resolve('test', 'fixtures', 'config');
 const getConfigsWhenGlobalBinaryIsUsed = async homedirStub => {
 	const pathsPkgDir = [path.resolve(fixtureBasePath, 'pkg-dir'),
 		path.resolve(fixtureBasePath, 'local1'),
-		path.resolve(fixtureBasePath, 'local2')];
+		path.resolve(fixtureBasePath, 'local2'),
+		path.resolve(fixtureBasePath, 'local3')];
 
 	const promises = [];
 	pathsPkgDir.forEach(pathPkgDir => {
@@ -27,7 +28,8 @@ const getConfigsWhenGlobalBinaryIsUsed = async homedirStub => {
 
 const getConfigsWhenLocalBinaryIsUsed = async pathPkgDir => {
 	const homedirs = [path.resolve(fixtureBasePath, 'homedir1'),
-		path.resolve(fixtureBasePath, 'homedir2')];
+		path.resolve(fixtureBasePath, 'homedir2'),
+		path.resolve(fixtureBasePath, 'homedir3')];
 
 	const promises = [];
 	homedirs.forEach(homedir => {
@@ -60,7 +62,7 @@ test('returns config from home directory when global binary is used and `.np-con
 	configs.forEach(config => t.deepEqual(config, {source: 'homedir/.np-config.js'}));
 });
 
-test('returns config from home directory when global binary is used and `.np-config.js` exists in home directory', async t => {
+test('returns config from home directory when global binary is used and `.np-config.cjs` exists in home directory', async t => {
 	const homedirStub = sinon.stub();
 	homedirStub.returns(path.resolve(fixtureBasePath, 'homedir3'));
 	const configs = await getConfigsWhenGlobalBinaryIsUsed(homedirStub);
@@ -82,7 +84,7 @@ test('returns config from package directory when local binary is used and `.np-c
 	configs.forEach(config => t.deepEqual(config, {source: 'packagedir/.np-config.js'}));
 });
 
-test('returns config from package directory when local binary is used and `.np-config.js` exists in package directory', async t => {
+test('returns config from package directory when local binary is used and `.np-config.cjs` exists in package directory', async t => {
 	const configs = await getConfigsWhenLocalBinaryIsUsed(path.resolve(fixtureBasePath, 'local3'));
 	configs.forEach(config => t.deepEqual(config, {source: 'packagedir/.np-config.cjs'}));
 });
