@@ -90,8 +90,7 @@ const cli = meow(`
 			type: 'boolean'
 		},
 		message: {
-			type: 'string',
-			alias: 'm'
+			type: 'string'
 		}
 	}
 });
