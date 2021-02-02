@@ -187,7 +187,7 @@ module.exports = async (input = 'patch', options) => {
 					let previewText = `[Preview] Command not executed: yarn version --new-version ${input}.`;
 
 					if (options.message) {
-						previewText += `-m '${options.message.replace(/%s/g, input)}'`
+						previewText += `-m '${options.message.replace(/%s/g, input)}'`;
 					}
 
 					return previewText;
@@ -199,7 +199,8 @@ module.exports = async (input = 'patch', options) => {
 				if (options.message) {
 					args.push('-m', options.message);
 				}
-				return exec('yarn', args)
+
+				return exec('yarn', args);
 			}
 		},
 		{
@@ -210,8 +211,9 @@ module.exports = async (input = 'patch', options) => {
 					let previewText = `[Preview] Command not executed: npm version ${input}.`;
 
 					if (options.message) {
-						previewText += `-m '${options.message.replace(/%s/g, input)}'`
+						previewText += `-m '${options.message.replace(/%s/g, input)}'`;
 					}
+
 					return previewText;
 				}
 			},
@@ -222,7 +224,7 @@ module.exports = async (input = 'patch', options) => {
 					args.push('-m', options.message);
 				}
 
-				return exec('npm', args)
+				return exec('npm', args);
 			}
 		}
 	]);
