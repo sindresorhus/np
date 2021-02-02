@@ -60,6 +60,13 @@ test('returns config from home directory when global binary is used and `.np-con
 	configs.forEach(config => t.deepEqual(config, {source: 'homedir/.np-config.js'}));
 });
 
+test('returns config from home directory when global binary is used and `.np-config.js` exists in home directory', async t => {
+	const homedirStub = sinon.stub();
+	homedirStub.returns(path.resolve(fixtureBasePath, 'homedir3'));
+	const configs = await getConfigsWhenGlobalBinaryIsUsed(homedirStub);
+	configs.forEach(config => t.deepEqual(config, {source: 'homedir/.np-config.cjs'}));
+});
+
 test('returns config from package directory when local binary is used and `package.json` exists in package directory', async t => {
 	const configs = await getConfigsWhenLocalBinaryIsUsed(path.resolve(fixtureBasePath, 'pkg-dir'));
 	configs.forEach(config => t.deepEqual(config, {source: 'package.json'}));
@@ -73,4 +80,9 @@ test('returns config from package directory when local binary is used and `.np-c
 test('returns config from package directory when local binary is used and `.np-config.js` exists in package directory', async t => {
 	const configs = await getConfigsWhenLocalBinaryIsUsed(path.resolve(fixtureBasePath, 'local2'));
 	configs.forEach(config => t.deepEqual(config, {source: 'packagedir/.np-config.js'}));
+});
+
+test('returns config from package directory when local binary is used and `.np-config.js` exists in package directory', async t => {
+	const configs = await getConfigsWhenLocalBinaryIsUsed(path.resolve(fixtureBasePath, 'local3'));
+	configs.forEach(config => t.deepEqual(config, {source: 'packagedir/.np-config.cjs'}));
 });
