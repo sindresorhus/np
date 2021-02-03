@@ -74,7 +74,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 };
 
 const checkNewFiles = async pkg => {
-	const newFiles = await util.getNewAndUnpublishedFiles(pkg);
+	const newFiles = await util.getNewFiles(pkg);
 	if ((!newFiles.unpublished || newFiles.unpublished.length === 0) && (!newFiles.firstTime || newFiles.firstTime.length === 0)) {
 		return true;
 	}
