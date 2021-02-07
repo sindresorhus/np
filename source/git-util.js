@@ -34,8 +34,7 @@ const firstCommit = async () => {
 };
 
 exports.previousTagOrFirstCommit = async () => {
-	const {stdout} = await execa('git', ['tag']);
-	const tags = stdout.split('\n');
+	const tags = await exports.tagList();
 
 	if (tags.length === 0) {
 		return;
@@ -45,7 +44,15 @@ exports.previousTagOrFirstCommit = async () => {
 		return firstCommit();
 	}
 
-	return tags[tags.length - 2];
+	try {
+		// Return the tag before the latest one.
+		const latest = await exports.latestTag();
+		const index = tags.indexOf(latest);
+		return tags[index - 1];
+	} catch {
+		// Fallback to the first commit.
+		return firstCommit();
+	}
 };
 
 exports.latestTagOrFirstCommit = async () => {
@@ -77,6 +84,22 @@ exports.verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
 	const currentBranch = await exports.currentBranch();
 	if (currentBranch !== releaseBranch) {
 		throw new Error(`Not on \`${releaseBranch}\` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
+	}
+};
+
+exports.tagList = async () => {
+	// Returns the list of tags, sorted by creation date in ascending order.
+	const {stdout} = await execa('git', ['tag', '--sort=creatordate']);
+	return stdout.split('\n');
+};
+
+exports.isHeadDetached = async () => {
+	try {
+		// Command will fail with code 1 if the HEAD is detached.
+		await execa('git', ['symbolic-ref', '--quiet', 'HEAD']);
+		return false;
+	} catch {
+		return true;
 	}
 };
 
