@@ -211,7 +211,7 @@ module.exports = async (input = 'patch', options) => {
 					let previewText = `[Preview] Command not executed: npm version ${input}`;
 
 					if (options.message) {
-						previewText += ` -m '${options.message.replace(/%s/g, input)}'`;
+						previewText += ` --message '${options.message.replace(/%s/g, input)}'`;
 					}
 
 					return `${previewText}.`;
@@ -221,7 +221,7 @@ module.exports = async (input = 'patch', options) => {
 				const args = ['version', input];
 
 				if (options.message) {
-					args.push('-m', options.message);
+					args.push('--message', options.message);
 				}
 
 				return exec('npm', args);
