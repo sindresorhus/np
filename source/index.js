@@ -184,20 +184,48 @@ module.exports = async (input = 'patch', options) => {
 			enabled: () => options.yarn === true,
 			skip: () => {
 				if (options.preview) {
-					return `[Preview] Command not executed: yarn version --new-version ${input}.`;
+					let previewText = `[Preview] Command not executed: yarn version --new-version ${input}`;
+
+					if (options.message) {
+						previewText += ` --message '${options.message.replace(/%s/g, input)}'`;
+					}
+
+					return `${previewText}.`;
 				}
 			},
-			task: () => exec('yarn', ['version', '--new-version', input])
+			task: () => {
+				const args = ['version', '--new-version', input];
+
+				if (options.message) {
+					args.push('--message', options.message);
+				}
+
+				return exec('yarn', args);
+			}
 		},
 		{
 			title: 'Bumping version using npm',
 			enabled: () => options.yarn === false,
 			skip: () => {
 				if (options.preview) {
-					return `[Preview] Command not executed: npm version ${input}.`;
+					let previewText = `[Preview] Command not executed: npm version ${input}`;
+
+					if (options.message) {
+						previewText += ` --message '${options.message.replace(/%s/g, input)}'`;
+					}
+
+					return `${previewText}.`;
 				}
 			},
-			task: () => exec('npm', ['version', input])
+			task: () => {
+				const args = ['version', input];
+
+				if (options.message) {
+					args.push('--message', options.message);
+				}
+
+				return exec('npm', args);
+			}
 		}
 	]);
 

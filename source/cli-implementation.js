@@ -36,6 +36,7 @@ const cli = meow(`
 	  --release-draft-only   Only opens a GitHub release draft for the latest published version
 	  --test-script          Name of npm run script to run tests before publishing (default: test)
 	  --no-2fa               Don't enable 2FA on new packages (not recommended)
+	  --message              Version bump commit message, '%s' will be replaced with version (default: default: '%s' with npm and 'v%s' with yarn)
 
 	Examples
 	  $ np
@@ -87,6 +88,9 @@ const cli = meow(`
 		},
 		'2fa': {
 			type: 'boolean'
+		},
+		message: {
+			type: 'string'
 		}
 	}
 });
