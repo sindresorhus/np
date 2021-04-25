@@ -79,22 +79,30 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 	};
 };
 
-const checkIgnoredFiles = async pkg => {
-	const ignoredFiles = await util.getNewAndUnpublishedFiles(pkg);
-	if (!ignoredFiles || ignoredFiles.length === 0) {
+const checkNewFiles = async pkg => {
+	const newFiles = await util.getNewFiles(pkg);
+	if ((!newFiles.unpublished || newFiles.unpublished.length === 0) && (!newFiles.firstTime || newFiles.firstTime.length === 0)) {
 		return true;
 	}
 
-	const message = `The following new files are not already part of your published package:\n${chalk.reset(ignoredFiles.map(path => `- ${path}`).join('\n'))}`;
+	const messages = [];
+	if (newFiles.unpublished.length > 0) {
+		messages.push(`The following new files will not be part of your published package:\n${chalk.reset(newFiles.unpublished.map(path => `- ${path}`).join('\n'))}`);
+	}
+
+	if (newFiles.firstTime.length > 0) {
+		messages.push(`The following new files will be published the first time:\n${chalk.reset(newFiles.firstTime.map(path => `- ${path}`).join('\n'))}`);
+	}
+
 	if (!isInteractive()) {
-		console.log(message);
+		console.log(messages.join('\n'));
 		return true;
 	}
 
 	const answers = await inquirer.prompt([{
 		type: 'confirm',
 		name: 'confirm',
-		message: `${message}\nContinue?`,
+		message: `${messages.join('\n')}\nContinue?`,
 		default: false
 	}]);
 
@@ -112,7 +120,7 @@ module.exports = async (options, pkg) => {
 	if (options.runPublish) {
 		checkIgnoreStrategy(pkg);
 
-		const answerIgnoredFiles = await checkIgnoredFiles(pkg);
+		const answerIgnoredFiles = await checkNewFiles(pkg);
 		if (!answerIgnoredFiles) {
 			return {
 				...options,
