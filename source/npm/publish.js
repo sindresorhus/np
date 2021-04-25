@@ -1,12 +1,11 @@
-'use strict';
-const execa = require('execa');
-const {from} = require('rxjs');
-const {catchError} = require('rxjs/operators');
-const handleNpmError = require('./handle-npm-error');
+import execa from 'execa';
+import * as rxjs from 'rxjs';
+import {catchError} from 'rxjs/operators';
+import handleNpmError from './handle-npm-error';
 
+const {from} = rxjs;
 const getPackagePublishArguments = options => {
 	const args = ['publish'];
-
 	if (options.contents) {
 		args.push(options.contents);
 	}
@@ -27,14 +26,11 @@ const getPackagePublishArguments = options => {
 };
 
 const pkgPublish = (pkgManager, options) => execa(pkgManager, getPackagePublishArguments(options));
+const publish = (context, pkgManager, task, options) => from(pkgPublish(pkgManager, options)).pipe(catchError(error => handleNpmError(error, task, otp => {
+	context.otp = otp;
+	return pkgPublish(pkgManager, {...options, otp});
+})));
 
-module.exports = (context, pkgManager, task, options) =>
-	from(pkgPublish(pkgManager, options)).pipe(
-		catchError(error => handleNpmError(error, task, otp => {
-			context.otp = otp;
+export default publish;
 
-			return pkgPublish(pkgManager, {...options, otp});
-		}))
-	);
-
-module.exports.getPackagePublishArguments = getPackagePublishArguments;
+export {getPackagePublishArguments};

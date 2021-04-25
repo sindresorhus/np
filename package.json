@@ -4,10 +4,11 @@
 	"description": "A better `npm publish`",
 	"license": "MIT",
 	"repository": "sindresorhus/np",
+	"type": "module",
 	"funding": "https://github.com/sindresorhus/np?sponsor=1",
 	"bin": "source/cli.js",
 	"engines": {
-		"node": ">=10",
+		"node": ">=12",
 		"npm": ">=6.8.0",
 		"git": ">=2.11.0",
 		"yarn": ">=1.7.0"

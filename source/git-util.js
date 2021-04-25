@@ -1,16 +1,41 @@
-'use strict';
-const execa = require('execa');
-const escapeStringRegexp = require('escape-string-regexp');
-const ignoreWalker = require('ignore-walk');
-const pkgDir = require('pkg-dir');
-const {verifyRequirementSatisfied} = require('./version');
 
-exports.latestTag = async () => {
+import execa from 'execa';
+import escapeStringRegexp from 'escape-string-regexp';
+import ignoreWalker from 'ignore-walk';
+import pkgDir from 'pkg-dir';
+import {verifyRequirementSatisfied} from './version';
+
+const firstCommit = async () => {
+	const {stdout} = await execa('git', ['rev-list', '--max-parents=0', 'HEAD']);
+	return stdout;
+};
+
+async function hasLocalBranch(branch) {
+	try {
+		await execa('git', [
+			'show-ref',
+			'--verify',
+			'--quiet',
+			`refs/heads/${branch}`
+		]);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+const gitVersion = async () => {
+	const {stdout} = await execa('git', ['version']);
+	const match = /git version (?<version>\d+\.\d+\.\d+).*/.exec(stdout);
+	return match && match.groups.version;
+};
+
+export const latestTag = async () => {
 	const {stdout} = await execa('git', ['describe', '--abbrev=0', '--tags']);
 	return stdout;
 };
 
-exports.newFilesSinceLastRelease = async () => {
+export const newFilesSinceLastRelease = async () => {
 	try {
 		const {stdout} = await execa('git', ['diff', '--name-only', '--diff-filter=A', await this.latestTag(), 'HEAD']);
 		if (stdout.trim().length === 0) {
@@ -28,14 +53,8 @@ exports.newFilesSinceLastRelease = async () => {
 	}
 };
 
-const firstCommit = async () => {
-	const {stdout} = await execa('git', ['rev-list', '--max-parents=0', 'HEAD']);
-	return stdout;
-};
-
-exports.previousTagOrFirstCommit = async () => {
+export const previousTagOrFirstCommit = async () => {
 	const tags = await exports.tagList();
-
 	if (tags.length === 0) {
 		return;
 	}
@@ -55,7 +74,7 @@ exports.previousTagOrFirstCommit = async () => {
 	}
 };
 
-exports.latestTagOrFirstCommit = async () => {
+export const latestTagOrFirstCommit = async () => {
 	let latest;
 	try {
 		// In case a previous tag exists, we use it to compare the current repo status to.
@@ -68,32 +87,31 @@ exports.latestTagOrFirstCommit = async () => {
 	return latest;
 };
 
-exports.hasUpstream = async () => {
+export const hasUpstream = async () => {
 	const escapedCurrentBranch = escapeStringRegexp(await exports.currentBranch());
 	const {stdout} = await execa('git', ['status', '--short', '--branch', '--porcelain']);
-
 	return new RegExp(String.raw`^## ${escapedCurrentBranch}\.\.\..+\/${escapedCurrentBranch}`).test(stdout);
 };
 
-exports.currentBranch = async () => {
+export const currentBranch = async () => {
 	const {stdout} = await execa('git', ['symbolic-ref', '--short', 'HEAD']);
 	return stdout;
 };
 
-exports.verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
+export const verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
 	const currentBranch = await exports.currentBranch();
 	if (currentBranch !== releaseBranch) {
 		throw new Error(`Not on \`${releaseBranch}\` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
 	}
 };
 
-exports.tagList = async () => {
+export const tagList = async () => {
 	// Returns the list of tags, sorted by creation date in ascending order.
 	const {stdout} = await execa('git', ['tag', '--sort=creatordate']);
 	return stdout.split('\n');
 };
 
-exports.isHeadDetached = async () => {
+export const isHeadDetached = async () => {
 	try {
 		// Command will fail with code 1 if the HEAD is detached.
 		await execa('git', ['symbolic-ref', '--quiet', 'HEAD']);
@@ -103,7 +121,7 @@ exports.isHeadDetached = async () => {
 	}
 };
 
-exports.isWorkingTreeClean = async () => {
+export const isWorkingTreeClean = async () => {
 	try {
 		const {stdout: status} = await execa('git', ['status', '--porcelain']);
 		if (status !== '') {
@@ -116,18 +134,18 @@ exports.isWorkingTreeClean = async () => {
 	}
 };
 
-exports.verifyWorkingTreeIsClean = async () => {
+export const verifyWorkingTreeIsClean = async () => {
 	if (!(await exports.isWorkingTreeClean())) {
 		throw new Error('Unclean working tree. Commit or stash changes first.');
 	}
 };
 
-exports.isRemoteHistoryClean = async () => {
+export const isRemoteHistoryClean = async () => {
 	let history;
 	try { // Gracefully handle no remote set up.
 		const {stdout} = await execa('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']);
 		history = stdout;
-	} catch {}
+	} catch { }
 
 	if (history && history !== '0') {
 		return false;
@@ -136,13 +154,13 @@ exports.isRemoteHistoryClean = async () => {
 	return true;
 };
 
-exports.verifyRemoteHistoryIsClean = async () => {
+export const verifyRemoteHistoryIsClean = async () => {
 	if (!(await exports.isRemoteHistoryClean())) {
 		throw new Error('Remote history differs. Please pull changes.');
 	}
 };
 
-exports.verifyRemoteIsValid = async () => {
+export const verifyRemoteIsValid = async () => {
 	try {
 		await execa('git', ['ls-remote', 'origin', 'HEAD']);
 	} catch (error) {
@@ -150,14 +168,13 @@ exports.verifyRemoteIsValid = async () => {
 	}
 };
 
-exports.fetch = async () => {
+export const fetch = async () => {
 	await execa('git', ['fetch']);
 };
 
-exports.tagExistsOnRemote = async tagName => {
+export const tagExistsOnRemote = async tagName => {
 	try {
 		const {stdout: revInfo} = await execa('git', ['rev-parse', '--quiet', '--verify', `refs/tags/${tagName}`]);
-
 		if (revInfo) {
 			return true;
 		}
@@ -174,21 +191,7 @@ exports.tagExistsOnRemote = async tagName => {
 	}
 };
 
-async function hasLocalBranch(branch) {
-	try {
-		await execa('git', [
-			'show-ref',
-			'--verify',
-			'--quiet',
-			`refs/heads/${branch}`
-		]);
-		return true;
-	} catch {
-		return false;
-	}
-}
-
-exports.defaultBranch = async () => {
+export const defaultBranch = async () => {
 	for (const branch of ['main', 'master', 'gh-pages']) {
 		// eslint-disable-next-line no-await-in-loop
 		if (await hasLocalBranch(branch)) {
@@ -196,23 +199,21 @@ exports.defaultBranch = async () => {
 		}
 	}
 
-	throw new Error(
-		'Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.'
-	);
+	throw new Error('Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.');
 };
 
-exports.verifyTagDoesNotExistOnRemote = async tagName => {
+export const verifyTagDoesNotExistOnRemote = async tagName => {
 	if (await exports.tagExistsOnRemote(tagName)) {
 		throw new Error(`Git tag \`${tagName}\` already exists.`);
 	}
 };
 
-exports.commitLogFromRevision = async revision => {
+export const commitLogFromRevision = async revision => {
 	const {stdout} = await execa('git', ['log', '--format=%s %h', `${revision}..HEAD`]);
 	return stdout;
 };
 
-exports.pushGraceful = async remoteIsOnGitHub => {
+export const pushGraceful = async remoteIsOnGitHub => {
 	try {
 		await exports.push();
 	} catch (error) {
@@ -226,31 +227,24 @@ exports.pushGraceful = async remoteIsOnGitHub => {
 	}
 };
 
-exports.push = async () => {
+export const push = async () => {
 	await execa('git', ['push', '--follow-tags']);
 };
 
-exports.deleteTag = async tagName => {
+export const deleteTag = async tagName => {
 	await execa('git', ['tag', '--delete', tagName]);
 };
 
-exports.removeLastCommit = async () => {
+export const removeLastCommit = async () => {
 	await execa('git', ['reset', '--hard', 'HEAD~1']);
 };
 
-const gitVersion = async () => {
-	const {stdout} = await execa('git', ['version']);
-	const match = /git version (?<version>\d+\.\d+\.\d+).*/.exec(stdout);
-	return match && match.groups.version;
-};
-
-exports.verifyRecentGitVersion = async () => {
+export const verifyRecentGitVersion = async () => {
 	const installedVersion = await gitVersion();
-
 	verifyRequirementSatisfied('git', installedVersion);
 };
 
-exports.checkIfFileGitIgnored = async pathToFile => {
+export const checkIfFileGitIgnored = async pathToFile => {
 	try {
 		const {stdout} = await execa('git', ['check-ignore', pathToFile]);
 		return Boolean(stdout);

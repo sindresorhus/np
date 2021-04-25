@@ -1,15 +1,13 @@
-'use strict';
-const Listr = require('listr');
-const execa = require('execa');
-const version = require('./version');
-const git = require('./git-util');
-const npm = require('./npm/util');
-const {getTagVersionPrefix} = require('./util');
+import Listr from 'listr';
+import execa from 'execa';
+import version from './version';
+import * as git from './git-util';
+import * as npm from './npm/util';
+import {getTagVersionPrefix} from './util';
 
-module.exports = (input, pkg, options) => {
+const prerequisiteTasks = (input, pkg, options) => {
 	const isExternalRegistry = npm.isExternalRegistry(pkg);
 	let newVersion = null;
-
 	const tasks = [
 		{
 			title: 'Ping npm registry',
@@ -35,7 +33,6 @@ module.exports = (input, pkg, options) => {
 				const username = await npm.username({
 					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false
 				});
-
 				const collaborators = await npm.collaborators(pkg);
 				if (!collaborators) {
 					return;
@@ -64,7 +61,6 @@ module.exports = (input, pkg, options) => {
 				}
 
 				newVersion = version(pkg.version).getNewVersionFrom(input);
-
 				if (version(pkg.version).isLowerThanOrEqualTo(newVersion)) {
 					throw new Error(`New version \`${newVersion}\` should be higher than current version \`${pkg.version}\``);
 				}
@@ -82,13 +78,12 @@ module.exports = (input, pkg, options) => {
 			title: 'Check git tag existence',
 			task: async () => {
 				await git.fetch();
-
 				const tagPrefix = await getTagVersionPrefix(options);
-
 				await git.verifyTagDoesNotExistOnRemote(`${tagPrefix}${newVersion}`);
 			}
 		}
 	];
-
 	return new Listr(tasks);
 };
+
+export default prerequisiteTasks;

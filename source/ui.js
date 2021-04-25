@@ -1,16 +1,16 @@
-'use strict';
-const inquirer = require('inquirer');
-const chalk = require('chalk');
-const githubUrlFromGit = require('github-url-from-git');
-const {htmlEscape} = require('escape-goat');
-const isScoped = require('is-scoped');
-const isInteractive = require('is-interactive');
-const util = require('./util');
-const git = require('./git-util');
-const {prereleaseTags, checkIgnoreStrategy, getRegistryUrl, isExternalRegistry} = require('./npm/util');
-const version = require('./version');
-const prettyVersionDiff = require('./pretty-version-diff');
+import * as inquirer from 'inquirer';
+import chalk from 'chalk';
+import githubUrlFromGit from 'github-url-from-git';
+import * as escapeGoat from 'escape-goat';
+import isScoped from 'is-scoped';
+import isInteractive from 'is-interactive';
+import * as util from './util';
+import * as git from './git-util';
+import {prereleaseTags, checkIgnoreStrategy, getRegistryUrl, isExternalRegistry} from './npm/util';
+import version from './version';
+import prettyVersionDiff from './pretty-version-diff';
 
+const {htmlEscape} = escapeGoat;
 const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch) => {
 	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
 	if (!revision) {
@@ -18,18 +18,16 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 	}
 
 	const log = await git.commitLogFromRevision(revision);
-
 	if (!log) {
 		return {
 			hasCommits: false,
 			hasUnreleasedCommits: false,
-			releaseNotes: () => {}
+			releaseNotes: () => { }
 		};
 	}
 
 	let hasUnreleasedCommits = false;
 	let commitRangeText = `${revision}...${releaseBranch}`;
-
 	let commits = log.split('\n')
 		.map(commit => {
 			const splitIndex = commit.lastIndexOf(' ');
@@ -38,14 +36,11 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 				id: commit.slice(splitIndex + 1)
 			};
 		});
-
 	if (!fromLatestTag) {
 		const latestTag = await git.latestTag();
-
 		// Version bump commit created by np, following the semver specification.
 		const versionBumpCommitName = latestTag.match(/v\d+\.\d+\.\d+/) && latestTag.slice(1); // Name v1.0.1 becomes 1.0.1
 		const versionBumpCommitIndex = commits.findIndex(commit => commit.message === versionBumpCommitName);
-
 		if (versionBumpCommitIndex > 0) {
 			commitRangeText = `${revision}...${latestTag}`;
 			hasUnreleasedCommits = true;
@@ -64,14 +59,9 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 		const commitId = util.linkifyCommit(repoUrl, commit.id);
 		return `- ${commitMessage}  ${commitId}`;
 	}).join('\n');
-
-	const releaseNotes = nextTag => commits.map(commit =>
-		`- ${htmlEscape(commit.message)}  ${commit.id}`
-	).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
-
+	const releaseNotes = nextTag => commits.map(commit => `- ${htmlEscape(commit.message)}  ${commit.id}`).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText);
 	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
-
 	return {
 		hasCommits: true,
 		hasUnreleasedCommits,
@@ -105,21 +95,18 @@ const checkNewFiles = async pkg => {
 		message: `${messages.join('\n')}\nContinue?`,
 		default: false
 	}]);
-
 	return answers.confirm;
 };
 
-module.exports = async (options, pkg) => {
+const ui = async (options, pkg) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 	const pkgManager = options.yarn ? 'yarn' : 'npm';
 	const registryUrl = await getRegistryUrl(pkgManager, pkg);
 	const releaseBranch = options.branch;
-
 	if (options.runPublish) {
 		checkIgnoreStrategy(pkg);
-
 		const answerIgnoredFiles = await checkNewFiles(pkg);
 		if (!answerIgnoredFiles) {
 			return {
@@ -180,7 +167,6 @@ module.exports = async (options, pkg) => {
 			when: answers => options.runPublish && (version.isPrereleaseOrIncrement(answers.customVersion) || version.isPrereleaseOrIncrement(answers.version)) && !options.tag,
 			choices: async () => {
 				const existingPrereleaseTags = await prereleaseTags(pkg.name);
-
 				return [
 					...existingPrereleaseTags,
 					new inquirer.Separator(),
@@ -216,10 +202,8 @@ module.exports = async (options, pkg) => {
 			default: false
 		}
 	];
-
 	const useLatestTag = !options.releaseDraftOnly;
 	const {hasCommits, hasUnreleasedCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
-
 	if (hasUnreleasedCommits && options.releaseDraftOnly) {
 		const answers = await inquirer.prompt([{
 			type: 'confirm',
@@ -227,7 +211,6 @@ module.exports = async (options, pkg) => {
 			message: 'Unreleased commits found. They won\'t be included in the release draft. Continue?',
 			default: false
 		}]);
-
 		if (!answers.confirm) {
 			return {
 				...options,
@@ -252,7 +235,6 @@ module.exports = async (options, pkg) => {
 			message: 'No commits found since previous release, continue?',
 			default: false
 		}]);
-
 		if (!answers.confirm) {
 			return {
 				...options,
@@ -269,7 +251,6 @@ module.exports = async (options, pkg) => {
 			message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(pkg.name)}. Do you want to try and publish it anyway?`,
 			default: false
 		}]);
-
 		if (!answers.confirm) {
 			return {
 				...options,
@@ -279,7 +260,6 @@ module.exports = async (options, pkg) => {
 	}
 
 	const answers = await inquirer.prompt(prompts);
-
 	return {
 		...options,
 		version: answers.version || answers.customVersion || options.version,
@@ -289,3 +269,5 @@ module.exports = async (options, pkg) => {
 		releaseNotes
 	};
 };
+
+export default ui;

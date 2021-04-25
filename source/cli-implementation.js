@@ -1,18 +1,17 @@
 #!/usr/bin/env node
-'use strict';
-// eslint-disable-next-line import/no-unassigned-import
-require('symbol-observable'); // Important: This needs to be first to prevent weird Observable incompatibilities
-const logSymbols = require('log-symbols');
-const meow = require('meow');
-const updateNotifier = require('update-notifier');
-const hasYarn = require('has-yarn');
-const config = require('./config');
-const git = require('./git-util');
-const {isPackageNameAvailable} = require('./npm/util');
-const version = require('./version');
-const util = require('./util');
-const ui = require('./ui');
-const np = require('.');
+
+import 'symbol-observable';
+import logSymbols from 'log-symbols';
+import meow from 'meow';
+import updateNotifier from 'update-notifier';
+import hasYarn from 'has-yarn';
+import config from './config';
+import * as git from './git-util';
+import {isPackageNameAvailable} from './npm/util';
+import version from './version';
+import * as util from './util';
+import ui from './ui';
+import np from '.';
 
 const cli = meow(`
 	Usage
@@ -94,12 +93,9 @@ const cli = meow(`
 		}
 	}
 });
-
 updateNotifier({pkg: cli.pkg}).notify();
-
 (async () => {
 	const pkg = util.readPkg();
-
 	const defaultFlags = {
 		cleanup: true,
 		tests: true,
@@ -108,30 +104,24 @@ updateNotifier({pkg: cli.pkg}).notify();
 		yarn: hasYarn(),
 		'2fa': true
 	};
-
 	const localConfig = await config();
-
 	const flags = {
 		...defaultFlags,
 		...localConfig,
 		...cli.flags
 	};
-
 	// Workaround for unintended auto-casing behavior from `meow`.
 	if ('2Fa' in flags) {
 		flags['2fa'] = flags['2Fa'];
 	}
 
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !pkg.private;
-
 	const availability = flags.publish ? await isPackageNameAvailable(pkg) : {
 		isAvailable: false,
 		isUnknown: false
 	};
-
 	// Use current (latest) version when 'releaseDraftOnly', otherwise use the first argument.
 	const version = flags.releaseDraftOnly ? pkg.version : (cli.input.length > 0 ? cli.input[0] : false);
-
 	const branch = flags.branch || await git.defaultBranch();
 	const options = await ui({
 		...flags,
@@ -140,14 +130,12 @@ updateNotifier({pkg: cli.pkg}).notify();
 		runPublish,
 		branch
 	}, pkg);
-
 	if (!options.confirm) {
 		process.exit(0);
 	}
 
 	console.log(); // Prints a newline for readability
 	const newPkg = await np(options.version, options);
-
 	if (options.preview || options.releaseDraftOnly) {
 		return;
 	}
