@@ -2,7 +2,7 @@
 import {debuglog} from 'util';
 import importLocal from 'import-local';
 import isInstalledGlobally from 'is-installed-globally';
-import './cli-implementation';
+import './cli-implementation.js';
 
 const log = debuglog('np');
 // Prefer the local installation

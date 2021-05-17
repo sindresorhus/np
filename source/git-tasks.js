@@ -1,5 +1,5 @@
 import Listr from 'listr';
-import * as git from './git-util';
+import * as git from './git-util.js';
 
 const gitTasks = options => {
 	const tasks = [

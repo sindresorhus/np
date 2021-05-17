@@ -4,15 +4,27 @@ import githubUrlFromGit from 'github-url-from-git';
 import * as escapeGoat from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
-import * as util from './util';
-import * as git from './git-util';
-import {prereleaseTags, checkIgnoreStrategy, getRegistryUrl, isExternalRegistry} from './npm/util';
-import version from './version';
-import prettyVersionDiff from './pretty-version-diff';
+import * as util from './util.js';
+import * as git from './git-util.js';
+import {
+	prereleaseTags,
+	checkIgnoreStrategy,
+	getRegistryUrl,
+	isExternalRegistry
+} from './npm/util.js';
+import version from './version.js';
+import prettyVersionDiff from './pretty-version-diff.js';
 
 const {htmlEscape} = escapeGoat;
-const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch) => {
-	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
+const printCommitLog = async (
+	repoUrl,
+	registryUrl,
+	fromLatestTag,
+	releaseBranch
+) => {
+	const revision = fromLatestTag ?
+		await git.latestTagOrFirstCommit() :
+		await git.previousTagOrFirstCommit();
 	if (!revision) {
 		throw new Error('The package has not been published yet.');
 	}
@@ -22,25 +34,27 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 		return {
 			hasCommits: false,
 			hasUnreleasedCommits: false,
-			releaseNotes: () => { }
+			releaseNotes: () => {}
 		};
 	}
 
 	let hasUnreleasedCommits = false;
 	let commitRangeText = `${revision}...${releaseBranch}`;
-	let commits = log.split('\n')
-		.map(commit => {
-			const splitIndex = commit.lastIndexOf(' ');
-			return {
-				message: commit.slice(0, splitIndex),
-				id: commit.slice(splitIndex + 1)
-			};
-		});
+	let commits = log.split('\n').map(commit => {
+		const splitIndex = commit.lastIndexOf(' ');
+		return {
+			message: commit.slice(0, splitIndex),
+			id: commit.slice(splitIndex + 1)
+		};
+	});
 	if (!fromLatestTag) {
 		const latestTag = await git.latestTag();
 		// Version bump commit created by np, following the semver specification.
-		const versionBumpCommitName = latestTag.match(/v\d+\.\d+\.\d+/) && latestTag.slice(1); // Name v1.0.1 becomes 1.0.1
-		const versionBumpCommitIndex = commits.findIndex(commit => commit.message === versionBumpCommitName);
+		const versionBumpCommitName =
+			latestTag.match(/v\d+\.\d+\.\d+/) && latestTag.slice(1); // Name v1.0.1 becomes 1.0.1
+		const versionBumpCommitIndex = commits.findIndex(
+			commit => commit.message === versionBumpCommitName
+		);
 		if (versionBumpCommitIndex > 0) {
 			commitRangeText = `${revision}...${latestTag}`;
 			hasUnreleasedCommits = true;
@@ -54,14 +68,23 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 		commits = commits.slice(versionBumpCommitIndex + 1);
 	}
 
-	const history = commits.map(commit => {
-		const commitMessage = util.linkifyIssues(repoUrl, commit.message);
-		const commitId = util.linkifyCommit(repoUrl, commit.id);
-		return `- ${commitMessage}  ${commitId}`;
-	}).join('\n');
-	const releaseNotes = nextTag => commits.map(commit => `- ${htmlEscape(commit.message)}  ${commit.id}`).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
+	const history = commits
+		.map(commit => {
+			const commitMessage = util.linkifyIssues(repoUrl, commit.message);
+			const commitId = util.linkifyCommit(repoUrl, commit.id);
+			return `- ${commitMessage}  ${commitId}`;
+		})
+		.join('\n');
+	const releaseNotes = nextTag =>
+		commits
+			.map(commit => `- ${htmlEscape(commit.message)}  ${commit.id}`)
+			.join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText);
-	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
+	console.log(
+		`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold(
+			'Commit Range:'
+		)}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`
+	);
 	return {
 		hasCommits: true,
 		hasUnreleasedCommits,
@@ -71,17 +94,28 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 
 const checkNewFiles = async pkg => {
 	const newFiles = await util.getNewFiles(pkg);
-	if ((!newFiles.unpublished || newFiles.unpublished.length === 0) && (!newFiles.firstTime || newFiles.firstTime.length === 0)) {
+	if (
+		(!newFiles.unpublished || newFiles.unpublished.length === 0) &&
+		(!newFiles.firstTime || newFiles.firstTime.length === 0)
+	) {
 		return true;
 	}
 
 	const messages = [];
 	if (newFiles.unpublished.length > 0) {
-		messages.push(`The following new files will not be part of your published package:\n${chalk.reset(newFiles.unpublished.map(path => `- ${path}`).join('\n'))}`);
+		messages.push(
+			`The following new files will not be part of your published package:\n${chalk.reset(
+				newFiles.unpublished.map(path => `- ${path}`).join('\n')
+			)}`
+		);
 	}
 
 	if (newFiles.firstTime.length > 0) {
-		messages.push(`The following new files will be published the first time:\n${chalk.reset(newFiles.firstTime.map(path => `- ${path}`).join('\n'))}`);
+		messages.push(
+			`The following new files will be published the first time:\n${chalk.reset(
+				newFiles.firstTime.map(path => `- ${path}`).join('\n')
+			)}`
+		);
 	}
 
 	if (!isInteractive()) {
@@ -89,19 +123,22 @@ const checkNewFiles = async pkg => {
 		return true;
 	}
 
-	const answers = await inquirer.prompt([{
-		type: 'confirm',
-		name: 'confirm',
-		message: `${messages.join('\n')}\nContinue?`,
-		default: false
-	}]);
+	const answers = await inquirer.prompt([
+		{
+			type: 'confirm',
+			name: 'confirm',
+			message: `${messages.join('\n')}\nContinue?`,
+			default: false
+		}
+	]);
 	return answers.confirm;
 };
 
 const ui = async (options, pkg) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
-	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
+	const repoUrl =
+		pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 	const pkgManager = options.yarn ? 'yarn' : 'npm';
 	const registryUrl = await getRegistryUrl(pkgManager, pkg);
 	const releaseBranch = options.branch;
@@ -117,9 +154,17 @@ const ui = async (options, pkg) => {
 	}
 
 	if (options.releaseDraftOnly) {
-		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
+		console.log(
+			`\nCreate a release draft on GitHub for ${chalk.bold.magenta(
+				pkg.name
+			)} ${chalk.dim(`(current: ${oldVersion})`)}\n`
+		);
 	} else {
-		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
+		console.log(
+			`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(
+				`(current: ${oldVersion})`
+			)}\n`
+		);
 	}
 
 	const prompts = [
@@ -128,26 +173,30 @@ const ui = async (options, pkg) => {
 			name: 'version',
 			message: 'Select semver increment or specify new version',
 			pageSize: version.SEMVER_INCREMENTS.length + 2,
-			choices: version.SEMVER_INCREMENTS
-				.map(inc => ({
-					name: `${inc} 	${prettyVersionDiff(oldVersion, inc)}`,
-					value: inc
-				}))
-				.concat([
-					new inquirer.Separator(),
-					{
-						name: 'Other (specify)',
-						value: null
-					}
-				]),
-			filter: input => version.isValidInput(input) ? version(oldVersion).getNewVersionFrom(input) : input
+			choices: version.SEMVER_INCREMENTS.map(inc => ({
+				name: `${inc} 	${prettyVersionDiff(oldVersion, inc)}`,
+				value: inc
+			})).concat([
+				new inquirer.Separator(),
+				{
+					name: 'Other (specify)',
+					value: null
+				}
+			]),
+			filter: input =>
+				version.isValidInput(input) ?
+					version(oldVersion).getNewVersionFrom(input) :
+					input
 		},
 		{
 			type: 'input',
 			name: 'customVersion',
 			message: 'Version',
 			when: answers => !answers.version,
-			filter: input => version.isValidInput(input) ? version(pkg.version).getNewVersionFrom(input) : input,
+			filter: input =>
+				version.isValidInput(input) ?
+					version(pkg.version).getNewVersionFrom(input) :
+					input,
 			validate: input => {
 				if (!version.isValidInput(input)) {
 					return 'Please specify a valid semver, for example, `1.2.3`. See https://semver.org';
@@ -164,7 +213,11 @@ const ui = async (options, pkg) => {
 			type: 'list',
 			name: 'tag',
 			message: 'How should this pre-release version be tagged in npm?',
-			when: answers => options.runPublish && (version.isPrereleaseOrIncrement(answers.customVersion) || version.isPrereleaseOrIncrement(answers.version)) && !options.tag,
+			when: answers =>
+				options.runPublish &&
+				(version.isPrereleaseOrIncrement(answers.customVersion) ||
+					version.isPrereleaseOrIncrement(answers.version)) &&
+				!options.tag,
 			choices: async () => {
 				const existingPrereleaseTags = await prereleaseTags(pkg.name);
 				return [
@@ -181,7 +234,12 @@ const ui = async (options, pkg) => {
 			type: 'input',
 			name: 'customTag',
 			message: 'Tag',
-			when: answers => options.runPublish && (version.isPrereleaseOrIncrement(answers.customVersion) || version.isPrereleaseOrIncrement(answers.version)) && !options.tag && !answers.tag,
+			when: answers =>
+				options.runPublish &&
+				(version.isPrereleaseOrIncrement(answers.customVersion) ||
+					version.isPrereleaseOrIncrement(answers.version)) &&
+				!options.tag &&
+				!answers.tag,
 			validate: input => {
 				if (input.length === 0) {
 					return 'Please specify a tag, for example, `next`.';
@@ -197,20 +255,33 @@ const ui = async (options, pkg) => {
 		{
 			type: 'confirm',
 			name: 'publishScoped',
-			when: isScoped(pkg.name) && options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted') && !isExternalRegistry(pkg),
-			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
+			when:
+				isScoped(pkg.name) &&
+				options.availability.isAvailable &&
+				!options.availability.isUnknown &&
+				options.runPublish &&
+				pkg.publishConfig &&
+				pkg.publishConfig.access !== 'restricted' &&
+				!isExternalRegistry(pkg),
+			message: `This scoped repo ${chalk.bold.magenta(
+				pkg.name
+			)} hasn't been published. Do you want to publish it publicly?`,
 			default: false
 		}
 	];
 	const useLatestTag = !options.releaseDraftOnly;
-	const {hasCommits, hasUnreleasedCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
+	const {hasCommits, hasUnreleasedCommits, releaseNotes} =
+		await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
 	if (hasUnreleasedCommits && options.releaseDraftOnly) {
-		const answers = await inquirer.prompt([{
-			type: 'confirm',
-			name: 'confirm',
-			message: 'Unreleased commits found. They won\'t be included in the release draft. Continue?',
-			default: false
-		}]);
+		const answers = await inquirer.prompt([
+			{
+				type: 'confirm',
+				name: 'confirm',
+				message:
+					'Unreleased commits found. They won\'t be included in the release draft. Continue?',
+				default: false
+			}
+		]);
 		if (!answers.confirm) {
 			return {
 				...options,
@@ -229,12 +300,14 @@ const ui = async (options, pkg) => {
 	}
 
 	if (!hasCommits) {
-		const answers = await inquirer.prompt([{
-			type: 'confirm',
-			name: 'confirm',
-			message: 'No commits found since previous release, continue?',
-			default: false
-		}]);
+		const answers = await inquirer.prompt([
+			{
+				type: 'confirm',
+				name: 'confirm',
+				message: 'No commits found since previous release, continue?',
+				default: false
+			}
+		]);
 		if (!answers.confirm) {
 			return {
 				...options,
@@ -244,13 +317,17 @@ const ui = async (options, pkg) => {
 	}
 
 	if (options.availability.isUnknown) {
-		const answers = await inquirer.prompt([{
-			type: 'confirm',
-			name: 'confirm',
-			when: isScoped(pkg.name) && options.runPublish,
-			message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(pkg.name)}. Do you want to try and publish it anyway?`,
-			default: false
-		}]);
+		const answers = await inquirer.prompt([
+			{
+				type: 'confirm',
+				name: 'confirm',
+				when: isScoped(pkg.name) && options.runPublish,
+				message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(
+					pkg.name
+				)}. Do you want to try and publish it anyway?`,
+				default: false
+			}
+		]);
 		if (!answers.confirm) {
 			return {
 				...options,

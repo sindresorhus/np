@@ -1,12 +1,15 @@
-
 import execa from 'execa';
 import escapeStringRegexp from 'escape-string-regexp';
 import ignoreWalker from 'ignore-walk';
 import pkgDir from 'pkg-dir';
-import {verifyRequirementSatisfied} from './version';
+import {verifyRequirementSatisfied} from './version.js';
 
 const firstCommit = async () => {
-	const {stdout} = await execa('git', ['rev-list', '--max-parents=0', 'HEAD']);
+	const {stdout} = await execa('git', [
+		'rev-list',
+		'--max-parents=0',
+		'HEAD'
+	]);
 	return stdout;
 };
 
@@ -37,12 +40,21 @@ export const latestTag = async () => {
 
 export const newFilesSinceLastRelease = async () => {
 	try {
-		const {stdout} = await execa('git', ['diff', '--name-only', '--diff-filter=A', await this.latestTag(), 'HEAD']);
+		const {stdout} = await execa('git', [
+			'diff',
+			'--name-only',
+			'--diff-filter=A',
+			await this.latestTag(),
+			'HEAD'
+		]);
 		if (stdout.trim().length === 0) {
 			return [];
 		}
 
-		const result = stdout.trim().split('\n').map(row => row.trim());
+		const result = stdout
+			.trim()
+			.split('\n')
+			.map(row => row.trim());
 		return result;
 	} catch {
 		// Get all files under version control
@@ -88,9 +100,18 @@ export const latestTagOrFirstCommit = async () => {
 };
 
 export const hasUpstream = async () => {
-	const escapedCurrentBranch = escapeStringRegexp(await exports.currentBranch());
-	const {stdout} = await execa('git', ['status', '--short', '--branch', '--porcelain']);
-	return new RegExp(String.raw`^## ${escapedCurrentBranch}\.\.\..+\/${escapedCurrentBranch}`).test(stdout);
+	const escapedCurrentBranch = escapeStringRegexp(
+		await exports.currentBranch()
+	);
+	const {stdout} = await execa('git', [
+		'status',
+		'--short',
+		'--branch',
+		'--porcelain'
+	]);
+	return new RegExp(
+		String.raw`^## ${escapedCurrentBranch}\.\.\..+\/${escapedCurrentBranch}`
+	).test(stdout);
 };
 
 export const currentBranch = async () => {
@@ -101,7 +122,9 @@ export const currentBranch = async () => {
 export const verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
 	const currentBranch = await exports.currentBranch();
 	if (currentBranch !== releaseBranch) {
-		throw new Error(`Not on \`${releaseBranch}\` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
+		throw new Error(
+			`Not on \`${releaseBranch}\` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`
+		);
 	}
 };
 
@@ -142,10 +165,16 @@ export const verifyWorkingTreeIsClean = async () => {
 
 export const isRemoteHistoryClean = async () => {
 	let history;
-	try { // Gracefully handle no remote set up.
-		const {stdout} = await execa('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']);
+	try {
+		// Gracefully handle no remote set up.
+		const {stdout} = await execa('git', [
+			'rev-list',
+			'--count',
+			'--left-only',
+			'@{u}...HEAD'
+		]);
 		history = stdout;
-	} catch { }
+	} catch {}
 
 	if (history && history !== '0') {
 		return false;
@@ -174,7 +203,12 @@ export const fetch = async () => {
 
 export const tagExistsOnRemote = async tagName => {
 	try {
-		const {stdout: revInfo} = await execa('git', ['rev-parse', '--quiet', '--verify', `refs/tags/${tagName}`]);
+		const {stdout: revInfo} = await execa('git', [
+			'rev-parse',
+			'--quiet',
+			'--verify',
+			`refs/tags/${tagName}`
+		]);
 		if (revInfo) {
 			return true;
 		}
@@ -199,7 +233,9 @@ export const defaultBranch = async () => {
 		}
 	}
 
-	throw new Error('Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.');
+	throw new Error(
+		'Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.'
+	);
 };
 
 export const verifyTagDoesNotExistOnRemote = async tagName => {
@@ -209,7 +245,11 @@ export const verifyTagDoesNotExistOnRemote = async tagName => {
 };
 
 export const commitLogFromRevision = async revision => {
-	const {stdout} = await execa('git', ['log', '--format=%s %h', `${revision}..HEAD`]);
+	const {stdout} = await execa('git', [
+		'log',
+		'--format=%s %h',
+		`${revision}..HEAD`
+	]);
 	return stdout;
 };
 
@@ -220,7 +260,11 @@ export const pushGraceful = async remoteIsOnGitHub => {
 		if (remoteIsOnGitHub && error.stderr && error.stderr.includes('GH006')) {
 			// Try to push tags only, when commits can't be pushed due to branch protection
 			await execa('git', ['push', '--tags']);
-			return {pushed: 'tags', reason: 'Branch protection: np can`t push the commits. Push them manually.'};
+			return {
+				pushed: 'tags',
+				reason:
+					'Branch protection: np can`t push the commits. Push them manually.'
+			};
 		}
 
 		throw error;

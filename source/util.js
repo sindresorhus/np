@@ -5,14 +5,16 @@ import execa from 'execa';
 import pMemoize from 'p-memoize';
 import ow$0 from 'ow';
 import pkgDir from 'pkg-dir';
-import * as gitUtil from './git-util';
-import * as npmUtil from './npm/util';
+import * as gitUtil from './git-util.js';
+import * as npmUtil from './npm/util.js';
 
 const {default: ow} = ow$0;
 export const readPkg = packagePath => {
 	packagePath = packagePath ? pkgDir.sync(packagePath) : pkgDir.sync();
 	if (!packagePath) {
-		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
+		throw new Error(
+			'No `package.json` found. Make sure the current directory is a valid package.'
+		);
 	}
 
 	const {packageJson} = readPkgUp.sync({
@@ -56,11 +58,19 @@ export const getTagVersionPrefix = pMemoize(async options => {
 	ow(options, ow.object.hasKeys('yarn'));
 	try {
 		if (options.yarn) {
-			const {stdout} = await execa('yarn', ['config', 'get', 'version-tag-prefix']);
+			const {stdout} = await execa('yarn', [
+				'config',
+				'get',
+				'version-tag-prefix'
+			]);
 			return stdout;
 		}
 
-		const {stdout} = await execa('npm', ['config', 'get', 'tag-version-prefix']);
+		const {stdout} = await execa('npm', [
+			'config',
+			'get',
+			'tag-version-prefix'
+		]);
 		return stdout;
 	} catch {
 		return 'v';
@@ -68,7 +78,10 @@ export const getTagVersionPrefix = pMemoize(async options => {
 });
 export const getNewFiles = async pkg => {
 	const listNewFiles = await gitUtil.newFilesSinceLastRelease();
-	return {unpublished: await npmUtil.getNewAndUnpublishedFiles(pkg, listNewFiles), firstTime: await npmUtil.getFirstTimePublishedFiles(pkg, listNewFiles)};
+	return {
+		unpublished: await npmUtil.getNewAndUnpublishedFiles(pkg, listNewFiles),
+		firstTime: await npmUtil.getFirstTimePublishedFiles(pkg, listNewFiles)
+	};
 };
 
 export const getPreReleasePrefix = pMemoize(async options => {

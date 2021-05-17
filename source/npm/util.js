@@ -8,7 +8,7 @@ import chalk from 'chalk';
 import pkgDir from 'pkg-dir';
 import ignoreWalker from 'ignore-walk';
 import minimatch from 'minimatch';
-import {verifyRequirementSatisfied} from '../version';
+import {verifyRequirementSatisfied} from '../version.js';
 
 const {default: ow} = ow$0;
 // According to https://docs.npmjs.com/files/package.json#files
@@ -43,12 +43,19 @@ async function getFilesIgnoredByDotnpmignore(pkg, fileList) {
 		path: pkgDir.sync(),
 		ignoreFiles: ['.npmignore']
 	});
-	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(allowList, pkg.directories), {matchBase: true, dot: true}));
+	return fileList.filter(
+		minimatch.filter(getIgnoredFilesGlob(allowList, pkg.directories), {
+			matchBase: true,
+			dot: true
+		})
+	);
 }
 
 function filterFileList(globArray, fileList) {
 	const globString = globArray.length > 1 ? `{${globArray}}` : globArray[0];
-	return fileList.filter(minimatch.filter(globString, {matchBase: true, dot: true})); // eslint-disable-line unicorn/no-fn-reference-in-iterator
+	return fileList.filter(
+		minimatch.filter(globString, {matchBase: true, dot: true})
+	); // eslint-disable-line unicorn/no-fn-reference-in-iterator
 }
 
 async function getFilesIncludedByDotnpmignore(pkg, fileList) {
@@ -67,11 +74,21 @@ function getFilesNotIncludedInFilesProperty(pkg, fileList) {
 			if (fs.statSync(path.resolve(rootDir, glob)).isDirectory()) {
 				globArrayForFilesAndDirectories.push(`${glob}/**/*`);
 			}
-		} catch { }
+		} catch {}
 	}
 
-	const result = fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayForFilesAndDirectories, pkg.directories), {matchBase: true, dot: true}));
-	return result.filter(minimatch.filter(getDefaultIncludedFilesGlob(pkg.main), {nocase: true, matchBase: true}));
+	const result = fileList.filter(
+		minimatch.filter(
+			getIgnoredFilesGlob(globArrayForFilesAndDirectories, pkg.directories),
+			{matchBase: true, dot: true}
+		)
+	);
+	return result.filter(
+		minimatch.filter(getDefaultIncludedFilesGlob(pkg.main), {
+			nocase: true,
+			matchBase: true
+		})
+	);
 }
 
 function getFilesIncludedInFilesProperty(pkg, fileList) {
@@ -82,7 +99,7 @@ function getFilesIncludedInFilesProperty(pkg, fileList) {
 			if (fs.statSync(path.resolve(rootDir, glob)).isDirectory()) {
 				globArrayForFilesAndDirectories.push(`${glob}/**/*`);
 			}
-		} catch { }
+		} catch {}
 	}
 
 	return filterFileList(globArrayForFilesAndDirectories, fileList);
@@ -113,24 +130,34 @@ function getIgnoredFilesGlob(globArrayFromFilesProperty, packageDirectories) {
 	let testDirectoriesGlob = '';
 	if (packageDirectories && Array.isArray(packageDirectories.test)) {
 		testDirectoriesGlob = packageDirectories.test.join(',');
-	} else if (packageDirectories && typeof packageDirectories.test === 'string') {
+	} else if (
+		packageDirectories &&
+		typeof packageDirectories.test === 'string'
+	) {
 		testDirectoriesGlob = packageDirectories.test;
 	} else {
 		// Fallback to `test` directory
 		testDirectoriesGlob = 'test/**/*';
 	}
 
-	return `!{${globArrayFromFilesProperty.join(',')},${filesIgnoredByDefault.join(',')},${testDirectoriesGlob}}`;
+	return `!{${globArrayFromFilesProperty.join(
+		','
+	)},${filesIgnoredByDefault.join(',')},${testDirectoriesGlob}}`;
 }
 
-export const checkConnection = () => pTimeout((async () => {
-	try {
-		await execa('npm', ['ping']);
-		return true;
-	} catch {
-		throw new Error('Connection to npm registry failed');
-	}
-})(), 15000, 'Connection to npm registry timed out');
+export const checkConnection = () =>
+	pTimeout(
+		(async () => {
+			try {
+				await execa('npm', ['ping']);
+				return true;
+			} catch {
+				throw new Error('Connection to npm registry failed');
+			}
+		})(),
+		15000,
+		'Connection to npm registry timed out'
+	);
 export const username = async ({externalRegistry}) => {
 	const args = ['whoami'];
 	if (externalRegistry) {
@@ -141,9 +168,11 @@ export const username = async ({externalRegistry}) => {
 		const {stdout} = await execa('npm', args);
 		return stdout;
 	} catch (error) {
-		throw new Error(/ENEEDAUTH/.test(error.stderr) ?
-			'You must be logged in. Use `npm login` and try again.' :
-			'Authentication error. Use `npm whoami` to troubleshoot.');
+		throw new Error(
+			/ENEEDAUTH/.test(error.stderr) ?
+				'You must be logged in. Use `npm login` and try again.' :
+				'Authentication error. Use `npm whoami` to troubleshoot.'
+		);
 	}
 };
 
@@ -172,9 +201,13 @@ export const prereleaseTags = async packageName => {
 	ow(packageName, ow.string);
 	let tags = [];
 	try {
-		const {stdout} = await execa('npm', ['view', '--json', packageName, 'dist-tags']);
-		tags = Object.keys(JSON.parse(stdout))
-			.filter(tag => tag !== 'latest');
+		const {stdout} = await execa('npm', [
+			'view',
+			'--json',
+			packageName,
+			'dist-tags'
+		]);
+		tags = Object.keys(JSON.parse(stdout)).filter(tag => tag !== 'latest');
 	} catch (error) {
 		if (((JSON.parse(error.stdout) || {}).error || {}).code !== 'E404') {
 			throw error;
@@ -201,7 +234,7 @@ export const isPackageNameAvailable = async pkg => {
 	}
 
 	try {
-		availability.isAvailable = await npmName(...args) || false;
+		availability.isAvailable = (await npmName(...args)) || false;
 	} catch {
 		availability.isUnknown = true;
 	}
@@ -209,7 +242,9 @@ export const isPackageNameAvailable = async pkg => {
 	return availability;
 };
 
-export const isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
+export const isExternalRegistry = pkg =>
+	typeof pkg.publishConfig === 'object' &&
+	typeof pkg.publishConfig.registry === 'string';
 export const version = async () => {
 	const {stdout} = await execa('npm', ['--version']);
 	return stdout;
@@ -223,7 +258,13 @@ export const verifyRecentNpmVersion = async () => {
 export const checkIgnoreStrategy = ({files}) => {
 	if (!files && !npmignoreExistsInPackageRootDir()) {
 		console.log(`
-		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
+		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan(
+	'files'
+)} field specified in ${chalk.bold.magenta(
+	'package.json'
+)} nor is a ${chalk.bold.magenta(
+	'.npmignore'
+)} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
 		`);
 	}
 };
@@ -248,7 +289,19 @@ export const getFirstTimePublishedFiles = async (pkg, newFiles = []) => {
 		result = newFiles;
 	}
 
-	return result.filter(minimatch.filter(`!{${filesIgnoredByDefault}}`, {matchBase: true, dot: true})).filter(minimatch.filter(getDefaultIncludedFilesGlob(pkg.main), {nocase: true, matchBase: true}));
+	return result
+		.filter(
+			minimatch.filter(`!{${filesIgnoredByDefault}}`, {
+				matchBase: true,
+				dot: true
+			})
+		)
+		.filter(
+			minimatch.filter(getDefaultIncludedFilesGlob(pkg.main), {
+				nocase: true,
+				matchBase: true
+			})
+		);
 };
 
 export const getRegistryUrl = async (pkgManager, pkg) => {

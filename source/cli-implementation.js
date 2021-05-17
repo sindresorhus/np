@@ -5,15 +5,16 @@ import logSymbols from 'log-symbols';
 import meow from 'meow';
 import updateNotifier from 'update-notifier';
 import hasYarn from 'has-yarn';
-import config from './config';
-import * as git from './git-util';
-import {isPackageNameAvailable} from './npm/util';
-import version from './version';
-import * as util from './util';
-import ui from './ui';
+import config from './config.js';
+import * as git from './git-util.js';
+import {isPackageNameAvailable} from './npm/util.js';
+import version from './version.js';
+import * as util from './util.js';
+import ui from './ui.js';
 import np from '.';
 
-const cli = meow(`
+const cli = meow(
+	`
 	Usage
 	  $ np <version>
 
@@ -43,56 +44,58 @@ const cli = meow(`
 	  $ np 1.0.2
 	  $ np 1.0.2-beta.3 --tag=beta
 	  $ np 1.0.2-beta.3 --tag=beta --contents=dist
-`, {
-	booleanDefault: undefined,
-	flags: {
-		anyBranch: {
-			type: 'boolean'
-		},
-		branch: {
-			type: 'string'
-		},
-		cleanup: {
-			type: 'boolean'
-		},
-		tests: {
-			type: 'boolean'
-		},
-		yolo: {
-			type: 'boolean'
-		},
-		publish: {
-			type: 'boolean'
-		},
-		releaseDraft: {
-			type: 'boolean'
-		},
-		releaseDraftOnly: {
-			type: 'boolean'
-		},
-		tag: {
-			type: 'string'
-		},
-		yarn: {
-			type: 'boolean'
-		},
-		contents: {
-			type: 'string'
-		},
-		preview: {
-			type: 'boolean'
-		},
-		testScript: {
-			type: 'string'
-		},
-		'2fa': {
-			type: 'boolean'
-		},
-		message: {
-			type: 'string'
+`,
+	{
+		booleanDefault: undefined,
+		flags: {
+			anyBranch: {
+				type: 'boolean'
+			},
+			branch: {
+				type: 'string'
+			},
+			cleanup: {
+				type: 'boolean'
+			},
+			tests: {
+				type: 'boolean'
+			},
+			yolo: {
+				type: 'boolean'
+			},
+			publish: {
+				type: 'boolean'
+			},
+			releaseDraft: {
+				type: 'boolean'
+			},
+			releaseDraftOnly: {
+				type: 'boolean'
+			},
+			tag: {
+				type: 'string'
+			},
+			yarn: {
+				type: 'boolean'
+			},
+			contents: {
+				type: 'string'
+			},
+			preview: {
+				type: 'boolean'
+			},
+			testScript: {
+				type: 'string'
+			},
+			'2fa': {
+				type: 'boolean'
+			},
+			message: {
+				type: 'string'
+			}
 		}
 	}
-});
+);
 updateNotifier({pkg: cli.pkg}).notify();
 (async () => {
 	const pkg = util.readPkg();
@@ -116,20 +119,29 @@ updateNotifier({pkg: cli.pkg}).notify();
 	}
 
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !pkg.private;
-	const availability = flags.publish ? await isPackageNameAvailable(pkg) : {
-		isAvailable: false,
-		isUnknown: false
-	};
+	const availability = flags.publish ?
+		await isPackageNameAvailable(pkg) :
+		{
+			isAvailable: false,
+			isUnknown: false
+		  };
 	// Use current (latest) version when 'releaseDraftOnly', otherwise use the first argument.
-	const version = flags.releaseDraftOnly ? pkg.version : (cli.input.length > 0 ? cli.input[0] : false);
-	const branch = flags.branch || await git.defaultBranch();
-	const options = await ui({
-		...flags,
-		availability,
-		version,
-		runPublish,
-		branch
-	}, pkg);
+	const version = flags.releaseDraftOnly ?
+		pkg.version :
+		(cli.input.length > 0 ?
+			cli.input[0] :
+			false);
+	const branch = flags.branch || (await git.defaultBranch());
+	const options = await ui(
+		{
+			...flags,
+			availability,
+			version,
+			runPublish,
+			branch
+		},
+		pkg
+	);
 	if (!options.confirm) {
 		process.exit(0);
 	}

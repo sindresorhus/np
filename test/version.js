@@ -1,12 +1,25 @@
 import test from 'ava';
-import version from '../source/version';
+import version from '../source/version.js';
 
 test('version.SEMVER_INCREMENTS', t => {
-	t.deepEqual(version.SEMVER_INCREMENTS, ['patch', 'minor', 'major', 'prepatch', 'preminor', 'premajor', 'prerelease']);
+	t.deepEqual(version.SEMVER_INCREMENTS, [
+		'patch',
+		'minor',
+		'major',
+		'prepatch',
+		'preminor',
+		'premajor',
+		'prerelease'
+	]);
 });
 
 test('version.PRERELEASE_VERSIONS', t => {
-	t.deepEqual(version.PRERELEASE_VERSIONS, ['prepatch', 'preminor', 'premajor', 'prerelease']);
+	t.deepEqual(version.PRERELEASE_VERSIONS, [
+		'prepatch',
+		'preminor',
+		'premajor',
+		'prerelease'
+	]);
 });
 
 test('version.isValidInput', t => {
@@ -49,7 +62,8 @@ test('version.isPrereleaseOrIncrement', t => {
 });
 
 test('version.getNewVersionFrom', t => {
-	const message = 'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease or a valid semver version.';
+	const message =
+		'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease or a valid semver version.';
 
 	t.throws(() => version('1.0.0').getNewVersionFrom('patchxxx'), message);
 	t.throws(() => version('1.0.0').getNewVersionFrom('1.0.0.0'), message);

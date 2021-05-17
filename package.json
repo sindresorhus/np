@@ -7,6 +7,7 @@
 	"type": "module",
 	"funding": "https://github.com/sindresorhus/np?sponsor=1",
 	"bin": "source/cli.js",
+	"exports": "./source/index.js",
 	"engines": {
 		"node": ">=12",
 		"npm": ">=6.8.0",
@@ -14,7 +15,7 @@
 		"yarn": ">=1.7.0"
 	},
 	"scripts": {
-		"test": "xo && FORCE_HYPERLINK=1 ava"
+		"test": "NODE_OPTIONS=--experimental-json-modules FORCE_HYPERLINK=1 ava"
 	},
 	"files": [
 		"source"
@@ -72,7 +73,7 @@
 		"update-notifier": "^5.0.1"
 	},
 	"devDependencies": {
-		"ava": "^2.3.0",
+		"ava": "3",
 		"execa_test_double": "^4.0.1",
 		"mockery": "^2.1.0",
 		"proxyquire": "^2.1.3",

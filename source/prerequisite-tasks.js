@@ -1,9 +1,9 @@
 import Listr from 'listr';
 import execa from 'execa';
-import version from './version';
-import * as git from './git-util';
-import * as npm from './npm/util';
-import {getTagVersionPrefix} from './util';
+import version from './version.js';
+import * as git from './git-util.js';
+import * as npm from './npm/util.js';
+import {getTagVersionPrefix} from './util.js';
 
 const prerequisiteTasks = (input, pkg, options) => {
 	const isExternalRegistry = npm.isExternalRegistry(pkg);
@@ -31,7 +31,9 @@ const prerequisiteTasks = (input, pkg, options) => {
 			enabled: () => process.env.NODE_ENV !== 'test' && !pkg.private,
 			task: async () => {
 				const username = await npm.username({
-					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false
+					externalRegistry: isExternalRegistry ?
+						pkg.publishConfig.registry :
+						false
 				});
 				const collaborators = await npm.collaborators(pkg);
 				if (!collaborators) {
@@ -41,7 +43,9 @@ const prerequisiteTasks = (input, pkg, options) => {
 				const json = JSON.parse(collaborators);
 				const permissions = json[username];
 				if (!permissions || !permissions.includes('write')) {
-					throw new Error('You do not have write permissions required to publish this package.');
+					throw new Error(
+						'You do not have write permissions required to publish this package.'
+					);
 				}
 			}
 		},
@@ -57,20 +61,32 @@ const prerequisiteTasks = (input, pkg, options) => {
 			title: 'Validate version',
 			task: () => {
 				if (!version.isValidInput(input)) {
-					throw new Error(`Version should be either ${version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`);
+					throw new Error(
+						`Version should be either ${version.SEMVER_INCREMENTS.join(
+							', '
+						)}, or a valid semver version.`
+					);
 				}
 
 				newVersion = version(pkg.version).getNewVersionFrom(input);
 				if (version(pkg.version).isLowerThanOrEqualTo(newVersion)) {
-					throw new Error(`New version \`${newVersion}\` should be higher than current version \`${pkg.version}\``);
+					throw new Error(
+						`New version \`${newVersion}\` should be higher than current version \`${pkg.version}\``
+					);
 				}
 			}
 		},
 		{
 			title: 'Check for pre-release version',
 			task: () => {
-				if (!pkg.private && version(newVersion).isPrerelease() && !options.tag) {
-					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
+				if (
+					!pkg.private &&
+					version(newVersion).isPrerelease() &&
+					!options.tag
+				) {
+					throw new Error(
+						'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag'
+					);
 				}
 			}
 		},

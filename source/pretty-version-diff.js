@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import version from './version';
+import version from './version.js';
 
 const prettyVersionDiff = (oldVersion, inc) => {
 	const newVersion = version(oldVersion).getNewVersionFrom(inc).split('.');
@@ -7,7 +7,7 @@ const prettyVersionDiff = (oldVersion, inc) => {
 	let firstVersionChange = false;
 	const output = [];
 	for (const [i, element] of newVersion.entries()) {
-		if ((element !== oldVersion[i] && !firstVersionChange)) {
+		if (element !== oldVersion[i] && !firstVersionChange) {
 			output.push(`${chalk.dim.cyan(element)}`);
 			firstVersionChange = true;
 		} else if (element.indexOf('-') >= 1) {

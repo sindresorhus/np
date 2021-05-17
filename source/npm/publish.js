@@ -1,7 +1,7 @@
 import execa from 'execa';
 import * as rxjs from 'rxjs';
-import {catchError} from 'rxjs/operators';
-import handleNpmError from './handle-npm-error';
+import {catchError} from 'rxjs/operators/index.js';
+import handleNpmError from './handle-npm-error.js';
 
 const {from} = rxjs;
 const getPackagePublishArguments = options => {
@@ -25,11 +25,17 @@ const getPackagePublishArguments = options => {
 	return args;
 };
 
-const pkgPublish = (pkgManager, options) => execa(pkgManager, getPackagePublishArguments(options));
-const publish = (context, pkgManager, task, options) => from(pkgPublish(pkgManager, options)).pipe(catchError(error => handleNpmError(error, task, otp => {
-	context.otp = otp;
-	return pkgPublish(pkgManager, {...options, otp});
-})));
+const pkgPublish = (pkgManager, options) =>
+	execa(pkgManager, getPackagePublishArguments(options));
+const publish = (context, pkgManager, task, options) =>
+	from(pkgPublish(pkgManager, options)).pipe(
+		catchError(error =>
+			handleNpmError(error, task, otp => {
+				context.otp = otp;
+				return pkgPublish(pkgManager, {...options, otp});
+			})
+		)
+	);
 
 export default publish;
 

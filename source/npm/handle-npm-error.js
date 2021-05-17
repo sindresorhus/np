@@ -1,7 +1,7 @@
 import listrInput from 'listr-input';
 import chalk from 'chalk';
 import * as rxjs from 'rxjs';
-import {catchError} from 'rxjs/operators';
+import {catchError} from 'rxjs/operators/index.js';
 const {throwError} = rxjs;
 const handleNpmError = (error, task, message, executor) => {
 	if (typeof message === 'function') {
@@ -10,7 +10,10 @@ const handleNpmError = (error, task, message, executor) => {
 	}
 
 	// `one-time pass` is for npm and `Two factor authentication` is for Yarn.
-	if (error.stderr.includes('one-time pass') || error.stdout.includes('Two factor authentication')) {
+	if (
+		error.stderr.includes('one-time pass') ||
+		error.stdout.includes('Two factor authentication')
+	) {
 		const {title} = task;
 		task.title = `${title} ${chalk.yellow('(waiting for input…)')}`;
 		return listrInput('Enter OTP:', {
@@ -19,7 +22,11 @@ const handleNpmError = (error, task, message, executor) => {
 				return executor(otp);
 			},
 			autoSubmit: value => value.length === 6
-		}).pipe(catchError(error => handleNpmError(error, task, 'OTP was incorrect, try again:', executor)));
+		}).pipe(
+			catchError(error =>
+				handleNpmError(error, task, 'OTP was incorrect, try again:', executor)
+			)
+		);
 	}
 
 	return throwError(error);

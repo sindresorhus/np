@@ -1,11 +1,11 @@
 import open from 'open';
 import newGithubReleaseUrl from 'new-github-release-url';
-import {getTagVersionPrefix, getPreReleasePrefix} from './util';
-import version from './version';
+import {getTagVersionPrefix, getPreReleasePrefix} from './util.js';
+import version from './version.js';
 
 const releaseTaskHelper = async (options, pkg) => {
 	const newVersion = version(pkg.version).getNewVersionFrom(options.version);
-	let tag = await getTagVersionPrefix(options) + newVersion;
+	let tag = (await getTagVersionPrefix(options)) + newVersion;
 	const isPreRelease = version(options.version).isPrerelease();
 	if (isPreRelease) {
 		tag += await getPreReleasePrefix(options);
