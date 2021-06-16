@@ -1,13 +1,14 @@
 import test from 'ava';
 import execaStub from 'execa_test_double';
 import mockery from 'mockery';
+import {Listr} from 'listr2';
 import {SilentRenderer} from './fixtures/listr-renderer';
 
 let testedModule;
 
 const run = async listr => {
-	listr.setRenderer(SilentRenderer);
-	await listr.run();
+	const listrStub = new Listr(listr.task, {renderer: SilentRenderer});
+	await listrStub.run();
 };
 
 test.before(() => {

@@ -1,7 +1,7 @@
 import test from 'ava';
 import execaStub from 'execa_test_double';
 import mockery from 'mockery';
-const {Listr} = require('listr2');
+import {Listr} from 'listr2';
 import version from '../source/version';
 import {SilentRenderer} from './fixtures/listr-renderer';
 
