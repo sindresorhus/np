@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const execa = require('execa');
 const del = require('del');
-const Listr = require('listr');
+const {Listr} = require('listr2');
 const split = require('split');
 const {merge, throwError} = require('rxjs');
 const {catchError, filter, finalize} = require('rxjs/operators');
@@ -34,6 +34,12 @@ const exec = (cmd, args) => {
 		streamToObservable(cp.stderr.pipe(split())),
 		cp
 	).pipe(filter(Boolean));
+};
+
+const execInteractive = (cmd, args, listrTaskWrapper) => {
+	const cp = execa(cmd, args, {all: true, stdin: 0});
+	cp.all.pipe(listrTaskWrapper.stdout());
+	return cp;
 };
 
 // eslint-disable-next-line default-param-last
@@ -115,7 +121,8 @@ module.exports = async (input = 'patch', options) => {
 			task: () => gitTasks(options)
 		}
 	], {
-		showSubtasks: false
+		showSubtasks: false,
+		rendererOptions: {lazy: true}
 	});
 
 	if (runCleanup) {
@@ -193,14 +200,14 @@ module.exports = async (input = 'patch', options) => {
 					return `${previewText}.`;
 				}
 			},
-			task: () => {
+			task: (_, taskWrapper) => {
 				const args = ['version', '--new-version', input];
 
 				if (options.message) {
 					args.push('--message', options.message);
 				}
 
-				return exec('yarn', args);
+				return execInteractive('yarn', args, taskWrapper);
 			}
 		},
 		{
@@ -217,14 +224,14 @@ module.exports = async (input = 'patch', options) => {
 					return `${previewText}.`;
 				}
 			},
-			task: () => {
+			task: (_, taskWrapper) => {
 				const args = ['version', input];
 
 				if (options.message) {
 					args.push('--message', options.message);
 				}
 
-				return exec('npm', args);
+				return execInteractive('npm', args, taskWrapper);
 			}
 		}
 	]);

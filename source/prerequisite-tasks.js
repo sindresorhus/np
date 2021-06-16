@@ -1,5 +1,5 @@
 'use strict';
-const Listr = require('listr');
+const {Listr} = require('listr2');
 const execa = require('execa');
 const version = require('./version');
 const git = require('./git-util');

@@ -1,5 +1,5 @@
 'use strict';
-const Listr = require('listr');
+const {Listr} = require('listr2');
 const git = require('./git-util');
 
 module.exports = options => {

@@ -49,7 +49,7 @@
 		"is-interactive": "^1.0.0",
 		"is-scoped": "^2.1.0",
 		"issue-regex": "^3.1.0",
-		"listr": "^0.14.3",
+		"listr2": "^3.10.0",
 		"listr-input": "^0.2.1",
 		"log-symbols": "^4.0.0",
 		"meow": "^8.1.0",
