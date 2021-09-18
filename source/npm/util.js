@@ -248,6 +248,8 @@ exports.getNewAndUnpublishedFiles = async (pkg, newFiles = []) => {
 	if (npmignoreExistsInPackageRootDir()) {
 		return getFilesIgnoredByDotnpmignore(pkg, newFiles);
 	}
+
+	return [];
 };
 
 exports.getFirstTimePublishedFiles = async (pkg, newFiles = []) => {
