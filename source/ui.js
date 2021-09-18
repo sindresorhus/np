@@ -86,11 +86,11 @@ const checkNewFiles = async pkg => {
 	}
 
 	const messages = [];
-	if (newFiles.unpublished.length > 0) {
+	if (newFiles.unpublished && newFiles.unpublished.length > 0) {
 		messages.push(`The following new files will not be part of your published package:\n${chalk.reset(newFiles.unpublished.map(path => `- ${path}`).join('\n'))}`);
 	}
 
-	if (newFiles.firstTime.length > 0) {
+	if (newFiles.firstTime && newFiles.firstTime.length > 0) {
 		messages.push(`The following new files will be published the first time:\n${chalk.reset(newFiles.firstTime.map(path => `- ${path}`).join('\n'))}`);
 	}
 
