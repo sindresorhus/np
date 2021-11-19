@@ -83,5 +83,10 @@
 			"!test/fixtures",
 			"!integration-test"
 		]
+	},
+	"xo": {
+		"ignores": [
+			"integration-test"
+		]
 	}
 }
