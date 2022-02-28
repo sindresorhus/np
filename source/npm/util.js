@@ -161,7 +161,7 @@ async function getFilesIgnoredByDotnpmignore(pkg, fileList) {
 	});
 	// We need to filter the allowlist because it includes too many files (including .git and node_modules)
 	// Ideally, we would filter some directories directly with `ignoreWalker`.
-	const filteredAllowList = allowList.filter(minimatch.filter(`!{${filesIgnoredByDefault.join(',')}}`, { matchBase: true, dot: true }))
+	const filteredAllowList = allowList.filter(minimatch.filter(`!{${filesIgnoredByDefault.join(',')}}`, {matchBase: true, dot: true}));
 	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(filteredAllowList, pkg.directories), {matchBase: true, dot: true}));
 }
 
