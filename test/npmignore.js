@@ -90,7 +90,7 @@ test('ignored files - ignore strategy is not used', async t => {
 				sync: () => path.resolve('test', 'fixtures')
 			}
 	});
-	t.is(await testedModule.getNewAndUnpublishedFiles({name: 'no ignore strategy'}, newFiles), undefined);
+	t.deepEqual(await testedModule.getNewAndUnpublishedFiles({name: 'no ignore strategy'}, newFiles), []);
 });
 
 test('first time published files using file-attribute in package.json with one file', async t => {

@@ -154,11 +154,15 @@ function npmignoreExistsInPackageRootDir() {
 	return fs.existsSync(path.resolve(rootDir, '.npmignore'));
 }
 
+function excludeGitAndNodeModulesPaths(singlePath) {
+	return !singlePath.startsWith('.git/') && !singlePath.startsWith('node_modules/');
+}
+
 async function getFilesIgnoredByDotnpmignore(pkg, fileList) {
-	const allowList = await ignoreWalker({
+	const allowList = (await ignoreWalker({
 		path: pkgDir.sync(),
 		ignoreFiles: ['.npmignore']
-	});
+	})).filter(singlePath => excludeGitAndNodeModulesPaths(singlePath));
 	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(allowList, pkg.directories), {matchBase: true, dot: true}));
 }
 
@@ -167,7 +171,7 @@ function filterFileList(globArray, fileList) {
 		return [];
 	}
 
-	const globString = globArray.length > 1 ? `{${globArray}}` : globArray[0];
+	const globString = globArray.length > 1 ? `{${globArray.filter(singlePath => excludeGitAndNodeModulesPaths(singlePath))}}` : globArray[0];
 	return fileList.filter(minimatch.filter(globString, {matchBase: true, dot: true})); // eslint-disable-line unicorn/no-fn-reference-in-iterator
 }
 
@@ -252,6 +256,8 @@ exports.getNewAndUnpublishedFiles = async (pkg, newFiles = []) => {
 	if (npmignoreExistsInPackageRootDir()) {
 		return getFilesIgnoredByDotnpmignore(pkg, newFiles);
 	}
+
+	return [];
 };
 
 exports.getFirstTimePublishedFiles = async (pkg, newFiles = []) => {
