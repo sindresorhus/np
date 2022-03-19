@@ -167,6 +167,10 @@ async function getFilesIgnoredByDotnpmignore(pkg, fileList) {
 }
 
 function filterFileList(globArray, fileList) {
+	if (globArray.length === 0) {
+		return [];
+	}
+
 	const globString = globArray.length > 1 ? `{${globArray.filter(singlePath => excludeGitAndNodeModulesPaths(singlePath))}}` : globArray[0];
 	return fileList.filter(minimatch.filter(globString, {matchBase: true, dot: true})); // eslint-disable-line unicorn/no-fn-reference-in-iterator
 }

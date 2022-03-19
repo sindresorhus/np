@@ -152,3 +152,23 @@ test('first time published files - ignore strategy is not used', async t => {
 	});
 	t.deepEqual(await testedModule.getFirstTimePublishedFiles({name: 'no ignore strategy'}, newFiles), ['source/ignore.txt', 'source/pay_attention.txt', 'test/file.txt']);
 });
+
+test('first time published files - empty files property', async t => {
+	const testedModule = proxyquire('../source/npm/util', {
+		'pkg-dir':
+			{
+				sync: () => path.resolve('test', 'fixtures', 'package')
+			}
+	});
+	t.deepEqual(await testedModule.getFirstTimePublishedFiles({files: []}, newFiles), []);
+});
+
+test('first time published files - .npmignore excludes everything', async t => {
+	const testedModule = proxyquire('../source/npm/util', {
+		'pkg-dir':
+			{
+				sync: () => path.resolve('test', 'fixtures', 'npmignore')
+			}
+	});
+	t.deepEqual(await testedModule.getFirstTimePublishedFiles({name: 'excluded everything'}, ['source/ignore.txt']), []);
+});
