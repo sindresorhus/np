@@ -34,8 +34,8 @@
 
 ## Install
 
-```
-$ npm install --global np
+```sh
+npm install --global np
 ```
 
 ## Usage
