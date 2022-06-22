@@ -95,7 +95,18 @@ exports.prereleaseTags = async packageName => {
 		tags = Object.keys(JSON.parse(stdout))
 			.filter(tag => tag !== 'latest');
 	} catch (error) {
-		if (((JSON.parse(error.stdout) || {}).error || {}).code !== 'E404') {
+		// HACK: NPM is mixing JSON with plain text errors. Luckily, the error
+		// always starts with 'npm ERR!' (unless you have a debugger attached)
+		// so as a solution, until npm/cli#2740 is fixed, we can remove anything
+		// starting with 'npm ERR!'
+		/** @type {string} */
+		const errorMessage = error.stderr;
+		const errorJSON = errorMessage
+			.split('\n')
+			.filter(error => !error.startsWith('npm ERR!'))
+			.join('\n');
+
+		if (((JSON.parse(errorJSON) || {}).error || {}).code !== 'E404') {
 			throw error;
 		}
 	}
