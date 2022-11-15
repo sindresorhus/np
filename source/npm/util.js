@@ -68,13 +68,13 @@ exports.collaborators = async pkg => {
 	const packageName = pkg.name;
 	ow(packageName, ow.string);
 
-	const args = ['access', 'list collaborators', packageName];
+	const args = [packageName];
 	if (exports.isExternalRegistry(pkg)) {
 		args.push('--registry', pkg.publishConfig.registry);
 	}
 
 	try {
-		const {stdout} = await execa('npm', args);
+		const {stdout} = await execa('npm access list collaborators', args);
 		return stdout;
 	} catch (error) {
 		// Ignore non-existing package error
