@@ -68,7 +68,7 @@ exports.collaborators = async pkg => {
 	const packageName = pkg.name;
 	ow(packageName, ow.string);
 
-	const args = ['access', 'list', 'collaborators', packageName];
+	const args = ['access', 'list', 'collaborators', '--json', packageName];
 	if (exports.isExternalRegistry(pkg)) {
 		args.push('--registry', pkg.publishConfig.registry);
 	}
