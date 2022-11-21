@@ -109,7 +109,7 @@ test.serial('should fail when user is not authenticated at npm registry', async 
 			stdout: 'sindresorhus'
 		},
 		{
-			command: 'npm access list collaborators test',
+			command: 'npm access list collaborators test --json',
 			exitCode: 0,
 			stdout: '{"sindresorhus": "read"}'
 		}
@@ -129,7 +129,7 @@ test.serial('should fail when user is not authenticated at external registry', a
 			stdout: 'sindresorhus'
 		},
 		{
-			command: 'npm access list collaborators test --registry http://my.io',
+			command: 'npm access list collaborators test --registry http://my.io --json',
 			exitCode: 0,
 			stdout: '{"sindresorhus": "read"}'
 		}
