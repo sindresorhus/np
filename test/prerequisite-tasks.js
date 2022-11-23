@@ -3,8 +3,11 @@ import execaStub from 'execa_test_double';
 import mockery from 'mockery';
 import version from '../source/version';
 import {SilentRenderer} from './fixtures/listr-renderer';
+import {version as versionNpm} from '../source/npm/util';
 
 let testedModule;
+
+const npmVersion = versionNpm();
 
 const run = async listr => {
 	listr.setRenderer(SilentRenderer);
@@ -101,6 +104,7 @@ test.serial('should fail when yarn version does not match range in `package.json
 	t.true(SilentRenderer.tasks.some(task => task.title === 'Check yarn version' && task.hasFailed()));
 });
 
+const testArgs = npmVersion >= '9.0.0' ? 'list collaborators' : 'ls-collaborators';
 test.serial('should fail when user is not authenticated at npm registry', async t => {
 	execaStub.createStub([
 		{
@@ -109,7 +113,7 @@ test.serial('should fail when user is not authenticated at npm registry', async 
 			stdout: 'sindresorhus'
 		},
 		{
-			command: 'npm access list collaborators test --json',
+			command: `npm access ${testArgs} test --json`,
 			exitCode: 0,
 			stdout: '{"sindresorhus": "read"}'
 		}
@@ -129,7 +133,7 @@ test.serial('should fail when user is not authenticated at external registry', a
 			stdout: 'sindresorhus'
 		},
 		{
-			command: 'npm access list collaborators test --registry http://my.io --json',
+			command: `npm access ${testArgs} test --registry http://my.io --json`,
 			exitCode: 0,
 			stdout: '{"sindresorhus": "read"}'
 		}
