@@ -68,7 +68,8 @@ exports.collaborators = async pkg => {
 	const packageName = pkg.name;
 	ow(packageName, ow.string);
 
-	const args = ['access', 'list', 'collaborators', '--json', packageName];
+	const npmVersion = await exports.version();
+	const args = npmVersion >= '9.0.0' ? ['access', 'list', 'collaborators', '--json', packageName] : ['access', 'ls-collaborators', '--json', packageName];
 	if (exports.isExternalRegistry(pkg)) {
 		args.push('--registry', pkg.publishConfig.registry);
 	}
