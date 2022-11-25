@@ -10,7 +10,7 @@ let testedModule;
 
 const testArgs = async () => {
 	const npmVersion = await versionNpm();
-	return semver.satisfies(npmVersion, '>=9.0.0') ? ['list collaborators', '--json'] : ['ls-collaborators', ''];
+	return semver.satisfies(npmVersion, '>=9.0.0') ? ['list collaborators', ' --json'] : ['ls-collaborators', ''];
 };
 
 const run = async listr => {
@@ -116,7 +116,7 @@ test.serial('should fail when user is not authenticated at npm registry', async 
 			stdout: 'sindresorhus'
 		},
 		{
-			command: `npm access ${testArgs[0]} test ${testArgs[1]}`,
+			command: `npm access ${testArgs[0]} test${testArgs[1]}`,
 			exitCode: 0,
 			stdout: '{"sindresorhus": "read"}'
 		}
@@ -136,7 +136,7 @@ test.serial('should fail when user is not authenticated at external registry', a
 			stdout: 'sindresorhus'
 		},
 		{
-			command: `npm access ${testArgs[0]} test --registry http://my.io ${testArgs[1]}`,
+			command: `npm access ${testArgs[0]} test${testArgs[1]} --registry http://my.io`,
 			exitCode: 0,
 			stdout: '{"sindresorhus": "read"}'
 		}
