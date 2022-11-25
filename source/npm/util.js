@@ -70,7 +70,7 @@ exports.collaborators = async pkg => {
 	ow(packageName, ow.string);
 
 	const npmVersion = await exports.version();
-	const args = semver.satisfies(npmVersion, '>=9.0.0') ? ['access', 'list', 'collaborators', '--json', packageName] : ['access', 'ls-collaborators', '--json', packageName];
+	const args = semver.satisfies(npmVersion, '>=9.0.0') ? ['access', 'list', 'collaborators', '--json', packageName] : ['access', 'ls-collaborators', packageName];
 	if (exports.isExternalRegistry(pkg)) {
 		args.push('--registry', pkg.publishConfig.registry);
 	}
