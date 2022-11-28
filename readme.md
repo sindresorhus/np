@@ -1,3 +1,8 @@
+> **Note**
+> This is a fork of [np](https://github.com/sindresorhus/np) which adds support for [pnpm](https://pnpm.io). The maintainers of np [understandably don't want to support every package manager](https://github.com/sindresorhus/np/issues/251#issuecomment-400717095), so that's why this fork exists.
+>
+> Aside from adding support for `pnpm`, this fork is equivalent to the upstream version.
+
 # np [![XO code style](https://img.shields.io/badge/code_style-XO-5ed9c7.svg)](https://github.com/xojs/xo)
 
 > A better `npm publish`
@@ -319,3 +324,4 @@ npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my-awesome-p
 - [Sindre Sorhus](https://github.com/sindresorhus)
 - [Sam Verschueren](https://github.com/SamVerschueren)
 - [Itai Steinherz](https://github.com/itaisteinherz)
+- [Travis Fischer](https://github.com/transitive-bullshit) - added support for `pnpm`
