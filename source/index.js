@@ -31,7 +31,7 @@ const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
 	const cp = execa(cmd, args);
 
-	if (!cp.stdout?.pipe) {
+	if (!cp.stdout || !cp.stdout.pipe) {
 		return of({});
 	}
 
