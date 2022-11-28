@@ -87,11 +87,13 @@ const checkNewFiles = async pkg => {
 
 	const messages = [];
 	if (newFiles.unpublished.length > 0) {
-		messages.push(`The following new files will not be part of your published package:\n${chalk.reset(newFiles.unpublished.map(path => `- ${path}`).join('\n'))}`);
+		messages.push(`The following new files will not be part of your published package:\n${chalk.reset(newFiles.unpublished.map(path => `- ${path}`).join('\n'))}`
+		);
 	}
 
 	if (newFiles.firstTime.length > 0) {
-		messages.push(`The following new files will be published the first time:\n${chalk.reset(newFiles.firstTime.map(path => `- ${path}`).join('\n'))}`);
+		messages.push(`The following new files will be published the first time:\n${chalk.reset(newFiles.firstTime.map(path => `- ${path}`).join('\n'))}`
+		);
 	}
 
 	if (!isInteractive()) {
@@ -109,11 +111,12 @@ const checkNewFiles = async pkg => {
 	return answers.confirm;
 };
 
+// eslint-disable-next-line complexity
 module.exports = async (options, pkg) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
-	const pkgManager = options.yarn ? 'yarn' : 'npm';
+	const pkgManager = options.yarn === true ? 'yarn' : (options.pnpm === true ? 'pnpm' : 'npm');
 	const registryUrl = await getRegistryUrl(pkgManager, pkg);
 	const releaseBranch = options.branch;
 
@@ -211,7 +214,7 @@ module.exports = async (options, pkg) => {
 		{
 			type: 'confirm',
 			name: 'publishScoped',
-			when: isScoped(pkg.name) && options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted') && !isExternalRegistry(pkg),
+			when: isScoped(pkg.name) && options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && pkg.publishConfig && pkg.publishConfig.access !== 'restricted' && !isExternalRegistry(pkg),
 			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false
 		}

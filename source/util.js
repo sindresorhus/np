@@ -64,6 +64,11 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 			return stdout;
 		}
 
+		if (options.pnpm) {
+			const {stdout} = await execa('pnpm', ['config', 'get', 'tag-version-prefix']);
+			return stdout;
+		}
+
 		const {stdout} = await execa('npm', ['config', 'get', 'tag-version-prefix']);
 		return stdout;
 	} catch {
@@ -82,6 +87,15 @@ exports.getPreReleasePrefix = pMemoize(async options => {
 	try {
 		if (options.yarn) {
 			const {stdout} = await execa('yarn', ['config', 'get', 'preId']);
+			if (stdout !== 'undefined') {
+				return stdout;
+			}
+
+			return '';
+		}
+
+		if (options.pnpm) {
+			const {stdout} = await execa('pnpm', ['config', 'get', 'preId']);
 			if (stdout !== 'undefined') {
 				return stdout;
 			}

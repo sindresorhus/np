@@ -40,6 +40,7 @@
 		"escape-string-regexp": "^4.0.0",
 		"execa": "^5.0.0",
 		"github-url-from-git": "^1.5.0",
+		"has-pnpm": "^1.1.1",
 		"has-yarn": "^2.1.0",
 		"hosted-git-info": "^3.0.7",
 		"ignore-walk": "^3.0.3",

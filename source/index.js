@@ -11,6 +11,7 @@ const {catchError, filter, finalize} = require('rxjs/operators');
 const streamToObservable = require('@samverschueren/stream-to-observable');
 const readPkgUp = require('read-pkg-up');
 const hasYarn = require('has-yarn');
+const hasPnpm = require('has-pnpm');
 const pkgDir = require('pkg-dir');
 const hostedGitInfo = require('hosted-git-info');
 const onetime = require('onetime');
@@ -36,10 +37,14 @@ const exec = (cmd, args) => {
 	).pipe(filter(Boolean));
 };
 
-// eslint-disable-next-line default-param-last
+// eslint-disable-next-line default-param-last, complexity
 module.exports = async (input = 'patch', options) => {
-	if (!hasYarn() && options.yarn) {
+	if (options.yarn && !hasYarn()) {
 		throw new Error('Could not use Yarn without yarn.lock file');
+	}
+
+	if (options.pnpm && !hasPnpm()) {
+		throw new Error('Could not use pnpm without pnpm-lock.yaml file');
 	}
 
 	// TODO: Remove sometime far in the future
@@ -50,11 +55,25 @@ module.exports = async (input = 'patch', options) => {
 	const pkg = util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
-	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
+	const pkgManager =
+		options.yarn === true ? 'yarn' : (options.pnpm === true ? 'pnpm' : 'npm');
+	const pkgManagerName =
+		options.yarn === true ? 'Yarn' : (options.pnpm === true ? 'pnpm' : 'npm');
 	const rootDir = pkgDir.sync();
-	const hasLockFile = fs.existsSync(path.resolve(rootDir, options.yarn ? 'yarn.lock' : 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
-	const isOnGitHub = options.repoUrl && (hostedGitInfo.fromUrl(options.repoUrl) || {}).type === 'github';
+	const hasLockFile =
+		fs.existsSync(
+			path.resolve(
+				rootDir,
+				options.yarn ?
+					'yarn.lock' :
+					(options.pnpm ?
+						'pnpm-lock.yaml' :
+						'package-lock.json')
+			)
+		) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
+	const isOnGitHub =
+		options.repoUrl &&
+		(hostedGitInfo.fromUrl(options.repoUrl) || {}).type === 'github';
 	const testScript = options.testScript || 'test';
 	const testCommand = options.testScript ? ['run', testScript] : [testScript];
 
@@ -127,7 +146,7 @@ module.exports = async (input = 'patch', options) => {
 			},
 			{
 				title: 'Installing dependencies using Yarn',
-				enabled: () => options.yarn === true,
+				enabled: () => pkgManager === 'yarn',
 				task: () => {
 					return exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
 						catchError(async error => {
@@ -145,8 +164,27 @@ module.exports = async (input = 'patch', options) => {
 				}
 			},
 			{
+				title: 'Installing dependencies using pnpm',
+				enabled: () => pkgManager === 'pnpm',
+				task: () => {
+					return exec('pnpm', ['install', '--frozen-lockfile', '--prod']).pipe(
+						catchError(async error => {
+							if (!error.stderr.startsWith('error Your lockfile needs to be updated')) {
+								return;
+							}
+
+							if (await git.checkIfFileGitIgnored('pnpm-lock.yaml')) {
+								return;
+							}
+
+							throw new Error('pnpm-lock.yaml file is outdated. Run pnpm, commit the updated lockfile and try again.');
+						})
+					);
+				}
+			},
+			{
 				title: 'Installing dependencies using npm',
-				enabled: () => options.yarn === false,
+				enabled: () => pkgManager === 'npm',
 				task: () => {
 					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production'];
 					return exec('npm', [...args, '--engine-strict']);
@@ -159,15 +197,33 @@ module.exports = async (input = 'patch', options) => {
 		tasks.add([
 			{
 				title: 'Running tests using npm',
-				enabled: () => options.yarn === false,
+				enabled: () => pkgManager === 'npm',
 				task: () => exec('npm', testCommand)
 			},
 			{
 				title: 'Running tests using Yarn',
-				enabled: () => options.yarn === true,
-				task: () => exec('yarn', testCommand).pipe(
+				enabled: () => pkgManager === 'yarn',
+				task: () =>
+					exec('yarn', testCommand).pipe(
+						catchError(error => {
+							if (error.message.includes(`Command "${testScript}" not found`)) {
+								return [];
+							}
+
+							return throwError(error);
+						})
+					)
+			},
+			{
+				title: 'Running tests using pnpm',
+				enabled: () => pkgManager === 'pnpm',
+				task: () => exec('pnpm', testCommand).pipe(
 					catchError(error => {
-						if (error.message.includes(`Command "${testScript}" not found`)) {
+						if (
+							error.message.includes(
+								`Command failed with ENOENT: ${testScript}`
+							)
+						) {
 							return [];
 						}
 
@@ -181,7 +237,7 @@ module.exports = async (input = 'patch', options) => {
 	tasks.add([
 		{
 			title: 'Bumping version using Yarn',
-			enabled: () => options.yarn === true,
+			enabled: () => pkgManager === 'yarn',
 			skip: () => {
 				if (options.preview) {
 					let previewText = `[Preview] Command not executed: yarn version --new-version ${input}`;
@@ -205,7 +261,8 @@ module.exports = async (input = 'patch', options) => {
 		},
 		{
 			title: 'Bumping version using npm',
-			enabled: () => options.yarn === false,
+			// NOTE: pnpm does not have a command to bump version
+			enabled: () => pkgManager !== 'yarn',
 			skip: () => {
 				if (options.preview) {
 					let previewText = `[Preview] Command not executed: npm version ${input}`;
@@ -236,7 +293,9 @@ module.exports = async (input = 'patch', options) => {
 				skip: () => {
 					if (options.preview) {
 						const args = publish.getPackagePublishArguments(options);
-						return `[Preview] Command not executed: ${pkgManager} ${args.join(' ')}.`;
+						return `[Preview] Command not executed: ${pkgManager} ${args.join(
+							' '
+						)}.`;
 					}
 				},
 				task: (context, task) => {

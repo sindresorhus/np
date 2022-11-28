@@ -29,6 +29,14 @@ module.exports = (input, pkg, options) => {
 			}
 		},
 		{
+			title: 'Check pnpm version',
+			enabled: () => options.pnpm === true,
+			task: async () => {
+				const {stdout: pnpmVersion} = await execa('pnpm', ['--version']);
+				version.verifyRequirementSatisfied('pnpm', pnpmVersion);
+			}
+		},
+		{
 			title: 'Verify user is authenticated',
 			enabled: () => process.env.NODE_ENV !== 'test' && !pkg.private,
 			task: async () => {

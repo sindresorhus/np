@@ -4,6 +4,7 @@ import {getTagVersionPrefix} from '../source/util';
 
 test('get tag prefix', async t => {
 	t.is(await getTagVersionPrefix({yarn: false}), 'v');
+	t.is(await getTagVersionPrefix({yarn: false, pnpm: true}), 'v');
 	t.is(await getTagVersionPrefix({yarn: true}), 'v');
 });
 
