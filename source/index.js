@@ -25,16 +25,22 @@ const npm = require('./npm/util');
 const releaseTaskHelper = require('./release-task-helper');
 const util = require('./util');
 const git = require('./git-util');
+const {of} = require('rxjs');
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
 	const cp = execa(cmd, args);
 
+	if (!cp.stdout?.pipe) {
+		return of({});
+	}
+
 	return merge(
 		streamToObservable(cp.stdout.pipe(split())),
 		streamToObservable(cp.stderr.pipe(split())),
 		cp
-	).pipe(filter(Boolean));
+	)
+		.pipe(filter(Boolean));
 };
 
 // eslint-disable-next-line default-param-last, complexity
