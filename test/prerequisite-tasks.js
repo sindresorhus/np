@@ -3,15 +3,8 @@ import execaStub from 'execa_test_double';
 import mockery from 'mockery';
 import version from '../source/version';
 import {SilentRenderer} from './fixtures/listr-renderer';
-import {version as versionNpm} from '../source/npm/util';
-import semver from 'semver';
 
 let testedModule;
-
-const testArgs = async () => {
-	const npmVersion = await versionNpm();
-	return semver.satisfies(npmVersion, '>=9.0.0') ? ['list collaborators', ' --json'] : ['ls-collaborators', ''];
-};
 
 const run = async listr => {
 	listr.setRenderer(SilentRenderer);
@@ -116,7 +109,7 @@ test.serial('should fail when user is not authenticated at npm registry', async 
 			stdout: 'sindresorhus'
 		},
 		{
-			command: `npm access ${testArgs[0]} test${testArgs[1]}`,
+			command: 'npm access ls-collaborators test',
 			exitCode: 0,
 			stdout: '{"sindresorhus": "read"}'
 		}
@@ -136,7 +129,7 @@ test.serial('should fail when user is not authenticated at external registry', a
 			stdout: 'sindresorhus'
 		},
 		{
-			command: `npm access ${testArgs[0]} test${testArgs[1]} --registry http://my.io`,
+			command: 'npm access ls-collaborators test --registry http://my.io',
 			exitCode: 0,
 			stdout: '{"sindresorhus": "read"}'
 		}
