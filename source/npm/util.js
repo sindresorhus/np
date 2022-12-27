@@ -10,6 +10,7 @@ const pkgDir = require('pkg-dir');
 const ignoreWalker = require('ignore-walk');
 const minimatch = require('minimatch');
 const {verifyRequirementSatisfied} = require('../version');
+const semver = require('semver');
 
 // According to https://docs.npmjs.com/files/package.json#files
 // npm's default behavior is to ignore these files.
@@ -68,7 +69,8 @@ exports.collaborators = async pkg => {
 	const packageName = pkg.name;
 	ow(packageName, ow.string);
 
-	const args = ['access', 'ls-collaborators', packageName];
+	const npmVersion = await exports.version();
+	const args = semver.satisfies(npmVersion, '>=9.0.0') ? ['access', 'list', 'collaborators', packageName, '--json'] : ['access', 'ls-collaborators', packageName];
 	if (exports.isExternalRegistry(pkg)) {
 		args.push('--registry', pkg.publishConfig.registry);
 	}
