@@ -31,7 +31,6 @@
 - Monorepos are not supported.
 - Custom registries are not supported ([but could be with your help](https://github.com/sindresorhus/np/issues/420)).
 - CI is [not an ideal environment](https://github.com/sindresorhus/np/issues/619#issuecomment-994493179) for `np`. It's meant to be used locally as an interactive tool.
-- `np` is meant to be installed globally and used by a single person, not shared as a dev dependency ([for now](https://github.com/sindresorhus/np/issues/592)).
 
 ## Prerequisite
 
