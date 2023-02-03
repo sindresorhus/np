@@ -26,6 +26,13 @@
 - See exactly what will be executed with [preview mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
 - Supports [GitHub Packages](https://github.com/features/packages)
 
+### Why not
+
+- Monorepos are not supported.
+- Custom registries are not supported ([but could be, with your help](https://github.com/sindresorhus/np/issues/420))
+- CI is [not an ideal environment](https://github.com/sindresorhus/np/issues/619#issuecomment-994493179) for np, it's meant to be used locally as an interactive tool.
+- np is meant to be installed globally and used by a single person, not shared as a dev dependency ([for now](https://github.com/sindresorhus/np/issues/592)) 
+
 ## Prerequisite
 
 - Node.js 10 or later
