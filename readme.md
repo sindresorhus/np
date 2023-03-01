@@ -2,6 +2,26 @@
 
 > A better `npm publish`
 
+---
+
+<div align="center">
+	<p>
+		<p>
+			<sup>
+				<a href="https://github.com/sponsors/sindresorhus">My open source work is supported by the community</a>
+			</sup>
+		</p>
+		<sup>Special thanks to:</sup>
+		<br>
+		<br>
+		<a href="https://forwardemail.net">
+			<img src="https://sindresorhus.com/assets/thanks/forward-email-logo.png" width="320">
+		</a>
+	</p>
+</div>
+
+---
+
 <img src="screenshot.gif" width="688">
 
 ## Why
