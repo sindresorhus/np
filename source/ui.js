@@ -284,6 +284,7 @@ module.exports = async (options, pkg) => {
 		...options,
 		version: answers.version || answers.customVersion || options.version,
 		tag: answers.tag || answers.customTag || options.tag,
+		publishScoped: answers.publishScoped,
 		confirm: true,
 		repoUrl,
 		releaseNotes
