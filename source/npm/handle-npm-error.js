@@ -25,6 +25,12 @@ const handleNpmError = (error, task, message, executor) => {
 		);
 	}
 
+	// Attempting to privately publish a scoped package without the correct npm plan
+	// https://stackoverflow.com/a/44862841/10292952
+	if (error.code === 402 || error.stderr.includes('npm ERR! 402 Payment Required')) {
+		throw new Error('You cannot publish a privately scoped package without a paid plan. Did you mean to publish publicly?');
+	}
+
 	return throwError(error);
 };
 
