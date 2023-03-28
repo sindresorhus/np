@@ -20,7 +20,7 @@ class Version {
 	getNewVersionFrom(input) {
 		module.exports.validate(this.version);
 		if (!module.exports.isValidInput(input)) {
-			throw new Error(`Version should be either ${module.exports.SEMVER_INCREMENTS.join(', ')} or a valid semver version.`);
+			throw new Error(`Version should be either ${module.exports.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`);
 		}
 
 		return module.exports.SEMVER_INCREMENTS.includes(input) ? semver.inc(this.version, input) : input;
