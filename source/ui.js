@@ -91,7 +91,7 @@ const checkNewFiles = async pkg => {
 	}
 
 	if (newFiles.firstTime.length > 0) {
-		messages.push(`The following new files will be published the first time:\n${chalk.reset(newFiles.firstTime.map(path => `- ${path}`).join('\n'))}`);
+		messages.push(`The following new files will be published for the first time:\n${chalk.reset(newFiles.firstTime.map(path => `- ${path}`).join('\n'))}`);
 	}
 
 	if (!isInteractive()) {
