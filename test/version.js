@@ -118,3 +118,7 @@ test('version.satisfies', t => {
 	t.false(version('3.0.0').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
 	t.false(version('3.10.0').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
 });
+
+test('version.getAndValidateNewVersionFrom', t => {
+
+});
