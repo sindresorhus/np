@@ -49,7 +49,7 @@ test('version.isPrereleaseOrIncrement', t => {
 });
 
 test('version.getNewVersionFrom', t => {
-	const message = 'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease or a valid semver version.';
+	const message = 'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid semver version.';
 
 	t.throws(() => version('1.0.0').getNewVersionFrom('patchxxx'), message);
 	t.throws(() => version('1.0.0').getNewVersionFrom('1.0.0.0'), message);
