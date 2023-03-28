@@ -133,7 +133,7 @@ module.exports = async (options, pkg) => {
 		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 	} else {
 		const newVersion = options.version ? version.getAndValidateNewVersionFrom(options.version, oldVersion) : undefined;
-		const versionText = chalk.dim(`(current: ${oldVersion}${newVersion ? `, next: ${prettyVersionDiff(oldVersion, newVersion)}` : ''})`);
+		const versionText = chalk.dim(`(current: ${oldVersion}${newVersion ? `, next: ${prettyVersionDiff(oldVersion, newVersion)}` : ''}${chalk.dim(')')}`);
 
 		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${versionText}\n`);
 	}
