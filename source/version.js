@@ -64,3 +64,13 @@ module.exports.verifyRequirementSatisfied = (dependency, version) => {
 		throw new Error(`Please upgrade to ${dependency}${depRange}`);
 	}
 };
+
+module.exports.getAndValidateNewVersionFrom = (input, version) => {
+	const newVersion = module.exports(version).getNewVersionFrom(input);
+
+	if (module.exports(version).isLowerThanOrEqualTo(newVersion)) {
+		throw new Error(`New version \`${newVersion}\` should be higher than current version \`${version}\``);
+	}
+
+	return newVersion;
+};

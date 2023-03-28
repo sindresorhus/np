@@ -129,10 +129,13 @@ module.exports = async (options, pkg) => {
 		}
 	}
 
+	const newVersion = options.version ? version.getAndValidateNewVersionFrom(options.version, oldVersion) : undefined;
+	const versionText = chalk.dim(`(current: ${oldVersion}${newVersion ? `, next: ${prettyVersionDiff(oldVersion, newVersion)}` : ''})`);
+
 	if (options.releaseDraftOnly) {
-		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
+		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${versionText}\n`);
 	} else {
-		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
+		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${versionText}\n`);
 	}
 
 	const prompts = [
