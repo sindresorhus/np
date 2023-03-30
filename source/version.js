@@ -20,7 +20,7 @@ class Version {
 	getNewVersionFrom(input) {
 		module.exports.validate(this.version);
 		if (!module.exports.isValidInput(input)) {
-			throw new Error(`Version should be either ${module.exports.SEMVER_INCREMENTS.join(', ')} or a valid semver version.`);
+			throw new Error(`Version should be either ${module.exports.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`);
 		}
 
 		return module.exports.SEMVER_INCREMENTS.includes(input) ? semver.inc(this.version, input) : input;
@@ -63,4 +63,14 @@ module.exports.verifyRequirementSatisfied = (dependency, version) => {
 	if (!module.exports(version).satisfies(depRange)) {
 		throw new Error(`Please upgrade to ${dependency}${depRange}`);
 	}
+};
+
+module.exports.getAndValidateNewVersionFrom = (input, version) => {
+	const newVersion = module.exports(version).getNewVersionFrom(input);
+
+	if (module.exports(version).isLowerThanOrEqualTo(newVersion)) {
+		throw new Error(`New version \`${newVersion}\` should be higher than current version \`${version}\``);
+	}
+
+	return newVersion;
 };

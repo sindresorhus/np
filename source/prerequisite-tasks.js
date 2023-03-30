@@ -59,15 +59,7 @@ module.exports = (input, pkg, options) => {
 		{
 			title: 'Validate version',
 			task: () => {
-				if (!version.isValidInput(input)) {
-					throw new Error(`Version should be either ${version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`);
-				}
-
-				newVersion = version(pkg.version).getNewVersionFrom(input);
-
-				if (version(pkg.version).isLowerThanOrEqualTo(newVersion)) {
-					throw new Error(`New version \`${newVersion}\` should be higher than current version \`${pkg.version}\``);
-				}
+				newVersion = version.getAndValidateNewVersionFrom(input, pkg.version);
 			}
 		},
 		{

@@ -49,7 +49,7 @@ test('version.isPrereleaseOrIncrement', t => {
 });
 
 test('version.getNewVersionFrom', t => {
-	const message = 'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease or a valid semver version.';
+	const message = 'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid semver version.';
 
 	t.throws(() => version('1.0.0').getNewVersionFrom('patchxxx'), message);
 	t.throws(() => version('1.0.0').getNewVersionFrom('1.0.0.0'), message);
@@ -117,4 +117,23 @@ test('version.satisfies', t => {
 	t.true(version('6.7.0-next.0').satisfies('<6.8.0'));
 	t.false(version('3.0.0').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
 	t.false(version('3.10.0').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
+});
+
+test('version.getAndValidateNewVersionFrom', t => {
+	t.is(version.getAndValidateNewVersionFrom('patch', '1.0.0'), '1.0.1');
+
+	t.throws(
+		() => version.getAndValidateNewVersionFrom('patch', '1'),
+		'Version should be a valid semver version.'
+	);
+
+	t.throws(
+		() => version.getAndValidateNewVersionFrom('lol', '1.0.0'),
+		`Version should be either ${version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`
+	);
+
+	t.throws(
+		() => version.getAndValidateNewVersionFrom('1.0.0', '2.0.0'),
+		'New version `1.0.0` should be higher than current version `2.0.0`'
+	);
 });
