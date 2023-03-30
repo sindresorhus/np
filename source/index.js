@@ -47,7 +47,7 @@ module.exports = async (input = 'patch', options) => {
 		options.cleanup = false;
 	}
 
-	const pkg = util.readPkg(options.contents);
+	const {pkg} = util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
@@ -75,7 +75,7 @@ module.exports = async (input = 'patch', options) => {
 		const versionInLatestTag = latestTag.slice(tagVersionPrefix.length);
 
 		try {
-			if (versionInLatestTag === util.readPkg().version &&
+			if (versionInLatestTag === util.readPkg().pkg.version &&
 				versionInLatestTag !== pkg.version) { // Verify that the package's version has been bumped before deleting the last tag and commit.
 				await git.deleteTag(latestTag);
 				await git.removeLastCommit();

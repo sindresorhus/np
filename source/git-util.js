@@ -1,4 +1,5 @@
 'use strict';
+const path = require('path');
 const execa = require('execa');
 const escapeStringRegexp = require('escape-string-regexp');
 const ignoreWalker = require('ignore-walk');
@@ -7,6 +8,11 @@ const {verifyRequirementSatisfied} = require('./version');
 
 exports.latestTag = async () => {
 	const {stdout} = await execa('git', ['describe', '--abbrev=0', '--tags']);
+	return stdout;
+};
+
+exports.root = async () => {
+	const {stdout} = await execa('git', ['rev-parse', '--show-toplevel']);
 	return stdout;
 };
 
@@ -26,6 +32,12 @@ exports.newFilesSinceLastRelease = async () => {
 			ignoreFiles: ['.gitignore']
 		});
 	}
+};
+
+exports.readFileFromLastRelease = async file => {
+	const filePathFromRoot = path.relative(await exports.root(), file);
+	const {stdout: oldFile} = await execa('git', ['show', `${await this.latestTag()}:${filePathFromRoot}`]);
+	return oldFile;
 };
 
 const firstCommit = async () => {
