@@ -38,10 +38,11 @@ test.serial('package.json files field - source and dist dirs', async t => {
 	]);
 });
 
-test.serial('package.json files field - has readme', async t => {
-	await checkPackedFiles(t, 'has-readme', [
+test.serial('package.json files field - has readme and license', async t => {
+	await checkPackedFiles(t, 'has-readme-and-license', [
 		'package.json',
 		'readme.md',
+		'license.md',
 		'index.js'
 	]);
 });
@@ -78,5 +79,13 @@ test.serial('npmignore and gitignore', async t => {
 		'package.json',
 		'readme.md',
 		'dist/index.js'
+	]);
+});
+
+test.serial('package.json main field not in files field', async t => {
+	await checkPackedFiles(t, 'main', [
+		'package.json',
+		'foo.js',
+		'bar.js'
 	]);
 });
