@@ -38,6 +38,13 @@ test.serial('package.json files field - source and dist dirs', async t => {
 	]);
 });
 
+test.serial('package.json files field - leading slash', async t => {
+	await checkPackedFiles(t, 'files-slash', [
+		'package.json',
+		'index.js'
+	]);
+});
+
 test.serial('package.json files field - has readme and license', async t => {
 	await checkPackedFiles(t, 'has-readme-and-license', [
 		'package.json',
