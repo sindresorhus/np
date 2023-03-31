@@ -72,9 +72,14 @@ export const getTagVersionPrefix = pMemoize(async options => {
 
 export const joinList = list => chalk.reset(list.map(item => `- ${item}`).join('\n'));
 
-export const getNewFiles = async pkg => {
+export const getNewFiles = async () => {
 	const listNewFiles = await gitUtil.newFilesSinceLastRelease();
-	return {unpublished: await npmUtil.getNewAndUnpublishedFiles(pkg, listNewFiles), firstTime: await npmUtil.getFirstTimePublishedFiles(pkg, listNewFiles)};
+	const listPkgFiles = await npmUtil.getFilesToBePacked();
+
+	return {
+		unpublished: listNewFiles.filter(file => !listPkgFiles.includes(file)),
+		firstTime: listNewFiles.filter(file => listPkgFiles.includes(file)),
+	};
 };
 
 export const getNewDependencies = async (newPkg, pkgPath) => {
