@@ -23,7 +23,7 @@ const prerequisiteTasks = (input, pkg, options) => {
 		{
 			title: 'Check yarn version',
 			enabled: () => options.yarn === true,
-			async task() {
+			task: async () => {
 				const {stdout: yarnVersion} = await execa('yarn', ['--version']);
 				Version.verifyRequirementSatisfied('yarn', yarnVersion);
 			}
@@ -31,7 +31,7 @@ const prerequisiteTasks = (input, pkg, options) => {
 		{
 			title: 'Verify user is authenticated',
 			enabled: () => process.env.NODE_ENV !== 'test' && !pkg.private,
-			async task() {
+			task: async () => {
 				const username = await npm.username({
 					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false
 				});
