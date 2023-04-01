@@ -58,16 +58,8 @@ const prerequisiteTasks = (input, pkg, options) => {
 		},
 		{
 			title: 'Validate version',
-			task() {
-				if (!Version.isValidInput(input)) {
-					throw new Error(`Version should be either ${Version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`);
-				}
-
-				newVersion = new Version(pkg.version).getNewVersionFrom(input);
-
-				if (new Version(pkg.version).isLowerThanOrEqualTo(newVersion)) {
-					throw new Error(`New version \`${newVersion}\` should be higher than current version \`${pkg.version}\``);
-				}
+			task: () => {
+				newVersion = Version.getAndValidateNewVersionFrom(input, pkg.version);
 			}
 		},
 		{

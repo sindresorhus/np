@@ -3,9 +3,6 @@ import sinon from 'sinon';
 import esmock from 'esmock';
 import np from '../source/index.js';
 
-// FIXME:
-// somehow running this is deleting node_modules
-
 const defaultOptions = {
 	cleanup: true,
 	tests: true,

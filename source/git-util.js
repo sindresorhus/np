@@ -1,3 +1,4 @@
+import path from 'node:path';
 import {execa} from 'execa';
 import escapeStringRegexp from 'escape-string-regexp';
 import ignoreWalker from 'ignore-walk';
@@ -9,9 +10,14 @@ export const latestTag = async () => {
 	return stdout;
 };
 
+export const root = async () => {
+	const {stdout} = await execa('git', ['rev-parse', '--show-toplevel']);
+	return stdout;
+};
+
 export const newFilesSinceLastRelease = async () => {
 	try {
-		const {stdout} = await execa('git', ['diff', '--name-only', '--diff-filter=A', await this.latestTag(), 'HEAD']);
+		const {stdout} = await execa('git', ['diff', '--name-only', '--diff-filter=A', await latestTag(), 'HEAD']);
 		if (stdout.trim().length === 0) {
 			return [];
 		}
@@ -25,6 +31,12 @@ export const newFilesSinceLastRelease = async () => {
 			ignoreFiles: ['.gitignore']
 		});
 	}
+};
+
+export const readFileFromLastRelease = async file => {
+	const filePathFromRoot = path.relative(await root(), file);
+	const {stdout: oldFile} = await execa('git', ['show', `${await latestTag()}:${filePathFromRoot}`]);
+	return oldFile;
 };
 
 const firstCommit = async () => {

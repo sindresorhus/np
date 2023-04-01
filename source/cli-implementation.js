@@ -98,7 +98,7 @@ const cli = meow(`
 updateNotifier({pkg: cli.pkg}).notify();
 
 try {
-	const pkg = util.readPkg();
+	const {pkg, pkgPath} = await util.readPkg();
 
 	const defaultFlags = {
 		cleanup: true,
@@ -139,7 +139,7 @@ try {
 		version,
 		runPublish,
 		branch
-	}, pkg);
+	}, {pkg, pkgPath});
 
 	if (!options.confirm) {
 		process.exit(0);

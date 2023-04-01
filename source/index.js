@@ -46,7 +46,7 @@ const np = async (input = 'patch', options) => {
 		options.cleanup = false;
 	}
 
-	const pkg = await util.readPkg(options.contents);
+	const {pkg} = await util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';

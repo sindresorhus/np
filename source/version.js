@@ -22,7 +22,7 @@ export default class Version {
 	getNewVersionFrom(input) {
 		Version.validate(this.version);
 		if (!Version.isValidInput(input)) {
-			throw new Error(`Version should be either ${Version.SEMVER_INCREMENTS.join(', ')} or a valid semver version.`);
+			throw new Error(`Version should be either ${Version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`);
 		}
 
 		return Version.SEMVER_INCREMENTS.includes(input) ? semver.inc(this.version, input) : input;
@@ -62,5 +62,15 @@ export default class Version {
 		if (!new Version(version).satisfies(depRange)) {
 			throw new Error(`Please upgrade to ${dependency}${depRange}`);
 		}
+	}
+
+	static getAndValidateNewVersionFrom(input, version) {
+		const newVersion = new Version(version).getNewVersionFrom(input);
+
+		if (new Version(version).isLowerThanOrEqualTo(newVersion)) {
+			throw new Error(`New version \`${newVersion}\` should be higher than current version \`${version}\``);
+		}
+
+		return newVersion;
 	}
 }
