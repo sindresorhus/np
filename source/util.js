@@ -6,6 +6,7 @@ const execa = require('execa');
 const pMemoize = require('p-memoize');
 const {default: ow} = require('ow');
 const pkgDir = require('pkg-dir');
+const chalk = require('chalk');
 const gitUtil = require('./git-util');
 const npmUtil = require('./npm/util');
 
@@ -16,11 +17,11 @@ exports.readPkg = packagePath => {
 		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
 	}
 
-	const {packageJson} = readPkgUp.sync({
+	const {packageJson, path} = readPkgUp.sync({
 		cwd: packagePath
 	});
 
-	return packageJson;
+	return {pkg: packageJson, pkgPath: path};
 };
 
 exports.linkifyIssues = (url, message) => {
@@ -71,9 +72,26 @@ exports.getTagVersionPrefix = pMemoize(async options => {
 	}
 });
 
+exports.joinList = list => chalk.reset(list.map(item => `- ${item}`).join('\n'));
+
 exports.getNewFiles = async pkg => {
 	const listNewFiles = await gitUtil.newFilesSinceLastRelease();
 	return {unpublished: await npmUtil.getNewAndUnpublishedFiles(pkg, listNewFiles), firstTime: await npmUtil.getFirstTimePublishedFiles(pkg, listNewFiles)};
+};
+
+exports.getNewDependencies = async (newPkg, pkgPath) => {
+	let oldPkg = await gitUtil.readFileFromLastRelease(pkgPath);
+	oldPkg = JSON.parse(oldPkg);
+
+	const newDependencies = [];
+
+	for (const dependency of Object.keys(newPkg.dependencies)) {
+		if (!oldPkg.dependencies[dependency]) {
+			newDependencies.push(dependency);
+		}
+	}
+
+	return newDependencies;
 };
 
 exports.getPreReleasePrefix = pMemoize(async options => {

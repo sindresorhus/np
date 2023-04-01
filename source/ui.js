@@ -79,19 +79,31 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 	};
 };
 
-const checkNewFiles = async pkg => {
+const checkNewFilesAndDependencies = async (pkg, pkgPath) => {
 	const newFiles = await util.getNewFiles(pkg);
-	if ((!newFiles.unpublished || newFiles.unpublished.length === 0) && (!newFiles.firstTime || newFiles.firstTime.length === 0)) {
+	const newDependencies = await util.getNewDependencies(pkg, pkgPath);
+
+	const noNewUnpublishedFiles = !newFiles.unpublished || newFiles.unpublished.length === 0;
+	const noNewFirstTimeFiles = !newFiles.firstTime || newFiles.firstTime.length === 0;
+	const noNewFiles = noNewUnpublishedFiles && noNewFirstTimeFiles;
+
+	const noNewDependencies = !newDependencies || newDependencies.length === 0;
+
+	if (noNewFiles && noNewDependencies) {
 		return true;
 	}
 
 	const messages = [];
 	if (newFiles.unpublished.length > 0) {
-		messages.push(`The following new files will not be part of your published package:\n${chalk.reset(newFiles.unpublished.map(path => `- ${path}`).join('\n'))}`);
+		messages.push(`The following new files will not be part of your published package:\n${util.joinList(newFiles.unpublished)}`);
 	}
 
 	if (newFiles.firstTime.length > 0) {
-		messages.push(`The following new files will be published for the first time:\n${chalk.reset(newFiles.firstTime.map(path => `- ${path}`).join('\n'))}`);
+		messages.push(`The following new files will be published for the first time:\n${util.joinList(newFiles.firstTime)}`);
+	}
+
+	if (newDependencies.length > 0) {
+		messages.push(`The following new dependencies will be part of your published package:\n${util.joinList(newDependencies)}`);
 	}
 
 	if (!isInteractive()) {
@@ -109,7 +121,7 @@ const checkNewFiles = async pkg => {
 	return answers.confirm;
 };
 
-module.exports = async (options, pkg) => {
+module.exports = async (options, {pkg, pkgPath}) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
@@ -120,7 +132,7 @@ module.exports = async (options, pkg) => {
 	if (options.runPublish) {
 		checkIgnoreStrategy(pkg);
 
-		const answerIgnoredFiles = await checkNewFiles(pkg);
+		const answerIgnoredFiles = await checkNewFilesAndDependencies(pkg, pkgPath);
 		if (!answerIgnoredFiles) {
 			return {
 				...options,
