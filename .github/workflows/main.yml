@@ -10,9 +10,9 @@ jobs:
       fail-fast: false
       matrix:
         node-version:
-          - 14
-          - 12
-          - 10
+          - 19
+          - 18
+          - 16
     steps:
       - uses: actions/checkout@v2
         with:
