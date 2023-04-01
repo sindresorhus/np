@@ -1,29 +1,28 @@
-'use strict';
-require('any-observable/register/rxjs-all');
-const fs = require('fs');
-const path = require('path');
-const execa = require('execa');
-const del = require('del');
-const Listr = require('listr');
-const split = require('split');
-const {merge, throwError} = require('rxjs');
-const {catchError, filter, finalize} = require('rxjs/operators');
-const streamToObservable = require('@samverschueren/stream-to-observable');
-const readPkgUp = require('read-pkg-up');
-const hasYarn = require('has-yarn');
-const pkgDir = require('pkg-dir');
-const hostedGitInfo = require('hosted-git-info');
-const onetime = require('onetime');
-const exitHook = require('async-exit-hook');
-const logSymbols = require('log-symbols');
-const prerequisiteTasks = require('./prerequisite-tasks');
-const gitTasks = require('./git-tasks');
-const publish = require('./npm/publish');
-const enable2fa = require('./npm/enable-2fa');
-const npm = require('./npm/util');
-const releaseTaskHelper = require('./release-task-helper');
-const util = require('./util');
-const git = require('./git-util');
+import 'any-observable/register/rxjs-all.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import {execa} from 'execa';
+import {deleteAsync} from 'del';
+import Listr from 'listr';
+import split from 'split';
+import {merge, throwError} from 'rxjs';
+import {catchError, filter, finalize} from 'rxjs/operators/index.js';
+import streamToObservable from '@samverschueren/stream-to-observable';
+import {readPackageUp} from 'read-pkg-up';
+import hasYarn from 'has-yarn';
+import {packageDirectorySync} from 'pkg-dir';
+import hostedGitInfo from 'hosted-git-info';
+import onetime from 'onetime';
+import exitHook from 'async-exit-hook';
+import logSymbols from 'log-symbols';
+import prerequisiteTasks from './prerequisite-tasks.js';
+import gitTasks from './git-tasks.js';
+import publish from './npm/publish.js';
+import enable2fa from './npm/enable-2fa.js';
+import * as npm from './npm/util.js';
+import releaseTaskHelper from './release-task-helper.js';
+import * as util from './util.js';
+import * as git from './git-util.js';
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
@@ -36,8 +35,8 @@ const exec = (cmd, args) => {
 	).pipe(filter(Boolean));
 };
 
-// eslint-disable-next-line default-param-last
-module.exports = async (input = 'patch', options) => {
+// eslint-disable-next-line complexity
+const np = async (input = 'patch', options) => {
 	if (!hasYarn() && options.yarn) {
 		throw new Error('Could not use Yarn without yarn.lock file');
 	}
@@ -47,14 +46,14 @@ module.exports = async (input = 'patch', options) => {
 		options.cleanup = false;
 	}
 
-	const pkg = util.readPkg(options.contents);
+	const pkg = await util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
-	const rootDir = pkgDir.sync();
+	const rootDir = packageDirectorySync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, options.yarn ? 'yarn.lock' : 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
-	const isOnGitHub = options.repoUrl && (hostedGitInfo.fromUrl(options.repoUrl) || {}).type === 'github';
+	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl)?.type === 'github';
 	const testScript = options.testScript || 'test';
 	const testCommand = options.testScript ? ['run', testScript] : [testScript];
 
@@ -75,8 +74,8 @@ module.exports = async (input = 'patch', options) => {
 		const versionInLatestTag = latestTag.slice(tagVersionPrefix.length);
 
 		try {
-			if (versionInLatestTag === util.readPkg().version &&
-				versionInLatestTag !== pkg.version) { // Verify that the package's version has been bumped before deleting the last tag and commit.
+			// Verify that the package's version has been bumped before deleting the last tag and commit.
+			if (versionInLatestTag === util.readPkg().version && versionInLatestTag !== pkg.version) {
 				await git.deleteTag(latestTag);
 				await git.removeLastCommit();
 			}
@@ -115,7 +114,8 @@ module.exports = async (input = 'patch', options) => {
 			task: () => gitTasks(options)
 		}
 	], {
-		showSubtasks: false
+		showSubtasks: false,
+		renderer: options.renderer ?? 'default'
 	});
 
 	if (runCleanup) {
@@ -123,13 +123,13 @@ module.exports = async (input = 'patch', options) => {
 			{
 				title: 'Cleanup',
 				enabled: () => !hasLockFile,
-				task: () => del('node_modules')
+				task: () => deleteAsync('node_modules')
 			},
 			{
 				title: 'Installing dependencies using Yarn',
 				enabled: () => options.yarn === true,
-				task: () => {
-					return exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
+				task: () => (
+					exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
 						catchError(async error => {
 							if ((!error.stderr.startsWith('error Your lockfile needs to be updated'))) {
 								return;
@@ -141,8 +141,8 @@ module.exports = async (input = 'patch', options) => {
 
 							throw new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.');
 						})
-					);
-				}
+					)
+				)
 			},
 			{
 				title: 'Installing dependencies using npm',
@@ -315,6 +315,8 @@ module.exports = async (input = 'patch', options) => {
 		console.error(`\n${logSymbols.error} ${pushedObjects.reason}`);
 	}
 
-	const {packageJson: newPkg} = await readPkgUp();
+	const {packageJson: newPkg} = await readPackageUp();
 	return newPkg;
 };
+
+export default np;

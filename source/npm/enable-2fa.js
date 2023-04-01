@@ -1,10 +1,9 @@
-'use strict';
-const execa = require('execa');
-const {from} = require('rxjs');
-const {catchError} = require('rxjs/operators');
-const handleNpmError = require('./handle-npm-error');
+import {execa} from 'execa';
+import {from} from 'rxjs';
+import {catchError} from 'rxjs/operators/index.js';
+import handleNpmError from './handle-npm-error.js';
 
-const getEnable2faArgs = (packageName, options) => {
+export const getEnable2faArgs = (packageName, options) => {
 	const args = ['access', '2fa-required', packageName];
 
 	if (options && options.otp) {
@@ -16,9 +15,10 @@ const getEnable2faArgs = (packageName, options) => {
 
 const enable2fa = (packageName, options) => execa('npm', getEnable2faArgs(packageName, options));
 
-module.exports = (task, packageName, options) =>
+const tryEnable2fa = (task, packageName, options) => {
 	from(enable2fa(packageName, options)).pipe(
 		catchError(error => handleNpmError(error, task, otp => enable2fa(packageName, {otp})))
 	);
+};
 
-module.exports.getEnable2faArgs = getEnable2faArgs;
+export default tryEnable2fa;

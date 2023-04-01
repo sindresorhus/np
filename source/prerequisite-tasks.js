@@ -1,12 +1,12 @@
-'use strict';
-const Listr = require('listr');
-const execa = require('execa');
-const version = require('./version');
-const git = require('./git-util');
-const npm = require('./npm/util');
-const {getTagVersionPrefix} = require('./util');
+import process from 'node:process';
+import Listr from 'listr';
+import {execa} from 'execa';
+import Version from './version.js';
+import * as git from './git-util.js';
+import * as npm from './npm/util.js';
+import {getTagVersionPrefix} from './util.js';
 
-module.exports = (input, pkg, options) => {
+const prerequisiteTasks = (input, pkg, options) => {
 	const isExternalRegistry = npm.isExternalRegistry(pkg);
 	let newVersion = null;
 
@@ -23,15 +23,15 @@ module.exports = (input, pkg, options) => {
 		{
 			title: 'Check yarn version',
 			enabled: () => options.yarn === true,
-			task: async () => {
+			async task() {
 				const {stdout: yarnVersion} = await execa('yarn', ['--version']);
-				version.verifyRequirementSatisfied('yarn', yarnVersion);
+				Version.verifyRequirementSatisfied('yarn', yarnVersion);
 			}
 		},
 		{
 			title: 'Verify user is authenticated',
 			enabled: () => process.env.NODE_ENV !== 'test' && !pkg.private,
-			task: async () => {
+			async task() {
 				const username = await npm.username({
 					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false
 				});
@@ -58,29 +58,29 @@ module.exports = (input, pkg, options) => {
 		},
 		{
 			title: 'Validate version',
-			task: () => {
-				if (!version.isValidInput(input)) {
-					throw new Error(`Version should be either ${version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`);
+			task() {
+				if (!Version.isValidInput(input)) {
+					throw new Error(`Version should be either ${Version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`);
 				}
 
-				newVersion = version(pkg.version).getNewVersionFrom(input);
+				newVersion = new Version(pkg.version).getNewVersionFrom(input);
 
-				if (version(pkg.version).isLowerThanOrEqualTo(newVersion)) {
+				if (new Version(pkg.version).isLowerThanOrEqualTo(newVersion)) {
 					throw new Error(`New version \`${newVersion}\` should be higher than current version \`${pkg.version}\``);
 				}
 			}
 		},
 		{
 			title: 'Check for pre-release version',
-			task: () => {
-				if (!pkg.private && version(newVersion).isPrerelease() && !options.tag) {
+			task() {
+				if (!pkg.private && new Version(newVersion).isPrerelease() && !options.tag) {
 					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 				}
 			}
 		},
 		{
 			title: 'Check git tag existence',
-			task: async () => {
+			async task() {
 				await git.fetch();
 
 				const tagPrefix = await getTagVersionPrefix(options);
@@ -92,3 +92,5 @@ module.exports = (input, pkg, options) => {
 
 	return new Listr(tasks);
 };
+
+export default prerequisiteTasks;

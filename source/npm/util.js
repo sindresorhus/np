@@ -1,16 +1,15 @@
-'use strict';
-const fs = require('fs');
-const path = require('path');
-const execa = require('execa');
-const pTimeout = require('p-timeout');
-const {default: ow} = require('ow');
-const npmName = require('npm-name');
-const chalk = require('chalk');
-const pkgDir = require('pkg-dir');
-const ignoreWalker = require('ignore-walk');
-const minimatch = require('minimatch');
-const {verifyRequirementSatisfied} = require('../version');
-const semver = require('semver');
+import fs from 'node:fs';
+import path from 'node:path';
+import {execa} from 'execa';
+import pTimeout from 'p-timeout';
+import ow from 'ow';
+import npmName from 'npm-name';
+import chalk from 'chalk';
+import {packageDirectorySync} from 'pkg-dir';
+import ignoreWalker from 'ignore-walk';
+import minimatch from 'minimatch';
+import semver from 'semver';
+import Version from '../version.js';
 
 // According to https://docs.npmjs.com/files/package.json#files
 // npm's default behavior is to ignore these files.
@@ -35,7 +34,7 @@ const filesIgnoredByDefault = [
 	'.git'
 ];
 
-exports.checkConnection = () => pTimeout(
+export const checkConnection = () => pTimeout(
 	(async () => {
 		try {
 			await execa('npm', ['ping']);
@@ -43,12 +42,13 @@ exports.checkConnection = () => pTimeout(
 		} catch {
 			throw new Error('Connection to npm registry failed');
 		}
-	})(),
-	15000,
-	'Connection to npm registry timed out'
+	})(), {
+		milliseconds: 15_000,
+		message: 'Connection to npm registry timed out'
+	}
 );
 
-exports.username = async ({externalRegistry}) => {
+export const username = async ({externalRegistry}) => {
 	const args = ['whoami'];
 
 	if (externalRegistry) {
@@ -59,19 +59,19 @@ exports.username = async ({externalRegistry}) => {
 		const {stdout} = await execa('npm', args);
 		return stdout;
 	} catch (error) {
-		throw new Error(/ENEEDAUTH/.test(error.stderr) ?
-			'You must be logged in. Use `npm login` and try again.' :
-			'Authentication error. Use `npm whoami` to troubleshoot.');
+		throw new Error(/ENEEDAUTH/.test(error.stderr)
+			? 'You must be logged in. Use `npm login` and try again.'
+			: 'Authentication error. Use `npm whoami` to troubleshoot.');
 	}
 };
 
-exports.collaborators = async pkg => {
+export const collaborators = async pkg => {
 	const packageName = pkg.name;
 	ow(packageName, ow.string);
 
-	const npmVersion = await exports.version();
+	const npmVersion = await version();
 	const args = semver.satisfies(npmVersion, '>=9.0.0') ? ['access', 'list', 'collaborators', packageName, '--json'] : ['access', 'ls-collaborators', packageName];
-	if (exports.isExternalRegistry(pkg)) {
+	if (isExternalRegistry(pkg)) {
 		args.push('--registry', pkg.publishConfig.registry);
 	}
 
@@ -88,7 +88,7 @@ exports.collaborators = async pkg => {
 	}
 };
 
-exports.prereleaseTags = async packageName => {
+export const prereleaseTags = async packageName => {
 	ow(packageName, ow.string);
 
 	let tags = [];
@@ -120,14 +120,14 @@ exports.prereleaseTags = async packageName => {
 	return tags;
 };
 
-exports.isPackageNameAvailable = async pkg => {
+export const isPackageNameAvailable = async pkg => {
 	const args = [pkg.name];
 	const availability = {
 		isAvailable: false,
 		isUnknown: false
 	};
 
-	if (exports.isExternalRegistry(pkg)) {
+	if (isExternalRegistry(pkg)) {
 		args.push({
 			registryUrl: pkg.publishConfig.registry
 		});
@@ -142,19 +142,19 @@ exports.isPackageNameAvailable = async pkg => {
 	return availability;
 };
 
-exports.isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
+export const isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
 
-exports.version = async () => {
+export const version = async () => {
 	const {stdout} = await execa('npm', ['--version']);
 	return stdout;
 };
 
-exports.verifyRecentNpmVersion = async () => {
-	const npmVersion = await exports.version();
-	verifyRequirementSatisfied('npm', npmVersion);
+export const verifyRecentNpmVersion = async () => {
+	const npmVersion = await version();
+	Version.verifyRequirementSatisfied('npm', npmVersion);
 };
 
-exports.checkIgnoreStrategy = ({files}) => {
+export const checkIgnoreStrategy = ({files}) => {
 	if (!files && !npmignoreExistsInPackageRootDir()) {
 		console.log(`
 		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
@@ -163,7 +163,7 @@ exports.checkIgnoreStrategy = ({files}) => {
 };
 
 function npmignoreExistsInPackageRootDir() {
-	const rootDir = pkgDir.sync();
+	const rootDir = packageDirectorySync();
 	return fs.existsSync(path.resolve(rootDir, '.npmignore'));
 }
 
@@ -172,10 +172,11 @@ function excludeGitAndNodeModulesPaths(singlePath) {
 }
 
 async function getFilesIgnoredByDotnpmignore(pkg, fileList) {
-	const allowList = (await ignoreWalker({
-		path: pkgDir.sync(),
+	let allowList = await ignoreWalker({
+		path: packageDirectorySync(),
 		ignoreFiles: ['.npmignore']
-	})).filter(singlePath => excludeGitAndNodeModulesPaths(singlePath));
+	});
+	allowList = allowList.filter(singlePath => excludeGitAndNodeModulesPaths(singlePath));
 	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(allowList, pkg.directories), {matchBase: true, dot: true}));
 }
 
@@ -185,12 +186,12 @@ function filterFileList(globArray, fileList) {
 	}
 
 	const globString = globArray.length > 1 ? `{${globArray.filter(singlePath => excludeGitAndNodeModulesPaths(singlePath))}}` : globArray[0];
-	return fileList.filter(minimatch.filter(globString, {matchBase: true, dot: true})); // eslint-disable-line unicorn/no-fn-reference-in-iterator
+	return fileList.filter(minimatch.filter(globString, {matchBase: true, dot: true})); // eslint-disable-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
 }
 
 async function getFilesIncludedByDotnpmignore(pkg, fileList) {
 	const allowList = await ignoreWalker({
-		path: pkgDir.sync(),
+		path: packageDirectorySync(),
 		ignoreFiles: ['.npmignore']
 	});
 	return filterFileList(allowList, fileList);
@@ -198,7 +199,7 @@ async function getFilesIncludedByDotnpmignore(pkg, fileList) {
 
 function getFilesNotIncludedInFilesProperty(pkg, fileList) {
 	const globArrayForFilesAndDirectories = [...pkg.files];
-	const rootDir = pkgDir.sync();
+	const rootDir = packageDirectorySync();
 	for (const glob of pkg.files) {
 		try {
 			if (fs.statSync(path.resolve(rootDir, glob)).isDirectory()) {
@@ -213,7 +214,7 @@ function getFilesNotIncludedInFilesProperty(pkg, fileList) {
 
 function getFilesIncludedInFilesProperty(pkg, fileList) {
 	const globArrayForFilesAndDirectories = [...pkg.files];
-	const rootDir = pkgDir.sync();
+	const rootDir = packageDirectorySync();
 	for (const glob of pkg.files) {
 		try {
 			if (fs.statSync(path.resolve(rootDir, glob)).isDirectory()) {
@@ -261,7 +262,7 @@ function getIgnoredFilesGlob(globArrayFromFilesProperty, packageDirectories) {
 }
 
 // Get all files which will be ignored by either `.npmignore` or the `files` property in `package.json` (if defined).
-exports.getNewAndUnpublishedFiles = async (pkg, newFiles = []) => {
+export const getNewAndUnpublishedFiles = async (pkg, newFiles = []) => {
 	if (pkg.files) {
 		return getFilesNotIncludedInFilesProperty(pkg, newFiles);
 	}
@@ -273,7 +274,7 @@ exports.getNewAndUnpublishedFiles = async (pkg, newFiles = []) => {
 	return [];
 };
 
-exports.getFirstTimePublishedFiles = async (pkg, newFiles = []) => {
+export const getFirstTimePublishedFiles = async (pkg, newFiles = []) => {
 	let result;
 	if (pkg.files) {
 		result = getFilesIncludedInFilesProperty(pkg, newFiles);
@@ -286,11 +287,10 @@ exports.getFirstTimePublishedFiles = async (pkg, newFiles = []) => {
 	return result.filter(minimatch.filter(`!{${filesIgnoredByDefault}}`, {matchBase: true, dot: true})).filter(minimatch.filter(getDefaultIncludedFilesGlob(pkg.main), {nocase: true, matchBase: true}));
 };
 
-exports.getRegistryUrl = async (pkgManager, pkg) => {
+export const getRegistryUrl = async (pkgManager, pkg) => {
 	const args = ['config', 'get', 'registry'];
-	if (exports.isExternalRegistry(pkg)) {
-		args.push('--registry');
-		args.push(pkg.publishConfig.registry);
+	if (isExternalRegistry(pkg)) {
+		args.push('--registry', pkg.publishConfig.registry);
 	}
 
 	const {stdout} = await execa(pkgManager, args);

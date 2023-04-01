@@ -1,57 +1,50 @@
 import test from 'ava';
-import execaStub from 'execa_test_double';
-import mockery from 'mockery';
-import {SilentRenderer} from './fixtures/listr-renderer';
+import {SilentRenderer} from './fixtures/listr-renderer.js';
+import {
+	_stubExeca,
+	run,
+	assertTaskFailed,
+	assertTaskDoesntExist
+} from './_utils.js';
 
-let testedModule;
+const stubExeca = _stubExeca('../source/git-tasks.js');
 
-const run = async listr => {
-	listr.setRenderer(SilentRenderer);
-	await listr.run();
-};
-
-test.before(() => {
-	mockery.registerMock('execa', execaStub.execa);
-	mockery.enable({
-		useCleanCache: true,
-		warnOnReplace: false,
-		warnOnUnregistered: false
-	});
-	testedModule = require('../source/git-tasks');
-});
-
-test.beforeEach(() => {
-	execaStub.resetStub();
+test.afterEach(() => {
+	SilentRenderer.clearTasks();
 });
 
 test.serial('should fail when release branch is not specified, current branch is not the release branch, and publishing from any branch not permitted', async t => {
-	execaStub.createStub([
-		{
-			command: 'git symbolic-ref --short HEAD',
-			exitCode: 0,
-			stdout: 'feature'
-		}
-	]);
-	await t.throwsAsync(run(testedModule({branch: 'master'})),
-		{message: 'Not on `master` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'});
-	t.true(SilentRenderer.tasks.some(task => task.title === 'Check current branch' && task.hasFailed()));
+	const gitTasks = await stubExeca(t, [{
+		command: 'git symbolic-ref --short HEAD',
+		exitCode: 0,
+		stdout: 'feature'
+	}]);
+
+	await t.throwsAsync(
+		run(gitTasks({branch: 'master'})),
+		{message: 'Not on `master` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'}
+	);
+
+	assertTaskFailed(t, 'Check current branch');
 });
 
 test.serial('should fail when current branch is not the specified release branch and publishing from any branch not permitted', async t => {
-	execaStub.createStub([
-		{
-			command: 'git symbolic-ref --short HEAD',
-			exitCode: 0,
-			stdout: 'feature'
-		}
-	]);
-	await t.throwsAsync(run(testedModule({branch: 'release'})),
-		{message: 'Not on `release` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'});
-	t.true(SilentRenderer.tasks.some(task => task.title === 'Check current branch' && task.hasFailed()));
+	const gitTasks = await stubExeca(t, [{
+		command: 'git symbolic-ref --short HEAD',
+		exitCode: 0,
+		stdout: 'feature'
+	}]);
+
+	await t.throwsAsync(
+		run(gitTasks({branch: 'release'})),
+		{message: 'Not on `release` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'}
+	);
+
+	assertTaskFailed(t, 'Check current branch');
 });
 
 test.serial('should not fail when current branch not master and publishing from any branch permitted', async t => {
-	execaStub.createStub([
+	const gitTasks = await stubExeca(t, [
 		{
 			command: 'git symbolic-ref --short HEAD',
 			exitCode: 0,
@@ -68,12 +61,16 @@ test.serial('should not fail when current branch not master and publishing from 
 			stdout: ''
 		}
 	]);
-	await run(testedModule({anyBranch: true}));
-	t.false(SilentRenderer.tasks.some(task => task.title === 'Check current branch'));
+
+	await t.notThrowsAsync(
+		run(gitTasks({anyBranch: true}))
+	);
+
+	assertTaskDoesntExist(t, 'Check current branch');
 });
 
 test.serial('should fail when local working tree modified', async t => {
-	execaStub.createStub([
+	const gitTasks = await stubExeca(t, [
 		{
 			command: 'git symbolic-ref --short HEAD',
 			exitCode: 0,
@@ -85,12 +82,17 @@ test.serial('should fail when local working tree modified', async t => {
 			stdout: 'M source/git-tasks.js'
 		}
 	]);
-	await t.throwsAsync(run(testedModule({branch: 'master'})), {message: 'Unclean working tree. Commit or stash changes first.'});
-	t.true(SilentRenderer.tasks.some(task => task.title === 'Check local working tree' && task.hasFailed()));
+
+	await t.throwsAsync(
+		run(gitTasks({branch: 'master'})),
+		{message: 'Unclean working tree. Commit or stash changes first.'}
+	);
+
+	assertTaskFailed(t, 'Check local working tree');
 });
 
 test.serial('should fail when remote history differs', async t => {
-	execaStub.createStub([
+	const gitTasks = await stubExeca(t, [
 		{
 			command: 'git symbolic-ref --short HEAD',
 			exitCode: 0,
@@ -107,12 +109,17 @@ test.serial('should fail when remote history differs', async t => {
 			stdout: '1'
 		}
 	]);
-	await t.throwsAsync(run(testedModule({branch: 'master'})), {message: 'Remote history differs. Please pull changes.'});
-	t.true(SilentRenderer.tasks.some(task => task.title === 'Check remote history' && task.hasFailed()));
+
+	await t.throwsAsync(
+		run(gitTasks({branch: 'master'})),
+		{message: 'Remote history differs. Please pull changes.'}
+	);
+
+	assertTaskFailed(t, 'Check remote history');
 });
 
 test.serial('checks should pass when publishing from master, working tree is clean and remote history not different', async t => {
-	execaStub.createStub([
+	const gitTasks = await stubExeca(t, [
 		{
 			command: 'git symbolic-ref --short HEAD',
 			exitCode: 0,
@@ -129,5 +136,8 @@ test.serial('checks should pass when publishing from master, working tree is cle
 			stdout: ''
 		}
 	]);
-	await t.notThrowsAsync(run(testedModule({branch: 'master'})));
+
+	await t.notThrowsAsync(
+		run(gitTasks({branch: 'master'}))
+	);
 });

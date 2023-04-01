@@ -1,25 +1,24 @@
 #!/usr/bin/env node
-'use strict';
-// eslint-disable-next-line import/no-unassigned-import
-require('symbol-observable'); // Important: This needs to be first to prevent weird Observable incompatibilities
-const logSymbols = require('log-symbols');
-const meow = require('meow');
-const updateNotifier = require('update-notifier');
-const hasYarn = require('has-yarn');
-const config = require('./config');
-const git = require('./git-util');
-const {isPackageNameAvailable} = require('./npm/util');
-const version = require('./version');
-const util = require('./util');
-const ui = require('./ui');
-const np = require('.');
+import 'symbol-observable'; // eslint-disable-line import/no-unassigned-import
+import process from 'node:process';
+import logSymbols from 'log-symbols';
+import meow from 'meow';
+import updateNotifier from 'update-notifier';
+import hasYarn from 'has-yarn';
+import config from './config.js';
+import * as git from './git-util.js';
+import {isPackageNameAvailable} from './npm/util.js';
+import Version from './version.js';
+import * as util from './util.js';
+import ui from './ui.js';
+import np from './index.js';
 
 const cli = meow(`
 	Usage
 	  $ np <version>
 
 	  Version can be:
-	    ${version.SEMVER_INCREMENTS.join(' | ')} | 1.2.3
+	    ${Version.SEMVER_INCREMENTS.join(' | ')} | 1.2.3
 
 	Options
 	  --any-branch           Allow publishing from any branch
@@ -45,6 +44,7 @@ const cli = meow(`
 	  $ np 1.0.2-beta.3 --tag=beta
 	  $ np 1.0.2-beta.3 --tag=beta --contents=dist
 `, {
+	importMeta: import.meta,
 	booleanDefault: undefined,
 	flags: {
 		anyBranch: {
@@ -97,7 +97,7 @@ const cli = meow(`
 
 updateNotifier({pkg: cli.pkg}).notify();
 
-(async () => {
+try {
 	const pkg = util.readPkg();
 
 	const defaultFlags = {
@@ -149,11 +149,11 @@ updateNotifier({pkg: cli.pkg}).notify();
 	const newPkg = await np(options.version, options);
 
 	if (options.preview || options.releaseDraftOnly) {
-		return;
+		process.exit(0);
 	}
 
 	console.log(`\n ${newPkg.name} ${newPkg.version} published 🎉`);
-})().catch(error => {
+} catch (error) {
 	console.error(`\n${logSymbols.error} ${error.message}`);
 	process.exit(1);
-});
+}

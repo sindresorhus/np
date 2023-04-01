@@ -1,13 +1,12 @@
-'use strict';
-const open = require('open');
-const newGithubReleaseUrl = require('new-github-release-url');
-const {getTagVersionPrefix, getPreReleasePrefix} = require('./util');
-const version = require('./version');
+import open from 'open';
+import newGithubReleaseUrl from 'new-github-release-url';
+import {getTagVersionPrefix, getPreReleasePrefix} from './util.js';
+import Version from './version.js';
 
-module.exports = async (options, pkg) => {
-	const newVersion = version(pkg.version).getNewVersionFrom(options.version);
+const releaseTaskHelper = async (options, pkg) => {
+	const newVersion = new Version(pkg.version).getNewVersionFrom(options.version);
 	let tag = await getTagVersionPrefix(options) + newVersion;
-	const isPreRelease = version(options.version).isPrerelease();
+	const isPreRelease = new Version(options.version).isPrerelease();
 	if (isPreRelease) {
 		tag += await getPreReleasePrefix(options);
 	}
@@ -21,3 +20,5 @@ module.exports = async (options, pkg) => {
 
 	await open(url);
 };
+
+export default releaseTaskHelper;

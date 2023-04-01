@@ -1,7 +1,9 @@
-'use strict';
-const semver = require('semver');
+import semver from 'semver';
+import {readPackageUp} from 'read-pkg-up';
 
-class Version {
+const {packageJson: pkg} = await readPackageUp();
+
+export default class Version {
 	constructor(version) {
 		this.version = version;
 	}
@@ -11,56 +13,54 @@ class Version {
 	}
 
 	satisfies(range) {
-		module.exports.validate(this.version);
+		Version.validate(this.version);
 		return semver.satisfies(this.version, range, {
 			includePrerelease: true
 		});
 	}
 
 	getNewVersionFrom(input) {
-		module.exports.validate(this.version);
-		if (!module.exports.isValidInput(input)) {
-			throw new Error(`Version should be either ${module.exports.SEMVER_INCREMENTS.join(', ')} or a valid semver version.`);
+		Version.validate(this.version);
+		if (!Version.isValidInput(input)) {
+			throw new Error(`Version should be either ${Version.SEMVER_INCREMENTS.join(', ')} or a valid semver version.`);
 		}
 
-		return module.exports.SEMVER_INCREMENTS.includes(input) ? semver.inc(this.version, input) : input;
+		return Version.SEMVER_INCREMENTS.includes(input) ? semver.inc(this.version, input) : input;
 	}
 
 	isGreaterThanOrEqualTo(otherVersion) {
-		module.exports.validate(this.version);
-		module.exports.validate(otherVersion);
+		Version.validate(this.version);
+		Version.validate(otherVersion);
 
 		return semver.gte(otherVersion, this.version);
 	}
 
 	isLowerThanOrEqualTo(otherVersion) {
-		module.exports.validate(this.version);
-		module.exports.validate(otherVersion);
+		Version.validate(this.version);
+		Version.validate(otherVersion);
 
 		return semver.lte(otherVersion, this.version);
 	}
+
+	static SEMVER_INCREMENTS = ['patch', 'minor', 'major', 'prepatch', 'preminor', 'premajor', 'prerelease'];
+	static PRERELEASE_VERSIONS = ['prepatch', 'preminor', 'premajor', 'prerelease'];
+
+	static isPrereleaseOrIncrement = input => new Version(input).isPrerelease() || Version.PRERELEASE_VERSIONS.includes(input);
+
+	static isValidVersion = input => Boolean(semver.valid(input));
+
+	static isValidInput = input => Version.SEMVER_INCREMENTS.includes(input) || Version.isValidVersion(input);
+
+	static validate(version) {
+		if (!Version.isValidVersion(version)) {
+			throw new Error('Version should be a valid semver version.');
+		}
+	}
+
+	static verifyRequirementSatisfied(dependency, version) {
+		const depRange = pkg.engines[dependency];
+		if (!new Version(version).satisfies(depRange)) {
+			throw new Error(`Please upgrade to ${dependency}${depRange}`);
+		}
+	}
 }
-
-module.exports = version => new Version(version);
-
-module.exports.SEMVER_INCREMENTS = ['patch', 'minor', 'major', 'prepatch', 'preminor', 'premajor', 'prerelease'];
-module.exports.PRERELEASE_VERSIONS = ['prepatch', 'preminor', 'premajor', 'prerelease'];
-
-module.exports.isPrereleaseOrIncrement = input => module.exports(input).isPrerelease() || module.exports.PRERELEASE_VERSIONS.includes(input);
-
-const isValidVersion = input => Boolean(semver.valid(input));
-
-module.exports.isValidInput = input => module.exports.SEMVER_INCREMENTS.includes(input) || isValidVersion(input);
-
-module.exports.validate = version => {
-	if (!isValidVersion(version)) {
-		throw new Error('Version should be a valid semver version.');
-	}
-};
-
-module.exports.verifyRequirementSatisfied = (dependency, version) => {
-	const depRange = require('../package.json').engines[dependency];
-	if (!module.exports(version).satisfies(depRange)) {
-		throw new Error(`Please upgrade to ${dependency}${depRange}`);
-	}
-};

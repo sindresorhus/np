@@ -1,0 +1,51 @@
+import esmock from 'esmock';
+import {execa} from 'execa';
+import {SilentRenderer} from './fixtures/listr-renderer.js';
+
+export const _stubExeca = source => async (t, commands) => esmock(source, {}, {
+	execa: {
+		execa: async (...args) => {
+			for (const result of commands) {
+				// Console.log(result);
+				// eslint-disable-next-line no-await-in-loop
+				const argsMatch = await t.try(tt => {
+					const [command, ...commandArgs] = result.command.split(' ');
+					tt.deepEqual(args, [command, commandArgs]);
+				});
+
+				if (argsMatch.passed) {
+					argsMatch.discard();
+
+					if (!result.exitCode || result.exitCode === 0) {
+						return result;
+					}
+
+					throw result;
+				}
+
+				argsMatch.discard();
+			}
+
+			return execa(...args);
+		}
+	}
+});
+
+export const run = async listr => {
+	listr.setRenderer(SilentRenderer);
+	await listr.run();
+};
+
+export const assertTaskFailed = (t, taskTitle) => {
+	const task = SilentRenderer.tasks.find(task => task.title === taskTitle);
+	t.true(task.hasFailed(), `'${taskTitle}' did not fail!`);
+};
+
+export const assertTaskDisabled = (t, taskTitle) => {
+	const task = SilentRenderer.tasks.find(task => task.title === taskTitle);
+	t.true(!task.isEnabled(), `'${taskTitle}' was enabled!`);
+};
+
+export const assertTaskDoesntExist = (t, taskTitle) => {
+	t.true(SilentRenderer.tasks.every(task => task.title !== taskTitle), `'${taskTitle}' exists!`);
+};

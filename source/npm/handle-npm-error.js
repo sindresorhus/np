@@ -1,7 +1,7 @@
-const listrInput = require('listr-input');
-const chalk = require('chalk');
-const {throwError} = require('rxjs');
-const {catchError} = require('rxjs/operators');
+import listrInput from 'listr-input';
+import chalk from 'chalk';
+import {throwError} from 'rxjs';
+import {catchError} from 'rxjs/operators/index.js';
 
 const handleNpmError = (error, task, message, executor) => {
 	if (typeof message === 'function') {
@@ -15,7 +15,7 @@ const handleNpmError = (error, task, message, executor) => {
 		task.title = `${title} ${chalk.yellow('(waiting for input…)')}`;
 
 		return listrInput('Enter OTP:', {
-			done: otp => {
+			done(otp) {
 				task.title = title;
 				return executor(otp);
 			},
@@ -34,4 +34,4 @@ const handleNpmError = (error, task, message, executor) => {
 	return throwError(error);
 };
 
-module.exports = handleNpmError;
+export default handleNpmError;
