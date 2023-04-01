@@ -22,7 +22,7 @@
 
 ---
 
-<img src="screenshot.gif" width="688">
+<img src="media/screenshot.gif" width="688">
 
 ## Why
 
@@ -104,7 +104,7 @@ $ np --help
 
 Run `np` without arguments to launch the interactive UI that guides you through publishing a new version.
 
-<img src="screenshot-ui.png" width="1290">
+<img src="media/screenshot-ui.png" width="1290">
 
 ## Config
 
@@ -226,7 +226,7 @@ $ yarn config set version-sign-git-tag true
 
 ### Private packages
 
-<img src="private-packages.png" width="260" align="right">
+<img src="media/private-packages.png" width="260" align="right">
 
 You can use `np` for packages that aren't publicly published to npm (perhaps installed from a private git repo).
 
