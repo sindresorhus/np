@@ -148,6 +148,11 @@ test.serial('should fail when user is not authenticated at external registry', a
 			command: 'npm access ls-collaborators test --registry http://my.io',
 			exitCode: 0,
 			stdout: '{"sindresorhus": "read"}'
+		},
+		{
+			command: 'npm access list collaborators test --json --registry http://my.io',
+			exitCode: 0,
+			stdout: '{"sindresorhus": "read"}'
 		}
 	]);
 
