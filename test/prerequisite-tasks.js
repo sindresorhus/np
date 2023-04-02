@@ -203,7 +203,7 @@ test.serial('should fail when git version does not match range in `package.json`
 	assertTaskFailed(t, 'Check git version');
 });
 
-test.serial('should fail when git remote does not exists', async t => {
+test.serial('should fail when git remote does not exist', async t => {
 	const prerequisiteTasks = await stubExeca(t, [{
 		command: 'git ls-remote origin HEAD',
 		exitCode: 1,
