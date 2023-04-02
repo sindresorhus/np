@@ -1,6 +1,5 @@
 import {execa} from 'execa';
-import {from} from 'rxjs';
-import {catchError} from 'rxjs/operators/index.js';
+import {from, catchError} from 'rxjs';
 import handleNpmError from './handle-npm-error.js';
 
 export const getEnable2faArgs = (packageName, options) => {

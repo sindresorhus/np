@@ -1,7 +1,6 @@
 import listrInput from 'listr-input';
 import chalk from 'chalk';
-import {throwError} from 'rxjs';
-import {catchError} from 'rxjs/operators/index.js';
+import {throwError, catchError} from 'rxjs';
 
 const handleNpmError = (error, task, message, executor) => {
 	if (typeof message === 'function') {
@@ -31,7 +30,7 @@ const handleNpmError = (error, task, message, executor) => {
 		throw new Error('You cannot publish a privately scoped package without a paid plan. Did you mean to publish publicly?');
 	}
 
-	return throwError(error);
+	return throwError(() => error);
 };
 
 export default handleNpmError;

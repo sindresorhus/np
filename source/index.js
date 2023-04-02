@@ -1,13 +1,9 @@
-import 'any-observable/register/rxjs-all.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import {execa} from 'execa';
 import {deleteAsync} from 'del';
 import Listr from 'listr';
-import split from 'split';
-import {merge, throwError} from 'rxjs';
-import {catchError, filter, finalize} from 'rxjs/operators/index.js';
-import streamToObservable from '@samverschueren/stream-to-observable';
+import {merge, throwError, catchError, filter, finalize} from 'rxjs';
 import {readPackageUp} from 'read-pkg-up';
 import hasYarn from 'has-yarn';
 import {packageDirectorySync} from 'pkg-dir';
@@ -28,11 +24,7 @@ const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
 	const cp = execa(cmd, args);
 
-	return merge(
-		streamToObservable(cp.stdout.pipe(split())),
-		streamToObservable(cp.stderr.pipe(split())),
-		cp
-	).pipe(filter(Boolean));
+	return merge(cp.stdout, cp.stderr, cp).pipe(filter(Boolean));
 };
 
 // eslint-disable-next-line complexity
@@ -166,7 +158,7 @@ const np = async (input = 'patch', options) => {
 							return [];
 						}
 
-						return throwError(error);
+						return throwError(() => error);
 					})
 				)
 			}
