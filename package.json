@@ -8,8 +8,8 @@
 	"type": "module",
 	"bin": "source/cli.js",
 	"engines": {
-		"node": ">=14.18",
-		"npm": ">=6.8.0",
+		"node": ">=16.6.0",
+		"npm": ">=7.19.0",
 		"git": ">=2.11.0",
 		"yarn": ">=1.7.0"
 	},

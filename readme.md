@@ -54,8 +54,8 @@
 
 ## Prerequisite
 
-- Node.js 10 or later
-- npm 6.8.0 or later
+- Node.js 16 or later
+- npm 7.19.0 or later
 - Git 2.11 or later
 
 ## Install
