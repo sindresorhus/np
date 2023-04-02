@@ -52,7 +52,7 @@
 		"listr-input": "^0.2.1",
 		"log-symbols": "^5.1.0",
 		"meow": "^11.0.0",
-		"minimatch": "^7.4.3",
+		"minimatch": "^8.0.2",
 		"new-github-release-url": "^2.0.0",
 		"npm-name": "^7.1.0",
 		"onetime": "^6.0.0",
