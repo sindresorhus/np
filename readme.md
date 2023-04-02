@@ -108,7 +108,7 @@ Run `np` without arguments to launch the interactive UI that guides you through 
 
 ## Config
 
-`np` can be configured both locally and globally. When using the global `np` binary, you can configure any of the CLI flags in either a `.np-config.js`, `.np-config.cjs` or `.np-config.json` file in the home directory. When using the local `np` binary, for example, in a `npm run` script, you can configure `np` by setting the flags in either a top-level `np` field in `package.json` or in a `.np-config.js`, `.np-config.cjs` or `.np-config.json` file in the project directory. If it exists, the local installation will always take precedence. This ensures any local config matches the version of `np` it was designed for.
+`np` can be configured both globally and locally. When using the global `np` binary, you can configure any of the CLI flags in either a `.np-config.js` (as CJS), `.np-config.cjs`, `.np-config.mjs`, or `.np-config.json` file in the home directory. When using the local `np` binary, for example, in a `npm run` script, you can configure `np` by setting the flags in either a top-level `np` field in `package.json` or in one of the aforementioned file types in the project directory. If it exists, the local installation will always take precedence. This ensures any local config matches the version of `np` it was designed for.
 
 Currently, these are the flags you can configure:
 
@@ -151,6 +151,14 @@ For example, this configures `np` to never use Yarn and to use `dist` as the sub
 `.np-config.js` or `.np-config.cjs`
 ```js
 module.exports = {
+	yarn: false,
+	contents: 'dist'
+};
+```
+
+`.np-config.mjs`
+```js
+export default {
 	yarn: false,
 	contents: 'dist'
 };
