@@ -92,7 +92,10 @@
 		],
 		"rules": {
 			"comma-dangle": "off",
-			"object-shorthand": ["error", "properties"]
+			"object-shorthand": [
+				"error",
+				"properties"
+			]
 		}
 	}
 }
