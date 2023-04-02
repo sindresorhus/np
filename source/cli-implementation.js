@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import 'symbol-observable'; // eslint-disable-line import/no-unassigned-import
+// eslint-disable-next-line import/no-unassigned-import
+import 'symbol-observable'; // Important: This needs to be first to prevent weird Observable incompatibilities
 import logSymbols from 'log-symbols';
 import meow from 'meow';
 import updateNotifier from 'update-notifier';
