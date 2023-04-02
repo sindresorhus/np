@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import 'symbol-observable'; // eslint-disable-line import/no-unassigned-import
-import process from 'node:process';
 import logSymbols from 'log-symbols';
 import meow from 'meow';
 import updateNotifier from 'update-notifier';
 import hasYarn from 'has-yarn';
+import {gracefulExit} from 'exit-hook';
 import config from './config.js';
 import * as git from './git-util.js';
 import {isPackageNameAvailable} from './npm/util.js';
@@ -142,18 +142,18 @@ try {
 	}, {pkg, pkgPath});
 
 	if (!options.confirm) {
-		process.exit(0);
+		gracefulExit();
 	}
 
 	console.log(); // Prints a newline for readability
 	const newPkg = await np(options.version, options);
 
 	if (options.preview || options.releaseDraftOnly) {
-		process.exit(0);
+		gracefulExit();
 	}
 
 	console.log(`\n ${newPkg.name} ${newPkg.version} published 🎉`);
 } catch (error) {
 	console.error(`\n${logSymbols.error} ${error.message}`);
-	process.exit(1);
+	gracefulExit(1);
 }

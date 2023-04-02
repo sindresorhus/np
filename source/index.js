@@ -13,7 +13,7 @@ import hasYarn from 'has-yarn';
 import {packageDirectorySync} from 'pkg-dir';
 import hostedGitInfo from 'hosted-git-info';
 import onetime from 'onetime';
-import exitHook from 'async-exit-hook';
+import {asyncExitHook} from 'exit-hook';
 import logSymbols from 'log-symbols';
 import prerequisiteTasks from './prerequisite-tasks.js';
 import gitTasks from './git-tasks.js';
@@ -86,22 +86,17 @@ const np = async (input = 'patch', options) => {
 		}
 	});
 
-	// The default parameter is a workaround for https://github.com/Tapppi/async-exit-hook/issues/9
-	exitHook((callback = () => {}) => {
-		if (options.preview) {
-			callback();
-		} else if (publishStatus === 'FAILED') {
-			(async () => {
-				await rollback();
-				callback();
-			})();
-		} else if (publishStatus === 'SUCCESS') {
-			callback();
+	asyncExitHook(async () => {
+		if (options.preview || publishStatus === 'SUCCESS') {
+			return;
+		}
+
+		if (publishStatus === 'FAILED') {
+			await rollback();
 		} else {
 			console.log('\nAborted!');
-			callback();
 		}
-	});
+	}, {minimumWait: 2000});
 
 	const tasks = new Listr([
 		{
