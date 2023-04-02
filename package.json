@@ -14,7 +14,7 @@
 		"yarn": ">=1.7.0"
 	},
 	"scripts": {
-		"test": "xo && FORCE_HYPERLINK=1 ava"
+		"test": "xo && FORCE_HYPERLINK=1 ava && ava test/integration.js --no-worker-threads"
 	},
 	"files": [
 		"source"
@@ -72,21 +72,19 @@
 		"ava": "^5.2.0",
 		"common-tags": "^1.8.2",
 		"esmock": "^2.2.0",
+		"fs-extra": "^11.1.1",
 		"sinon": "^15.0.3",
 		"xo": "^0.53.1"
 	},
 	"ava": {
 		"files": [
-			"!integration-test"
+			"!test/integration.js"
 		],
 		"nodeArguments": [
 			"--loader=esmock"
 		]
 	},
 	"xo": {
-		"ignores": [
-			"integration-test"
-		],
 		"rules": {
 			"comma-dangle": "off",
 			"object-shorthand": [
