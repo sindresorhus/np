@@ -14,7 +14,7 @@
 		"yarn": ">=1.7.0"
 	},
 	"scripts": {
-		"test": "xo && FORCE_HYPERLINK=1 ava && ava test/integration.js --no-worker-threads"
+		"test": "xo && ava && ava test/integration.js --no-worker-threads"
 	},
 	"files": [
 		"source"
@@ -77,6 +77,9 @@
 		"xo": "^0.53.1"
 	},
 	"ava": {
+		"environmentVariables": {
+			"FORCE_HYPERLINK": "1"
+		},
 		"files": [
 			"!test/integration.js"
 		],
