@@ -11,6 +11,7 @@ import {
 	assertTaskDisabled
 } from './_utils.js';
 
+/** @type {(...args: ReturnType<_stubExeca>) => Promise<import('../source/prerequisite-tasks.js').default>} */
 const stubExeca = _stubExeca('../source/prerequisite-tasks.js');
 const {packageJson: pkg} = await readPackageUp();
 

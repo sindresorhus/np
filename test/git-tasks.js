@@ -7,6 +7,7 @@ import {
 	assertTaskDoesntExist
 } from './_utils.js';
 
+/** @type {(...args: ReturnType<_stubExeca>) => Promise<import('../source/git-tasks.js').default>} */
 const stubExeca = _stubExeca('../source/git-tasks.js');
 
 test.afterEach(() => {
