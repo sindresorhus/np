@@ -1,16 +1,29 @@
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import test from 'ava';
 import esmock from 'esmock';
 
+const runIfExists = async (func, ...args) => {
+	if (typeof func === 'function') {
+		await func(...args);
+	}
+};
+
 const getFixture = name => path.resolve('test', 'fixtures', 'files', name);
 
-const mockPkgDir = test.macro(async (t, fixture, expectedFiles) => {
+const mockPkgDir = test.macro(async (t, fixture, expectedFiles, {before, after} = {}) => {
+	const fixtureDir = getFixture(fixture);
+
+	await runIfExists(before, fixtureDir);
+
 	const npmUtil = await esmock('../source/npm/util.js', {
-		'pkg-dir': {packageDirectory: async () => getFixture(fixture)},
+		'pkg-dir': {packageDirectory: async () => fixtureDir},
 	});
 
 	const files = await npmUtil.getFilesToBePacked();
 	t.deepEqual(files.sort(), expectedFiles.sort(), 'Files different from expectations!');
+
+	await runIfExists(after, fixtureDir);
 });
 
 test('package.json files field - one file', mockPkgDir, 'one-file', [
@@ -57,17 +70,26 @@ test('package.json files field and npmignore', mockPkgDir, 'files-and-npmignore'
 	'source/index.d.ts',
 ]);
 
+const renameDotGitignore = {
+	async before(fixtureDir) {
+		await fs.rename(`${fixtureDir}/gitignore`, `${fixtureDir}/.gitignore`);
+	},
+	async after(fixtureDir) {
+		await fs.rename(`${fixtureDir}/.gitignore`, `${fixtureDir}/gitignore`);
+	},
+};
+
 test('package.json files field and gitignore', mockPkgDir, 'gitignore', [
 	'package.json',
 	'readme.md',
 	'dist/index.js',
-]);
+], renameDotGitignore);
 
 test('npmignore and gitignore', mockPkgDir, 'npmignore-and-gitignore', [
 	'package.json',
 	'readme.md',
 	'dist/index.js',
-]);
+], renameDotGitignore);
 
 test('package.json main field not in files field', mockPkgDir, 'main', [
 	'package.json',
