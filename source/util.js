@@ -77,7 +77,7 @@ export const getNewFiles = async () => {
 	const listPkgFiles = await npmUtil.getFilesToBePacked();
 
 	return {
-		unpublished: listNewFiles.filter(file => !listPkgFiles.includes(file)),
+		unpublished: listNewFiles.filter(file => !listPkgFiles.includes(file) && !file.startsWith('.git')),
 		firstTime: listNewFiles.filter(file => listPkgFiles.includes(file)),
 	};
 };
