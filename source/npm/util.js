@@ -31,7 +31,7 @@ const filesIgnoredByDefault = [
 	'npm-debug.log',
 	'package-lock.json',
 	'.git/**/*',
-	'.git'
+	'.git',
 ];
 
 export const checkConnection = () => pTimeout(
@@ -44,8 +44,8 @@ export const checkConnection = () => pTimeout(
 		}
 	})(), {
 		milliseconds: 15_000,
-		message: 'Connection to npm registry timed out'
-	}
+		message: 'Connection to npm registry timed out',
+	},
 );
 
 export const username = async ({externalRegistry}) => {
@@ -124,12 +124,12 @@ export const isPackageNameAvailable = async pkg => {
 	const args = [pkg.name];
 	const availability = {
 		isAvailable: false,
-		isUnknown: false
+		isUnknown: false,
 	};
 
 	if (isExternalRegistry(pkg)) {
 		args.push({
-			registryUrl: pkg.publishConfig.registry
+			registryUrl: pkg.publishConfig.registry,
 		});
 	}
 
@@ -174,7 +174,7 @@ function excludeGitAndNodeModulesPaths(singlePath) {
 async function getFilesIgnoredByDotnpmignore(pkg, fileList) {
 	let allowList = await ignoreWalker({
 		path: packageDirectorySync(),
-		ignoreFiles: ['.npmignore']
+		ignoreFiles: ['.npmignore'],
 	});
 	allowList = allowList.filter(singlePath => excludeGitAndNodeModulesPaths(singlePath));
 	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(allowList, pkg.directories), {matchBase: true, dot: true}));
@@ -192,7 +192,7 @@ function filterFileList(globArray, fileList) {
 async function getFilesIncludedByDotnpmignore(pkg, fileList) {
 	const allowList = await ignoreWalker({
 		path: packageDirectorySync(),
-		ignoreFiles: ['.npmignore']
+		ignoreFiles: ['.npmignore'],
 	});
 	return filterFileList(allowList, fileList);
 }
@@ -237,7 +237,7 @@ function getDefaultIncludedFilesGlob(mainFile) {
 		'HISTORY*',
 		'LICENSE*',
 		'LICENCE*',
-		'NOTICE*'
+		'NOTICE*',
 	];
 	if (mainFile) {
 		filesAlwaysIncluded.push(mainFile);

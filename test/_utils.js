@@ -4,7 +4,7 @@ import {SilentRenderer} from './fixtures/listr-renderer.js';
 
 export const _stubExeca = source => async (t, commands) => esmock(source, {}, {
 	execa: {
-		execa: async (...args) => {
+		async execa(...args) {
 			const results = await Promise.all(commands.map(async result => {
 				const argsMatch = await t.try(tt => {
 					const [command, ...commandArgs] = result.command.split(' ');
@@ -26,8 +26,8 @@ export const _stubExeca = source => async (t, commands) => esmock(source, {}, {
 
 			const result = results.filter(Boolean).at(0);
 			return result ?? execa(...args);
-		}
-	}
+		},
+	},
 });
 
 export const run = async listr => {

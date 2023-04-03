@@ -22,7 +22,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 		return {
 			hasCommits: false,
 			hasUnreleasedCommits: false,
-			releaseNotes: () => {}
+			releaseNotes() {},
 		};
 	}
 
@@ -34,7 +34,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 			const splitIndex = commit.lastIndexOf(' ');
 			return {
 				message: commit.slice(0, splitIndex),
-				id: commit.slice(splitIndex + 1)
+				id: commit.slice(splitIndex + 1),
 			};
 		});
 
@@ -65,7 +65,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 	}).join('\n');
 
 	const releaseNotes = nextTag => commits.map(commit =>
-		`- ${htmlEscape(commit.message)}  ${commit.id}`
+		`- ${htmlEscape(commit.message)}  ${commit.id}`,
 	).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 
 	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText);
@@ -74,7 +74,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 	return {
 		hasCommits: true,
 		hasUnreleasedCommits,
-		releaseNotes
+		releaseNotes,
 	};
 };
 
@@ -114,7 +114,7 @@ const checkNewFilesAndDependencies = async (pkg, pkgPath) => {
 		type: 'confirm',
 		name: 'confirm',
 		message: `${messages.join('\n')}\nContinue?`,
-		default: false
+		default: false,
 	}]);
 
 	return answers.confirm;
@@ -136,7 +136,7 @@ const ui = async (options, {pkg, pkgPath}) => {
 		if (!answerIgnoredFiles) {
 			return {
 				...options,
-				confirm: answerIgnoredFiles
+				confirm: answerIgnoredFiles,
 			};
 		}
 	}
@@ -158,14 +158,14 @@ const ui = async (options, {pkg, pkgPath}) => {
 			confirm: {
 				type: 'confirm',
 				message: 'Unreleased commits found. They won\'t be included in the release draft. Continue?',
-				default: false
-			}
+				default: false,
+			},
 		});
 
 		if (!answers.confirm) {
 			return {
 				...options,
-				...answers
+				...answers,
 			};
 		}
 	}
@@ -175,7 +175,7 @@ const ui = async (options, {pkg, pkgPath}) => {
 			...options,
 			confirm: true,
 			repoUrl,
-			releaseNotes
+			releaseNotes,
 		};
 	}
 
@@ -184,14 +184,14 @@ const ui = async (options, {pkg, pkgPath}) => {
 			confirm: {
 				type: 'confirm',
 				message: 'No commits found since previous release, continue?',
-				default: false
-			}
+				default: false,
+			},
 		});
 
 		if (!answers.confirm) {
 			return {
 				...options,
-				...answers
+				...answers,
 			};
 		}
 	}
@@ -202,14 +202,14 @@ const ui = async (options, {pkg, pkgPath}) => {
 				type: 'confirm',
 				when: isScoped(pkg.name) && options.runPublish,
 				message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(pkg.name)}. Do you want to try and publish it anyway?`,
-				default: false
-			}
+				default: false,
+			},
 		});
 
 		if (!answers.confirm) {
 			return {
 				...options,
-				...answers
+				...answers,
 			};
 		}
 	}
@@ -222,14 +222,14 @@ const ui = async (options, {pkg, pkgPath}) => {
 			choices: [...Version.SEMVER_INCREMENTS
 				.map(inc => ({
 					name: `${inc} 	${prettyVersionDiff(oldVersion, inc)}`,
-					value: inc
+					value: inc,
 				})),
 			new inquirer.Separator(),
 			{
 				name: 'Other (specify)',
-				value: null
+				value: null,
 			}],
-			filter: input => Version.isValidInput(input) ? new Version(oldVersion).getNewVersionFrom(input) : input
+			filter: input => Version.isValidInput(input) ? new Version(oldVersion).getNewVersionFrom(input) : input,
 		},
 		customVersion: {
 			type: 'input',
@@ -246,7 +246,7 @@ const ui = async (options, {pkg, pkgPath}) => {
 				}
 
 				return true;
-			}
+			},
 		},
 		tag: {
 			type: 'list',
@@ -260,10 +260,10 @@ const ui = async (options, {pkg, pkgPath}) => {
 					new inquirer.Separator(),
 					{
 						name: 'Other (specify)',
-						value: null
-					}
+						value: null,
+					},
 				];
-			}
+			},
 		},
 		customTag: {
 			type: 'input',
@@ -279,14 +279,14 @@ const ui = async (options, {pkg, pkgPath}) => {
 				}
 
 				return true;
-			}
+			},
 		},
 		publishScoped: {
 			type: 'confirm',
 			when: isScoped(pkg.name) && options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted') && !isExternalRegistry(pkg),
 			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
-			default: false
-		}
+			default: false,
+		},
 	});
 
 	return {
@@ -296,7 +296,7 @@ const ui = async (options, {pkg, pkgPath}) => {
 		publishScoped: answers.publishScoped,
 		confirm: true,
 		repoUrl,
-		releaseNotes
+		releaseNotes,
 	};
 };
 

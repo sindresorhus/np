@@ -15,7 +15,7 @@ export default class Version {
 	satisfies(range) {
 		Version.validate(this.version);
 		return semver.satisfies(this.version, range, {
-			includePrerelease: true
+			includePrerelease: true,
 		});
 	}
 

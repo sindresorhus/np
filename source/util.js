@@ -16,7 +16,7 @@ export const readPkg = async packagePath => {
 	}
 
 	const {packageJson, path} = await readPackageUp({
-		cwd: packagePath
+		cwd: packagePath,
 	});
 
 	return {pkg: packageJson, pkgPath: path};

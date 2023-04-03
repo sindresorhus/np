@@ -86,14 +86,5 @@
 		"nodeArguments": [
 			"--loader=esmock"
 		]
-	},
-	"xo": {
-		"rules": {
-			"comma-dangle": "off",
-			"object-shorthand": [
-				"error",
-				"properties"
-			]
-		}
 	}
 }

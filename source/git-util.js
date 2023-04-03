@@ -28,7 +28,7 @@ export const newFilesSinceLastRelease = async () => {
 		// Get all files under version control
 		return ignoreWalker({
 			path: packageDirectorySync(),
-			ignoreFiles: ['.gitignore']
+			ignoreFiles: ['.gitignore'],
 		});
 	}
 };
@@ -191,7 +191,7 @@ async function hasLocalBranch(branch) {
 			'show-ref',
 			'--verify',
 			'--quiet',
-			`refs/heads/${branch}`
+			`refs/heads/${branch}`,
 		]);
 		return true;
 	} catch {
@@ -208,7 +208,7 @@ export const defaultBranch = async () => {
 	}
 
 	throw new Error(
-		'Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.'
+		'Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.',
 	);
 };
 

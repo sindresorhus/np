@@ -18,9 +18,9 @@ const handleNpmError = (error, task, message, executor) => {
 				task.title = title;
 				return executor(otp);
 			},
-			autoSubmit: value => value.length === 6
+			autoSubmit: value => value.length === 6,
 		}).pipe(
-			catchError(error => handleNpmError(error, task, 'OTP was incorrect, try again:', executor))
+			catchError(error => handleNpmError(error, task, 'OTP was incorrect, try again:', executor)),
 		);
 	}
 

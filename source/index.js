@@ -94,15 +94,15 @@ const np = async (input = 'patch', options) => {
 		{
 			title: 'Prerequisite check',
 			enabled: () => options.runPublish,
-			task: () => prerequisiteTasks(input, pkg, options)
+			task: () => prerequisiteTasks(input, pkg, options),
 		},
 		{
 			title: 'Git',
-			task: () => gitTasks(options)
-		}
+			task: () => gitTasks(options),
+		},
 	], {
 		showSubtasks: false,
-		renderer: options.renderer ?? 'default'
+		renderer: options.renderer ?? 'default',
 	});
 
 	if (runCleanup) {
@@ -110,7 +110,7 @@ const np = async (input = 'patch', options) => {
 			{
 				title: 'Cleanup',
 				enabled: () => !hasLockFile,
-				task: () => deleteAsync('node_modules')
+				task: () => deleteAsync('node_modules'),
 			},
 			{
 				title: 'Installing dependencies using Yarn',
@@ -127,18 +127,18 @@ const np = async (input = 'patch', options) => {
 							}
 
 							throw new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.');
-						})
+						}),
 					)
-				)
+				),
 			},
 			{
 				title: 'Installing dependencies using npm',
 				enabled: () => options.yarn === false,
-				task: () => {
+				task() {
 					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production'];
 					return exec('npm', [...args, '--engine-strict']);
-				}
-			}
+				},
+			},
 		]);
 	}
 
@@ -147,7 +147,7 @@ const np = async (input = 'patch', options) => {
 			{
 				title: 'Running tests using npm',
 				enabled: () => options.yarn === false,
-				task: () => exec('npm', testCommand)
+				task: () => exec('npm', testCommand),
 			},
 			{
 				title: 'Running tests using Yarn',
@@ -159,9 +159,9 @@ const np = async (input = 'patch', options) => {
 						}
 
 						return throwError(() => error);
-					})
-				)
-			}
+					}),
+				),
+			},
 		]);
 	}
 
@@ -169,7 +169,7 @@ const np = async (input = 'patch', options) => {
 		{
 			title: 'Bumping version using Yarn',
 			enabled: () => options.yarn === true,
-			skip: () => {
+			skip() {
 				if (options.preview) {
 					let previewText = `[Preview] Command not executed: yarn version --new-version ${input}`;
 
@@ -180,7 +180,7 @@ const np = async (input = 'patch', options) => {
 					return `${previewText}.`;
 				}
 			},
-			task: () => {
+			task() {
 				const args = ['version', '--new-version', input];
 
 				if (options.message) {
@@ -188,12 +188,12 @@ const np = async (input = 'patch', options) => {
 				}
 
 				return exec('yarn', args);
-			}
+			},
 		},
 		{
 			title: 'Bumping version using npm',
 			enabled: () => options.yarn === false,
-			skip: () => {
+			skip() {
 				if (options.preview) {
 					let previewText = `[Preview] Command not executed: npm version ${input}`;
 
@@ -204,7 +204,7 @@ const np = async (input = 'patch', options) => {
 					return `${previewText}.`;
 				}
 			},
-			task: () => {
+			task() {
 				const args = ['version', input];
 
 				if (options.message) {
@@ -212,21 +212,21 @@ const np = async (input = 'patch', options) => {
 				}
 
 				return exec('npm', args);
-			}
-		}
+			},
+		},
 	]);
 
 	if (options.runPublish) {
 		tasks.add([
 			{
 				title: `Publishing package using ${pkgManagerName}`,
-				skip: () => {
+				skip() {
 					if (options.preview) {
 						const args = publish.getPackagePublishArguments(options);
 						return `[Preview] Command not executed: ${pkgManager} ${args.join(' ')}.`;
 					}
 				},
-				task: (context, task) => {
+				task(context, task) {
 					let hasError = false;
 
 					return publish(context, pkgManager, task, options)
@@ -238,10 +238,10 @@ const np = async (input = 'patch', options) => {
 							}),
 							finalize(() => {
 								publishStatus = hasError ? 'FAILED' : 'SUCCESS';
-							})
+							}),
 						);
-				}
-			}
+				},
+			},
 		]);
 
 		const isExternalRegistry = npm.isExternalRegistry(pkg);
@@ -249,14 +249,14 @@ const np = async (input = 'patch', options) => {
 			tasks.add([
 				{
 					title: 'Enabling two-factor authentication',
-					skip: () => {
+					skip() {
 						if (options.preview) {
 							const args = enable2fa.getEnable2faArgs(pkg.name, options);
 							return `[Preview] Command not executed: npm ${args.join(' ')}.`;
 						}
 					},
-					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
-				}
+					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp}),
+				},
 			]);
 		}
 	} else {
@@ -265,7 +265,7 @@ const np = async (input = 'patch', options) => {
 
 	tasks.add({
 		title: 'Pushing tags',
-		skip: async () => {
+		async skip() {
 			if (!(await git.hasUpstream())) {
 				return 'Upstream branch not found; not pushing.';
 			}
@@ -278,21 +278,21 @@ const np = async (input = 'patch', options) => {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
-		task: async () => {
+		async task() {
 			pushedObjects = await git.pushGraceful(isOnGitHub);
-		}
+		},
 	});
 
 	if (options.releaseDraft) {
 		tasks.add({
 			title: 'Creating release draft on GitHub',
 			enabled: () => isOnGitHub === true,
-			skip: () => {
+			skip() {
 				if (options.preview) {
 					return '[Preview] GitHub Releases draft will not be opened in preview mode.';
 				}
 			},
-			task: () => releaseTaskHelper(options, pkg)
+			task: () => releaseTaskHelper(options, pkg),
 		});
 	}
 

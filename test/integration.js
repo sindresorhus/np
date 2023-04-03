@@ -48,7 +48,7 @@ test.serial('files to package with tags added', async t => {
 
 	t.deepEqual(
 		await util.getNewFiles({files: ['*.js']}),
-		{unpublished: ['new'], firstTime: ['index.js']}
+		{unpublished: ['new'], firstTime: ['index.js']},
 	);
 });
 
@@ -62,7 +62,7 @@ test.serial.failing('file `new` to package without tags added', async t => {
 
 	t.deepEqual(
 		await util.getNewFiles({files: ['index.js']}),
-		{unpublished: ['new'], firstTime: ['index.js']}
+		{unpublished: ['new'], firstTime: ['index.js']},
 	);
 });
 
@@ -86,7 +86,7 @@ test.serial('files with long pathnames added', async t => {
 
 	t.deepEqual(
 		await util.getNewFiles({files: ['*.js']}),
-		{unpublished: [filePath1, filePath2], firstTime: []}
+		{unpublished: [filePath1, filePath2], firstTime: []},
 	);
 });
 
@@ -99,6 +99,6 @@ test.serial('no new files added', async t => {
 
 	t.deepEqual(
 		await util.getNewFiles({files: ['*.js']}),
-		{unpublished: [], firstTime: []}
+		{unpublished: [], firstTime: []},
 	);
 });

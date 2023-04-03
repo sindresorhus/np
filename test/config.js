@@ -15,7 +15,7 @@ const getConfigsWhenGlobalBinaryIsUsed = async homedirStub => {
 		const getConfig = await esmock(testedModulePath, {
 			'is-installed-globally': true,
 			'pkg-dir': {packageDirectory: async () => pathPkgDir},
-			'node:os': {homedir: homedirStub}
+			'node:os': {homedir: homedirStub},
 		});
 		return getConfig();
 	});
@@ -30,7 +30,7 @@ const getConfigsWhenLocalBinaryIsUsed = async pathPkgDir => {
 		const getConfig = await esmock(testedModulePath, {
 			'is-installed-globally': false,
 			'pkg-dir': {packageDirectory: async () => pathPkgDir},
-			'node:os': {homedir: () => homedir}
+			'node:os': {homedir: () => homedir},
 		});
 		return getConfig();
 	});
@@ -56,45 +56,45 @@ const useLocalBinary = test.macro(async (t, pkgDir, source) => {
 });
 
 test('returns config from home directory when global binary is used and .np-config-json exists in home directory',
-	useGlobalBinary, 'homedir1', 'homedir/.np-config.json'
+	useGlobalBinary, 'homedir1', 'homedir/.np-config.json',
 );
 
 test('returns config from home directory when global binary is used and `.np-config.js` as CJS exists in home directory',
-	useGlobalBinary, 'homedir2', 'homedir/.np-config.js'
+	useGlobalBinary, 'homedir2', 'homedir/.np-config.js',
 );
 
 test('returns config from home directory when global binary is used and `.np-config.cjs` exists in home directory',
-	useGlobalBinary, 'homedir3', 'homedir/.np-config.cjs'
+	useGlobalBinary, 'homedir3', 'homedir/.np-config.cjs',
 );
 
 test.failing('returns config from home directory when global binary is used and `.np-config.js` as ESM exists in home directory',
-	useGlobalBinary, 'homedir4', 'homedir/.np-config.js'
+	useGlobalBinary, 'homedir4', 'homedir/.np-config.js',
 );
 
 test('returns config from home directory when global binary is used and `.np-config.mjs` exists in home directory',
-	useGlobalBinary, 'homedir5', 'homedir/.np-config.mjs'
+	useGlobalBinary, 'homedir5', 'homedir/.np-config.mjs',
 );
 
 test('returns config from package directory when local binary is used and `package.json` exists in package directory',
-	useLocalBinary, 'pkg-dir', 'package.json'
+	useLocalBinary, 'pkg-dir', 'package.json',
 );
 
 test('returns config from package directory when local binary is used and `.np-config.json` exists in package directory',
-	useLocalBinary, 'local1', 'packagedir/.np-config.json'
+	useLocalBinary, 'local1', 'packagedir/.np-config.json',
 );
 
 test('returns config from package directory when local binary is used and `.np-config.js` as CJS exists in package directory',
-	useLocalBinary, 'local2', 'packagedir/.np-config.js'
+	useLocalBinary, 'local2', 'packagedir/.np-config.js',
 );
 
 test('returns config from package directory when local binary is used and `.np-config.cjs` exists in package directory',
-	useLocalBinary, 'local3', 'packagedir/.np-config.cjs'
+	useLocalBinary, 'local3', 'packagedir/.np-config.cjs',
 );
 
 test('returns config from package directory when local binary is used and `.np-config.js` as ESM exists in package directory',
-	useLocalBinary, 'local4', 'packagedir/.np-config.js'
+	useLocalBinary, 'local4', 'packagedir/.np-config.js',
 );
 
 test('returns config from package directory when local binary is used and `.np-config.mjs` exists in package directory',
-	useLocalBinary, 'local5', 'packagedir/.np-config.mjs'
+	useLocalBinary, 'local5', 'packagedir/.np-config.mjs',
 );

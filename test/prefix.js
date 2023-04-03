@@ -18,7 +18,7 @@ test('no options passed', async t => {
 
 test.serial('defaults to "v" when command fails', async t => {
 	const testedModule = await esmock('../source/util.js', {
-		execa: {default: Promise.reject}
+		execa: {default: Promise.reject},
 	});
 
 	t.is(await testedModule.getTagVersionPrefix({yarn: true}), 'v');

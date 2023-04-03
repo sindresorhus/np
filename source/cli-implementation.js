@@ -49,51 +49,51 @@ const cli = meow(`
 	booleanDefault: undefined,
 	flags: {
 		anyBranch: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		branch: {
-			type: 'string'
+			type: 'string',
 		},
 		cleanup: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		tests: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		yolo: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		publish: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		releaseDraft: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		releaseDraftOnly: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		tag: {
-			type: 'string'
+			type: 'string',
 		},
 		yarn: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		contents: {
-			type: 'string'
+			type: 'string',
 		},
 		preview: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		testScript: {
-			type: 'string'
+			type: 'string',
 		},
 		'2fa': {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		message: {
-			type: 'string'
-		}
-	}
+			type: 'string',
+		},
+	},
 });
 
 updateNotifier({pkg: cli.pkg}).notify();
@@ -107,7 +107,7 @@ try {
 		publish: true,
 		releaseDraft: true,
 		yarn: hasYarn(),
-		'2fa': true
+		'2fa': true,
 	};
 
 	const localConfig = await config();
@@ -115,7 +115,7 @@ try {
 	const flags = {
 		...defaultFlags,
 		...localConfig,
-		...cli.flags
+		...cli.flags,
 	};
 
 	// Workaround for unintended auto-casing behavior from `meow`.
@@ -127,7 +127,7 @@ try {
 
 	const availability = flags.publish ? await isPackageNameAvailable(pkg) : {
 		isAvailable: false,
-		isUnknown: false
+		isUnknown: false,
 	};
 
 	// Use current (latest) version when 'releaseDraftOnly', otherwise use the first argument.
@@ -139,7 +139,7 @@ try {
 		availability,
 		version,
 		runPublish,
-		branch
+		branch,
 	}, {pkg, pkgPath});
 
 	if (!options.confirm) {

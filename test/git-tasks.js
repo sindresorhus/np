@@ -4,7 +4,7 @@ import {
 	_stubExeca,
 	run,
 	assertTaskFailed,
-	assertTaskDoesntExist
+	assertTaskDoesntExist,
 } from './_utils.js';
 
 /** @type {(...args: ReturnType<_stubExeca>) => Promise<import('../source/git-tasks.js').default>} */
@@ -18,12 +18,12 @@ test.serial('should fail when release branch is not specified, current branch is
 	const gitTasks = await stubExeca(t, [{
 		command: 'git symbolic-ref --short HEAD',
 		exitCode: 0,
-		stdout: 'feature'
+		stdout: 'feature',
 	}]);
 
 	await t.throwsAsync(
 		run(gitTasks({branch: 'master'})),
-		{message: 'Not on `master` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'}
+		{message: 'Not on `master` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'},
 	);
 
 	assertTaskFailed(t, 'Check current branch');
@@ -33,12 +33,12 @@ test.serial('should fail when current branch is not the specified release branch
 	const gitTasks = await stubExeca(t, [{
 		command: 'git symbolic-ref --short HEAD',
 		exitCode: 0,
-		stdout: 'feature'
+		stdout: 'feature',
 	}]);
 
 	await t.throwsAsync(
 		run(gitTasks({branch: 'release'})),
-		{message: 'Not on `release` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'}
+		{message: 'Not on `release` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'},
 	);
 
 	assertTaskFailed(t, 'Check current branch');
@@ -49,22 +49,22 @@ test.serial('should not fail when current branch not master and publishing from 
 		{
 			command: 'git symbolic-ref --short HEAD',
 			exitCode: 0,
-			stdout: 'feature'
+			stdout: 'feature',
 		},
 		{
 			command: 'git status --porcelain',
 			exitCode: 0,
-			stdout: ''
+			stdout: '',
 		},
 		{
 			command: 'git rev-list --count --left-only @{u}...HEAD',
 			exitCode: 0,
-			stdout: ''
-		}
+			stdout: '',
+		},
 	]);
 
 	await t.notThrowsAsync(
-		run(gitTasks({anyBranch: true}))
+		run(gitTasks({anyBranch: true})),
 	);
 
 	assertTaskDoesntExist(t, 'Check current branch');
@@ -75,18 +75,18 @@ test.serial('should fail when local working tree modified', async t => {
 		{
 			command: 'git symbolic-ref --short HEAD',
 			exitCode: 0,
-			stdout: 'master'
+			stdout: 'master',
 		},
 		{
 			command: 'git status --porcelain',
 			exitCode: 0,
-			stdout: 'M source/git-tasks.js'
-		}
+			stdout: 'M source/git-tasks.js',
+		},
 	]);
 
 	await t.throwsAsync(
 		run(gitTasks({branch: 'master'})),
-		{message: 'Unclean working tree. Commit or stash changes first.'}
+		{message: 'Unclean working tree. Commit or stash changes first.'},
 	);
 
 	assertTaskFailed(t, 'Check local working tree');
@@ -97,23 +97,23 @@ test.serial('should fail when remote history differs', async t => {
 		{
 			command: 'git symbolic-ref --short HEAD',
 			exitCode: 0,
-			stdout: 'master'
+			stdout: 'master',
 		},
 		{
 			command: 'git status --porcelain',
 			exitCode: 0,
-			stdout: ''
+			stdout: '',
 		},
 		{
 			command: 'git rev-list --count --left-only @{u}...HEAD',
 			exitCode: 0,
-			stdout: '1'
-		}
+			stdout: '1',
+		},
 	]);
 
 	await t.throwsAsync(
 		run(gitTasks({branch: 'master'})),
-		{message: 'Remote history differs. Please pull changes.'}
+		{message: 'Remote history differs. Please pull changes.'},
 	);
 
 	assertTaskFailed(t, 'Check remote history');
@@ -124,21 +124,21 @@ test.serial('checks should pass when publishing from master, working tree is cle
 		{
 			command: 'git symbolic-ref --short HEAD',
 			exitCode: 0,
-			stdout: 'master'
+			stdout: 'master',
 		},
 		{
 			command: 'git status --porcelain',
 			exitCode: 0,
-			stdout: ''
+			stdout: '',
 		},
 		{
 			command: 'git rev-list --count --left-only @{u}...HEAD',
 			exitCode: 0,
-			stdout: ''
-		}
+			stdout: '',
+		},
 	]);
 
 	await t.notThrowsAsync(
-		run(gitTasks({branch: 'master'}))
+		run(gitTasks({branch: 'master'})),
 	);
 });

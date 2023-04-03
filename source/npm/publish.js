@@ -32,7 +32,7 @@ const publish = (context, pkgManager, task, options) => {
 			context.otp = otp;
 
 			return pkgPublish(pkgManager, {...options, otp});
-		}))
+		})),
 	);
 };
 

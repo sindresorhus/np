@@ -10,31 +10,31 @@ const defaultOptions = {
 	runPublish: true,
 	availability: {
 		isAvailable: false,
-		isUnknown: false
+		isUnknown: false,
 	},
-	renderer: 'silent'
+	renderer: 'silent',
 };
 
 const npFails = test.macro(async (t, inputs, message) => {
 	await t.throwsAsync(
 		Promise.all(inputs.map(input => np(input, defaultOptions))),
-		{message}
+		{message},
 	);
 });
 
 test('version is invalid', npFails,
 	['foo', '4.x.3'],
-	'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid semver version.'
+	'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid semver version.',
 );
 
 test('version is pre-release', npFails,
 	['premajor', 'preminor', 'prepatch', 'prerelease', '10.0.0-0', '10.0.0-beta'],
-	'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag'
+	'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag',
 );
 
 test('errors on too low version', npFails,
 	['1.0.0', '1.0.0-beta'],
-	/New version `1\.0\.0(?:-beta)?` should be higher than current version `\d+\.\d+\.\d+`/
+	/New version `1\.0\.0(?:-beta)?` should be higher than current version `\d+\.\d+\.\d+`/,
 );
 
 test('skip enabling 2FA if the package exists', async t => {
@@ -47,18 +47,18 @@ test('skip enabling 2FA if the package exists', async t => {
 		'../source/git-tasks.js': sinon.stub(),
 		'../source/git-util.js': {
 			hasUpstream: sinon.stub().returns(true),
-			pushGraceful: sinon.stub()
+			pushGraceful: sinon.stub(),
 		},
 		'../source/npm/enable-2fa.js': enable2faStub,
-		'../source/npm/publish.js': sinon.stub().returns({pipe: sinon.stub()})
+		'../source/npm/publish.js': sinon.stub().returns({pipe: sinon.stub()}),
 	}, {});
 
 	await t.notThrowsAsync(npMock('1.0.0', {
 		...defaultOptions,
 		availability: {
 			isAvailable: false,
-			isUnknown: false
-		}
+			isUnknown: false,
+		},
 	}));
 
 	t.true(enable2faStub.notCalled);
@@ -74,19 +74,19 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 		'../source/git-tasks.js': sinon.stub(),
 		'../source/git-util.js': {
 			hasUpstream: sinon.stub().returns(true),
-			pushGraceful: sinon.stub()
+			pushGraceful: sinon.stub(),
 		},
 		'../source/npm/enable-2fa.js': enable2faStub,
-		'../source/npm/publish.js': sinon.stub().returns({pipe: sinon.stub()})
+		'../source/npm/publish.js': sinon.stub().returns({pipe: sinon.stub()}),
 	});
 
 	await t.notThrowsAsync(npMock('1.0.0', {
 		...defaultOptions,
 		availability: {
 			isAvailable: true,
-			isUnknown: false
+			isUnknown: false,
 		},
-		'2fa': false
+		'2fa': false,
 	}));
 
 	t.true(enable2faStub.notCalled);

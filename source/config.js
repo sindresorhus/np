@@ -21,8 +21,8 @@ const getConfig = async () => {
 		stopDir: searchDir,
 		loaders: {
 			'.js': loadESM,
-			'.mjs': loadESM
-		}
+			'.mjs': loadESM,
+		},
 	});
 	const {config} = (await explorer.search(searchDir)) || {};
 

@@ -15,7 +15,7 @@ const releaseTaskHelper = async (options, pkg) => {
 		repoUrl: options.repoUrl,
 		tag,
 		body: options.releaseNotes(tag),
-		isPrerelease: isPreRelease
+		isPrerelease: isPreRelease,
 	});
 
 	await open(url);

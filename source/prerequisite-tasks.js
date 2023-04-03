@@ -14,26 +14,26 @@ const prerequisiteTasks = (input, pkg, options) => {
 		{
 			title: 'Ping npm registry',
 			enabled: () => !pkg.private && !isExternalRegistry,
-			task: async () => npm.checkConnection()
+			task: async () => npm.checkConnection(),
 		},
 		{
 			title: 'Check npm version',
-			task: async () => npm.verifyRecentNpmVersion()
+			task: async () => npm.verifyRecentNpmVersion(),
 		},
 		{
 			title: 'Check yarn version',
 			enabled: () => options.yarn === true,
-			task: async () => {
+			async task() {
 				const {stdout: yarnVersion} = await execa('yarn', ['--version']);
 				Version.verifyRequirementSatisfied('yarn', yarnVersion);
-			}
+			},
 		},
 		{
 			title: 'Verify user is authenticated',
 			enabled: () => process.env.NODE_ENV !== 'test' && !pkg.private,
-			task: async () => {
+			async task() {
 				const username = await npm.username({
-					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false
+					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false,
 				});
 
 				const collaborators = await npm.collaborators(pkg);
@@ -46,21 +46,21 @@ const prerequisiteTasks = (input, pkg, options) => {
 				if (!permissions || !permissions.includes('write')) {
 					throw new Error('You do not have write permissions required to publish this package.');
 				}
-			}
+			},
 		},
 		{
 			title: 'Check git version',
-			task: async () => git.verifyRecentGitVersion()
+			task: async () => git.verifyRecentGitVersion(),
 		},
 		{
 			title: 'Check git remote',
-			task: async () => git.verifyRemoteIsValid()
+			task: async () => git.verifyRemoteIsValid(),
 		},
 		{
 			title: 'Validate version',
-			task: () => {
+			task() {
 				newVersion = Version.getAndValidateNewVersionFrom(input, pkg.version);
-			}
+			},
 		},
 		{
 			title: 'Check for pre-release version',
@@ -68,7 +68,7 @@ const prerequisiteTasks = (input, pkg, options) => {
 				if (!pkg.private && new Version(newVersion).isPrerelease() && !options.tag) {
 					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 				}
-			}
+			},
 		},
 		{
 			title: 'Check git tag existence',
@@ -78,8 +78,8 @@ const prerequisiteTasks = (input, pkg, options) => {
 				const tagPrefix = await getTagVersionPrefix(options);
 
 				await git.verifyTagDoesNotExistOnRemote(`${tagPrefix}${newVersion}`);
-			}
-		}
+			},
+		},
 	];
 
 	return new Listr(tasks);

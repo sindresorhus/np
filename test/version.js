@@ -124,16 +124,16 @@ test('version.getAndValidateNewVersionFrom', t => {
 
 	t.throws(
 		() => Version.getAndValidateNewVersionFrom('patch', '1'),
-		{message: 'Version should be a valid semver version.'}
+		{message: 'Version should be a valid semver version.'},
 	);
 
 	t.throws(
 		() => Version.getAndValidateNewVersionFrom('lol', '1.0.0'),
-		{message: `Version should be either ${Version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`}
+		{message: `Version should be either ${Version.SEMVER_INCREMENTS.join(', ')}, or a valid semver version.`},
 	);
 
 	t.throws(
 		() => Version.getAndValidateNewVersionFrom('1.0.0', '2.0.0'),
-		{message: 'New version `1.0.0` should be higher than current version `2.0.0`'}
+		{message: 'New version `1.0.0` should be higher than current version `2.0.0`'},
 	);
 });
