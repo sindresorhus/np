@@ -3,102 +3,101 @@ import process from 'node:process';
 import path from 'node:path';
 import fs from 'fs-extra';
 import test from 'ava';
+// Import esmock from 'esmock';
 import {$} from 'execa';
-import {deleteAsync} from 'del';
-import * as gitUtil from '../source/git-util.js';
+import {temporaryDirectoryTask} from 'tempy';
+import {writePackage} from 'write-pkg';
 import * as util from '../source/util.js';
 
-test.before(async t => {
-	await fs.emptyDir('integration');
-	process.chdir('integration');
+const createEmptyGitRepo = async ($$, temporaryDir) => {
+	await $$`git init`;
 
-	await $`git init`;
-	await t.throwsAsync(gitUtil.latestTag(), undefined, 'prerequisites not met: repository should not contain any tags');
+	// `git tag` needs an initial commit
+	await fs.createFile(path.resolve(temporaryDir, 'temp'));
+	await $$`git add temp`;
+	await $$`git commit -m "init1"`;
+	await $$`git rm temp`;
+	await $$`git commit -m "init2"`;
+};
 
-	await fs.createFile('temp');
-	await $`git add .`;
-	await $`git commit -m 'init'`;
-	await deleteAsync('temp');
+const createIntegrationTest = async (t, assertions) => {
+	await temporaryDirectoryTask(async temporaryDir => {
+		const $$ = $({cwd: temporaryDir});
+
+		await createEmptyGitRepo($$, temporaryDir);
+		process.chdir(temporaryDir);
+
+		t.context.createFile = async file => fs.createFile(path.resolve(temporaryDir, file));
+		await assertions($$, temporaryDir);
+	});
+};
+
+test('main', async t => {
+	await createIntegrationTest(t, async $$ => {
+		await t.context.createFile('testFile');
+
+		const {stdout} = await $$`git status -u`;
+
+		t.true(
+			stdout.includes('Untracked files') && stdout.includes('testFile'),
+			'File wasn\'t created properly!',
+		);
+	});
 });
 
-test.after.always(async () => {
-	process.chdir('..');
-	await deleteAsync('integration');
+const createFixture = test.macro(async (t, pkgFiles, commands, {unpublished, firstTime}) => {
+	await createIntegrationTest(t, async ($$, temporaryDir) => {
+		// /** @type {import('../source/util.js')} */
+		// const util = await esmock('../source/util.js', {}, {
+		// 	'node:process': {cwd: () => temporaryDir},
+		// });
+
+		const pkg = {
+			name: 'foo',
+			version: '0.0.0',
+		};
+
+		if (pkgFiles.length > 0) {
+			pkg.files = pkgFiles;
+		}
+
+		await commands(t, $$, temporaryDir);
+		await writePackage(temporaryDir, pkg);
+
+		t.deepEqual(
+			await util.getNewFiles(),
+			{unpublished, firstTime},
+		);
+	});
 });
 
-test.afterEach.always(async t => {
-	if (typeof t.context.teardown === 'function') {
-		await t.context.teardown();
-	}
-});
+test.serial('files to package with tags added', createFixture, ['*.js'], async (t, $$) => {
+	await $$`git tag v0.0.0`;
+	await t.context.createFile('new');
+	await t.context.createFile('index.js');
+	await $$`git add new index.js`;
+	await $$`git commit -m "added"`;
+}, {unpublished: ['new'], firstTime: ['index.js']});
 
-test.serial('files to package with tags added', async t => {
-	await $`git tag v0.0.0`;
-	await fs.createFile('new');
-	await fs.createFile('index.js');
-	await $`git add new index.js`;
-	await $`git commit -m "added"`;
+test.serial('file `new` to package without tags added', createFixture, ['index.js'], async t => {
+	await t.context.createFile('new');
+	await t.context.createFile('index.js');
+}, {unpublished: ['new'], firstTime: ['index.js', 'package.json']});
 
-	t.context.teardown = async () => {
-		await $`git rm new`;
-		await $`git rm index.js`;
-		await $`git tag -d v0.0.0`;
-		await $`git commit -m "deleted"`;
-	};
-
-	t.deepEqual(
-		await util.getNewFiles({files: ['*.js']}),
-		{unpublished: ['new'], firstTime: ['index.js']},
-	);
-});
-
-test.serial.failing('file `new` to package without tags added', async t => {
-	await fs.createFile('new');
-	await fs.createFile('index.js');
-
-	t.context.teardown = async () => {
-		await deleteAsync(['new', 'index.js']);
-	};
-
-	t.deepEqual(
-		await util.getNewFiles({files: ['index.js']}),
-		{unpublished: ['new'], firstTime: ['index.js']},
-	);
-});
-
-test.serial('files with long pathnames added', async t => {
+(() => { // Wrapper to have constants with macro
 	const longPath = path.join('veryLonggggggDirectoryName', 'veryLonggggggDirectoryName');
 	const filePath1 = path.join(longPath, 'file1');
 	const filePath2 = path.join(longPath, 'file2');
 
+	test.serial('files with long pathnames added', createFixture, ['*.js'], async (t, $$) => {
+		await $$`git tag v0.0.0`;
+		await t.context.createFile(filePath1);
+		await t.context.createFile(filePath2);
+		await $$`git add ${filePath1} ${filePath2}`;
+		await $$`git commit -m "added"`;
+	}, {unpublished: [filePath1, filePath2], firstTime: []});
+})();
+
+test.serial('no new files added', createFixture, [], async () => {
 	await $`git tag v0.0.0`;
-	await fs.mkdir(longPath, {recursive: true});
-	await fs.createFile(filePath1);
-	await fs.createFile(filePath2);
-	await $`git add ${filePath1} ${filePath2}`;
-	await $`git commit -m "added"`;
-
-	t.context.teardown = async () => {
-		await $`git rm -r ${longPath}`;
-		await $`git tag -d v0.0.0`;
-		await $`git commit -m "deleted"`;
-	};
-
-	t.deepEqual(
-		await util.getNewFiles({files: ['*.js']}),
-		{unpublished: [filePath1, filePath2], firstTime: []},
-	);
-});
-
-test.serial('no new files added', async t => {
-	await $`git tag v0.0.0`;
-
-	t.context.teardown = async () => {
-		await $`git tag -d v0.0.0`;
-	};
-
-	t.deepEqual(
-		await util.getNewFiles({files: ['*.js']}),
-		{unpublished: [], firstTime: []},
-	);
-});
+}, {unpublished: [], firstTime: []});

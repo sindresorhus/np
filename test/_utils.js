@@ -48,3 +48,9 @@ export const assertTaskDisabled = (t, taskTitle) => {
 export const assertTaskDoesntExist = (t, taskTitle) => {
 	t.true(SilentRenderer.tasks.every(task => task.title !== taskTitle), `'${taskTitle}' exists!`);
 };
+
+export const runIfExists = async (func, ...args) => {
+	if (typeof func === 'function') {
+		await func(...args);
+	}
+};

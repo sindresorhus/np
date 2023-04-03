@@ -2,12 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import test from 'ava';
 import esmock from 'esmock';
-
-const runIfExists = async (func, ...args) => {
-	if (typeof func === 'function') {
-		await func(...args);
-	}
-};
+import {runIfExists} from './_utils.js';
 
 const getFixture = name => path.resolve('test', 'fixtures', 'files', name);
 
