@@ -1,9 +1,8 @@
-'use strict';
-const chalk = require('chalk');
-const version = require('./version');
+import chalk from 'chalk';
+import Version from './version.js';
 
-module.exports = (oldVersion, inc) => {
-	const newVersion = version(oldVersion).getNewVersionFrom(inc).split('.');
+const prettyVersionDiff = (oldVersion, inc) => {
+	const newVersion = new Version(oldVersion).getNewVersionFrom(inc).split('.');
 	oldVersion = oldVersion.split('.');
 	let firstVersionChange = false;
 	const output = [];
@@ -23,3 +22,5 @@ module.exports = (oldVersion, inc) => {
 
 	return output.join(chalk.reset.dim('.'));
 };
+
+export default prettyVersionDiff;

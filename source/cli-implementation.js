@@ -1,25 +1,25 @@
 #!/usr/bin/env node
-'use strict';
 // eslint-disable-next-line import/no-unassigned-import
-require('symbol-observable'); // Important: This needs to be first to prevent weird Observable incompatibilities
-const logSymbols = require('log-symbols');
-const meow = require('meow');
-const updateNotifier = require('update-notifier');
-const hasYarn = require('has-yarn');
-const config = require('./config');
-const git = require('./git-util');
-const {isPackageNameAvailable} = require('./npm/util');
-const version = require('./version');
-const util = require('./util');
-const ui = require('./ui');
-const np = require('.');
+import 'symbol-observable'; // Important: This needs to be first to prevent weird Observable incompatibilities
+import logSymbols from 'log-symbols';
+import meow from 'meow';
+import updateNotifier from 'update-notifier';
+import hasYarn from 'has-yarn';
+import {gracefulExit} from 'exit-hook';
+import config from './config.js';
+import * as git from './git-util.js';
+import {isPackageNameAvailable} from './npm/util.js';
+import Version from './version.js';
+import * as util from './util.js';
+import ui from './ui.js';
+import np from './index.js';
 
 const cli = meow(`
 	Usage
 	  $ np <version>
 
 	  Version can be:
-	    ${version.SEMVER_INCREMENTS.join(' | ')} | 1.2.3
+	    ${Version.SEMVER_INCREMENTS.join(' | ')} | 1.2.3
 
 	Options
 	  --any-branch           Allow publishing from any branch
@@ -45,60 +45,61 @@ const cli = meow(`
 	  $ np 1.0.2-beta.3 --tag=beta
 	  $ np 1.0.2-beta.3 --tag=beta --contents=dist
 `, {
+	importMeta: import.meta,
 	booleanDefault: undefined,
 	flags: {
 		anyBranch: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		branch: {
-			type: 'string'
+			type: 'string',
 		},
 		cleanup: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		tests: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		yolo: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		publish: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		releaseDraft: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		releaseDraftOnly: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		tag: {
-			type: 'string'
+			type: 'string',
 		},
 		yarn: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		contents: {
-			type: 'string'
+			type: 'string',
 		},
 		preview: {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		testScript: {
-			type: 'string'
+			type: 'string',
 		},
 		'2fa': {
-			type: 'boolean'
+			type: 'boolean',
 		},
 		message: {
-			type: 'string'
-		}
-	}
+			type: 'string',
+		},
+	},
 });
 
 updateNotifier({pkg: cli.pkg}).notify();
 
-(async () => {
-	const {pkg, pkgPath} = util.readPkg();
+try {
+	const {pkg, pkgPath} = await util.readPkg();
 
 	const defaultFlags = {
 		cleanup: true,
@@ -106,7 +107,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 		publish: true,
 		releaseDraft: true,
 		yarn: hasYarn(),
-		'2fa': true
+		'2fa': true,
 	};
 
 	const localConfig = await config();
@@ -114,7 +115,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 	const flags = {
 		...defaultFlags,
 		...localConfig,
-		...cli.flags
+		...cli.flags,
 	};
 
 	// Workaround for unintended auto-casing behavior from `meow`.
@@ -126,7 +127,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 
 	const availability = flags.publish ? await isPackageNameAvailable(pkg) : {
 		isAvailable: false,
-		isUnknown: false
+		isUnknown: false,
 	};
 
 	// Use current (latest) version when 'releaseDraftOnly', otherwise use the first argument.
@@ -138,22 +139,22 @@ updateNotifier({pkg: cli.pkg}).notify();
 		availability,
 		version,
 		runPublish,
-		branch
+		branch,
 	}, {pkg, pkgPath});
 
 	if (!options.confirm) {
-		process.exit(0);
+		gracefulExit();
 	}
 
 	console.log(); // Prints a newline for readability
 	const newPkg = await np(options.version, options);
 
 	if (options.preview || options.releaseDraftOnly) {
-		return;
+		gracefulExit();
 	}
 
 	console.log(`\n ${newPkg.name} ${newPkg.version} published 🎉`);
-})().catch(error => {
+} catch (error) {
 	console.error(`\n${logSymbols.error} ${error.message}`);
-	process.exit(1);
-});
+	gracefulExit(1);
+}

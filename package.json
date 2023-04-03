@@ -5,15 +5,16 @@
 	"license": "MIT",
 	"repository": "sindresorhus/np",
 	"funding": "https://github.com/sindresorhus/np?sponsor=1",
+	"type": "module",
 	"bin": "source/cli.js",
 	"engines": {
-		"node": ">=10",
-		"npm": ">=6.8.0",
+		"node": ">=16.6.0",
+		"npm": ">=7.19.0",
 		"git": ">=2.11.0",
 		"yarn": ">=1.7.0"
 	},
 	"scripts": {
-		"test": "xo && FORCE_HYPERLINK=1 ava"
+		"test": "xo && ava && ava test/integration.js --no-worker-threads"
 	},
 	"files": [
 		"source"
@@ -30,63 +31,60 @@
 		"commit"
 	],
 	"dependencies": {
-		"@samverschueren/stream-to-observable": "^0.3.1",
-		"any-observable": "^0.5.1",
-		"async-exit-hook": "^2.0.1",
-		"chalk": "^4.1.0",
-		"cosmiconfig": "^7.0.0",
-		"del": "^6.0.0",
-		"escape-goat": "^3.0.0",
-		"escape-string-regexp": "^4.0.0",
-		"execa": "^5.0.0",
+		"chalk": "^5.2.0",
+		"cosmiconfig": "^8.1.3",
+		"del": "^7.0.0",
+		"escape-goat": "^4.0.0",
+		"escape-string-regexp": "^5.0.0",
+		"execa": "^7.1.1",
+		"exit-hook": "^3.2.0",
 		"github-url-from-git": "^1.5.0",
-		"has-yarn": "^2.1.0",
-		"hosted-git-info": "^3.0.7",
-		"ignore-walk": "^3.0.3",
-		"import-local": "^3.0.2",
-		"inquirer": "^7.3.3",
-		"is-installed-globally": "^0.3.2",
-		"is-interactive": "^1.0.0",
-		"is-scoped": "^2.1.0",
-		"issue-regex": "^3.1.0",
+		"has-yarn": "^3.0.0",
+		"hosted-git-info": "^6.1.1",
+		"ignore-walk": "^6.0.2",
+		"import-local": "^3.1.0",
+		"inquirer": "^9.1.5",
+		"is-installed-globally": "^0.4.0",
+		"is-interactive": "^2.0.0",
+		"is-scoped": "^3.0.0",
+		"issue-regex": "^4.1.0",
 		"listr": "^0.14.3",
 		"listr-input": "^0.2.1",
-		"log-symbols": "^4.0.0",
-		"meow": "^8.1.0",
-		"minimatch": "^3.0.4",
-		"new-github-release-url": "^1.0.0",
-		"npm-name": "^6.0.1",
-		"onetime": "^5.1.2",
-		"open": "^7.3.0",
-		"ow": "^0.21.0",
-		"p-memoize": "^4.0.1",
-		"p-timeout": "^4.1.0",
-		"pkg-dir": "^5.0.0",
-		"read-pkg-up": "^7.0.1",
-		"rxjs": "^6.6.3",
-		"semver": "^7.3.4",
-		"split": "^1.0.1",
-		"symbol-observable": "^3.0.0",
-		"terminal-link": "^2.1.1",
-		"update-notifier": "^5.0.1"
+		"log-symbols": "^5.1.0",
+		"meow": "^11.0.0",
+		"minimatch": "^8.0.2",
+		"new-github-release-url": "^2.0.0",
+		"npm-name": "^7.1.0",
+		"onetime": "^6.0.0",
+		"open": "^9.1.0",
+		"ow": "^1.1.1",
+		"p-memoize": "^7.1.1",
+		"p-timeout": "^6.1.1",
+		"pkg-dir": "^7.0.0",
+		"read-pkg-up": "^9.1.0",
+		"rxjs": "^7.8.0",
+		"semver": "^7.3.8",
+		"symbol-observable": "^4.0.0",
+		"terminal-link": "^3.0.0",
+		"update-notifier": "^6.0.2"
 	},
 	"devDependencies": {
-		"ava": "^2.3.0",
-		"execa_test_double": "^4.0.1",
-		"mockery": "^2.1.0",
-		"proxyquire": "^2.1.3",
-		"sinon": "^9.2.2",
-		"xo": "^0.36.1"
+		"ava": "^5.2.0",
+		"common-tags": "^1.8.2",
+		"esmock": "^2.2.0",
+		"fs-extra": "^11.1.1",
+		"sinon": "^15.0.3",
+		"xo": "^0.53.1"
 	},
 	"ava": {
+		"environmentVariables": {
+			"FORCE_HYPERLINK": "1"
+		},
 		"files": [
-			"!test/fixtures",
-			"!integration-test"
-		]
-	},
-	"xo": {
-		"ignores": [
-			"integration-test"
+			"!test/integration.js"
+		],
+		"nodeArguments": [
+			"--loader=esmock"
 		]
 	}
 }

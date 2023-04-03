@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-'use strict';
-const {debuglog} = require('util');
-const importLocal = require('import-local');
-const isInstalledGlobally = require('is-installed-globally');
+import {fileURLToPath} from 'node:url';
+import {debuglog} from 'node:util';
+import importLocal from 'import-local';
+import isInstalledGlobally from 'is-installed-globally';
 
+const __filename = fileURLToPath(import.meta.url);
 const log = debuglog('np');
 
 // Prefer the local installation
@@ -12,6 +13,5 @@ if (!importLocal(__filename)) {
 		log('Using global install of np.');
 	}
 
-	// eslint-disable-next-line import/no-unassigned-import
-	require('./cli-implementation');
+	await import('./cli-implementation.js');
 }

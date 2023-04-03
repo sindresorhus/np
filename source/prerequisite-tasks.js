@@ -1,12 +1,12 @@
-'use strict';
-const Listr = require('listr');
-const execa = require('execa');
-const version = require('./version');
-const git = require('./git-util');
-const npm = require('./npm/util');
-const {getTagVersionPrefix} = require('./util');
+import process from 'node:process';
+import Listr from 'listr';
+import {execa} from 'execa';
+import Version from './version.js';
+import * as git from './git-util.js';
+import * as npm from './npm/util.js';
+import {getTagVersionPrefix} from './util.js';
 
-module.exports = (input, pkg, options) => {
+const prerequisiteTasks = (input, pkg, options) => {
 	const isExternalRegistry = npm.isExternalRegistry(pkg);
 	let newVersion = null;
 
@@ -14,26 +14,26 @@ module.exports = (input, pkg, options) => {
 		{
 			title: 'Ping npm registry',
 			enabled: () => !pkg.private && !isExternalRegistry,
-			task: async () => npm.checkConnection()
+			task: async () => npm.checkConnection(),
 		},
 		{
 			title: 'Check npm version',
-			task: async () => npm.verifyRecentNpmVersion()
+			task: async () => npm.verifyRecentNpmVersion(),
 		},
 		{
 			title: 'Check yarn version',
 			enabled: () => options.yarn === true,
-			task: async () => {
+			async task() {
 				const {stdout: yarnVersion} = await execa('yarn', ['--version']);
-				version.verifyRequirementSatisfied('yarn', yarnVersion);
-			}
+				Version.verifyRequirementSatisfied('yarn', yarnVersion);
+			},
 		},
 		{
 			title: 'Verify user is authenticated',
 			enabled: () => process.env.NODE_ENV !== 'test' && !pkg.private,
-			task: async () => {
+			async task() {
 				const username = await npm.username({
-					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false
+					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false,
 				});
 
 				const collaborators = await npm.collaborators(pkg);
@@ -46,41 +46,43 @@ module.exports = (input, pkg, options) => {
 				if (!permissions || !permissions.includes('write')) {
 					throw new Error('You do not have write permissions required to publish this package.');
 				}
-			}
+			},
 		},
 		{
 			title: 'Check git version',
-			task: async () => git.verifyRecentGitVersion()
+			task: async () => git.verifyRecentGitVersion(),
 		},
 		{
 			title: 'Check git remote',
-			task: async () => git.verifyRemoteIsValid()
+			task: async () => git.verifyRemoteIsValid(),
 		},
 		{
 			title: 'Validate version',
-			task: () => {
-				newVersion = version.getAndValidateNewVersionFrom(input, pkg.version);
-			}
+			task() {
+				newVersion = Version.getAndValidateNewVersionFrom(input, pkg.version);
+			},
 		},
 		{
 			title: 'Check for pre-release version',
-			task: () => {
-				if (!pkg.private && version(newVersion).isPrerelease() && !options.tag) {
+			task() {
+				if (!pkg.private && new Version(newVersion).isPrerelease() && !options.tag) {
 					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 				}
-			}
+			},
 		},
 		{
 			title: 'Check git tag existence',
-			task: async () => {
+			async task() {
 				await git.fetch();
 
 				const tagPrefix = await getTagVersionPrefix(options);
 
 				await git.verifyTagDoesNotExistOnRemote(`${tagPrefix}${newVersion}`);
-			}
-		}
+			},
+		},
 	];
 
 	return new Listr(tasks);
 };
+
+export default prerequisiteTasks;

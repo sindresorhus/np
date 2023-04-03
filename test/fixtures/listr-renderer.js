@@ -1,6 +1,6 @@
 let tasks;
 
-class SilentRenderer {
+export class SilentRenderer {
 	constructor(_tasks) {
 		tasks = _tasks;
 	}
@@ -13,9 +13,11 @@ class SilentRenderer {
 		return true;
 	}
 
-	render() { }
+	static clearTasks() {
+		tasks = [];
+	}
 
-	end() { }
+	render() {}
+
+	end() {}
 }
-
-module.exports.SilentRenderer = SilentRenderer;

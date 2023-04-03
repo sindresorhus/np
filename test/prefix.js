@@ -1,6 +1,7 @@
 import test from 'ava';
-import proxyquire from 'proxyquire';
-import {getTagVersionPrefix} from '../source/util';
+import esmock from 'esmock';
+import {stripIndent} from 'common-tags';
+import {getTagVersionPrefix} from '../source/util.js';
 
 test('get tag prefix', async t => {
 	t.is(await getTagVersionPrefix({yarn: false}), 'v');
@@ -8,11 +9,17 @@ test('get tag prefix', async t => {
 });
 
 test('no options passed', async t => {
-	await t.throwsAsync(getTagVersionPrefix(), {message: 'Expected `options` to be of type `object` but received type `undefined`'});
-	await t.throwsAsync(getTagVersionPrefix({}), {message: 'Expected object `options` to have keys `["yarn"]`'});
+	await t.throwsAsync(getTagVersionPrefix(), {message: stripIndent`
+		Expected argument to be of type \`object\` but received type \`undefined\`
+		Expected object to have keys \`["yarn"]\`
+	`});
+	await t.throwsAsync(getTagVersionPrefix({}), {message: 'Expected object to have keys `["yarn"]`'});
 });
 
 test.serial('defaults to "v" when command fails', async t => {
-	proxyquire('../source/util', {execa: Promise.reject});
-	t.is(await getTagVersionPrefix({yarn: true}), 'v');
+	const testedModule = await esmock('../source/util.js', {
+		execa: {default: Promise.reject},
+	});
+
+	t.is(await testedModule.getTagVersionPrefix({yarn: true}), 'v');
 });

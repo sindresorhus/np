@@ -1,90 +1,100 @@
-import path from 'path';
+import path from 'node:path';
 import test from 'ava';
 import sinon from 'sinon';
-import proxyquire from 'proxyquire';
+import esmock from 'esmock';
 
-const fixtureBasePath = path.resolve('test', 'fixtures', 'config');
+const testedModulePath = '../source/config.js';
+
+const getFixture = fixture => path.resolve('test', 'fixtures', 'config', fixture);
+const getFixtures = fixtures => fixtures.map(fixture => getFixture(fixture));
 
 const getConfigsWhenGlobalBinaryIsUsed = async homedirStub => {
-	const pathsPkgDir = [path.resolve(fixtureBasePath, 'pkg-dir'),
-		path.resolve(fixtureBasePath, 'local1'),
-		path.resolve(fixtureBasePath, 'local2'),
-		path.resolve(fixtureBasePath, 'local3')];
+	const pathsPkgDir = getFixtures(['pkg-dir', 'local1', 'local2', 'local3']);
 
-	const promises = [];
-	pathsPkgDir.forEach(pathPkgDir => {
-		promises.push(proxyquire('../source/config', {
+	const promises = pathsPkgDir.map(async pathPkgDir => {
+		const getConfig = await esmock(testedModulePath, {
 			'is-installed-globally': true,
-			'pkg-dir': async () => {
-				return pathPkgDir;
-			},
-			os: {
-				homedir: homedirStub
-			}
-		})());
+			'pkg-dir': {packageDirectory: async () => pathPkgDir},
+			'node:os': {homedir: homedirStub},
+		});
+		return getConfig();
 	});
+
 	return Promise.all(promises);
 };
 
 const getConfigsWhenLocalBinaryIsUsed = async pathPkgDir => {
-	const homedirs = [path.resolve(fixtureBasePath, 'homedir1'),
-		path.resolve(fixtureBasePath, 'homedir2'),
-		path.resolve(fixtureBasePath, 'homedir3')];
+	const homedirs = getFixtures(['homedir1', 'homedir2', 'homedir3']);
 
-	const promises = [];
-	homedirs.forEach(homedir => {
-		promises.push(proxyquire('../source/config', {
+	const promises = homedirs.map(async homedir => {
+		const getConfig = await esmock(testedModulePath, {
 			'is-installed-globally': false,
-			'pkg-dir': async () => {
-				return pathPkgDir;
-			},
-			os: {
-				homedir: () => {
-					return homedir;
-				}
-			}
-		})());
+			'pkg-dir': {packageDirectory: async () => pathPkgDir},
+			'node:os': {homedir: () => homedir},
+		});
+		return getConfig();
 	});
+
 	return Promise.all(promises);
 };
 
-test('returns config from home directory when global binary is used and `.np-config-json` exists in home directory', async t => {
-	const homedirStub = sinon.stub();
-	homedirStub.returns(path.resolve(fixtureBasePath, 'homedir1'));
+const useGlobalBinary = test.macro(async (t, homedir, source) => {
+	const homedirStub = sinon.stub().returns(getFixture(homedir));
 	const configs = await getConfigsWhenGlobalBinaryIsUsed(homedirStub);
-	configs.forEach(config => t.deepEqual(config, {source: 'homedir/.np-config.json'}));
+
+	for (const config of configs) {
+		t.deepEqual(config, {source});
+	}
 });
 
-test('returns config from home directory when global binary is used and `.np-config.js` exists in home directory', async t => {
-	const homedirStub = sinon.stub();
-	homedirStub.returns(path.resolve(fixtureBasePath, 'homedir2'));
-	const configs = await getConfigsWhenGlobalBinaryIsUsed(homedirStub);
-	configs.forEach(config => t.deepEqual(config, {source: 'homedir/.np-config.js'}));
+const useLocalBinary = test.macro(async (t, pkgDir, source) => {
+	const configs = await getConfigsWhenLocalBinaryIsUsed(getFixture(pkgDir));
+
+	for (const config of configs) {
+		t.deepEqual(config, {source});
+	}
 });
 
-test('returns config from home directory when global binary is used and `.np-config.cjs` exists in home directory', async t => {
-	const homedirStub = sinon.stub();
-	homedirStub.returns(path.resolve(fixtureBasePath, 'homedir3'));
-	const configs = await getConfigsWhenGlobalBinaryIsUsed(homedirStub);
-	configs.forEach(config => t.deepEqual(config, {source: 'homedir/.np-config.cjs'}));
-});
+test('returns config from home directory when global binary is used and .np-config-json exists in home directory',
+	useGlobalBinary, 'homedir1', 'homedir/.np-config.json',
+);
 
-test('returns config from package directory when local binary is used and `package.json` exists in package directory', async t => {
-	const configs = await getConfigsWhenLocalBinaryIsUsed(path.resolve(fixtureBasePath, 'pkg-dir'));
-	configs.forEach(config => t.deepEqual(config, {source: 'package.json'}));
-});
+test('returns config from home directory when global binary is used and `.np-config.js` as CJS exists in home directory',
+	useGlobalBinary, 'homedir2', 'homedir/.np-config.js',
+);
 
-test('returns config from package directory when local binary is used and `.np-config.json` exists in package directory', async t => {
-	const configs = await getConfigsWhenLocalBinaryIsUsed(path.resolve(fixtureBasePath, 'local1'));
-	configs.forEach(config => t.deepEqual(config, {source: 'packagedir/.np-config.json'}));
-});
+test('returns config from home directory when global binary is used and `.np-config.cjs` exists in home directory',
+	useGlobalBinary, 'homedir3', 'homedir/.np-config.cjs',
+);
 
-test('returns config from package directory when local binary is used and `.np-config.js` exists in package directory', async t => {
-	const configs = await getConfigsWhenLocalBinaryIsUsed(path.resolve(fixtureBasePath, 'local2'));
-	configs.forEach(config => t.deepEqual(config, {source: 'packagedir/.np-config.js'}));
-});
+test.failing('returns config from home directory when global binary is used and `.np-config.js` as ESM exists in home directory',
+	useGlobalBinary, 'homedir4', 'homedir/.np-config.js',
+);
 
-test('returns config from package directory when local binary is used and `.np-config.cjs` exists in package directory', async t => {
-	const configs = await getConfigsWhenLocalBinaryIsUsed(path.resolve(fixtureBasePath, 'local3'));
-	configs.forEach(config => t.deepEqual(config, {source: 'packagedir/.np-config.cjs'}));
-});
+test('returns config from home directory when global binary is used and `.np-config.mjs` exists in home directory',
+	useGlobalBinary, 'homedir5', 'homedir/.np-config.mjs',
+);
+
+test('returns config from package directory when local binary is used and `package.json` exists in package directory',
+	useLocalBinary, 'pkg-dir', 'package.json',
+);
+
+test('returns config from package directory when local binary is used and `.np-config.json` exists in package directory',
+	useLocalBinary, 'local1', 'packagedir/.np-config.json',
+);
+
+test('returns config from package directory when local binary is used and `.np-config.js` as CJS exists in package directory',
+	useLocalBinary, 'local2', 'packagedir/.np-config.js',
+);
+
+test('returns config from package directory when local binary is used and `.np-config.cjs` exists in package directory',
+	useLocalBinary, 'local3', 'packagedir/.np-config.cjs',
+);
+
+test('returns config from package directory when local binary is used and `.np-config.js` as ESM exists in package directory',
+	useLocalBinary, 'local4', 'packagedir/.np-config.js',
+);
+
+test('returns config from package directory when local binary is used and `.np-config.mjs` exists in package directory',
+	useLocalBinary, 'local5', 'packagedir/.np-config.mjs',
+);

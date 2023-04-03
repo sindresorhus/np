@@ -1,21 +1,20 @@
-'use strict';
-const Listr = require('listr');
-const git = require('./git-util');
+import Listr from 'listr';
+import * as git from './git-util.js';
 
-module.exports = options => {
+const gitTasks = options => {
 	const tasks = [
 		{
 			title: 'Check current branch',
-			task: () => git.verifyCurrentBranchIsReleaseBranch(options.branch)
+			task: () => git.verifyCurrentBranchIsReleaseBranch(options.branch),
 		},
 		{
 			title: 'Check local working tree',
-			task: () => git.verifyWorkingTreeIsClean()
+			task: () => git.verifyWorkingTreeIsClean(),
 		},
 		{
 			title: 'Check remote history',
-			task: () => git.verifyRemoteHistoryIsClean()
-		}
+			task: () => git.verifyRemoteHistoryIsClean(),
+		},
 	];
 
 	if (options.anyBranch) {
@@ -24,3 +23,5 @@ module.exports = options => {
 
 	return new Listr(tasks);
 };
+
+export default gitTasks;

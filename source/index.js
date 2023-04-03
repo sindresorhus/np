@@ -1,43 +1,34 @@
-'use strict';
-require('any-observable/register/rxjs-all');
-const fs = require('fs');
-const path = require('path');
-const execa = require('execa');
-const del = require('del');
-const Listr = require('listr');
-const split = require('split');
-const {merge, throwError} = require('rxjs');
-const {catchError, filter, finalize} = require('rxjs/operators');
-const streamToObservable = require('@samverschueren/stream-to-observable');
-const readPkgUp = require('read-pkg-up');
-const hasYarn = require('has-yarn');
-const pkgDir = require('pkg-dir');
-const hostedGitInfo = require('hosted-git-info');
-const onetime = require('onetime');
-const exitHook = require('async-exit-hook');
-const logSymbols = require('log-symbols');
-const prerequisiteTasks = require('./prerequisite-tasks');
-const gitTasks = require('./git-tasks');
-const publish = require('./npm/publish');
-const enable2fa = require('./npm/enable-2fa');
-const npm = require('./npm/util');
-const releaseTaskHelper = require('./release-task-helper');
-const util = require('./util');
-const git = require('./git-util');
+import fs from 'node:fs';
+import path from 'node:path';
+import {execa} from 'execa';
+import {deleteAsync} from 'del';
+import Listr from 'listr';
+import {merge, throwError, catchError, filter, finalize} from 'rxjs';
+import {readPackageUp} from 'read-pkg-up';
+import hasYarn from 'has-yarn';
+import {packageDirectorySync} from 'pkg-dir';
+import hostedGitInfo from 'hosted-git-info';
+import onetime from 'onetime';
+import {asyncExitHook} from 'exit-hook';
+import logSymbols from 'log-symbols';
+import prerequisiteTasks from './prerequisite-tasks.js';
+import gitTasks from './git-tasks.js';
+import publish from './npm/publish.js';
+import enable2fa from './npm/enable-2fa.js';
+import * as npm from './npm/util.js';
+import releaseTaskHelper from './release-task-helper.js';
+import * as util from './util.js';
+import * as git from './git-util.js';
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
 	const cp = execa(cmd, args);
 
-	return merge(
-		streamToObservable(cp.stdout.pipe(split())),
-		streamToObservable(cp.stderr.pipe(split())),
-		cp
-	).pipe(filter(Boolean));
+	return merge(cp.stdout, cp.stderr, cp).pipe(filter(Boolean));
 };
 
-// eslint-disable-next-line default-param-last
-module.exports = async (input = 'patch', options) => {
+// eslint-disable-next-line complexity
+const np = async (input = 'patch', options) => {
 	if (!hasYarn() && options.yarn) {
 		throw new Error('Could not use Yarn without yarn.lock file');
 	}
@@ -47,14 +38,14 @@ module.exports = async (input = 'patch', options) => {
 		options.cleanup = false;
 	}
 
-	const {pkg} = util.readPkg(options.contents);
+	const {pkg} = await util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
-	const rootDir = pkgDir.sync();
+	const rootDir = packageDirectorySync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, options.yarn ? 'yarn.lock' : 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
-	const isOnGitHub = options.repoUrl && (hostedGitInfo.fromUrl(options.repoUrl) || {}).type === 'github';
+	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl)?.type === 'github';
 	const testScript = options.testScript || 'test';
 	const testCommand = options.testScript ? ['run', testScript] : [testScript];
 
@@ -75,8 +66,8 @@ module.exports = async (input = 'patch', options) => {
 		const versionInLatestTag = latestTag.slice(tagVersionPrefix.length);
 
 		try {
-			if (versionInLatestTag === util.readPkg().pkg.version &&
-				versionInLatestTag !== pkg.version) { // Verify that the package's version has been bumped before deleting the last tag and commit.
+			// Verify that the package's version has been bumped before deleting the last tag and commit.
+			if (versionInLatestTag === util.readPkg().version && versionInLatestTag !== pkg.version) {
 				await git.deleteTag(latestTag);
 				await git.removeLastCommit();
 			}
@@ -87,35 +78,31 @@ module.exports = async (input = 'patch', options) => {
 		}
 	});
 
-	// The default parameter is a workaround for https://github.com/Tapppi/async-exit-hook/issues/9
-	exitHook((callback = () => {}) => {
-		if (options.preview) {
-			callback();
-		} else if (publishStatus === 'FAILED') {
-			(async () => {
-				await rollback();
-				callback();
-			})();
-		} else if (publishStatus === 'SUCCESS') {
-			callback();
+	asyncExitHook(async () => {
+		if (options.preview || publishStatus === 'SUCCESS') {
+			return;
+		}
+
+		if (publishStatus === 'FAILED') {
+			await rollback();
 		} else {
 			console.log('\nAborted!');
-			callback();
 		}
-	});
+	}, {minimumWait: 2000});
 
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
 			enabled: () => options.runPublish,
-			task: () => prerequisiteTasks(input, pkg, options)
+			task: () => prerequisiteTasks(input, pkg, options),
 		},
 		{
 			title: 'Git',
-			task: () => gitTasks(options)
-		}
+			task: () => gitTasks(options),
+		},
 	], {
-		showSubtasks: false
+		showSubtasks: false,
+		renderer: options.renderer ?? 'default',
 	});
 
 	if (runCleanup) {
@@ -123,13 +110,13 @@ module.exports = async (input = 'patch', options) => {
 			{
 				title: 'Cleanup',
 				enabled: () => !hasLockFile,
-				task: () => del('node_modules')
+				task: () => deleteAsync('node_modules'),
 			},
 			{
 				title: 'Installing dependencies using Yarn',
 				enabled: () => options.yarn === true,
-				task: () => {
-					return exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
+				task: () => (
+					exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
 						catchError(async error => {
 							if ((!error.stderr.startsWith('error Your lockfile needs to be updated'))) {
 								return;
@@ -140,18 +127,18 @@ module.exports = async (input = 'patch', options) => {
 							}
 
 							throw new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.');
-						})
-					);
-				}
+						}),
+					)
+				),
 			},
 			{
 				title: 'Installing dependencies using npm',
 				enabled: () => options.yarn === false,
-				task: () => {
+				task() {
 					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production'];
 					return exec('npm', [...args, '--engine-strict']);
-				}
-			}
+				},
+			},
 		]);
 	}
 
@@ -160,7 +147,7 @@ module.exports = async (input = 'patch', options) => {
 			{
 				title: 'Running tests using npm',
 				enabled: () => options.yarn === false,
-				task: () => exec('npm', testCommand)
+				task: () => exec('npm', testCommand),
 			},
 			{
 				title: 'Running tests using Yarn',
@@ -171,10 +158,10 @@ module.exports = async (input = 'patch', options) => {
 							return [];
 						}
 
-						return throwError(error);
-					})
-				)
-			}
+						return throwError(() => error);
+					}),
+				),
+			},
 		]);
 	}
 
@@ -182,7 +169,7 @@ module.exports = async (input = 'patch', options) => {
 		{
 			title: 'Bumping version using Yarn',
 			enabled: () => options.yarn === true,
-			skip: () => {
+			skip() {
 				if (options.preview) {
 					let previewText = `[Preview] Command not executed: yarn version --new-version ${input}`;
 
@@ -193,7 +180,7 @@ module.exports = async (input = 'patch', options) => {
 					return `${previewText}.`;
 				}
 			},
-			task: () => {
+			task() {
 				const args = ['version', '--new-version', input];
 
 				if (options.message) {
@@ -201,12 +188,12 @@ module.exports = async (input = 'patch', options) => {
 				}
 
 				return exec('yarn', args);
-			}
+			},
 		},
 		{
 			title: 'Bumping version using npm',
 			enabled: () => options.yarn === false,
-			skip: () => {
+			skip() {
 				if (options.preview) {
 					let previewText = `[Preview] Command not executed: npm version ${input}`;
 
@@ -217,7 +204,7 @@ module.exports = async (input = 'patch', options) => {
 					return `${previewText}.`;
 				}
 			},
-			task: () => {
+			task() {
 				const args = ['version', input];
 
 				if (options.message) {
@@ -225,21 +212,21 @@ module.exports = async (input = 'patch', options) => {
 				}
 
 				return exec('npm', args);
-			}
-		}
+			},
+		},
 	]);
 
 	if (options.runPublish) {
 		tasks.add([
 			{
 				title: `Publishing package using ${pkgManagerName}`,
-				skip: () => {
+				skip() {
 					if (options.preview) {
 						const args = publish.getPackagePublishArguments(options);
 						return `[Preview] Command not executed: ${pkgManager} ${args.join(' ')}.`;
 					}
 				},
-				task: (context, task) => {
+				task(context, task) {
 					let hasError = false;
 
 					return publish(context, pkgManager, task, options)
@@ -251,10 +238,10 @@ module.exports = async (input = 'patch', options) => {
 							}),
 							finalize(() => {
 								publishStatus = hasError ? 'FAILED' : 'SUCCESS';
-							})
+							}),
 						);
-				}
-			}
+				},
+			},
 		]);
 
 		const isExternalRegistry = npm.isExternalRegistry(pkg);
@@ -262,14 +249,14 @@ module.exports = async (input = 'patch', options) => {
 			tasks.add([
 				{
 					title: 'Enabling two-factor authentication',
-					skip: () => {
+					skip() {
 						if (options.preview) {
 							const args = enable2fa.getEnable2faArgs(pkg.name, options);
 							return `[Preview] Command not executed: npm ${args.join(' ')}.`;
 						}
 					},
-					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp})
-				}
+					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp}),
+				},
 			]);
 		}
 	} else {
@@ -278,7 +265,7 @@ module.exports = async (input = 'patch', options) => {
 
 	tasks.add({
 		title: 'Pushing tags',
-		skip: async () => {
+		async skip() {
 			if (!(await git.hasUpstream())) {
 				return 'Upstream branch not found; not pushing.';
 			}
@@ -291,21 +278,21 @@ module.exports = async (input = 'patch', options) => {
 				return 'Couldn\'t publish package to npm; not pushing.';
 			}
 		},
-		task: async () => {
+		async task() {
 			pushedObjects = await git.pushGraceful(isOnGitHub);
-		}
+		},
 	});
 
 	if (options.releaseDraft) {
 		tasks.add({
 			title: 'Creating release draft on GitHub',
 			enabled: () => isOnGitHub === true,
-			skip: () => {
+			skip() {
 				if (options.preview) {
 					return '[Preview] GitHub Releases draft will not be opened in preview mode.';
 				}
 			},
-			task: () => releaseTaskHelper(options, pkg)
+			task: () => releaseTaskHelper(options, pkg),
 		});
 	}
 
@@ -315,6 +302,8 @@ module.exports = async (input = 'patch', options) => {
 		console.error(`\n${logSymbols.error} ${pushedObjects.reason}`);
 	}
 
-	const {packageJson: newPkg} = await readPkgUp();
+	const {packageJson: newPkg} = await readPackageUp();
 	return newPkg;
 };
+
+export default np;
