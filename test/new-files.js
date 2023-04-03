@@ -1,98 +1,77 @@
-import path from 'path';
+import path from 'node:path';
 import test from 'ava';
-import proxyquire from 'proxyquire';
-
-const source = '../source/npm/util';
+import esmock from 'esmock';
 
 const getFixture = name => path.resolve('test', 'fixtures', 'files', name);
 
-const checkPackedFiles = async (t, fixture, expectedFiles) => {
-	const npmUtil = proxyquire(source, {
-		'pkg-dir': () => getFixture(fixture)
+const mockPkgDir = test.macro(async (t, fixture, expectedFiles) => {
+	const npmUtil = await esmock('../source/npm/util.js', {
+		'pkg-dir': {packageDirectory: async () => getFixture(fixture)},
 	});
 
 	const files = await npmUtil.getFilesToBePacked();
 	t.deepEqual(files.sort(), expectedFiles.sort(), 'Files different from expectations!');
-};
-
-test.serial('package.json files field - one file', async t => {
-	await checkPackedFiles(t, 'one-file', [
-		'package.json',
-		'index.js'
-	]);
 });
 
-test.serial('package.json files field - source dir', async t => {
-	await checkPackedFiles(t, 'source-dir', [
-		'package.json',
-		'source/foo.js',
-		'source/bar.js'
-	]);
-});
+test('package.json files field - one file', mockPkgDir, 'one-file', [
+	'package.json',
+	'index.js',
+]);
 
-test.serial('package.json files field - source and dist dirs', async t => {
-	await checkPackedFiles(t, 'source-and-dist-dir', [
-		'package.json',
-		'source/foo.js',
-		'source/bar.js'
-	]);
-});
+test('package.json files field - source dir', mockPkgDir, 'source-dir', [
+	'package.json',
+	'source/foo.js',
+	'source/bar.js',
+]);
 
-test.serial('package.json files field - leading slash', async t => {
-	await checkPackedFiles(t, 'files-slash', [
-		'package.json',
-		'index.js'
-	]);
-});
+test('package.json files field - source and dist dirs', mockPkgDir, 'source-and-dist-dir', [
+	'package.json',
+	'source/foo.js',
+	'source/bar.js',
+]);
 
-test.serial('package.json files field - has readme and license', async t => {
-	await checkPackedFiles(t, 'has-readme-and-license', [
-		'package.json',
-		'readme.md',
-		'license.md',
-		'index.js'
-	]);
-});
+test('package.json files field - leading slash', mockPkgDir, 'files-slash', [
+	'package.json',
+	'index.js',
+]);
 
-test.serial('npmignore', async t => {
-	await checkPackedFiles(t, 'npmignore', [
-		'package.json',
-		'readme.md',
-		'index.js',
-		'index.d.ts'
-	]);
-});
+test('package.json files field - has readme and license', mockPkgDir, 'has-readme-and-license', [
+	'package.json',
+	'readme.md',
+	'license.md',
+	'index.js',
+]);
 
-test.serial('package.json files field and npmignore', async t => {
-	await checkPackedFiles(t, 'files-and-npmignore', [
-		'package.json',
-		'readme.md',
-		'source/foo.js',
-		'source/bar.js',
-		'source/index.d.ts'
-	]);
-});
+test('npmignore', mockPkgDir, 'npmignore', [
+	'package.json',
+	'readme.md',
+	'index.js',
+	'index.d.ts',
+]);
 
-test.serial('package.json files field and gitignore', async t => {
-	await checkPackedFiles(t, 'gitignore', [
-		'package.json',
-		'readme.md',
-		'dist/index.js'
-	]);
-});
+test('package.json files field and npmignore', mockPkgDir, 'files-and-npmignore', [
+	'package.json',
+	'readme.md',
+	'source/foo.js',
+	'source/bar.js',
+	'source/index.d.ts',
+]);
 
-test.serial('npmignore and gitignore', async t => {
-	await checkPackedFiles(t, 'npmignore-and-gitignore', [
-		'package.json',
-		'readme.md',
-		'dist/index.js'
-	]);
-});
+test('package.json files field and gitignore', mockPkgDir, 'gitignore', [
+	'package.json',
+	'readme.md',
+	'dist/index.js',
+]);
 
-test.serial('package.json main field not in files field', async t => {
-	await checkPackedFiles(t, 'main', [
-		'package.json',
-		'foo.js',
-		'bar.js'
-	]);
-});
+test('npmignore and gitignore', mockPkgDir, 'npmignore-and-gitignore', [
+	'package.json',
+	'readme.md',
+	'dist/index.js',
+]);
+
+test('package.json main field not in files field', mockPkgDir, 'main', [
+	'package.json',
+	'foo.js',
+	'bar.js',
+]);
+

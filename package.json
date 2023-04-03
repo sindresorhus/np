@@ -60,6 +60,7 @@
 		"ow": "^1.1.1",
 		"p-memoize": "^7.1.1",
 		"p-timeout": "^6.1.1",
+		"path-exists": "^5.0.0",
 		"pkg-dir": "^7.0.0",
 		"read-pkg-up": "^9.1.0",
 		"rxjs": "^7.8.0",
