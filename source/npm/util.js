@@ -143,12 +143,10 @@ export const checkIgnoreStrategy = async ({files}) => {
 };
 
 export const getFilesToBePacked = async () => {
-	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json'], {cwd: await packageDirectory()});
+	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json']);
 
-	let {files} = JSON.parse(stdout)[0];
-	files = files.map(file => file.path);
-
-	return files;
+	const {files} = JSON.parse(stdout).at(0);
+	return files.map(file => file.path);
 };
 
 export const getRegistryUrl = async (pkgManager, pkg) => {
