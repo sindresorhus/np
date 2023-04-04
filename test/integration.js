@@ -47,6 +47,7 @@ const createFixture = test.macro(async (t, pkgFiles, commands, {unpublished, fir
 		const util = await esmock('../source/util.js', {}, {
 			'node:process': {cwd: () => temporaryDir},
 			execa: {execa: async (...args) => execa(...args, {cwd: temporaryDir})},
+			'pkg-dir': {packageDirectory: async () => temporaryDir},
 		});
 
 		await commands(t, $$, temporaryDir);
@@ -72,7 +73,7 @@ test('files to package with tags added', createFixture, ['*.js'], async (t, $$) 
 	await $$`git commit -m "added"`;
 }, {unpublished: ['new'], firstTime: ['index.js']});
 
-test.failing('file `new` to package without tags added', createFixture, ['index.js'], async t => {
+test('file `new` to package without tags added', createFixture, ['index.js'], async t => {
 	await t.context.createFile('new');
 	await t.context.createFile('index.js');
 }, {unpublished: ['new'], firstTime: ['index.js', 'package.json']});
