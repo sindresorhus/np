@@ -143,7 +143,7 @@ export const checkIgnoreStrategy = async ({files}) => {
 };
 
 export const getFilesToBePacked = async () => {
-	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json']);
+	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json'], {cwd: await packageDirectory()});
 
 	const {files} = JSON.parse(stdout).at(0);
 	return files.map(file => file.path);

@@ -10,6 +10,7 @@ const mockPkgDir = test.macro(async (t, fixture, expectedFiles, {before, after} 
 	const fixtureDir = getFixture(fixture);
 
 	await runIfExists(before, fixtureDir);
+	t.teardown(async () => runIfExists(after, fixtureDir));
 
 	const npmUtil = await esmock('../source/npm/util.js', {
 		'pkg-dir': {packageDirectory: async () => fixtureDir},
@@ -17,8 +18,6 @@ const mockPkgDir = test.macro(async (t, fixture, expectedFiles, {before, after} 
 
 	const files = await npmUtil.getFilesToBePacked();
 	t.deepEqual(files.sort(), [...expectedFiles, 'package.json'].sort(), 'Files different from expectations!');
-
-	await runIfExists(after, fixtureDir);
 });
 
 test('package.json files field - one file', mockPkgDir, 'one-file', [
