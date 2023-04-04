@@ -67,7 +67,7 @@ test('files to package with tags added', createFixture, ['*.js'], async (t, $$) 
 	await $$`git tag v0.0.0`;
 	await t.context.createFile('new');
 	await t.context.createFile('index.js');
-	await $$`git add new index.js`;
+	await $$`git add -A`;
 	await $$`git commit -m "added"`;
 }, {unpublished: ['new'], firstTime: ['index.js']});
 
@@ -85,7 +85,7 @@ test('file `new` to package without tags added', createFixture, ['index.js'], as
 		await $$`git tag v0.0.0`;
 		await t.context.createFile(filePath1);
 		await t.context.createFile(filePath2);
-		await $$`git add ${filePath1} ${filePath2}`;
+		await $$`git add -A`;
 		await $$`git commit -m "added"`;
 	}, {unpublished: [filePath1, filePath2], firstTime: []});
 })();
@@ -93,3 +93,12 @@ test('file `new` to package without tags added', createFixture, ['index.js'], as
 test('no new files added', createFixture, [], async (_t, $$) => {
 	await $$`git tag v0.0.0`;
 }, {unpublished: [], firstTime: []});
+
+test('ignores .git and .github files', createFixture, ['*.js'], async (t, $$) => {
+	await $$`git tag v0.0.0`;
+	await t.context.createFile('.github/workflows/main.yml');
+	await t.context.createFile('.github/pull_request_template');
+	await t.context.createFile('index.js');
+	await $$`git add -A`;
+	await $$`git commit -m "added"`;
+}, {unpublished: [], firstTime: ['index.js']});
