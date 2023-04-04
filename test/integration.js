@@ -1,13 +1,10 @@
-/* eslint-disable ava/no-ignored-test-files */
-import process from 'node:process';
 import path from 'node:path';
 import fs from 'fs-extra';
 import test from 'ava';
-// Import esmock from 'esmock';
+import esmock from 'esmock';
 import {$} from 'execa';
 import {temporaryDirectoryTask} from 'tempy';
 import {writePackage} from 'write-pkg';
-import * as util from '../source/util.js';
 
 const createEmptyGitRepo = async ($$, temporaryDir) => {
 	await $$`git init`;
@@ -25,7 +22,6 @@ const createIntegrationTest = async (t, assertions) => {
 		const $$ = $({cwd: temporaryDir});
 
 		await createEmptyGitRepo($$, temporaryDir);
-		process.chdir(temporaryDir);
 
 		t.context.createFile = async file => fs.createFile(path.resolve(temporaryDir, file));
 		await assertions($$, temporaryDir);
@@ -47,22 +43,18 @@ test('main', async t => {
 
 const createFixture = test.macro(async (t, pkgFiles, commands, {unpublished, firstTime}) => {
 	await createIntegrationTest(t, async ($$, temporaryDir) => {
-		// /** @type {import('../source/util.js')} */
-		// const util = await esmock('../source/util.js', {}, {
-		// 	'node:process': {cwd: () => temporaryDir},
-		// });
-
-		const pkg = {
-			name: 'foo',
-			version: '0.0.0',
-		};
-
-		if (pkgFiles.length > 0) {
-			pkg.files = pkgFiles;
-		}
+		/** @type {import('../source/util.js')} */
+		const util = await esmock('../source/util.js', {}, {
+			'node:process': {cwd: () => temporaryDir},
+		});
 
 		await commands(t, $$, temporaryDir);
-		await writePackage(temporaryDir, pkg);
+
+		await writePackage(temporaryDir, {
+			name: 'foo',
+			version: '0.0.0',
+			...pkgFiles.length > 0 ? {files: pkgFiles} : {},
+		});
 
 		t.deepEqual(
 			await util.getNewFiles(),
@@ -71,7 +63,7 @@ const createFixture = test.macro(async (t, pkgFiles, commands, {unpublished, fir
 	});
 });
 
-test.serial('files to package with tags added', createFixture, ['*.js'], async (t, $$) => {
+test('files to package with tags added', createFixture, ['*.js'], async (t, $$) => {
 	await $$`git tag v0.0.0`;
 	await t.context.createFile('new');
 	await t.context.createFile('index.js');
@@ -79,7 +71,7 @@ test.serial('files to package with tags added', createFixture, ['*.js'], async (
 	await $$`git commit -m "added"`;
 }, {unpublished: ['new'], firstTime: ['index.js']});
 
-test.serial('file `new` to package without tags added', createFixture, ['index.js'], async t => {
+test('file `new` to package without tags added', createFixture, ['index.js'], async t => {
 	await t.context.createFile('new');
 	await t.context.createFile('index.js');
 }, {unpublished: ['new'], firstTime: ['index.js', 'package.json']});
@@ -89,7 +81,7 @@ test.serial('file `new` to package without tags added', createFixture, ['index.j
 	const filePath1 = path.join(longPath, 'file1');
 	const filePath2 = path.join(longPath, 'file2');
 
-	test.serial('files with long pathnames added', createFixture, ['*.js'], async (t, $$) => {
+	test('files with long pathnames added', createFixture, ['*.js'], async (t, $$) => {
 		await $$`git tag v0.0.0`;
 		await t.context.createFile(filePath1);
 		await t.context.createFile(filePath2);
@@ -98,6 +90,6 @@ test.serial('file `new` to package without tags added', createFixture, ['index.j
 	}, {unpublished: [filePath1, filePath2], firstTime: []});
 })();
 
-test.serial('no new files added', createFixture, [], async () => {
-	await $`git tag v0.0.0`;
+test('no new files added', createFixture, [], async (_t, $$) => {
+	await $$`git tag v0.0.0`;
 }, {unpublished: [], firstTime: []});
