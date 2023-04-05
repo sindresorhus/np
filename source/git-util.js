@@ -133,27 +133,35 @@ export const verifyWorkingTreeIsClean = async () => {
 	}
 };
 
+const hasRemote = async () => {
+	try {
+		await execa('git', ['rev-parse', '@{u}']);
+	} catch { // Has no remote if command fails
+		return false;
+	}
+
+	return true;
+};
+
 const hasUnfetchedChangesFromRemote = async () => {
-	let possibleNewChanges = '';
-	try { // Gracefully handle no remote set up.
-		({stderr: possibleNewChanges} = await execa('git', ['fetch', 'origin', '--dry-run']));
-	} catch {}
+	const {stderr: possibleNewChanges} = await execa('git', ['fetch', '--dry-run']);
 
 	// There are no unfetched changes if output is empty.
-	return possibleNewChanges === '';
+	return !possibleNewChanges || possibleNewChanges === '';
 };
 
 const isRemoteHistoryClean = async () => {
-	let history = '';
-	try { // Gracefully handle no remote set up.
-		({stdout: history} = await execa('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']));
-	} catch {}
+	const {stdout: history} = await execa('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']);
 
-	// Remote history is clean if there are 0 revisions or if no remote set up.
-	return history === '0' || history === '';
+	// Remote history is clean if there are 0 revisions.
+	return history === '0';
 };
 
 export const verifyRemoteHistoryIsClean = async () => {
+	if (!(await hasRemote())) {
+		return;
+	}
+
 	if (!(await hasUnfetchedChangesFromRemote())) {
 		throw new Error('Remote history differs. Please run `git fetch` and pull changes.');
 	}

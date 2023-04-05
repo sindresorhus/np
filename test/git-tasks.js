@@ -57,6 +57,14 @@ test.serial('should not fail when current branch not master and publishing from 
 			stdout: '',
 		},
 		{
+			command: 'git rev-parse @{u}',
+			exitCode: 0,
+		},
+		{
+			command: 'git fetch --dry-run',
+			exitCode: 0,
+		},
+		{
 			command: 'git rev-list --count --left-only @{u}...HEAD',
 			exitCode: 0,
 			stdout: '0',
@@ -105,7 +113,7 @@ test.serial('should not fail when no remote set up', async t => {
 			stdout: '',
 		},
 		{
-			command: 'git rev-list --count --left-only @{u}...HEAD',
+			command: 'git rev-parse @{u}',
 			stdout: '',
 			stderr: 'fatal: no upstream configured for branch \'master\'',
 		},
@@ -129,9 +137,12 @@ test.serial('should fail when remote history differs and changes are fetched', a
 			stdout: '',
 		},
 		{
-			command: 'git fetch origin --dry-run',
+			command: 'git rev-parse @{u}',
 			exitCode: 0,
-			stdout: '',
+		},
+		{
+			command: 'git fetch --dry-run',
+			exitCode: 0,
 		},
 		{
 			command: 'git rev-list --count --left-only @{u}...HEAD',
@@ -161,9 +172,12 @@ test.serial('should fail when remote has unfetched changes', async t => {
 			stdout: '',
 		},
 		{
-			command: 'git fetch origin --dry-run',
+			command: 'git rev-parse @{u}',
 			exitCode: 0,
-			stdout: 'From https://github.com/sindresorhus/np', // Has unfetched changes
+		},
+		{
+			command: 'git fetch --dry-run',
+			stderr: 'From https://github.com/sindresorhus/np', // Has unfetched changes
 		},
 	]);
 
@@ -186,6 +200,14 @@ test.serial('checks should pass when publishing from master, working tree is cle
 			command: 'git status --porcelain',
 			exitCode: 0,
 			stdout: '',
+		},
+		{
+			command: 'git rev-parse @{u}',
+			exitCode: 0,
+		},
+		{
+			command: 'git fetch --dry-run',
+			exitCode: 0,
 		},
 		{
 			command: 'git rev-list --count --left-only @{u}...HEAD',
