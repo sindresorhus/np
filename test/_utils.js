@@ -1,34 +1,36 @@
 import esmock from 'esmock';
+import sinon from 'sinon';
 import {execa} from 'execa';
 import {SilentRenderer} from './fixtures/listr-renderer.js';
 
-export const _stubExeca = source => async (t, commands) => esmock(source, {}, {
-	execa: {
-		async execa(...args) {
-			const results = await Promise.all(commands.map(async result => {
-				const argsMatch = await t.try(tt => {
-					const [command, ...commandArgs] = result.command.split(' ');
-					tt.deepEqual(args, [command, commandArgs]);
-				});
+const makeExecaStub = commands => {
+	const stub = sinon.stub();
 
-				if (argsMatch.passed) {
-					argsMatch.discard();
+	for (const result of commands) {
+		const [command, ...commandArgs] = result.command.split(' ');
 
-					if (!result.exitCode || result.exitCode === 0) {
-						return result;
-					}
+		// Command passes if the exit code is 0, or if there's no exit code and no stderr.
+		const passes = result.exitCode === 0 || (!result.exitCode && !result.stderr);
 
-					throw result;
-				}
+		if (passes) {
+			stub.withArgs(command, commandArgs).resolves(result);
+		} else {
+			stub.withArgs(command, commandArgs).rejects(Object.assign(new Error(), result)); // eslint-disable-line unicorn/error-message
+		}
+	}
 
-				argsMatch.discard();
-			}));
+	return stub;
+};
 
-			const result = results.filter(Boolean).at(0);
-			return result ?? execa(...args);
+export const _stubExeca = source => async (t, commands) => {
+	const execaStub = makeExecaStub(commands);
+
+	return esmock(source, {}, {
+		execa: {
+			execa: async (...args) => execaStub.resolves(execa(...args))(...args),
 		},
-	},
-});
+	});
+};
 
 export const run = async listr => {
 	listr.setRenderer(SilentRenderer);
