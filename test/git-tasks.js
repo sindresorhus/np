@@ -59,7 +59,7 @@ test.serial('should not fail when current branch not master and publishing from 
 		{
 			command: 'git rev-list --count --left-only @{u}...HEAD',
 			exitCode: 0,
-			stdout: '',
+			stdout: '0',
 		},
 	]);
 
@@ -107,13 +107,40 @@ test.serial('should fail when remote history differs', async t => {
 		{
 			command: 'git rev-list --count --left-only @{u}...HEAD',
 			exitCode: 0,
-			stdout: '1',
+			stdout: '1', // Has unpulled changes
 		},
 	]);
 
 	await t.throwsAsync(
 		run(gitTasks({branch: 'master'})),
 		{message: 'Remote history differs. Please pull changes.'},
+	);
+
+	assertTaskFailed(t, 'Check remote history');
+});
+
+test.serial('should fail when remote has unfetched changes', async t => {
+	const gitTasks = await stubExeca(t, [
+		{
+			command: 'git symbolic-ref --short HEAD',
+			exitCode: 0,
+			stdout: 'master',
+		},
+		{
+			command: 'git status --porcelain',
+			exitCode: 0,
+			stdout: '',
+		},
+		{
+			command: 'git fetch origin --dry-run',
+			exitCode: 0,
+			stdout: 'From https://github.com/sindresorhus/np', // Has unfetched changes
+		},
+	]);
+
+	await t.throwsAsync(
+		run(gitTasks({branch: 'master'})),
+		{message: 'Remote history differs. Please run `git fetch` and pull changes.'},
 	);
 
 	assertTaskFailed(t, 'Check remote history');
@@ -134,7 +161,7 @@ test.serial('checks should pass when publishing from master, working tree is cle
 		{
 			command: 'git rev-list --count --left-only @{u}...HEAD',
 			exitCode: 0,
-			stdout: '',
+			stdout: '0',
 		},
 	]);
 
