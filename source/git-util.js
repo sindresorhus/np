@@ -139,8 +139,8 @@ const hasUnfetchedChangesFromRemote = async () => {
 		({stderr: possibleNewChanges} = await execa('git', ['fetch', 'origin', '--dry-run']));
 	} catch {}
 
-	// There are no unfetched changes if output is empty
-	return possibleNewChanges?.length === 0;
+	// There are no unfetched changes if output is empty.
+	return possibleNewChanges === '';
 };
 
 const isRemoteHistoryClean = async () => {
@@ -149,8 +149,8 @@ const isRemoteHistoryClean = async () => {
 		({stdout: history} = await execa('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']));
 	} catch {}
 
-	// Remote history is clean if there are 0 revisions
-	return history === '0';
+	// Remote history is clean if there are 0 revisions or if no remote set up.
+	return history === '0' || history === '';
 };
 
 export const verifyRemoteHistoryIsClean = async () => {

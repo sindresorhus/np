@@ -92,7 +92,7 @@ test.serial('should fail when local working tree modified', async t => {
 	assertTaskFailed(t, 'Check local working tree');
 });
 
-test.serial('should fail when remote history differs', async t => {
+test.serial('should not fail when no remote set up', async t => {
 	const gitTasks = await stubExeca(t, [
 		{
 			command: 'git symbolic-ref --short HEAD',
@@ -101,6 +101,35 @@ test.serial('should fail when remote history differs', async t => {
 		},
 		{
 			command: 'git status --porcelain',
+			exitCode: 0,
+			stdout: '',
+		},
+		{
+			command: 'git rev-list --count --left-only @{u}...HEAD',
+			stdout: '',
+			stderr: 'fatal: no upstream configured for branch \'master\'',
+		},
+	]);
+
+	await t.notThrowsAsync(
+		run(gitTasks({branch: 'master'})),
+	);
+});
+
+test.serial('should fail when remote history differs and changes are fetched', async t => {
+	const gitTasks = await stubExeca(t, [
+		{
+			command: 'git symbolic-ref --short HEAD',
+			exitCode: 0,
+			stdout: 'master',
+		},
+		{
+			command: 'git status --porcelain',
+			exitCode: 0,
+			stdout: '',
+		},
+		{
+			command: 'git fetch origin --dry-run',
 			exitCode: 0,
 			stdout: '',
 		},
