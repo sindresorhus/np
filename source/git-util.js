@@ -144,7 +144,7 @@ const hasRemote = async () => {
 };
 
 const hasUnfetchedChangesFromRemote = async () => {
-	const {stderr: possibleNewChanges} = await execa('git', ['fetch', '--dry-run']);
+	const {stdout: possibleNewChanges} = await execa('git', ['fetch', '--dry-run']);
 
 	// There are no unfetched changes if output is empty.
 	return !possibleNewChanges || possibleNewChanges === '';

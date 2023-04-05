@@ -17,7 +17,6 @@ test.afterEach(() => {
 test.serial('should fail when release branch is not specified, current branch is not the release branch, and publishing from any branch not permitted', async t => {
 	const gitTasks = await stubExeca(t, [{
 		command: 'git symbolic-ref --short HEAD',
-		exitCode: 0,
 		stdout: 'feature',
 	}]);
 
@@ -32,7 +31,6 @@ test.serial('should fail when release branch is not specified, current branch is
 test.serial('should fail when current branch is not the specified release branch and publishing from any branch not permitted', async t => {
 	const gitTasks = await stubExeca(t, [{
 		command: 'git symbolic-ref --short HEAD',
-		exitCode: 0,
 		stdout: 'feature',
 	}]);
 
@@ -48,12 +46,10 @@ test.serial('should not fail when current branch not master and publishing from 
 	const gitTasks = await stubExeca(t, [
 		{
 			command: 'git symbolic-ref --short HEAD',
-			exitCode: 0,
 			stdout: 'feature',
 		},
 		{
 			command: 'git status --porcelain',
-			exitCode: 0,
 			stdout: '',
 		},
 		{
@@ -66,7 +62,6 @@ test.serial('should not fail when current branch not master and publishing from 
 		},
 		{
 			command: 'git rev-list --count --left-only @{u}...HEAD',
-			exitCode: 0,
 			stdout: '0',
 		},
 	]);
@@ -82,12 +77,10 @@ test.serial('should fail when local working tree modified', async t => {
 	const gitTasks = await stubExeca(t, [
 		{
 			command: 'git symbolic-ref --short HEAD',
-			exitCode: 0,
 			stdout: 'master',
 		},
 		{
 			command: 'git status --porcelain',
-			exitCode: 0,
 			stdout: 'M source/git-tasks.js',
 		},
 	]);
@@ -104,17 +97,14 @@ test.serial('should not fail when no remote set up', async t => {
 	const gitTasks = await stubExeca(t, [
 		{
 			command: 'git symbolic-ref --short HEAD',
-			exitCode: 0,
 			stdout: 'master',
 		},
 		{
 			command: 'git status --porcelain',
-			exitCode: 0,
 			stdout: '',
 		},
 		{
 			command: 'git rev-parse @{u}',
-			stdout: '',
 			stderr: 'fatal: no upstream configured for branch \'master\'',
 		},
 	]);
@@ -128,12 +118,10 @@ test.serial('should fail when remote history differs and changes are fetched', a
 	const gitTasks = await stubExeca(t, [
 		{
 			command: 'git symbolic-ref --short HEAD',
-			exitCode: 0,
 			stdout: 'master',
 		},
 		{
 			command: 'git status --porcelain',
-			exitCode: 0,
 			stdout: '',
 		},
 		{
@@ -146,7 +134,6 @@ test.serial('should fail when remote history differs and changes are fetched', a
 		},
 		{
 			command: 'git rev-list --count --left-only @{u}...HEAD',
-			exitCode: 0,
 			stdout: '1', // Has unpulled changes
 		},
 	]);
@@ -163,12 +150,10 @@ test.serial('should fail when remote has unfetched changes', async t => {
 	const gitTasks = await stubExeca(t, [
 		{
 			command: 'git symbolic-ref --short HEAD',
-			exitCode: 0,
 			stdout: 'master',
 		},
 		{
 			command: 'git status --porcelain',
-			exitCode: 0,
 			stdout: '',
 		},
 		{
@@ -177,7 +162,7 @@ test.serial('should fail when remote has unfetched changes', async t => {
 		},
 		{
 			command: 'git fetch --dry-run',
-			stderr: 'From https://github.com/sindresorhus/np', // Has unfetched changes
+			stdout: 'From https://github.com/sindresorhus/np', // Has unfetched changes
 		},
 	]);
 
@@ -193,12 +178,10 @@ test.serial('checks should pass when publishing from master, working tree is cle
 	const gitTasks = await stubExeca(t, [
 		{
 			command: 'git symbolic-ref --short HEAD',
-			exitCode: 0,
 			stdout: 'master',
 		},
 		{
 			command: 'git status --porcelain',
-			exitCode: 0,
 			stdout: '',
 		},
 		{
@@ -211,7 +194,6 @@ test.serial('checks should pass when publishing from master, working tree is cle
 		},
 		{
 			command: 'git rev-list --count --left-only @{u}...HEAD',
-			exitCode: 0,
 			stdout: '0',
 		},
 	]);
