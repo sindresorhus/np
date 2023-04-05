@@ -1,0 +1,6 @@
+{
+	"name": "foo",
+	"version": "0.0.0",
+	"main": "foo.js",
+	"files": ["bar.js"]
+}

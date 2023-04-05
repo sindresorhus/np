@@ -2,7 +2,7 @@ import path from 'node:path';
 import {execa} from 'execa';
 import escapeStringRegexp from 'escape-string-regexp';
 import ignoreWalker from 'ignore-walk';
-import {packageDirectorySync} from 'pkg-dir';
+import {packageDirectory} from 'pkg-dir';
 import Version from './version.js';
 
 export const latestTag = async () => {
@@ -27,7 +27,7 @@ export const newFilesSinceLastRelease = async () => {
 	} catch {
 		// Get all files under version control
 		return ignoreWalker({
-			path: packageDirectorySync(),
+			path: await packageDirectory(),
 			ignoreFiles: ['.gitignore'],
 		});
 	}

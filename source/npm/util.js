@@ -1,38 +1,13 @@
-import fs from 'node:fs';
 import path from 'node:path';
+import {pathExists} from 'path-exists';
 import {execa} from 'execa';
 import pTimeout from 'p-timeout';
 import ow from 'ow';
 import npmName from 'npm-name';
 import chalk from 'chalk';
-import {packageDirectorySync} from 'pkg-dir';
-import ignoreWalker from 'ignore-walk';
-import minimatch from 'minimatch';
+import {packageDirectory} from 'pkg-dir';
 import semver from 'semver';
 import Version from '../version.js';
-
-// According to https://docs.npmjs.com/files/package.json#files
-// npm's default behavior is to ignore these files.
-const filesIgnoredByDefault = [
-	'.*.swp',
-	'.npmignore',
-	'.gitignore',
-	'._*',
-	'.DS_Store',
-	'.hg',
-	'.npmrc',
-	'.lock-wscript',
-	'.svn',
-	'.wafpickle-N',
-	'*.orig',
-	'config.gypi',
-	'CVS',
-	'node_modules/**/*',
-	'npm-debug.log',
-	'package-lock.json',
-	'.git/**/*',
-	'.git',
-];
 
 export const checkConnection = () => pTimeout(
 	(async () => {
@@ -154,137 +129,24 @@ export const verifyRecentNpmVersion = async () => {
 	Version.verifyRequirementSatisfied('npm', npmVersion);
 };
 
-export const checkIgnoreStrategy = ({files}) => {
-	if (!files && !npmignoreExistsInPackageRootDir()) {
+const npmignoreExistsInPackageRootDir = async () => {
+	const rootDir = await packageDirectory();
+	return pathExists(path.resolve(rootDir, '.npmignore'));
+};
+
+export const checkIgnoreStrategy = async ({files}) => {
+	if (!files && !(await npmignoreExistsInPackageRootDir())) {
 		console.log(`
 		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
 		`);
 	}
 };
 
-function npmignoreExistsInPackageRootDir() {
-	const rootDir = packageDirectorySync();
-	return fs.existsSync(path.resolve(rootDir, '.npmignore'));
-}
+export const getFilesToBePacked = async () => {
+	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json'], {cwd: await packageDirectory()});
 
-function excludeGitAndNodeModulesPaths(singlePath) {
-	return !singlePath.startsWith('.git/') && !singlePath.startsWith('node_modules/');
-}
-
-async function getFilesIgnoredByDotnpmignore(pkg, fileList) {
-	let allowList = await ignoreWalker({
-		path: packageDirectorySync(),
-		ignoreFiles: ['.npmignore'],
-	});
-	allowList = allowList.filter(singlePath => excludeGitAndNodeModulesPaths(singlePath));
-	return fileList.filter(minimatch.filter(getIgnoredFilesGlob(allowList, pkg.directories), {matchBase: true, dot: true}));
-}
-
-function filterFileList(globArray, fileList) {
-	if (globArray.length === 0) {
-		return [];
-	}
-
-	const globString = globArray.length > 1 ? `{${globArray.filter(singlePath => excludeGitAndNodeModulesPaths(singlePath))}}` : globArray[0];
-	return fileList.filter(minimatch.filter(globString, {matchBase: true, dot: true})); // eslint-disable-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
-}
-
-async function getFilesIncludedByDotnpmignore(pkg, fileList) {
-	const allowList = await ignoreWalker({
-		path: packageDirectorySync(),
-		ignoreFiles: ['.npmignore'],
-	});
-	return filterFileList(allowList, fileList);
-}
-
-function getFilesNotIncludedInFilesProperty(pkg, fileList) {
-	const globArrayForFilesAndDirectories = [...pkg.files];
-	const rootDir = packageDirectorySync();
-	for (const glob of pkg.files) {
-		try {
-			if (fs.statSync(path.resolve(rootDir, glob)).isDirectory()) {
-				globArrayForFilesAndDirectories.push(`${glob}/**/*`);
-			}
-		} catch {}
-	}
-
-	const result = fileList.filter(minimatch.filter(getIgnoredFilesGlob(globArrayForFilesAndDirectories, pkg.directories), {matchBase: true, dot: true}));
-	return result.filter(minimatch.filter(getDefaultIncludedFilesGlob(pkg.main), {nocase: true, matchBase: true}));
-}
-
-function getFilesIncludedInFilesProperty(pkg, fileList) {
-	const globArrayForFilesAndDirectories = [...pkg.files];
-	const rootDir = packageDirectorySync();
-	for (const glob of pkg.files) {
-		try {
-			if (fs.statSync(path.resolve(rootDir, glob)).isDirectory()) {
-				globArrayForFilesAndDirectories.push(`${glob}/**/*`);
-			}
-		} catch {}
-	}
-
-	return filterFileList(globArrayForFilesAndDirectories, fileList);
-}
-
-function getDefaultIncludedFilesGlob(mainFile) {
-	// According to https://docs.npmjs.com/files/package.json#files
-	// npm's default behavior is to always include these files.
-	const filesAlwaysIncluded = [
-		'package.json',
-		'README*',
-		'CHANGES*',
-		'CHANGELOG*',
-		'HISTORY*',
-		'LICENSE*',
-		'LICENCE*',
-		'NOTICE*',
-	];
-	if (mainFile) {
-		filesAlwaysIncluded.push(mainFile);
-	}
-
-	return `!{${filesAlwaysIncluded}}`;
-}
-
-function getIgnoredFilesGlob(globArrayFromFilesProperty, packageDirectories) {
-	// Test files are assumed not to be part of the package
-	let testDirectoriesGlob = '';
-	if (packageDirectories && Array.isArray(packageDirectories.test)) {
-		testDirectoriesGlob = packageDirectories.test.join(',');
-	} else if (packageDirectories && typeof packageDirectories.test === 'string') {
-		testDirectoriesGlob = packageDirectories.test;
-	} else {
-		// Fallback to `test` directory
-		testDirectoriesGlob = 'test/**/*';
-	}
-
-	return `!{${globArrayFromFilesProperty.join(',')},${filesIgnoredByDefault.join(',')},${testDirectoriesGlob}}`;
-}
-
-// Get all files which will be ignored by either `.npmignore` or the `files` property in `package.json` (if defined).
-export const getNewAndUnpublishedFiles = async (pkg, newFiles = []) => {
-	if (pkg.files) {
-		return getFilesNotIncludedInFilesProperty(pkg, newFiles);
-	}
-
-	if (npmignoreExistsInPackageRootDir()) {
-		return getFilesIgnoredByDotnpmignore(pkg, newFiles);
-	}
-
-	return [];
-};
-
-export const getFirstTimePublishedFiles = async (pkg, newFiles = []) => {
-	let result;
-	if (pkg.files) {
-		result = getFilesIncludedInFilesProperty(pkg, newFiles);
-	} else if (npmignoreExistsInPackageRootDir()) {
-		result = await getFilesIncludedByDotnpmignore(pkg, newFiles);
-	} else {
-		result = newFiles;
-	}
-
-	return result.filter(minimatch.filter(`!{${filesIgnoredByDefault}}`, {matchBase: true, dot: true})).filter(minimatch.filter(getDefaultIncludedFilesGlob(pkg.main), {nocase: true, matchBase: true}));
+	const {files} = JSON.parse(stdout).at(0);
+	return files.map(file => file.path);
 };
 
 export const getRegistryUrl = async (pkgManager, pkg) => {
