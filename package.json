@@ -74,6 +74,7 @@
 		"common-tags": "^1.8.2",
 		"esmock": "^2.2.1",
 		"fs-extra": "^11.1.1",
+		"move-file": "^3.1.0",
 		"sinon": "^15.0.3",
 		"tempy": "^3.0.0",
 		"write-pkg": "^5.1.0",
