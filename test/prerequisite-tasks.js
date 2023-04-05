@@ -20,7 +20,7 @@ test.afterEach(() => {
 });
 
 test.serial('public-package published on npm registry: should fail when npm registry not pingable', async t => {
-	const prerequisiteTasks = await stubExeca(t, [{
+	const prerequisiteTasks = await stubExeca([{
 		command: 'npm ping',
 		exitCode: 1,
 		exitCodeName: 'EPERM',
@@ -37,7 +37,7 @@ test.serial('public-package published on npm registry: should fail when npm regi
 });
 
 test.serial('private package: should disable task pinging npm registry', async t => {
-	const prerequisiteTasks = await stubExeca(t, [{
+	const prerequisiteTasks = await stubExeca([{
 		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 		exitCode: 0,
 		stdout: '',
@@ -51,7 +51,7 @@ test.serial('private package: should disable task pinging npm registry', async t
 });
 
 test.serial('external registry: should disable task pinging npm registry', async t => {
-	const prerequisiteTasks = await stubExeca(t, [{
+	const prerequisiteTasks = await stubExeca([{
 		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 		exitCode: 0,
 		stdout: '',
@@ -65,7 +65,7 @@ test.serial('external registry: should disable task pinging npm registry', async
 });
 
 test.serial('should fail when npm version does not match range in `package.json`', async t => {
-	const prerequisiteTasks = await stubExeca(t, [
+	const prerequisiteTasks = await stubExeca([
 		{
 			command: 'npm --version',
 			exitCode: 0,
@@ -89,7 +89,7 @@ test.serial('should fail when npm version does not match range in `package.json`
 });
 
 test.serial('should fail when yarn version does not match range in `package.json`', async t => {
-	const prerequisiteTasks = await stubExeca(t, [
+	const prerequisiteTasks = await stubExeca([
 		{
 			command: 'yarn --version',
 			exitCode: 0,
@@ -113,7 +113,7 @@ test.serial('should fail when yarn version does not match range in `package.json
 });
 
 test.serial('should fail when user is not authenticated at npm registry', async t => {
-	const prerequisiteTasks = await stubExeca(t, [
+	const prerequisiteTasks = await stubExeca([
 		{
 			command: 'npm whoami',
 			exitCode: 0,
@@ -139,7 +139,7 @@ test.serial('should fail when user is not authenticated at npm registry', async 
 });
 
 test.serial('should fail when user is not authenticated at external registry', async t => {
-	const prerequisiteTasks = await stubExeca(t, [
+	const prerequisiteTasks = await stubExeca([
 		{
 			command: 'npm whoami --registry http://my.io',
 			exitCode: 0,
@@ -170,7 +170,7 @@ test.serial('should fail when user is not authenticated at external registry', a
 });
 
 test.serial('private package: should disable task `verify user is authenticated`', async t => {
-	const prerequisiteTasks = await stubExeca(t, [{
+	const prerequisiteTasks = await stubExeca([{
 		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 		exitCode: 0,
 		stdout: '',
@@ -188,7 +188,7 @@ test.serial('private package: should disable task `verify user is authenticated`
 });
 
 test.serial('should fail when git version does not match range in `package.json`', async t => {
-	const prerequisiteTasks = await stubExeca(t, [{
+	const prerequisiteTasks = await stubExeca([{
 		command: 'git version',
 		exitCode: 0,
 		stdout: 'git version 1.0.0',
@@ -205,7 +205,7 @@ test.serial('should fail when git version does not match range in `package.json`
 });
 
 test.serial('should fail when git remote does not exist', async t => {
-	const prerequisiteTasks = await stubExeca(t, [{
+	const prerequisiteTasks = await stubExeca([{
 		command: 'git ls-remote origin HEAD',
 		exitCode: 1,
 		exitCodeName: 'EPERM',
@@ -248,7 +248,7 @@ test.serial('should fail when prerelease version of public package without dist 
 });
 
 test.serial('should not fail when prerelease version of public package with dist tag given', async t => {
-	const prerequisiteTasks = await stubExeca(t, [{
+	const prerequisiteTasks = await stubExeca([{
 		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 		stdout: '',
 	}]);
@@ -259,7 +259,7 @@ test.serial('should not fail when prerelease version of public package with dist
 });
 
 test.serial('should not fail when prerelease version of private package without dist tag given', async t => {
-	const prerequisiteTasks = await stubExeca(t, [{
+	const prerequisiteTasks = await stubExeca([{
 		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 		stdout: '',
 	}]);
@@ -270,7 +270,7 @@ test.serial('should not fail when prerelease version of private package without 
 });
 
 test.serial('should fail when git tag already exists', async t => {
-	const prerequisiteTasks = await stubExeca(t, [{
+	const prerequisiteTasks = await stubExeca([{
 		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 		stdout: 'vvb',
 	}]);
@@ -284,7 +284,7 @@ test.serial('should fail when git tag already exists', async t => {
 });
 
 test.serial('checks should pass', async t => {
-	const prerequisiteTasks = await stubExeca(t, [{
+	const prerequisiteTasks = await stubExeca([{
 		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 		stdout: '',
 	}]);

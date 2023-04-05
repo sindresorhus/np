@@ -22,7 +22,7 @@ const makeExecaStub = commands => {
 	return stub;
 };
 
-export const _stubExeca = source => async (t, commands) => {
+export const _stubExeca = source => async commands => {
 	const execaStub = makeExecaStub(commands);
 
 	return esmock(source, {}, {
