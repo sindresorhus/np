@@ -12,6 +12,12 @@ export default class Version {
 		return Boolean(semver.prerelease(this.version));
 	}
 
+	// TODO: should this be validated? it's after `getNewVersionFrom` in tasks
+	// add test in test/version.js
+	isMajor(input) {
+		return semver.diff(this.version, input) === 'major';
+	}
+
 	satisfies(range) {
 		Version.validate(this.version);
 		return semver.satisfies(this.version, range, {

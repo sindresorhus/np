@@ -4,10 +4,11 @@ import {execa} from 'execa';
 import Version from './version.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
-import {getTagVersionPrefix} from './util.js';
+import * as util from './util.js';
 
 const prerequisiteTasks = (input, pkg, options) => {
 	const isExternalRegistry = npm.isExternalRegistry(pkg);
+	/** @type {Version} */
 	let newVersion = null;
 
 	const tasks = [
@@ -63,6 +64,18 @@ const prerequisiteTasks = (input, pkg, options) => {
 			},
 		},
 		{
+			title: 'Check for Node version bump',
+			async task() {
+				// TODO: path
+				const nodeVersionIncreased = await util.hasNodeVersionIncreased(pkg, '');
+
+				if (nodeVersionIncreased && !newVersion.isMajor(input)) {
+					// TODO: better message
+					throw new Error('The Node version has increased, but this release is not a major version.');
+				}
+			},
+		},
+		{
 			title: 'Check for pre-release version',
 			task() {
 				if (!pkg.private && new Version(newVersion).isPrerelease() && !options.tag) {
@@ -75,7 +88,7 @@ const prerequisiteTasks = (input, pkg, options) => {
 			async task() {
 				await git.fetch();
 
-				const tagPrefix = await getTagVersionPrefix(options);
+				const tagPrefix = await util.getTagVersionPrefix(options);
 
 				await git.verifyTagDoesNotExistOnRemote(`${tagPrefix}${newVersion}`);
 			},

@@ -1,11 +1,13 @@
 import {readPackageUp} from 'read-pkg-up';
+import {packageDirectory} from 'pkg-dir';
+import {readPackage} from 'read-pkg';
 import issueRegex from 'issue-regex';
 import terminalLink from 'terminal-link';
 import {execa} from 'execa';
 import pMemoize from 'p-memoize';
 import ow from 'ow';
 import chalk from 'chalk';
-import {packageDirectory} from 'pkg-dir';
+import semver from 'semver';
 import * as gitUtil from './git-util.js';
 import * as npmUtil from './npm/util.js';
 
@@ -82,9 +84,14 @@ export const getNewFiles = async () => {
 	};
 };
 
+const getPackageJsonFromLastRelease = async pkgPath => {
+	const pkg = await gitUtil.readFileFromLastRelease(pkgPath);
+	// TODO: tests are failing, either sindresorhus/read-pkg#28 or use normalize-package-data
+	return readPackage(pkg);
+};
+
 export const getNewDependencies = async (newPkg, pkgPath) => {
-	let oldPkg = await gitUtil.readFileFromLastRelease(pkgPath);
-	oldPkg = JSON.parse(oldPkg);
+	const oldPkg = await getPackageJsonFromLastRelease(pkgPath);
 
 	const newDependencies = [];
 
@@ -120,3 +127,14 @@ export const getPreReleasePrefix = pMemoize(async options => {
 		return '';
 	}
 });
+
+export const hasNodeVersionIncreased = async (newPkg, pkgPath) => {
+	const oldPkg = await getPackageJsonFromLastRelease(pkgPath);
+
+	// TODO: what if `oldPkg` had a version but `newPkg` doesn't?
+	if (!oldPkg || !newPkg.engines.node) {
+		return false;
+	}
+
+	return semver.gt(newPkg.engines.node, oldPkg.engines.node);
+};
