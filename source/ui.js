@@ -79,7 +79,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 };
 
 const checkNewFilesAndDependencies = async (pkg, pkgPath) => {
-	const newFiles = await util.getNewFiles(pkg);
+	const newFiles = await util.getNewFiles(pkgPath);
 	const newDependencies = await util.getNewDependencies(pkg, pkgPath);
 
 	const noNewUnpublishedFiles = !newFiles.unpublished || newFiles.unpublished.length === 0;

@@ -2,7 +2,6 @@ import path from 'node:path';
 import {execa} from 'execa';
 import escapeStringRegexp from 'escape-string-regexp';
 import ignoreWalker from 'ignore-walk';
-import {packageDirectory} from 'pkg-dir';
 import Version from './version.js';
 
 export const latestTag = async () => {
@@ -15,7 +14,7 @@ export const root = async () => {
 	return stdout;
 };
 
-export const newFilesSinceLastRelease = async () => {
+export const newFilesSinceLastRelease = async pkgPath => {
 	try {
 		const {stdout} = await execa('git', ['diff', '--name-only', '--diff-filter=A', await latestTag(), 'HEAD']);
 		if (stdout.trim().length === 0) {
@@ -27,7 +26,7 @@ export const newFilesSinceLastRelease = async () => {
 	} catch {
 		// Get all files under version control
 		return ignoreWalker({
-			path: await packageDirectory(),
+			path: pkgPath,
 			ignoreFiles: ['.gitignore'],
 		});
 	}

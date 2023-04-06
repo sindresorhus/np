@@ -72,9 +72,9 @@ export const getTagVersionPrefix = pMemoize(async options => {
 
 export const joinList = list => chalk.reset(list.map(item => `- ${item}`).join('\n'));
 
-export const getNewFiles = async () => {
-	const listNewFiles = await gitUtil.newFilesSinceLastRelease();
-	const listPkgFiles = await npmUtil.getFilesToBePacked();
+export const getNewFiles = async pkgPath => {
+	const listNewFiles = await gitUtil.newFilesSinceLastRelease(pkgPath);
+	const listPkgFiles = await npmUtil.getFilesToBePacked(pkgPath);
 
 	return {
 		unpublished: listNewFiles.filter(file => !listPkgFiles.includes(file) && !file.startsWith('.git')),

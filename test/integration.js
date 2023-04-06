@@ -41,13 +41,12 @@ test('main', async t => {
 	});
 });
 
-const createFixture = test.macro(async (t, pkgFiles, commands, {unpublished, firstTime}) => {
+const createNewFilesFixture = test.macro(async (t, pkgFiles, commands, {unpublished, firstTime}) => {
 	await createIntegrationTest(t, async ($$, temporaryDir) => {
 		/** @type {import('../source/util.js')} */
 		const util = await esmock('../source/util.js', {}, {
 			'node:process': {cwd: () => temporaryDir},
 			execa: {execa: async (...args) => execa(...args, {cwd: temporaryDir})},
-			'pkg-dir': {packageDirectory: async () => temporaryDir},
 		});
 
 		await commands(t, $$, temporaryDir);
@@ -59,13 +58,13 @@ const createFixture = test.macro(async (t, pkgFiles, commands, {unpublished, fir
 		});
 
 		t.deepEqual(
-			await util.getNewFiles(),
+			await util.getNewFiles(temporaryDir),
 			{unpublished, firstTime},
 		);
 	});
 });
 
-test('files to package with tags added', createFixture, ['*.js'], async (t, $$) => {
+test('files to package with tags added', createNewFilesFixture, ['*.js'], async (t, $$) => {
 	await $$`git tag v0.0.0`;
 	await t.context.createFile('new');
 	await t.context.createFile('index.js');
@@ -73,7 +72,7 @@ test('files to package with tags added', createFixture, ['*.js'], async (t, $$) 
 	await $$`git commit -m "added"`;
 }, {unpublished: ['new'], firstTime: ['index.js']});
 
-test('file `new` to package without tags added', createFixture, ['index.js'], async t => {
+test('file `new` to package without tags added', createNewFilesFixture, ['index.js'], async t => {
 	await t.context.createFile('new');
 	await t.context.createFile('index.js');
 }, {unpublished: ['new'], firstTime: ['index.js', 'package.json']});
@@ -83,7 +82,7 @@ test('file `new` to package without tags added', createFixture, ['index.js'], as
 	const filePath1 = path.join(longPath, 'file1');
 	const filePath2 = path.join(longPath, 'file2');
 
-	test('files with long pathnames added', createFixture, ['*.js'], async (t, $$) => {
+	test('files with long pathnames added', createNewFilesFixture, ['*.js'], async (t, $$) => {
 		await $$`git tag v0.0.0`;
 		await t.context.createFile(filePath1);
 		await t.context.createFile(filePath2);
@@ -92,11 +91,11 @@ test('file `new` to package without tags added', createFixture, ['index.js'], as
 	}, {unpublished: [filePath1, filePath2], firstTime: []});
 })();
 
-test('no new files added', createFixture, [], async (_t, $$) => {
+test('no new files added', createNewFilesFixture, [], async (_t, $$) => {
 	await $$`git tag v0.0.0`;
 }, {unpublished: [], firstTime: []});
 
-test('ignores .git and .github files', createFixture, ['*.js'], async (t, $$) => {
+test('ignores .git and .github files', createNewFilesFixture, ['*.js'], async (t, $$) => {
 	await $$`git tag v0.0.0`;
 	await t.context.createFile('.github/workflows/main.yml');
 	await t.context.createFile('.github/pull_request_template');
