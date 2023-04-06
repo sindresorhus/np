@@ -14,7 +14,7 @@ export const root = async () => {
 	return stdout;
 };
 
-export const newFilesSinceLastRelease = async pkgPath => {
+export const newFilesSinceLastRelease = async rootDir => {
 	try {
 		const {stdout} = await execa('git', ['diff', '--name-only', '--diff-filter=A', await latestTag(), 'HEAD']);
 		if (stdout.trim().length === 0) {
@@ -26,7 +26,7 @@ export const newFilesSinceLastRelease = async pkgPath => {
 	} catch {
 		// Get all files under version control
 		return ignoreWalker({
-			path: pkgPath,
+			path: rootDir,
 			ignoreFiles: ['.gitignore'],
 		});
 	}

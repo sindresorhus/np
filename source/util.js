@@ -1,3 +1,4 @@
+import path from 'node:path';
 import {readPackageUp} from 'read-pkg-up';
 import issueRegex from 'issue-regex';
 import terminalLink from 'terminal-link';
@@ -15,11 +16,11 @@ export const readPkg = async packagePath => {
 		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
 	}
 
-	const {packageJson, path} = await readPackageUp({
+	const {packageJson, path: pkgPath} = await readPackageUp({
 		cwd: packagePath,
 	});
 
-	return {pkg: packageJson, pkgPath: path};
+	return {pkg: packageJson, rootDir: path.dirname(pkgPath)};
 };
 
 export const linkifyIssues = (url, message) => {
@@ -72,9 +73,9 @@ export const getTagVersionPrefix = pMemoize(async options => {
 
 export const joinList = list => chalk.reset(list.map(item => `- ${item}`).join('\n'));
 
-export const getNewFiles = async pkgPath => {
-	const listNewFiles = await gitUtil.newFilesSinceLastRelease(pkgPath);
-	const listPkgFiles = await npmUtil.getFilesToBePacked(pkgPath);
+export const getNewFiles = async rootDir => {
+	const listNewFiles = await gitUtil.newFilesSinceLastRelease(rootDir);
+	const listPkgFiles = await npmUtil.getFilesToBePacked(rootDir);
 
 	return {
 		unpublished: listNewFiles.filter(file => !listPkgFiles.includes(file) && !file.startsWith('.git')),
@@ -82,8 +83,8 @@ export const getNewFiles = async pkgPath => {
 	};
 };
 
-export const getNewDependencies = async (newPkg, pkgPath) => {
-	let oldPkg = await gitUtil.readFileFromLastRelease(pkgPath);
+export const getNewDependencies = async (newPkg, rootDir) => {
+	let oldPkg = await gitUtil.readFileFromLastRelease(path.resolve(rootDir, 'package.json'));
 	oldPkg = JSON.parse(oldPkg);
 
 	const newDependencies = [];

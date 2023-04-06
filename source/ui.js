@@ -78,9 +78,9 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 	};
 };
 
-const checkNewFilesAndDependencies = async (pkg, pkgPath) => {
-	const newFiles = await util.getNewFiles(pkgPath);
-	const newDependencies = await util.getNewDependencies(pkg, pkgPath);
+const checkNewFilesAndDependencies = async (pkg, rootDir) => {
+	const newFiles = await util.getNewFiles(rootDir);
+	const newDependencies = await util.getNewDependencies(pkg, rootDir);
 
 	const noNewUnpublishedFiles = !newFiles.unpublished || newFiles.unpublished.length === 0;
 	const noNewFirstTimeFiles = !newFiles.firstTime || newFiles.firstTime.length === 0;
@@ -121,7 +121,7 @@ const checkNewFilesAndDependencies = async (pkg, pkgPath) => {
 };
 
 // eslint-disable-next-line complexity
-const ui = async (options, {pkg, pkgPath}) => {
+const ui = async (options, {pkg, rootDir}) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
@@ -130,9 +130,9 @@ const ui = async (options, {pkg, pkgPath}) => {
 	const releaseBranch = options.branch;
 
 	if (options.runPublish) {
-		await npmUtil.checkIgnoreStrategy(pkg);
+		npmUtil.checkIgnoreStrategy(pkg, rootDir);
 
-		const answerIgnoredFiles = await checkNewFilesAndDependencies(pkg, pkgPath);
+		const answerIgnoredFiles = await checkNewFilesAndDependencies(pkg, rootDir);
 		if (!answerIgnoredFiles) {
 			return {
 				...options,

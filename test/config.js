@@ -14,10 +14,9 @@ const getConfigsWhenGlobalBinaryIsUsed = async homedirStub => {
 	const promises = pathsPkgDir.map(async pathPkgDir => {
 		const getConfig = await esmock(testedModulePath, {
 			'is-installed-globally': true,
-			'pkg-dir': {packageDirectory: async () => pathPkgDir},
 			'node:os': {homedir: homedirStub},
 		});
-		return getConfig();
+		return getConfig(pathPkgDir);
 	});
 
 	return Promise.all(promises);
@@ -29,10 +28,9 @@ const getConfigsWhenLocalBinaryIsUsed = async pathPkgDir => {
 	const promises = homedirs.map(async homedir => {
 		const getConfig = await esmock(testedModulePath, {
 			'is-installed-globally': false,
-			'pkg-dir': {packageDirectory: async () => pathPkgDir},
 			'node:os': {homedir: () => homedir},
 		});
-		return getConfig();
+		return getConfig(pathPkgDir);
 	});
 
 	return Promise.all(promises);

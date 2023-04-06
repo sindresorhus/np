@@ -99,7 +99,7 @@ const cli = meow(`
 updateNotifier({pkg: cli.pkg}).notify();
 
 try {
-	const {pkg, pkgPath} = await util.readPkg();
+	const {pkg, rootDir} = await util.readPkg(cli.flags.contents);
 
 	const defaultFlags = {
 		cleanup: true,
@@ -110,7 +110,7 @@ try {
 		'2fa': true,
 	};
 
-	const localConfig = await config();
+	const localConfig = await config(rootDir);
 
 	const flags = {
 		...defaultFlags,
@@ -140,14 +140,14 @@ try {
 		version,
 		runPublish,
 		branch,
-	}, {pkg, pkgPath});
+	}, {pkg, rootDir});
 
 	if (!options.confirm) {
 		gracefulExit();
 	}
 
 	console.log(); // Prints a newline for readability
-	const newPkg = await np(options.version, options);
+	const newPkg = await np(options.version, options, {pkg, rootDir});
 
 	if (options.preview || options.releaseDraftOnly) {
 		gracefulExit();
