@@ -1,6 +1,5 @@
 import os from 'node:os';
 import isInstalledGlobally from 'is-installed-globally';
-import {packageDirectory} from 'pkg-dir';
 import {cosmiconfig} from 'cosmiconfig';
 
 // TODO: remove when cosmiconfig/cosmiconfig#283 lands
@@ -9,8 +8,8 @@ const loadESM = async filepath => {
 	return module.default ?? module;
 };
 
-const getConfig = async () => {
-	const searchDir = isInstalledGlobally ? os.homedir() : await packageDirectory();
+const getConfig = async rootDir => {
+	const searchDir = isInstalledGlobally ? os.homedir() : rootDir;
 	const searchPlaces = ['.np-config.json', '.np-config.js', '.np-config.cjs', '.np-config.mjs'];
 	if (!isInstalledGlobally) {
 		searchPlaces.push('package.json');

@@ -1,3 +1,4 @@
+import path from 'node:path';
 import {readPackageUp} from 'read-pkg-up';
 import issueRegex from 'issue-regex';
 import terminalLink from 'terminal-link';
@@ -6,8 +7,8 @@ import pMemoize from 'p-memoize';
 import ow from 'ow';
 import chalk from 'chalk';
 import {packageDirectory} from 'pkg-dir';
-import * as gitUtil from './git-util.js';
-import * as npmUtil from './npm/util.js';
+import * as git from './git-util.js';
+import * as npm from './npm/util.js';
 
 export const readPkg = async packagePath => {
 	packagePath = packagePath ? await packageDirectory(packagePath) : await packageDirectory();
@@ -15,11 +16,11 @@ export const readPkg = async packagePath => {
 		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
 	}
 
-	const {packageJson, path} = await readPackageUp({
+	const {packageJson, path: pkgPath} = await readPackageUp({
 		cwd: packagePath,
 	});
 
-	return {pkg: packageJson, pkgPath: path};
+	return {pkg: packageJson, rootDir: path.dirname(pkgPath)};
 };
 
 export const linkifyIssues = (url, message) => {
@@ -72,9 +73,9 @@ export const getTagVersionPrefix = pMemoize(async options => {
 
 export const joinList = list => chalk.reset(list.map(item => `- ${item}`).join('\n'));
 
-export const getNewFiles = async () => {
-	const listNewFiles = await gitUtil.newFilesSinceLastRelease();
-	const listPkgFiles = await npmUtil.getFilesToBePacked();
+export const getNewFiles = async rootDir => {
+	const listNewFiles = await git.newFilesSinceLastRelease(rootDir);
+	const listPkgFiles = await npm.getFilesToBePacked(rootDir);
 
 	return {
 		unpublished: listNewFiles.filter(file => !listPkgFiles.includes(file) && !file.startsWith('.git')),
@@ -82,8 +83,8 @@ export const getNewFiles = async () => {
 	};
 };
 
-export const getNewDependencies = async (newPkg, pkgPath) => {
-	let oldPkg = await gitUtil.readFileFromLastRelease(pkgPath);
+export const getNewDependencies = async (newPkg, rootDir) => {
+	let oldPkg = await git.readFileFromLastRelease(path.resolve(rootDir, 'package.json'));
 	oldPkg = JSON.parse(oldPkg);
 
 	const newDependencies = [];

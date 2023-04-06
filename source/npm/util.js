@@ -5,7 +5,6 @@ import pTimeout from 'p-timeout';
 import ow from 'ow';
 import npmName from 'npm-name';
 import chalk from 'chalk';
-import {packageDirectory} from 'pkg-dir';
 import semver from 'semver';
 import Version from '../version.js';
 
@@ -129,21 +128,18 @@ export const verifyRecentNpmVersion = async () => {
 	Version.verifyRequirementSatisfied('npm', npmVersion);
 };
 
-const npmignoreExistsInPackageRootDir = async () => {
-	const rootDir = await packageDirectory();
-	return pathExists(path.resolve(rootDir, '.npmignore'));
-};
+export const checkIgnoreStrategy = ({files}, rootDir) => {
+	const npmignoreExistsInPackageRootDir = pathExists(path.resolve(rootDir, '.npmignore'));
 
-export const checkIgnoreStrategy = async ({files}) => {
-	if (!files && !(await npmignoreExistsInPackageRootDir())) {
+	if (!files && !npmignoreExistsInPackageRootDir) {
 		console.log(`
 		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
 		`);
 	}
 };
 
-export const getFilesToBePacked = async () => {
-	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json'], {cwd: await packageDirectory()});
+export const getFilesToBePacked = async rootDir => {
+	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json'], {cwd: rootDir});
 
 	const {files} = JSON.parse(stdout).at(0);
 	return files.map(file => file.path);

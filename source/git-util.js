@@ -2,7 +2,6 @@ import path from 'node:path';
 import {execa} from 'execa';
 import escapeStringRegexp from 'escape-string-regexp';
 import ignoreWalker from 'ignore-walk';
-import {packageDirectory} from 'pkg-dir';
 import Version from './version.js';
 
 export const latestTag = async () => {
@@ -15,7 +14,7 @@ export const root = async () => {
 	return stdout;
 };
 
-export const newFilesSinceLastRelease = async () => {
+export const newFilesSinceLastRelease = async rootDir => {
 	try {
 		const {stdout} = await execa('git', ['diff', '--name-only', '--diff-filter=A', await latestTag(), 'HEAD']);
 		if (stdout.trim().length === 0) {
@@ -27,7 +26,7 @@ export const newFilesSinceLastRelease = async () => {
 	} catch {
 		// Get all files under version control
 		return ignoreWalker({
-			path: await packageDirectory(),
+			path: rootDir,
 			ignoreFiles: ['.gitignore'],
 		});
 	}
@@ -205,12 +204,7 @@ export const tagExistsOnRemote = async tagName => {
 
 async function hasLocalBranch(branch) {
 	try {
-		await execa('git', [
-			'show-ref',
-			'--verify',
-			'--quiet',
-			`refs/heads/${branch}`,
-		]);
+		await execa('git', ['show-ref', '--verify', '--quiet', `refs/heads/${branch}`]);
 		return true;
 	} catch {
 		return false;
@@ -225,9 +219,7 @@ export const defaultBranch = async () => {
 		}
 	}
 
-	throw new Error(
-		'Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.',
-	);
+	throw new Error('Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.');
 };
 
 export const verifyTagDoesNotExistOnRemote = async tagName => {

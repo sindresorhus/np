@@ -6,7 +6,6 @@ import Listr from 'listr';
 import {merge, throwError, catchError, filter, finalize} from 'rxjs';
 import {readPackageUp} from 'read-pkg-up';
 import hasYarn from 'has-yarn';
-import {packageDirectorySync} from 'pkg-dir';
 import hostedGitInfo from 'hosted-git-info';
 import onetime from 'onetime';
 import {asyncExitHook} from 'exit-hook';
@@ -15,10 +14,10 @@ import prerequisiteTasks from './prerequisite-tasks.js';
 import gitTasks from './git-tasks.js';
 import publish from './npm/publish.js';
 import enable2fa from './npm/enable-2fa.js';
-import * as npm from './npm/util.js';
 import releaseTaskHelper from './release-task-helper.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
+import * as npm from './npm/util.js';
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
@@ -28,7 +27,7 @@ const exec = (cmd, args) => {
 };
 
 // eslint-disable-next-line complexity
-const np = async (input = 'patch', options) => {
+const np = async (input = 'patch', options, {pkg, rootDir}) => {
 	if (!hasYarn() && options.yarn) {
 		throw new Error('Could not use Yarn without yarn.lock file');
 	}
@@ -38,12 +37,10 @@ const np = async (input = 'patch', options) => {
 		options.cleanup = false;
 	}
 
-	const {pkg} = await util.readPkg(options.contents);
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
 	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
-	const rootDir = packageDirectorySync();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, options.yarn ? 'yarn.lock' : 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
 	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl)?.type === 'github';
 	const testScript = options.testScript || 'test';

@@ -1,6 +1,7 @@
 import test from 'ava';
 import sinon from 'sinon';
 import esmock from 'esmock';
+import * as util from '../source/util.js';
 import np from '../source/index.js';
 
 const defaultOptions = {
@@ -15,9 +16,11 @@ const defaultOptions = {
 	renderer: 'silent',
 };
 
+const npPkg = await util.readPkg();
+
 const npFails = test.macro(async (t, inputs, message) => {
 	await t.throwsAsync(
-		Promise.all(inputs.map(input => np(input, defaultOptions))),
+		Promise.all(inputs.map(input => np(input, defaultOptions, npPkg))),
 		{message},
 	);
 });
@@ -51,7 +54,7 @@ test('skip enabling 2FA if the package exists', async t => {
 		},
 		'../source/npm/enable-2fa.js': enable2faStub,
 		'../source/npm/publish.js': sinon.stub().returns({pipe: sinon.stub()}),
-	}, {});
+	});
 
 	await t.notThrowsAsync(npMock('1.0.0', {
 		...defaultOptions,
@@ -59,7 +62,7 @@ test('skip enabling 2FA if the package exists', async t => {
 			isAvailable: false,
 			isUnknown: false,
 		},
-	}));
+	}, npPkg));
 
 	t.true(enable2faStub.notCalled);
 });
@@ -87,7 +90,7 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 			isUnknown: false,
 		},
 		'2fa': false,
-	}));
+	}, npPkg));
 
 	t.true(enable2faStub.notCalled);
 });

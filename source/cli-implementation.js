@@ -7,10 +7,10 @@ import updateNotifier from 'update-notifier';
 import hasYarn from 'has-yarn';
 import {gracefulExit} from 'exit-hook';
 import config from './config.js';
-import * as git from './git-util.js';
-import {isPackageNameAvailable} from './npm/util.js';
-import Version from './version.js';
 import * as util from './util.js';
+import * as git from './git-util.js';
+import * as npm from './npm/util.js';
+import Version from './version.js';
 import ui from './ui.js';
 import np from './index.js';
 
@@ -99,7 +99,7 @@ const cli = meow(`
 updateNotifier({pkg: cli.pkg}).notify();
 
 try {
-	const {pkg, pkgPath} = await util.readPkg();
+	const {pkg, rootDir} = await util.readPkg(cli.flags.contents);
 
 	const defaultFlags = {
 		cleanup: true,
@@ -110,7 +110,7 @@ try {
 		'2fa': true,
 	};
 
-	const localConfig = await config();
+	const localConfig = await config(rootDir);
 
 	const flags = {
 		...defaultFlags,
@@ -125,7 +125,7 @@ try {
 
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !pkg.private;
 
-	const availability = flags.publish ? await isPackageNameAvailable(pkg) : {
+	const availability = flags.publish ? await npm.isPackageNameAvailable(pkg) : {
 		isAvailable: false,
 		isUnknown: false,
 	};
@@ -140,14 +140,14 @@ try {
 		version,
 		runPublish,
 		branch,
-	}, {pkg, pkgPath});
+	}, {pkg, rootDir});
 
 	if (!options.confirm) {
 		gracefulExit();
 	}
 
 	console.log(); // Prints a newline for readability
-	const newPkg = await np(options.version, options);
+	const newPkg = await np(options.version, options, {pkg, rootDir});
 
 	if (options.preview || options.releaseDraftOnly) {
 		gracefulExit();
