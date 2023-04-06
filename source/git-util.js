@@ -204,12 +204,7 @@ export const tagExistsOnRemote = async tagName => {
 
 async function hasLocalBranch(branch) {
 	try {
-		await execa('git', [
-			'show-ref',
-			'--verify',
-			'--quiet',
-			`refs/heads/${branch}`,
-		]);
+		await execa('git', ['show-ref', '--verify', '--quiet', `refs/heads/${branch}`]);
 		return true;
 	} catch {
 		return false;
@@ -224,9 +219,7 @@ export const defaultBranch = async () => {
 		}
 	}
 
-	throw new Error(
-		'Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.',
-	);
+	throw new Error('Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.');
 };
 
 export const verifyTagDoesNotExistOnRemote = async tagName => {
