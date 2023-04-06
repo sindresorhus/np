@@ -62,6 +62,7 @@
 		"p-timeout": "^6.1.1",
 		"path-exists": "^5.0.0",
 		"pkg-dir": "^7.0.0",
+		"read-pkg": "^7.1.0",
 		"read-pkg-up": "^9.1.0",
 		"rxjs": "^7.8.0",
 		"semver": "^7.3.8",
