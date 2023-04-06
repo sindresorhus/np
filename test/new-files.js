@@ -1,7 +1,7 @@
 import path from 'node:path';
-import fs from 'node:fs/promises';
 import test from 'ava';
 import esmock from 'esmock';
+import {renameFile} from 'move-file';
 import {runIfExists} from './_utils.js';
 
 const getFixture = name => path.resolve('test', 'fixtures', 'files', name);
@@ -59,10 +59,10 @@ test('package.json files field and npmignore', mockPkgDir, 'files-and-npmignore'
 
 const renameDotGitignore = {
 	async before(fixtureDir) {
-		await fs.rename(`${fixtureDir}/gitignore`, `${fixtureDir}/.gitignore`);
+		await renameFile('gitignore', '.gitignore', {cwd: fixtureDir});
 	},
 	async after(fixtureDir) {
-		await fs.rename(`${fixtureDir}/.gitignore`, `${fixtureDir}/gitignore`);
+		await renameFile('.gitignore', 'gitignore', {cwd: fixtureDir});
 	},
 };
 
