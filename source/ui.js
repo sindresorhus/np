@@ -6,7 +6,7 @@ import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
 import * as util from './util.js';
 import * as git from './git-util.js';
-import * as npmUtil from './npm/util.js';
+import * as npm from './npm/util.js';
 import Version from './version.js';
 import prettyVersionDiff from './pretty-version-diff.js';
 
@@ -126,11 +126,11 @@ const ui = async (options, {pkg, rootDir}) => {
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 	const pkgManager = options.yarn ? 'yarn' : 'npm';
-	const registryUrl = await npmUtil.getRegistryUrl(pkgManager, pkg);
+	const registryUrl = await npm.getRegistryUrl(pkgManager, pkg);
 	const releaseBranch = options.branch;
 
 	if (options.runPublish) {
-		npmUtil.checkIgnoreStrategy(pkg, rootDir);
+		npm.checkIgnoreStrategy(pkg, rootDir);
 
 		const answerIgnoredFiles = await checkNewFilesAndDependencies(pkg, rootDir);
 		if (!answerIgnoredFiles) {
@@ -253,7 +253,7 @@ const ui = async (options, {pkg, rootDir}) => {
 			message: 'How should this pre-release version be tagged in npm?',
 			when: answers => options.runPublish && (Version.isPrereleaseOrIncrement(answers.customVersion) || Version.isPrereleaseOrIncrement(answers.version)) && !options.tag,
 			async choices() {
-				const existingPrereleaseTags = await npmUtil.prereleaseTags(pkg.name);
+				const existingPrereleaseTags = await npm.prereleaseTags(pkg.name);
 
 				return [
 					...existingPrereleaseTags,
@@ -283,7 +283,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		},
 		publishScoped: {
 			type: 'confirm',
-			when: isScoped(pkg.name) && options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted') && !npmUtil.isExternalRegistry(pkg),
+			when: isScoped(pkg.name) && options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted') && !npm.isExternalRegistry(pkg),
 			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false,
 		},

@@ -7,10 +7,10 @@ import updateNotifier from 'update-notifier';
 import hasYarn from 'has-yarn';
 import {gracefulExit} from 'exit-hook';
 import config from './config.js';
-import * as git from './git-util.js';
-import {isPackageNameAvailable} from './npm/util.js';
-import Version from './version.js';
 import * as util from './util.js';
+import * as git from './git-util.js';
+import * as npm from './npm/util.js';
+import Version from './version.js';
 import ui from './ui.js';
 import np from './index.js';
 
@@ -125,7 +125,7 @@ try {
 
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !pkg.private;
 
-	const availability = flags.publish ? await isPackageNameAvailable(pkg) : {
+	const availability = flags.publish ? await npm.isPackageNameAvailable(pkg) : {
 		isAvailable: false,
 		isUnknown: false,
 	};

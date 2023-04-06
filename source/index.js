@@ -14,10 +14,10 @@ import prerequisiteTasks from './prerequisite-tasks.js';
 import gitTasks from './git-tasks.js';
 import publish from './npm/publish.js';
 import enable2fa from './npm/enable-2fa.js';
-import * as npm from './npm/util.js';
 import releaseTaskHelper from './release-task-helper.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
+import * as npm from './npm/util.js';
 
 const exec = (cmd, args) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
