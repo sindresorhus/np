@@ -1,14 +1,14 @@
 import test from 'ava';
-import {SilentRenderer} from './fixtures/listr-renderer.js';
+import {SilentRenderer} from '../fixtures/listr-renderer.js';
 import {
 	_stubExeca,
 	run,
 	assertTaskFailed,
 	assertTaskDoesntExist,
-} from './_utils.js';
+} from '../_utils.js';
 
-/** @type {(...args: ReturnType<_stubExeca>) => Promise<import('../source/git-tasks.js').default>} */
-const stubExeca = _stubExeca('../source/git-tasks.js');
+/** @type {(...args: ReturnType<_stubExeca>) => Promise<import('../../source/git-tasks.js').default>} */
+const stubExeca = _stubExeca('../../source/git-tasks.js', import.meta.url);
 
 test.afterEach(() => {
 	SilentRenderer.clearTasks();

@@ -1,18 +1,18 @@
 import process from 'node:process';
 import test from 'ava';
 import {readPackageUp} from 'read-pkg-up';
-import Version from '../source/version.js';
-import actualPrerequisiteTasks from '../source/prerequisite-tasks.js';
-import {SilentRenderer} from './fixtures/listr-renderer.js';
+import Version from '../../source/version.js';
+import actualPrerequisiteTasks from '../../source/prerequisite-tasks.js';
+import {SilentRenderer} from '../fixtures/listr-renderer.js';
 import {
 	_stubExeca,
 	run,
 	assertTaskFailed,
 	assertTaskDisabled,
-} from './_utils.js';
+} from '../_utils.js';
 
-/** @type {(...args: ReturnType<_stubExeca>) => Promise<import('../source/prerequisite-tasks.js').default>} */
-const stubExeca = _stubExeca('../source/prerequisite-tasks.js');
+/** @type {(...args: ReturnType<_stubExeca>) => Promise<import('../../source/prerequisite-tasks.js').default>} */
+const stubExeca = _stubExeca('../../source/prerequisite-tasks.js', import.meta.url);
 const {packageJson: pkg} = await readPackageUp();
 
 test.afterEach(() => {
