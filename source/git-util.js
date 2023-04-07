@@ -6,6 +6,7 @@ import Version from './version.js';
 
 export const latestTag = async () => {
 	const {stdout} = await execa('git', ['describe', '--abbrev=0', '--tags']);
+	console.log('hi ' + stdout);
 	return stdout;
 };
 
@@ -36,6 +37,12 @@ export const readFileFromLastRelease = async file => {
 	const filePathFromRoot = path.relative(await root(), file);
 	const {stdout: oldFile} = await execa('git', ['show', `${await latestTag()}:${filePathFromRoot}`]);
 	return oldFile;
+};
+
+const tagList = async () => {
+	// Returns the list of tags, sorted by creation date in ascending order.
+	const {stdout} = await execa('git', ['tag', '--sort=creatordate']);
+	return stdout.split('\n');
 };
 
 const firstCommit = async () => {
@@ -97,12 +104,6 @@ export const verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
 	}
 };
 
-export const tagList = async () => {
-	// Returns the list of tags, sorted by creation date in ascending order.
-	const {stdout} = await execa('git', ['tag', '--sort=creatordate']);
-	return stdout.split('\n');
-};
-
 export const isHeadDetached = async () => {
 	try {
 		// Command will fail with code 1 if the HEAD is detached.
@@ -113,7 +114,7 @@ export const isHeadDetached = async () => {
 	}
 };
 
-export const isWorkingTreeClean = async () => {
+const isWorkingTreeClean = async () => {
 	try {
 		const {stdout: status} = await execa('git', ['status', '--porcelain']);
 		if (status !== '') {
@@ -182,7 +183,7 @@ export const fetch = async () => {
 	await execa('git', ['fetch']);
 };
 
-export const tagExistsOnRemote = async tagName => {
+const tagExistsOnRemote = async tagName => {
 	try {
 		const {stdout: revInfo} = await execa('git', ['rev-parse', '--quiet', '--verify', `refs/tags/${tagName}`]);
 
@@ -202,14 +203,14 @@ export const tagExistsOnRemote = async tagName => {
 	}
 };
 
-async function hasLocalBranch(branch) {
+const hasLocalBranch = async branch => {
 	try {
 		await execa('git', ['show-ref', '--verify', '--quiet', `refs/heads/${branch}`]);
 		return true;
 	} catch {
 		return false;
 	}
-}
+};
 
 export const defaultBranch = async () => {
 	for (const branch of ['main', 'master', 'gh-pages']) {
@@ -233,6 +234,10 @@ export const commitLogFromRevision = async revision => {
 	return stdout;
 };
 
+const push = async () => {
+	await execa('git', ['push', '--follow-tags']);
+};
+
 export const pushGraceful = async remoteIsOnGitHub => {
 	try {
 		await push();
@@ -245,10 +250,6 @@ export const pushGraceful = async remoteIsOnGitHub => {
 
 		throw error;
 	}
-};
-
-export const push = async () => {
-	await execa('git', ['push', '--follow-tags']);
 };
 
 export const deleteTag = async tagName => {
