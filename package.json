@@ -81,6 +81,10 @@
 		"xo": "^0.53.1"
 	},
 	"ava": {
+		"files": [
+			"!test/fixtures",
+			"!test/_helpers"
+		],
 		"environmentVariables": {
 			"FORCE_HYPERLINK": "1"
 		},

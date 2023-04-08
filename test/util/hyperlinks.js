@@ -1,7 +1,7 @@
 import test from 'ava';
 import sinon from 'sinon';
 import terminalLink from 'terminal-link';
-import {linkifyIssues, linkifyCommit, linkifyCommitRange} from '../source/util.js';
+import {linkifyIssues, linkifyCommit, linkifyCommitRange} from '../../source/util.js';
 
 const MOCK_REPO_URL = 'https://github.com/unicorn/rainbow';
 const MOCK_COMMIT_HASH = '5063f8a';
@@ -13,6 +13,7 @@ test.afterEach(() => {
 	sandbox.restore();
 });
 
+// TODO: use esmock, get rid of serial on tests
 const mockTerminalLinkUnsupported = () =>
 	sandbox.stub(terminalLink, 'isSupported').value(false);
 

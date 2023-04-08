@@ -89,9 +89,9 @@ test('git-util.verifyTagDoesNotExistOnRemote - does not exist', createFixture, [
 	);
 });
 
-test('git-util.verifyRecentGitVersion - satisfies', createFixture, [{
+test('git-util.verifyRecentGitVersion - satisfied', createFixture, [{
 	command: 'git version',
-	stdout: 'git version 2.12.0',
+	stdout: 'git version 2.12.0', // One higher than minimum
 }], async ({t, testedModule: git}) => {
 	await t.notThrowsAsync(
 		git.verifyRecentGitVersion(),
@@ -100,7 +100,7 @@ test('git-util.verifyRecentGitVersion - satisfies', createFixture, [{
 
 test('git-util.verifyRecentGitVersion - not satisfied', createFixture, [{
 	command: 'git version',
-	stdout: 'git version 2.10.0',
+	stdout: 'git version 2.10.0', // One lower than minimum
 }], async ({t, testedModule: git}) => {
 	await t.throwsAsync(
 		git.verifyRecentGitVersion(),

@@ -1,6 +1,5 @@
 import path from 'node:path';
 import test from 'ava';
-import sinon from 'sinon';
 import esmock from 'esmock';
 
 const testedModulePath = '../source/config.js';
@@ -8,13 +7,13 @@ const testedModulePath = '../source/config.js';
 const getFixture = fixture => path.resolve('test', 'fixtures', 'config', fixture);
 const getFixtures = fixtures => fixtures.map(fixture => getFixture(fixture));
 
-const getConfigsWhenGlobalBinaryIsUsed = async homedirStub => {
+const getConfigsWhenGlobalBinaryIsUsed = async homedir => {
 	const pathsPkgDir = getFixtures(['pkg-dir', 'local1', 'local2', 'local3']);
 
 	const promises = pathsPkgDir.map(async pathPkgDir => {
 		const getConfig = await esmock(testedModulePath, {
 			'is-installed-globally': true,
-			'node:os': {homedir: homedirStub},
+			'node:os': {homedir: () => homedir},
 		});
 		return getConfig(pathPkgDir);
 	});
@@ -37,8 +36,7 @@ const getConfigsWhenLocalBinaryIsUsed = async pathPkgDir => {
 };
 
 const useGlobalBinary = test.macro(async (t, homedir, source) => {
-	const homedirStub = sinon.stub().returns(getFixture(homedir));
-	const configs = await getConfigsWhenGlobalBinaryIsUsed(homedirStub);
+	const configs = await getConfigsWhenGlobalBinaryIsUsed(getFixture(homedir));
 
 	for (const config of configs) {
 		t.deepEqual(config, {source});

@@ -3,31 +3,25 @@ import test from 'ava';
 import {readPackageUp} from 'read-pkg-up';
 import Version from '../../source/version.js';
 import actualPrerequisiteTasks from '../../source/prerequisite-tasks.js';
-import {SilentRenderer} from '../fixtures/listr-renderer.js';
-import {
-	_stubExeca,
-	run,
-	assertTaskFailed,
-	assertTaskDisabled,
-} from '../_utils.js';
+import {SilentRenderer} from '../_helpers/listr-renderer.js';
+import {_createFixture} from '../_helpers/stub-execa.js';
+import {run, assertTaskFailed, assertTaskDisabled} from '../_helpers/listr.js';
 
-/** @type {(...args: ReturnType<_stubExeca>) => Promise<import('../../source/prerequisite-tasks.js').default>} */
-const stubExeca = _stubExeca('../../source/prerequisite-tasks.js', import.meta.url);
+/** @type {ReturnType<typeof _createFixture<import('../../source/prerequisite-tasks.js')>>} */
+const createFixture = _createFixture('../../source/prerequisite-tasks.js', import.meta.url);
 const {packageJson: pkg} = await readPackageUp();
 
 test.afterEach(() => {
 	SilentRenderer.clearTasks();
 });
 
-test.serial('public-package published on npm registry: should fail when npm registry not pingable', async t => {
-	const prerequisiteTasks = await stubExeca([{
-		command: 'npm ping',
-		exitCode: 1,
-		exitCodeName: 'EPERM',
-		stdout: '',
-		stderr: 'failed',
-	}]);
-
+test.serial('public-package published on npm registry: should fail when npm registry not pingable', createFixture, [{
+	command: 'npm ping',
+	exitCode: 1,
+	exitCodeName: 'EPERM',
+	stdout: '',
+	stderr: 'failed',
+}], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
 		run(prerequisiteTasks('1.0.0', {name: 'test'}, {})),
 		{message: 'Connection to npm registry failed'},
@@ -36,13 +30,10 @@ test.serial('public-package published on npm registry: should fail when npm regi
 	assertTaskFailed(t, 'Ping npm registry');
 });
 
-test.serial('private package: should disable task pinging npm registry', async t => {
-	const prerequisiteTasks = await stubExeca([{
-		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
-		exitCode: 0,
-		stdout: '',
-	}]);
-
+test.serial('private package: should disable task pinging npm registry', createFixture, [{
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(
 		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {yarn: false})),
 	);
@@ -50,13 +41,10 @@ test.serial('private package: should disable task pinging npm registry', async t
 	assertTaskDisabled(t, 'Ping npm registry');
 });
 
-test.serial('external registry: should disable task pinging npm registry', async t => {
-	const prerequisiteTasks = await stubExeca([{
-		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
-		exitCode: 0,
-		stdout: '',
-	}]);
-
+test.serial('external registry: should disable task pinging npm registry', createFixture, [{
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(
 		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {yarn: false})),
 	);
@@ -64,20 +52,16 @@ test.serial('external registry: should disable task pinging npm registry', async
 	assertTaskDisabled(t, 'Ping npm registry');
 });
 
-test.serial('should fail when npm version does not match range in `package.json`', async t => {
-	const prerequisiteTasks = await stubExeca([
-		{
-			command: 'npm --version',
-			exitCode: 0,
-			stdout: '6.0.0',
-		},
-		{
-			command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
-			exitCode: 0,
-			stdout: '',
-		},
-	]);
-
+test.serial('should fail when npm version does not match range in `package.json`', createFixture, [
+	{
+		command: 'npm --version',
+		stdout: '6.0.0',
+	},
+	{
+		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+		stdout: '',
+	},
+], async ({t, testedModule: prerequisiteTasks}) => {
 	const depRange = pkg.engines.npm;
 
 	await t.throwsAsync(
@@ -88,20 +72,16 @@ test.serial('should fail when npm version does not match range in `package.json`
 	assertTaskFailed(t, 'Check npm version');
 });
 
-test.serial('should fail when yarn version does not match range in `package.json`', async t => {
-	const prerequisiteTasks = await stubExeca([
-		{
-			command: 'yarn --version',
-			exitCode: 0,
-			stdout: '1.0.0',
-		},
-		{
-			command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
-			exitCode: 0,
-			stdout: '',
-		},
-	]);
-
+test.serial('should fail when yarn version does not match range in `package.json`', createFixture, [
+	{
+		command: 'yarn --version',
+		stdout: '1.0.0',
+	},
+	{
+		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+		stdout: '',
+	},
+], async ({t, testedModule: prerequisiteTasks}) => {
 	const depRange = pkg.engines.yarn;
 
 	await t.throwsAsync(
@@ -112,20 +92,16 @@ test.serial('should fail when yarn version does not match range in `package.json
 	assertTaskFailed(t, 'Check yarn version');
 });
 
-test.serial('should fail when user is not authenticated at npm registry', async t => {
-	const prerequisiteTasks = await stubExeca([
-		{
-			command: 'npm whoami',
-			exitCode: 0,
-			stdout: 'sindresorhus',
-		},
-		{
-			command: 'npm access ls-collaborators test',
-			exitCode: 0,
-			stdout: '{"sindresorhus": "read"}',
-		},
-	]);
-
+test.serial('should fail when user is not authenticated at npm registry', createFixture, [
+	{
+		command: 'npm whoami',
+		stdout: 'sindresorhus',
+	},
+	{
+		command: 'npm access ls-collaborators test',
+		stdout: '{"sindresorhus": "read"}',
+	},
+], async ({t, testedModule: prerequisiteTasks}) => {
 	process.env.NODE_ENV = 'P';
 
 	await t.throwsAsync(
@@ -138,25 +114,20 @@ test.serial('should fail when user is not authenticated at npm registry', async 
 	assertTaskFailed(t, 'Verify user is authenticated');
 });
 
-test.serial('should fail when user is not authenticated at external registry', async t => {
-	const prerequisiteTasks = await stubExeca([
-		{
-			command: 'npm whoami --registry http://my.io',
-			exitCode: 0,
-			stdout: 'sindresorhus',
-		},
-		{
-			command: 'npm access ls-collaborators test --registry http://my.io',
-			exitCode: 0,
-			stdout: '{"sindresorhus": "read"}',
-		},
-		{
-			command: 'npm access list collaborators test --json --registry http://my.io',
-			exitCode: 0,
-			stdout: '{"sindresorhus": "read"}',
-		},
-	]);
-
+test.serial('should fail when user is not authenticated at external registry', createFixture, [
+	{
+		command: 'npm whoami --registry http://my.io',
+		stdout: 'sindresorhus',
+	},
+	{
+		command: 'npm access ls-collaborators test --registry http://my.io',
+		stdout: '{"sindresorhus": "read"}',
+	},
+	{
+		command: 'npm access list collaborators test --json --registry http://my.io',
+		stdout: '{"sindresorhus": "read"}',
+	},
+], async ({t, testedModule: prerequisiteTasks}) => {
 	process.env.NODE_ENV = 'P';
 
 	await t.throwsAsync(
@@ -169,13 +140,10 @@ test.serial('should fail when user is not authenticated at external registry', a
 	assertTaskFailed(t, 'Verify user is authenticated');
 });
 
-test.serial('private package: should disable task `verify user is authenticated`', async t => {
-	const prerequisiteTasks = await stubExeca([{
-		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
-		exitCode: 0,
-		stdout: '',
-	}]);
-
+test.serial('private package: should disable task `verify user is authenticated`', createFixture, [{
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
 	process.env.NODE_ENV = 'P';
 
 	await t.notThrowsAsync(
@@ -187,13 +155,10 @@ test.serial('private package: should disable task `verify user is authenticated`
 	assertTaskDisabled(t, 'Verify user is authenticated');
 });
 
-test.serial('should fail when git version does not match range in `package.json`', async t => {
-	const prerequisiteTasks = await stubExeca([{
-		command: 'git version',
-		exitCode: 0,
-		stdout: 'git version 1.0.0',
-	}]);
-
+test.serial('should fail when git version does not match range in `package.json`', createFixture, [{
+	command: 'git version',
+	stdout: 'git version 1.0.0',
+}], async ({t, testedModule: prerequisiteTasks}) => {
 	const depRange = pkg.engines.git;
 
 	await t.throwsAsync(
@@ -204,14 +169,12 @@ test.serial('should fail when git version does not match range in `package.json`
 	assertTaskFailed(t, 'Check git version');
 });
 
-test.serial('should fail when git remote does not exist', async t => {
-	const prerequisiteTasks = await stubExeca([{
-		command: 'git ls-remote origin HEAD',
-		exitCode: 1,
-		exitCodeName: 'EPERM',
-		stderr: 'not found',
-	}]);
-
+test.serial('should fail when git remote does not exist', createFixture, [{
+	command: 'git ls-remote origin HEAD',
+	exitCode: 1,
+	exitCodeName: 'EPERM',
+	stderr: 'not found',
+}], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
 		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
 		{message: 'not found'},
@@ -247,34 +210,28 @@ test.serial('should fail when prerelease version of public package without dist 
 	assertTaskFailed(t, 'Check for pre-release version');
 });
 
-test.serial('should not fail when prerelease version of public package with dist tag given', async t => {
-	const prerequisiteTasks = await stubExeca([{
-		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
-		stdout: '',
-	}]);
-
+test.serial('should not fail when prerelease version of public package with dist tag given', createFixture, [{
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(
 		run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {yarn: false, tag: 'pre'})),
 	);
 });
 
-test.serial('should not fail when prerelease version of private package without dist tag given', async t => {
-	const prerequisiteTasks = await stubExeca([{
-		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
-		stdout: '',
-	}]);
-
+test.serial('should not fail when prerelease version of private package without dist tag given', createFixture, [{
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(
 		run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0', private: true}, {yarn: false})),
 	);
 });
 
-test.serial('should fail when git tag already exists', async t => {
-	const prerequisiteTasks = await stubExeca([{
-		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
-		stdout: 'vvb',
-	}]);
-
+test.serial('should fail when git tag already exists', createFixture, [{
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	stdout: 'vvb',
+}], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
 		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
 		{message: 'Git tag `v2.0.0` already exists.'},
@@ -283,12 +240,10 @@ test.serial('should fail when git tag already exists', async t => {
 	assertTaskFailed(t, 'Check git tag existence');
 });
 
-test.serial('checks should pass', async t => {
-	const prerequisiteTasks = await stubExeca([{
-		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
-		stdout: '',
-	}]);
-
+test.serial('checks should pass', createFixture, [{
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(
 		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
 	);

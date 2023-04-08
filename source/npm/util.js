@@ -33,18 +33,24 @@ export const username = async ({externalRegistry}) => {
 		const {stdout} = await execa('npm', args);
 		return stdout;
 	} catch (error) {
-		throw new Error(/ENEEDAUTH/.test(error.stderr)
+		const message = /ENEEDAUTH/.test(error.stderr)
 			? 'You must be logged in. Use `npm login` and try again.'
-			: 'Authentication error. Use `npm whoami` to troubleshoot.');
+			: 'Authentication error. Use `npm whoami` to troubleshoot.';
+		throw new Error(message);
 	}
 };
+
+export const isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
 
 export const collaborators = async pkg => {
 	const packageName = pkg.name;
 	ow(packageName, ow.string);
 
 	const npmVersion = await version();
-	const args = semver.satisfies(npmVersion, '>=9.0.0') ? ['access', 'list', 'collaborators', packageName, '--json'] : ['access', 'ls-collaborators', packageName];
+	const args = semver.satisfies(npmVersion, '>=9.0.0')
+		? ['access', 'list', 'collaborators', packageName, '--json']
+		: ['access', 'ls-collaborators', packageName];
+
 	if (isExternalRegistry(pkg)) {
 		args.push('--registry', pkg.publishConfig.registry);
 	}
@@ -116,9 +122,7 @@ export const isPackageNameAvailable = async pkg => {
 	return availability;
 };
 
-export const isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
-
-export const version = async () => {
+const version = async () => {
 	const {stdout} = await execa('npm', ['--version']);
 	return stdout;
 };

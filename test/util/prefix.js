@@ -1,7 +1,7 @@
 import test from 'ava';
 import esmock from 'esmock';
 import {stripIndent} from 'common-tags';
-import {getTagVersionPrefix} from '../source/util.js';
+import {getTagVersionPrefix} from '../../source/util.js';
 
 test('get tag prefix', async t => {
 	t.is(await getTagVersionPrefix({yarn: false}), 'v');
@@ -16,10 +16,10 @@ test('no options passed', async t => {
 	await t.throwsAsync(getTagVersionPrefix({}), {message: 'Expected object to have keys `["yarn"]`'});
 });
 
-test.serial('defaults to "v" when command fails', async t => {
-	const testedModule = await esmock('../source/util.js', {
-		execa: {default: Promise.reject},
+test('defaults to "v" when command fails', async t => {
+	const util = await esmock('../../source/util.js', {
+		execa: {execa: Promise.reject},
 	});
 
-	t.is(await testedModule.getTagVersionPrefix({yarn: true}), 'v');
+	t.is(await util.getTagVersionPrefix({yarn: true}), 'v');
 });

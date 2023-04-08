@@ -6,7 +6,6 @@ import Version from './version.js';
 
 export const latestTag = async () => {
 	const {stdout} = await execa('git', ['describe', '--abbrev=0', '--tags']);
-	console.log('hi ' + stdout);
 	return stdout;
 };
 

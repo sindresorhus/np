@@ -1,50 +1,14 @@
 import path from 'node:path';
-import fs from 'fs-extra';
 import test from 'ava';
 import esmock from 'esmock';
-import {$, execa} from 'execa';
-import {temporaryDirectoryTask} from 'tempy';
+import {execa} from 'execa';
 import {writePackage} from 'write-pkg';
-
-const createEmptyGitRepo = async ($$, temporaryDir) => {
-	await $$`git init`;
-
-	// `git tag` needs an initial commit
-	await fs.createFile(path.resolve(temporaryDir, 'temp'));
-	await $$`git add temp`;
-	await $$`git commit -m "init1"`;
-	await $$`git rm temp`;
-	await $$`git commit -m "init2"`;
-};
-
-const createIntegrationTest = async (t, assertions) => {
-	await temporaryDirectoryTask(async temporaryDir => {
-		const $$ = $({cwd: temporaryDir});
-
-		await createEmptyGitRepo($$, temporaryDir);
-
-		t.context.createFile = async file => fs.createFile(path.resolve(temporaryDir, file));
-		await assertions($$, temporaryDir);
-	});
-};
-
-test('main', async t => {
-	await createIntegrationTest(t, async $$ => {
-		await t.context.createFile('testFile');
-
-		const {stdout} = await $$`git status -u`;
-
-		t.true(
-			stdout.includes('Untracked files') && stdout.includes('testFile'),
-			'File wasn\'t created properly!',
-		);
-	});
-});
+import {createIntegrationTest} from '../_helpers/integration-test.js';
 
 const createNewFilesFixture = test.macro(async (t, pkgFiles, commands, {unpublished, firstTime}) => {
 	await createIntegrationTest(t, async ($$, temporaryDir) => {
-		/** @type {import('../source/util.js')} */
-		const util = await esmock('../source/util.js', {}, {
+		/** @type {import('../../source/util.js')} */
+		const util = await esmock('../../source/util.js', {}, {
 			'node:process': {cwd: () => temporaryDir},
 			execa: {execa: async (...args) => execa(...args, {cwd: temporaryDir})},
 		});

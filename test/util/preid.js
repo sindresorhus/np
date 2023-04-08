@@ -1,6 +1,6 @@
 import test from 'ava';
 import {stripIndent} from 'common-tags';
-import {getPreReleasePrefix} from '../source/util.js';
+import {getPreReleasePrefix} from '../../source/util.js';
 
 test('get preId postfix', async t => {
 	t.is(await getPreReleasePrefix({yarn: false}), '');
