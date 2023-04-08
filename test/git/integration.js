@@ -7,6 +7,12 @@ const createFixture = _createFixture('../../source/git-util.js');
 // From https://stackoverflow.com/a/3357357/10292952
 const getCommitMessage = async ($$, sha) => $$`git log --format=%B -n 1 ${sha}`;
 
+test('git-util.latestTag', createFixture, async ({$$}) => {
+	await $$`git tag v0.0.0`;
+}, async ({t, testedModule: git}) => {
+	t.is(await git.latestTag(), 'v0.0.0');
+});
+
 test('git-util.newFilesSinceLastRelease', createFixture, async ({t, $$}) => {
 	await $$`git tag v0.0.0`;
 	await t.context.createFile('new');
@@ -33,6 +39,17 @@ test('git-util.newFilesSinceLastRelease - use ignoreWalker', createFixture, asyn
 }, async ({t, testedModule: git, temporaryDir}) => {
 	const newFiles = await git.newFilesSinceLastRelease(temporaryDir);
 	t.deepEqual(newFiles.sort(), ['index.js', 'package.json', '.gitignore'].sort());
+});
+
+// TODO: failing, seems like issue with path.relative
+test.failing('git-util.readFileFromLastRelease', createFixture, async ({t, $$}) => {
+	await $$`git tag v0.0.0`;
+	await t.context.createFile('unicorn.txt', 'unicorn');
+	await $$`git add -A`;
+	await $$`git commit -m "added"`;
+}, async ({t, testedModule: git}) => {
+	const file = await git.readFileFromLastRelease('unicorn.txt');
+	t.is(file, 'unicorn');
 });
 
 // TODO: `tagList` always has a minimum length of 1 -> `''.split('\n')` => `['']`
@@ -145,22 +162,24 @@ test('git-util.defaultBranch - main', createFixture, async ({$$}) => {
 });
 
 test('git-util.defaultBranch - master', createFixture, async ({$$}) => {
-	await $$`git switch -c master`;
-	await $$`git branch -D main`;
+	await $$`git checkout -B master`;
+	await $$`git update-ref -d refs/heads/main`;
 }, async ({t, testedModule: git}) => {
 	t.is(await git.defaultBranch(), 'master');
 });
 
 test('git-util.defaultBranch - gh-pages', createFixture, async ({$$}) => {
-	await $$`git switch -c gh-pages`;
-	await $$`git branch -D main`;
+	await $$`git checkout -B gh-pages`;
+	await $$`git update-ref -d refs/heads/main`;
+	await $$`git update-ref -d refs/heads/master`;
 }, async ({t, testedModule: git}) => {
 	t.is(await git.defaultBranch(), 'gh-pages');
 });
 
 test('git-util.defaultBranch - fails', createFixture, async ({$$}) => {
-	await $$`git switch -c unicorn`;
-	await $$`git branch -D main`;
+	await $$`git checkout -B unicorn`;
+	await $$`git update-ref -d refs/heads/main`;
+	await $$`git update-ref -d refs/heads/master`;
 }, async ({t, testedModule: git}) => {
 	await t.throwsAsync(
 		git.defaultBranch(),
