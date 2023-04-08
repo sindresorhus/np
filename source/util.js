@@ -11,7 +11,7 @@ import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
 export const readPkg = async packagePath => {
-	packagePath = packagePath ? await packageDirectory(packagePath) : await packageDirectory();
+	packagePath = packagePath ? await packageDirectory({cwd: packagePath}) : await packageDirectory();
 	if (!packagePath) {
 		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
 	}
