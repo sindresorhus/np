@@ -1,15 +1,15 @@
 import test from 'ava';
 import Version from '../source/version.js';
 
-test('version.SEMVER_INCREMENTS', t => {
+test('SEMVER_INCREMENTS', t => {
 	t.deepEqual(Version.SEMVER_INCREMENTS, ['patch', 'minor', 'major', 'prepatch', 'preminor', 'premajor', 'prerelease']);
 });
 
-test('version.PRERELEASE_VERSIONS', t => {
+test('PRERELEASE_VERSIONS', t => {
 	t.deepEqual(Version.PRERELEASE_VERSIONS, ['prepatch', 'preminor', 'premajor', 'prerelease']);
 });
 
-test('version.isValidInput', t => {
+test('isValidInput', t => {
 	t.false(Version.isValidInput(null));
 	t.false(Version.isValidInput('foo'));
 	t.false(Version.isValidInput('1.0.0.0'));
@@ -28,7 +28,7 @@ test('version.isValidInput', t => {
 	t.true(Version.isValidInput('2.0.0-rc.2'));
 });
 
-test('version.isPrerelease', t => {
+test('isPrerelease', t => {
 	t.false(new Version('1.0.0').isPrerelease());
 	t.false(new Version('1.1.0').isPrerelease());
 	t.false(new Version('1.0.1').isPrerelease());
@@ -37,7 +37,7 @@ test('version.isPrerelease', t => {
 	t.true(new Version('2.0.0-rc.2').isPrerelease());
 });
 
-test('version.isPrereleaseOrIncrement', t => {
+test('isPrereleaseOrIncrement', t => {
 	t.false(Version.isPrereleaseOrIncrement('patch'));
 	t.false(Version.isPrereleaseOrIncrement('minor'));
 	t.false(Version.isPrereleaseOrIncrement('major'));
@@ -48,7 +48,7 @@ test('version.isPrereleaseOrIncrement', t => {
 	t.true(Version.isPrereleaseOrIncrement('prerelease'));
 });
 
-test('version.getNewVersionFrom', t => {
+test('getNewVersionFrom', t => {
 	const message = 'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid semver version.';
 
 	t.throws(() => new Version('1.0.0').getNewVersionFrom('patchxxx'), {message});
@@ -66,7 +66,7 @@ test('version.getNewVersionFrom', t => {
 	t.is(new Version('1.0.1-0').getNewVersionFrom('prerelease'), '1.0.1-1');
 });
 
-test('version.validate', t => {
+test('validate', t => {
 	const message = 'Version should be a valid semver version.';
 
 	t.throws(() => Version.validate('patch'), {message});
@@ -78,7 +78,7 @@ test('version.validate', t => {
 	t.notThrows(() => Version.validate('1.0.0-0'));
 });
 
-test('version.isGreaterThanOrEqualTo', t => {
+test('isGreaterThanOrEqualTo', t => {
 	t.false(new Version('1.0.0').isGreaterThanOrEqualTo('0.0.1'));
 	t.false(new Version('1.0.0').isGreaterThanOrEqualTo('0.1.0'));
 
@@ -94,7 +94,7 @@ test('version.isGreaterThanOrEqualTo', t => {
 	t.true(new Version('1.0.0').isGreaterThanOrEqualTo('2.0.0-beta'));
 });
 
-test('version.isLowerThanOrEqualTo', t => {
+test('isLowerThanOrEqualTo', t => {
 	t.true(new Version('1.0.0').isLowerThanOrEqualTo('0.0.1'));
 	t.true(new Version('1.0.0').isLowerThanOrEqualTo('0.1.0'));
 
@@ -110,7 +110,7 @@ test('version.isLowerThanOrEqualTo', t => {
 	t.false(new Version('1.0.0').isLowerThanOrEqualTo('2.0.0-beta'));
 });
 
-test('version.satisfies', t => {
+test('satisfies', t => {
 	t.true(new Version('2.15.8').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
 	t.true(new Version('2.99.8').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
 	t.true(new Version('3.10.1').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
@@ -119,7 +119,7 @@ test('version.satisfies', t => {
 	t.false(new Version('3.10.0').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
 });
 
-test('version.getAndValidateNewVersionFrom', t => {
+test('getAndValidateNewVersionFrom', t => {
 	t.is(Version.getAndValidateNewVersionFrom('patch', '1.0.0'), '1.0.1');
 
 	t.throws(
@@ -137,3 +137,21 @@ test('version.getAndValidateNewVersionFrom', t => {
 		{message: 'New version `1.0.0` should be higher than current version `2.0.0`'},
 	);
 });
+
+test('getPartsOf', t => {
+	t.like(Version.getPartsOf('1.2.3'), {
+		major: 1,
+		minor: 2,
+		patch: 3,
+		prerelease: [],
+	});
+
+	t.like(Version.getPartsOf('1.2.3-alpha.4.5.6'), {
+		major: 1,
+		minor: 2,
+		patch: 3,
+		prerelease: ['alpha', 4, 5, 6],
+	});
+});
+
+// TODO; verifyRequirementSatisfied

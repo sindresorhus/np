@@ -3,6 +3,8 @@ import {readPackageUp} from 'read-pkg-up';
 
 const {packageJson: pkg} = await readPackageUp();
 
+// TODO: make the API cleaner
+
 export default class Version {
 	constructor(version) {
 		this.version = version;
@@ -19,6 +21,7 @@ export default class Version {
 		});
 	}
 
+	/** @returns {string} */
 	getNewVersionFrom(input) {
 		Version.validate(this.version);
 		if (!Version.isValidInput(input)) {
@@ -72,5 +75,9 @@ export default class Version {
 		}
 
 		return newVersion;
+	}
+
+	static getPartsOf(version) {
+		return semver.parse(version);
 	}
 }

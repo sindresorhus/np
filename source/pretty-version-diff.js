@@ -1,26 +1,24 @@
-import chalk from 'chalk';
+import chalkTemplate from 'chalk-template';
+import semver from 'semver';
 import Version from './version.js';
 
 const prettyVersionDiff = (oldVersion, inc) => {
-	const newVersion = new Version(oldVersion).getNewVersionFrom(inc).split('.');
-	oldVersion = oldVersion.split('.');
-	let firstVersionChange = false;
-	const output = [];
+	const newVersion = new Version(oldVersion).getNewVersionFrom(inc);
+	const {major, minor, patch, prerelease} = Version.getPartsOf(newVersion);
+	const diff = semver.diff(oldVersion, newVersion);
 
-	for (const [i, element] of newVersion.entries()) {
-		if ((element !== oldVersion[i] && !firstVersionChange)) {
-			output.push(`${chalk.dim.cyan(element)}`);
-			firstVersionChange = true;
-		} else if (element.indexOf('-') >= 1) {
-			let preVersion = [];
-			preVersion = element.split('-');
-			output.push(`${chalk.dim.cyan(`${preVersion[0]}-${preVersion[1]}`)}`);
-		} else {
-			output.push(chalk.reset.dim(element));
-		}
-	}
-
-	return output.join(chalk.reset.dim('.'));
+	/* eslint-disable indent, unicorn/no-nested-ternary, operator-linebreak */
+	return (
+		diff === 'major' ? chalkTemplate`{dim {cyan ${major}}.${minor}.${patch}}` :
+		diff === 'minor' ? chalkTemplate`{dim ${major}.{cyan ${minor}}.${patch}}` :
+		diff === 'patch' ? chalkTemplate`{dim ${major}.${minor}.{cyan ${patch}}}` :
+		diff === 'premajor' ? chalkTemplate`{dim {cyan ${major}}.${minor}.${patch}-{cyan ${prerelease.join('.')}}}` :
+		diff === 'preminor' ? chalkTemplate`{dim ${major}.{cyan ${minor}}.${patch}-{cyan ${prerelease.join('.')}}}` :
+		diff === 'prepatch' ? chalkTemplate`{dim ${major}.${minor}.{cyan ${patch}}-{cyan ${prerelease.join('.')}}}` :
+		diff === 'prerelease' ? chalkTemplate`{dim ${major}.${minor}.${patch}-{cyan ${prerelease.join('.')}}}` : ''
+		// TODO: handle prepatch being the same as prerelease
+	);
+	/* eslint-enable indent, unicorn/no-nested-ternary, operator-linebreak */
 };
 
 export default prettyVersionDiff;
