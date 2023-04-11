@@ -5,8 +5,13 @@ import pTimeout from 'p-timeout';
 import ow from 'ow';
 import npmName from 'npm-name';
 import chalk from 'chalk';
-import semver from 'semver';
 import Version from '../version.js';
+import * as util from '../util.js';
+
+const version = async () => {
+	const {stdout} = await execa('npm', ['--version']);
+	return stdout;
+};
 
 export const checkConnection = () => pTimeout(
 	(async () => {
@@ -47,7 +52,8 @@ export const collaborators = async pkg => {
 	ow(packageName, ow.string);
 
 	const npmVersion = await version();
-	const args = semver.satisfies(npmVersion, '>=9.0.0')
+	// TODO: remove old command when targeting Node.js 18
+	const args = new Version(npmVersion).satisfies('>=9.0.0')
 		? ['access', 'list', 'collaborators', packageName, '--json']
 		: ['access', 'ls-collaborators', packageName];
 
@@ -122,14 +128,9 @@ export const isPackageNameAvailable = async pkg => {
 	return availability;
 };
 
-const version = async () => {
-	const {stdout} = await execa('npm', ['--version']);
-	return stdout;
-};
-
 export const verifyRecentNpmVersion = async () => {
 	const npmVersion = await version();
-	Version.verifyRequirementSatisfied('npm', npmVersion);
+	util.validateEngineVersionSatisfies('npm', npmVersion);
 };
 
 export const checkIgnoreStrategy = ({files}, rootDir) => {

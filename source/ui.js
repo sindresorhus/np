@@ -4,11 +4,10 @@ import githubUrlFromGit from 'github-url-from-git';
 import {htmlEscape} from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
+import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
-import Version from './version.js';
-import prettyVersionDiff from './pretty-version-diff.js';
 
 const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch) => {
 	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
@@ -144,8 +143,9 @@ const ui = async (options, {pkg, rootDir}) => {
 	if (options.releaseDraftOnly) {
 		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 	} else {
-		const newVersion = options.version ? Version.getAndValidateNewVersionFrom(options.version, oldVersion) : undefined;
-		const versionText = chalk.dim(`(current: ${oldVersion}${newVersion ? `, next: ${prettyVersionDiff(oldVersion, newVersion)}` : ''}${chalk.dim(')')}`);
+		const versionText = options.version
+			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version).format()})`)
+			: chalk.dim(`(current: ${oldVersion})`);
 
 		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${versionText}\n`);
 	}
@@ -214,44 +214,37 @@ const ui = async (options, {pkg, rootDir}) => {
 		}
 	}
 
+	const needsPrereleaseTag = answers => options.runPublish && (answers.version?.isPrerelease() || answers.customVersion?.isPrerelease()) && !options.tag;
+
 	const answers = await inquirer.prompt({
 		version: {
 			type: 'list',
-			message: 'Select semver increment or specify new version',
-			pageSize: Version.SEMVER_INCREMENTS.length + 2,
-			choices: [...Version.SEMVER_INCREMENTS
-				.map(inc => ({
-					name: `${inc} 	${prettyVersionDiff(oldVersion, inc)}`,
+			message: 'Select SemVer increment or specify new version',
+			pageSize: SEMVER_INCREMENTS.length + 2,
+			choices: [
+				...SEMVER_INCREMENTS.map(inc => ({
+					name: `${inc} 	${new Version(oldVersion, inc).format()}`,
 					value: inc,
 				})),
-			new inquirer.Separator(),
-			{
-				name: 'Other (specify)',
-				value: null,
-			}],
-			filter: input => Version.isValidInput(input) ? new Version(oldVersion).getNewVersionFrom(input) : input,
+				new inquirer.Separator(),
+				{
+					name: 'Other (specify)',
+					value: undefined,
+				},
+			],
+			filter: input => input ? new Version(oldVersion, input) : input,
 		},
 		customVersion: {
 			type: 'input',
 			message: 'Version',
-			when: answers => !answers.version,
-			filter: input => Version.isValidInput(input) ? new Version(pkg.version).getNewVersionFrom(input) : input,
-			validate(input) {
-				if (!Version.isValidInput(input)) {
-					return 'Please specify a valid semver, for example, `1.2.3`. See https://semver.org';
-				}
-
-				if (new Version(oldVersion).isLowerThanOrEqualTo(input)) {
-					return `Version must be greater than ${oldVersion}`;
-				}
-
-				return true;
-			},
+			when: answers => answers.version === undefined,
+			// TODO: filter and validate at the same time
+			filter: input => new Version(oldVersion).setNewVersionFrom(input).version,
 		},
 		tag: {
 			type: 'list',
 			message: 'How should this pre-release version be tagged in npm?',
-			when: answers => options.runPublish && (Version.isPrereleaseOrIncrement(answers.customVersion) || Version.isPrereleaseOrIncrement(answers.version)) && !options.tag,
+			when: answers => needsPrereleaseTag(answers),
 			async choices() {
 				const existingPrereleaseTags = await npm.prereleaseTags(pkg.name);
 
@@ -260,7 +253,7 @@ const ui = async (options, {pkg, rootDir}) => {
 					new inquirer.Separator(),
 					{
 						name: 'Other (specify)',
-						value: null,
+						value: undefined,
 					},
 				];
 			},
@@ -268,7 +261,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		customTag: {
 			type: 'input',
 			message: 'Tag',
-			when: answers => options.runPublish && (Version.isPrereleaseOrIncrement(answers.customVersion) || Version.isPrereleaseOrIncrement(answers.version)) && !options.tag && !answers.tag,
+			when: answers => answers.tag === undefined && needsPrereleaseTag(answers),
 			validate(input) {
 				if (input.length === 0) {
 					return 'Please specify a tag, for example, `next`.';

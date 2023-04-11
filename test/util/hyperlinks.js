@@ -55,3 +55,5 @@ test.serial('linkifyCommitRange returns raw commitRange if terminalLink is not s
 	mockTerminalLinkUnsupported();
 	t.is(linkifyCommitRange(MOCK_REPO_URL, MOCK_COMMIT_RANGE), MOCK_COMMIT_RANGE);
 });
+
+// TODO: linkifyCommitRange - L55 - returns with `compare`

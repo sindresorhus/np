@@ -83,10 +83,13 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		if (publishStatus === 'FAILED') {
 			await rollback();
 		} else {
-			console.log('\nAborted!');
+			console.log('\nAborted!'); // TODO: maybe only show 'Aborted!' if user cancels?
 		}
 	}, {minimumWait: 2000});
 
+	const shouldEnable2FA = options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !npm.isExternalRegistry(pkg);
+
+	// TODO: move tasks to subdirectory
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
@@ -97,13 +100,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 			title: 'Git',
 			task: () => gitTasks(options),
 		},
-	], {
-		showSubtasks: false,
-		renderer: options.renderer ?? 'default',
-	});
-
-	if (runCleanup) {
-		tasks.add([
+		...runCleanup ? [
 			{
 				title: 'Cleanup',
 				enabled: () => !hasLockFile,
@@ -136,11 +133,8 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 					return exec('npm', [...args, '--engine-strict']);
 				},
 			},
-		]);
-	}
-
-	if (runTests) {
-		tasks.add([
+		] : [],
+		...runTests ? [
 			{
 				title: 'Running tests using npm',
 				enabled: () => options.yarn === false,
@@ -159,10 +153,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 					}),
 				),
 			},
-		]);
-	}
-
-	tasks.add([
+		] : [],
 		{
 			title: 'Bumping version using Yarn',
 			enabled: () => options.yarn === true,
@@ -211,10 +202,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 				return exec('npm', args);
 			},
 		},
-	]);
-
-	if (options.runPublish) {
-		tasks.add([
+		...options.runPublish ? [
 			{
 				title: `Publishing package using ${pkgManagerName}`,
 				skip() {
@@ -239,49 +227,37 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 						);
 				},
 			},
-		]);
-
-		const isExternalRegistry = npm.isExternalRegistry(pkg);
-		if (options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !isExternalRegistry) {
-			tasks.add([
-				{
-					title: 'Enabling two-factor authentication',
-					skip() {
-						if (options.preview) {
-							const args = enable2fa.getEnable2faArgs(pkg.name, options);
-							return `[Preview] Command not executed: npm ${args.join(' ')}.`;
-						}
-					},
-					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp}),
+			...shouldEnable2FA ? [{
+				title: 'Enabling two-factor authentication',
+				skip() {
+					if (options.preview) {
+						const args = enable2fa.getEnable2faArgs(pkg.name, options);
+						return `[Preview] Command not executed: npm ${args.join(' ')}.`;
+					}
 				},
-			]);
-		}
-	} else {
-		publishStatus = 'SUCCESS';
-	}
+				task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp}),
+			}] : [],
+		] : [],
+		{
+			title: 'Pushing tags',
+			async skip() {
+				if (!(await git.hasUpstream())) {
+					return 'Upstream branch not found; not pushing.';
+				}
 
-	tasks.add({
-		title: 'Pushing tags',
-		async skip() {
-			if (!(await git.hasUpstream())) {
-				return 'Upstream branch not found; not pushing.';
-			}
+				if (options.preview) {
+					return '[Preview] Command not executed: git push --follow-tags.';
+				}
 
-			if (options.preview) {
-				return '[Preview] Command not executed: git push --follow-tags.';
-			}
-
-			if (publishStatus === 'FAILED' && options.runPublish) {
-				return 'Couldn\'t publish package to npm; not pushing.';
-			}
+				if (publishStatus === 'FAILED' && options.runPublish) {
+					return 'Couldn\'t publish package to npm; not pushing.';
+				}
+			},
+			async task() {
+				pushedObjects = await git.pushGraceful(isOnGitHub);
+			},
 		},
-		async task() {
-			pushedObjects = await git.pushGraceful(isOnGitHub);
-		},
-	});
-
-	if (options.releaseDraft) {
-		tasks.add({
+		...options.releaseDraft ? [{
 			title: 'Creating release draft on GitHub',
 			enabled: () => isOnGitHub === true,
 			skip() {
@@ -290,7 +266,14 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 				}
 			},
 			task: () => releaseTaskHelper(options, pkg),
-		});
+		}] : [],
+	], {
+		showSubtasks: false,
+		renderer: options.renderer ?? 'default',
+	});
+
+	if (!options.runPublish) {
+		publishStatus = 'SUCCESS';
 	}
 
 	await tasks.run();

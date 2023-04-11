@@ -30,6 +30,14 @@ test('util.readPkg - no package.json', async t => {
 	);
 });
 
+test('util.npPkg', t => {
+	t.is(util.npPkg.name, 'np');
+});
+
+test('util.npRootDir', t => {
+	t.is(util.npRootDir, rootDir);
+});
+
 const testJoinList = test.macro((t, list, expectations) => {
 	const output = util.joinList(list);
 	t.is(stripAnsi(output), expectations);
@@ -40,3 +48,25 @@ test('util.joinList - one item', testJoinList, ['foo'], '- foo');
 test('util.joinList - two items', testJoinList, ['foo', 'bar'], '- foo\n- bar');
 
 test('util.joinList - multiple items', testJoinList, ['foo', 'bar', 'baz'], '- foo\n- bar\n- baz');
+
+const testEngineRanges = test.macro((t, engine, {above, below}) => {
+	const range = util.npPkg.engines[engine];
+
+	t.notThrows(
+		() => util.validateEngineVersionSatisfies(engine, above), // One above minimum
+	);
+
+	t.throws(
+		() => util.validateEngineVersionSatisfies(engine, below), // One below minimum
+		{message: `\`np\` requires ${engine} ${range}`},
+	);
+});
+
+test('util.validateEngineVersionSatisfies - node', testEngineRanges, 'node', {above: '16.7.0', below: '16.5.0'});
+
+test('util.validateEngineVersionSatisfies - npm', testEngineRanges, 'npm', {above: '7.20.0', below: '7.18.0'});
+
+test('util.validateEngineVersionSatisfies - git', testEngineRanges, 'git', {above: '2.12.0', below: '2.10.0'});
+
+test('util.validateEngineVersionSatisfies - yarn', testEngineRanges, 'yarn', {above: '1.8.0', below: '1.6.0'});
+

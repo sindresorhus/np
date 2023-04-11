@@ -2,7 +2,7 @@ import path from 'node:path';
 import {execa} from 'execa';
 import escapeStringRegexp from 'escape-string-regexp';
 import ignoreWalker from 'ignore-walk';
-import Version from './version.js';
+import * as util from './util.js';
 
 export const latestTag = async () => {
 	const {stdout} = await execa('git', ['describe', '--abbrev=0', '--tags']);
@@ -182,26 +182,6 @@ export const fetch = async () => {
 	await execa('git', ['fetch']);
 };
 
-const tagExistsOnRemote = async tagName => {
-	try {
-		const {stdout: revInfo} = await execa('git', ['rev-parse', '--quiet', '--verify', `refs/tags/${tagName}`]);
-
-		if (revInfo) {
-			return true;
-		}
-
-		return false;
-	} catch (error) {
-		// Command fails with code 1 and no output if the tag does not exist, even though `--quiet` is provided
-		// https://github.com/sindresorhus/np/pull/73#discussion_r72385685
-		if (error.stdout === '' && error.stderr === '') {
-			return false;
-		}
-
-		throw error;
-	}
-};
-
 const hasLocalBranch = async branch => {
 	try {
 		await execa('git', ['show-ref', '--verify', '--quiet', `refs/heads/${branch}`]);
@@ -220,6 +200,26 @@ export const defaultBranch = async () => {
 	}
 
 	throw new Error('Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.');
+};
+
+const tagExistsOnRemote = async tagName => {
+	try {
+		const {stdout: revInfo} = await execa('git', ['rev-parse', '--quiet', '--verify', `refs/tags/${tagName}`]);
+
+		if (revInfo) {
+			return true;
+		}
+
+		return false;
+	} catch (error) {
+		// Command fails with code 1 and no output if the tag does not exist, even though `--quiet` is provided
+		// https://github.com/sindresorhus/np/pull/73#discussion_r72385685
+		if (error.stdout === '' && error.stderr === '') {
+			return false;
+		}
+
+		throw error;
+	}
 };
 
 export const verifyTagDoesNotExistOnRemote = async tagName => {
@@ -267,8 +267,7 @@ const gitVersion = async () => {
 
 export const verifyRecentGitVersion = async () => {
 	const installedVersion = await gitVersion();
-
-	Version.verifyRequirementSatisfied('git', installedVersion);
+	util.validateEngineVersionSatisfies('git', installedVersion);
 };
 
 export const checkIfFileGitIgnored = async pathToFile => {

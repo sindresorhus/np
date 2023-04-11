@@ -6,22 +6,21 @@ import {execa} from 'execa';
 import pMemoize from 'p-memoize';
 import ow from 'ow';
 import chalk from 'chalk';
-import {packageDirectory} from 'pkg-dir';
+import Version from './version.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
 export const readPkg = async packagePath => {
-	packagePath = packagePath ? await packageDirectory({cwd: packagePath}) : await packageDirectory();
-	if (!packagePath) {
+	const packageResult = await readPackageUp({cwd: packagePath});
+
+	if (!packageResult) {
 		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
 	}
 
-	const {packageJson, path: pkgPath} = await readPackageUp({
-		cwd: packagePath,
-	});
-
-	return {pkg: packageJson, rootDir: path.dirname(pkgPath)};
+	return {pkg: packageResult.packageJson, rootDir: path.dirname(packageResult.path)};
 };
+
+export const {pkg: npPkg, rootDir: npRootDir} = await readPkg();
 
 export const linkifyIssues = (url, message) => {
 	if (!(url && terminalLink.isSupported)) {
@@ -121,3 +120,10 @@ export const getPreReleasePrefix = pMemoize(async options => {
 		return '';
 	}
 });
+
+export const validateEngineVersionSatisfies = (engine, version) => {
+	const engineRange = npPkg.engines[engine];
+	if (!new Version(version).satisfies(engineRange)) {
+		throw new Error(`\`np\` requires ${engine} ${engineRange}`); // TODO: prettify range/engine, capitalize engine
+	}
+};

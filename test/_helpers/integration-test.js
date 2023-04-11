@@ -24,12 +24,12 @@ export const createIntegrationTest = async (t, assertions) => {
 		await createEmptyGitRepo($$, temporaryDir);
 
 		t.context.createFile = async (file, content = '') => fs.writeFile(path.resolve(temporaryDir, file), content);
-		await assertions($$, temporaryDir);
+		await assertions({$$, temporaryDir});
 	});
 };
 
 export const _createFixture = source => test.macro(async (t, commands, assertions) => {
-	await createIntegrationTest(t, async ($$, temporaryDir) => {
+	await createIntegrationTest(t, async ({$$, temporaryDir}) => {
 		const testedModule = await esmock(source, {}, {
 			'node:process': {cwd: () => temporaryDir},
 			execa: {execa: async (...args) => execa(...args, {cwd: temporaryDir})},

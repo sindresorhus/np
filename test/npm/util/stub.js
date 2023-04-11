@@ -24,7 +24,7 @@ test('npm.checkConnection - fail', createFixture, [{
 });
 
 // TODO: find way to timeout without timing out ava
-test.failing('npm.checkConnection - timeout', async t => {
+test('npm.checkConnection - timeout', async t => {
 	const npm = await esmock('../../../source/npm/util.js', {}, {
 		execa: {execa: async () => setTimeout(16_000, {})},
 	});
@@ -84,6 +84,6 @@ test('npm.verifyRecentNpmVersion - not satisfied', createFixture, [{
 }], async ({t, testedModule: npm}) => {
 	await t.throwsAsync(
 		npm.verifyRecentNpmVersion(),
-		{message: 'Please upgrade to npm>=7.19.0'}, // TODO: add space to error message?
+		{message: '`np` requires npm >=7.19.0'},
 	);
 });

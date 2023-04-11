@@ -89,6 +89,8 @@ test('git-util.verifyTagDoesNotExistOnRemote - does not exist', createFixture, [
 	);
 });
 
+// TODO: git-util.verifyTagDoesNotExistOnRemote - test when tagExistsOnRemote() errors
+
 test('git-util.verifyRecentGitVersion - satisfied', createFixture, [{
 	command: 'git version',
 	stdout: 'git version 2.12.0', // One higher than minimum
@@ -104,7 +106,7 @@ test('git-util.verifyRecentGitVersion - not satisfied', createFixture, [{
 }], async ({t, testedModule: git}) => {
 	await t.throwsAsync(
 		git.verifyRecentGitVersion(),
-		{message: 'Please upgrade to git>=2.11.0'}, // TODO: add space to error message?
+		{message: '`np` requires git >=2.11.0'},
 	);
 });
 

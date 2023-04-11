@@ -10,7 +10,7 @@ import config from './config.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
-import Version from './version.js';
+import {SEMVER_INCREMENTS} from './version.js';
 import ui from './ui.js';
 import np from './index.js';
 
@@ -19,7 +19,7 @@ const cli = meow(`
 	  $ np <version>
 
 	  Version can be:
-	    ${Version.SEMVER_INCREMENTS.join(' | ')} | 1.2.3
+	    ${SEMVER_INCREMENTS.join(' | ')} | 1.2.3
 
 	Options
 	  --any-branch           Allow publishing from any branch
@@ -130,8 +130,8 @@ try {
 		isUnknown: false,
 	};
 
-	// Use current (latest) version when 'releaseDraftOnly', otherwise use the first argument.
-	const version = flags.releaseDraftOnly ? pkg.version : (cli.input.length > 0 ? cli.input[0] : false);
+	// Use current (latest) version when 'releaseDraftOnly', otherwise try to use the first argument.
+	const version = flags.releaseDraftOnly ? pkg.version : (cli.input.at(0) ?? false); // TODO: can this be undefined?
 
 	const branch = flags.branch || await git.defaultBranch();
 	const options = await ui({
