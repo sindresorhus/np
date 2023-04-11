@@ -118,7 +118,7 @@ test('format - prerelease', t => {
 	t.is(new Version('0.0.0-0').setNewVersionFrom('0.0.0-1').format(), newVersion);
 });
 
-test.failing('format - prerelease as prepatch', t => {
+test('format - prerelease as prepatch', t => {
 	const newVersion = makeNewFormattedVersion('0.0.{1}-{0}');
 
 	t.is(new Version('0.0.0').setNewVersionFrom('prerelease').format(), newVersion);
