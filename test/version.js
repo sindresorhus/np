@@ -47,20 +47,20 @@ test('new Version - invalid w/ invalid increment', t => {
 });
 
 // Input as SemVer increment is covered in constructor tests
-test('setNewVersionFrom - valid input as version', t => {
-	t.is(new Version('1.0.0').setNewVersionFrom('2.0.0').version, '2.0.0');
+test('setFrom - valid input as version', t => {
+	t.is(new Version('1.0.0').setFrom('2.0.0').version, '2.0.0');
 });
 
-test('setNewVersionFrom - invalid input as version', t => {
+test('setFrom - invalid input as version', t => {
 	t.throws(
-		() => new Version('1.0.0').setNewVersionFrom('200'),
+		() => new Version('1.0.0').setFrom('200'),
 		{message: `New version \`200\` should either be one of ${INCREMENT_LIST}, or a valid \`SemVer\` version.`},
 	);
 });
 
-test('setNewVersionFrom - valid input is not higher than version', t => {
+test('setFrom - valid input is not higher than version', t => {
 	t.throws(
-		() => new Version('1.0.0').setNewVersionFrom('0.2.0'),
+		() => new Version('1.0.0').setFrom('0.2.0'),
 		{message: 'New version `0.2.0` should be higher than current version `1.0.0`.'},
 	);
 });
@@ -72,67 +72,67 @@ test('format', t => {
 test('format - major', t => {
 	const newVersion = makeNewFormattedVersion('{1}.0.0');
 
-	t.is(new Version('0.0.0').setNewVersionFrom('major').format(), newVersion);
-	t.is(new Version('0.0.0').setNewVersionFrom('1.0.0').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('major').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('1.0.0').format(), newVersion);
 });
 
 test('format - minor', t => {
 	const newVersion = makeNewFormattedVersion('0.{1}.0');
 
-	t.is(new Version('0.0.0').setNewVersionFrom('minor').format(), newVersion);
-	t.is(new Version('0.0.0').setNewVersionFrom('0.1.0').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('minor').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('0.1.0').format(), newVersion);
 });
 
 test('format - patch', t => {
 	const newVersion = makeNewFormattedVersion('0.0.{1}');
 
-	t.is(new Version('0.0.0').setNewVersionFrom('patch').format(), newVersion);
-	t.is(new Version('0.0.0').setNewVersionFrom('0.0.1').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('patch').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('0.0.1').format(), newVersion);
 });
 
 test('format - premajor', t => {
 	const newVersion = makeNewFormattedVersion('{1}.0.0-{0}');
 
-	t.is(new Version('0.0.0').setNewVersionFrom('premajor').format(), newVersion);
-	t.is(new Version('0.0.0').setNewVersionFrom('1.0.0-0').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('premajor').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('1.0.0-0').format(), newVersion);
 });
 
 test('format - preminor', t => {
 	const newVersion = makeNewFormattedVersion('0.{1}.0-{0}');
 
-	t.is(new Version('0.0.0').setNewVersionFrom('preminor').format(), newVersion);
-	t.is(new Version('0.0.0').setNewVersionFrom('0.1.0-0').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('preminor').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('0.1.0-0').format(), newVersion);
 });
 
 test('format - prepatch', t => {
 	const newVersion = makeNewFormattedVersion('0.0.{1}-{0}');
 
-	t.is(new Version('0.0.0').setNewVersionFrom('prepatch').format(), newVersion);
-	t.is(new Version('0.0.0').setNewVersionFrom('0.0.1-0').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('prepatch').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('0.0.1-0').format(), newVersion);
 });
 
 test('format - prerelease', t => {
 	const newVersion = makeNewFormattedVersion('0.0.0-{1}');
 
-	t.is(new Version('0.0.0-0').setNewVersionFrom('prerelease').format(), newVersion);
-	t.is(new Version('0.0.0-0').setNewVersionFrom('0.0.0-1').format(), newVersion);
+	t.is(new Version('0.0.0-0').setFrom('prerelease').format(), newVersion);
+	t.is(new Version('0.0.0-0').setFrom('0.0.0-1').format(), newVersion);
 });
 
 test('format - prerelease as prepatch', t => {
 	const newVersion = makeNewFormattedVersion('0.0.{1}-{0}');
 
-	t.is(new Version('0.0.0').setNewVersionFrom('prerelease').format(), newVersion);
-	t.is(new Version('0.0.0').setNewVersionFrom('0.0.1-0').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('prerelease').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('0.0.1-0').format(), newVersion);
 });
 
 test('format - prerelease with multiple numbers', t => {
 	const newVersion = makeNewFormattedVersion('0.0.{1}-{0.0}'); // TODO: should it be {0}.{0}?
-	t.is(new Version('0.0.0').setNewVersionFrom('0.0.1-0.0').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('0.0.1-0.0').format(), newVersion);
 });
 
 test('format - prerelease with text', t => {
 	const newVersion = makeNewFormattedVersion('0.0.{1}-{alpha.0}'); // TODO: should it be {alpha}.{0}?
-	t.is(new Version('0.0.0').setNewVersionFrom('0.0.1-alpha.0').format(), newVersion);
+	t.is(new Version('0.0.0').setFrom('0.0.1-alpha.0').format(), newVersion);
 });
 
 test('satisfies', t => {

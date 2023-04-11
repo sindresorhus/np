@@ -239,7 +239,7 @@ const ui = async (options, {pkg, rootDir}) => {
 			message: 'Version',
 			when: answers => answers.version === undefined,
 			// TODO: filter and validate at the same time
-			filter: input => new Version(oldVersion).setNewVersionFrom(input).version,
+			filter: input => new Version(oldVersion).setFrom(input).version,
 		},
 		tag: {
 			type: 'list',

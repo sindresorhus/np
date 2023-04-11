@@ -46,7 +46,7 @@ export default class Version {
 				throw new Error(`Increment \`${increment}\` should be one of ${SEMVER_INCREMENTS_LIST}.`);
 			}
 
-			this.setNewVersionFrom(increment);
+			this.setFrom(increment);
 		}
 	}
 
@@ -56,7 +56,7 @@ export default class Version {
 	@param {string | SemVerIncrement} input - A new valid `SemVer` version or a `SemVer` increment to increase the current version by.
 	@throws If `input` is not a valid `SemVer` version or increment, or if `input` is a valid `SemVer` version but is not greater than the current version.
 	*/
-	setNewVersionFrom(input) {
+	setFrom(input) {
 		if (isSemVerIncrement(input)) {
 			this.#version.inc(input);
 			this.diff = input;
