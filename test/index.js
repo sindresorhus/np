@@ -27,7 +27,7 @@ const npFails = test.macro(async (t, inputs, message) => {
 
 test('version is invalid', npFails,
 	['foo', '4.x.3'],
-	'New version `4.x.3` should either be one of `major`, `minor`, `patch`, `premajor`, `preminor`, `prepatch`, `prerelease`, or a valid `SemVer` version.',
+	/New version `(?:foo|4\.x\.3)` should either be one of `major`, `minor`, `patch`, `premajor`, `preminor`, `prepatch`, `prerelease`, or a valid `SemVer` version\./,
 );
 
 test('version is pre-release', npFails,
