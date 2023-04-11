@@ -1,8 +1,7 @@
 import semver from 'semver';
 import {template as chalk} from 'chalk-template';
 
-const PRERELEASE_VERSIONS = ['premajor', 'preminor', 'prepatch', 'prerelease'];
-export const SEMVER_INCREMENTS = ['major', 'minor', 'patch', ...PRERELEASE_VERSIONS];
+export const SEMVER_INCREMENTS = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch', 'prerelease'];
 const SEMVER_INCREMENTS_LIST = `\`${SEMVER_INCREMENTS.join('`, `')}\``;
 
 /** @typedef {semver.SemVer} SemVerInstance */
@@ -57,9 +56,11 @@ export default class Version {
 	@throws If `input` is not a valid `SemVer` version or increment, or if `input` is a valid `SemVer` version but is not greater than the current version.
 	*/
 	setFrom(input) {
+		// Use getter - reference may change
+		const oldVersion = this.version;
+
 		if (isSemVerIncrement(input)) {
 			this.#version.inc(input);
-			this.diff = input;
 		} else {
 			if (isInvalidSemVerVersion(input)) {
 				throw new Error(`New version \`${input}\` should either be one of ${SEMVER_INCREMENTS_LIST}, or a valid \`SemVer\` version.`);
@@ -69,11 +70,10 @@ export default class Version {
 				throw new Error(`New version \`${input}\` should be higher than current version \`${this.version}\`.`);
 			}
 
-			const oldVersion = this.#version;
 			this.version = input;
-			this.diff = semver.diff(oldVersion, this.#version);
 		}
 
+		this.diff = semver.diff(oldVersion, this.#version);
 		return this;
 	}
 
