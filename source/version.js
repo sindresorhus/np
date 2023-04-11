@@ -1,7 +1,7 @@
 import semver from 'semver';
 import {template as chalk} from 'chalk-template';
 
-export const SEMVER_INCREMENTS = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch', 'prerelease'];
+export const SEMVER_INCREMENTS = semver.RELEASE_TYPES.sort();
 const SEMVER_INCREMENTS_LIST = `\`${SEMVER_INCREMENTS.join('`, `')}\``;
 
 /** @typedef {semver.SemVer} SemVerInstance */
