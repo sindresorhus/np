@@ -1,3 +1,0 @@
-# This file is renamed to `.gitignore` in the test
-# This is not named `.gitignore` to allow `dist/` to be committed
-dist
