@@ -64,7 +64,7 @@
 		"pkg-dir": "^7.0.0",
 		"read-pkg-up": "^9.1.0",
 		"rxjs": "^7.8.0",
-		"semver": "^7.3.8",
+		"semver": "^7.4.0",
 		"symbol-observable": "^4.0.0",
 		"terminal-link": "^3.0.0",
 		"update-notifier": "^6.0.2"
