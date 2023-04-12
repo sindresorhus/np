@@ -12,6 +12,13 @@ const isSemVerIncrement = input => SEMVER_INCREMENTS.includes(input);
 
 const isInvalidSemVerVersion = input => Boolean(!semver.valid(input));
 
+/** @param {string[]} current @param {string[]} previous */
+const formatFirstDifference = (current, previous, {diffColor}) => {
+	const firstDifferenceIndex = current.findIndex((part, i) => previous.at(i) !== part);
+	current[firstDifferenceIndex] = `{${diffColor} ${current.at(firstDifferenceIndex)}}`;
+	return current.join('.');
+};
+
 export default class Version {
 	/** @type {SemVerInstance} */
 	#version;
@@ -77,20 +84,33 @@ export default class Version {
 		return this;
 	}
 
-	// TODO: test custom colors
-	format(color = 'dim', {diffColor = 'cyan'} = {}) {
+	/**
+
+	@param {object} options
+	@param {import('chalk').ColorName} [options.color = 'dim']
+	@param {import('chalk').ColorName} [options.diffColor = 'cyan']
+	@param {string | SemVerInstance} [options.previousVersion]
+	@returns {string} A color-formatted version string.
+	*/
+	format({color = 'dim', diffColor = 'cyan', previousVersion} = {}) {
 		if (!this.diff) {
 			return chalk(`{${color} ${this.version}}`);
 		}
 
 		const {major, minor, patch, prerelease} = this.#version;
+		const previousPrerelease = semver.prerelease(previousVersion);
+
+		if (prerelease && previousPrerelease) {
+			const prereleaseDiff = formatFirstDifference(prerelease, previousPrerelease, {diffColor});
+			return chalk(`{${color} ${major}.${minor}.${patch}-${prereleaseDiff}}`);
+		}
 
 		/* eslint-disable indent, unicorn/no-nested-ternary, operator-linebreak, no-multi-spaces */
 		return (
 			this.diff === 'major'      ? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}}`) :
 			this.diff === 'minor'      ? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}}`) :
 			this.diff === 'patch'      ? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}}`) :
-			this.diff === 'premajor'   ? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) : // TODO: handle prerelease diffs
+			this.diff === 'premajor'   ? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) :
 			this.diff === 'preminor'   ? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) :
 			this.diff === 'prepatch'   ? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}-{${diffColor} ${prerelease.join('.')}}}`) :
 			this.diff === 'prerelease' ? chalk(`{${color} ${major}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) : '' // TODO: throw error if somehow invalid????
@@ -99,7 +119,10 @@ export default class Version {
 	}
 
 	satisfies(range) {
-		// TODO: validate range?
+		if (!semver.validRange(range)) {
+			throw new Error(`Range \`${range}\` is not a valid \`SemVer\` range.`);
+		}
+
 		return semver.satisfies(this.version, range, {
 			includePrerelease: true,
 		});

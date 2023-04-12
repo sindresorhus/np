@@ -135,13 +135,48 @@ test('format - prerelease with text', t => {
 	t.is(new Version('0.0.0').setFrom('0.0.1-alpha.0').format(), newVersion);
 });
 
+test('format - prerelease diffs', t => {
+	t.is(
+		new Version('0.0.0-1.1').setFrom('0.0.0-1.2').format({previousVersion: '0.0.0-1.1'}),
+		makeNewFormattedVersion('0.0.0-1.{2}'),
+	);
+});
+
+test('format - custom colors', t => {
+	t.is(
+		new Version('1.2.3').format({color: 'green'}),
+		chalk('{green 1.2.3}'),
+	);
+
+	t.is(
+		new Version('1.2.3', 'minor').format({diffColor: 'red'}),
+		chalk('{dim 1.{red 3}.0}'),
+	);
+
+	t.is(
+		new Version('1.2.3', 'patch').format({color: 'bgBlack.red', diffColor: 'yellow'}),
+		chalk('{bgBlack.red 1.2.{yellow 4}}'),
+	);
+
+	t.is(
+		new Version('1.2.3', 'prerelease').format({color: 'bgBlack.red', diffColor: 'yellow'}),
+		chalk('{bgBlack.red 1.2.{yellow 4}-{yellow 0}}'),
+	);
+});
+
 test('satisfies', t => {
 	t.true(new Version('2.15.8').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
 	t.true(new Version('2.99.8').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
 	t.true(new Version('3.10.1').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
 	t.true(new Version('6.7.0-next.0').satisfies('<6.8.0'));
+
 	t.false(new Version('3.0.0').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
 	t.false(new Version('3.10.0').satisfies('>=2.15.8 <3.0.0 || >=3.10.1'));
+
+	t.throws(
+		() => new Version('1.2.3').satisfies('=>1.0.0'),
+		{message: 'Range `=>1.0.0` is not a valid `SemVer` range.'},
+	);
 });
 
 test('isPrerelease', t => {
