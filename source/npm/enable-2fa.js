@@ -6,7 +6,7 @@ import {version} from './util.js';
 
 export const getEnable2faArgs = async (packageName, options) => {
 	const npmVersion = await version();
-	const args = semver.satisfies(npmVersion, '>=9.0.0') ? ['access', 'set', 'mfa', 'publish', packageName] : ['access', '2fa-required', packageName];
+	const args = semver.satisfies(npmVersion, '>=9.0.0') ? ['access', 'set', 'mfa=publish', packageName] : ['access', '2fa-required', packageName];
 
 	if (options && options.otp) {
 		args.push('--otp', options.otp);
