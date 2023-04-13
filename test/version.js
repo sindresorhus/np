@@ -1,5 +1,7 @@
 import test from 'ava';
+import sinon from 'sinon';
 import {template as chalk} from 'chalk-template';
+import semver from 'semver';
 import Version from '../source/version.js';
 
 const INCREMENT_LIST = '`major`, `minor`, `patch`, `premajor`, `preminor`, `prepatch`, `prerelease`';
@@ -11,7 +13,7 @@ const makeNewFormattedVersion = input => {
 };
 
 test('new Version - valid', t => {
-	t.is(new Version('1.0.0').version, '1.0.0');
+	t.is(new Version('1.0.0').toString(), '1.0.0');
 });
 
 test('new Version - invalid', t => {
@@ -22,7 +24,7 @@ test('new Version - invalid', t => {
 });
 
 test('new Version - valid w/ valid increment', t => {
-	t.is(new Version('1.0.0', 'major').version, '2.0.0');
+	t.is(new Version('1.0.0', 'major').toString(), '2.0.0');
 });
 
 test('new Version - invalid w/ valid increment', t => {
@@ -48,7 +50,7 @@ test('new Version - invalid w/ invalid increment', t => {
 
 // Input as SemVer increment is covered in constructor tests
 test('setFrom - valid input as version', t => {
-	t.is(new Version('1.0.0').setFrom('2.0.0').version, '2.0.0');
+	t.is(new Version('1.0.0').setFrom('2.0.0').toString(), '2.0.0');
 });
 
 test('setFrom - invalid input as version', t => {
@@ -67,6 +69,13 @@ test('setFrom - valid input is not higher than version', t => {
 
 test('format', t => {
 	t.is(new Version('0.0.0').format(), makeNewFormattedVersion('0.0.0'));
+});
+
+test('format - set diff', t => {
+	t.is(
+		new Version('1.0.0').format({previousVersion: '0.0.0'}),
+		makeNewFormattedVersion('{1}.0.0'),
+	);
 });
 
 test('format - major', t => {
@@ -136,9 +145,16 @@ test('format - prerelease with text', t => {
 });
 
 test('format - prerelease diffs', t => {
+	const newVersion = makeNewFormattedVersion('0.0.0-1.{2}');
+
 	t.is(
 		new Version('0.0.0-1.1').setFrom('0.0.0-1.2').format({previousVersion: '0.0.0-1.1'}),
-		makeNewFormattedVersion('0.0.0-1.{2}'),
+		newVersion,
+	);
+
+	t.is(
+		new Version('0.0.0-1.2').format({previousVersion: '0.0.0-1.1'}),
+		newVersion,
 	);
 });
 
@@ -161,6 +177,28 @@ test('format - custom colors', t => {
 	t.is(
 		new Version('1.2.3', 'prerelease').format({color: 'bgBlack.red', diffColor: 'yellow'}),
 		chalk('{bgBlack.red 1.2.{yellow 4}-{yellow 0}}'),
+	);
+});
+
+test('format - previousVersion as SemVer instance', t => {
+	const previousVersion = semver.parse('0.0.0');
+	const newVersion = makeNewFormattedVersion('{1}.0.0');
+
+	const spy = sinon.spy(semver, 'parse');
+
+	t.is(new Version('1.0.0').format({previousVersion}), newVersion);
+	t.true(spy.calledOnce, 'semver.parse was called for previousVersion!');
+
+	spy.resetHistory();
+
+	t.is(new Version('1.0.0').format({previousVersion: '0.0.0'}), newVersion);
+	t.true(spy.calledTwice, 'semver.parse was not called for previousVersion!');
+});
+
+test('format - invalid previousVersion', t => {
+	t.throws(
+		() => new Version('1.0.0').format({previousVersion: '000'}),
+		{message: 'Previous version `000` should be a valid `SemVer` version.'},
 	);
 });
 

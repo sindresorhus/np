@@ -1,19 +1,26 @@
 import semver from 'semver';
 import {template as chalk} from 'chalk-template';
 
+/** @type {string[]} Allowed `SemVer` release types. */
 export const SEMVER_INCREMENTS = semver.RELEASE_TYPES.sort();
 const SEMVER_INCREMENTS_LIST = `\`${SEMVER_INCREMENTS.join('`, `')}\``;
 
 /** @typedef {semver.SemVer} SemVerInstance */
 /** @typedef {semver.ReleaseType} SemVerIncrement */
+/** @typedef {import('chalk').ColorName} ColorName */
 
 /** @param {string} input @returns {input is SemVerIncrement} */
 const isSemVerIncrement = input => SEMVER_INCREMENTS.includes(input);
 
+/** @param {string} input */
 const isInvalidSemVerVersion = input => Boolean(!semver.valid(input));
 
-/** @param {string[]} current @param {string[]} previous */
-const formatFirstDifference = (current, previous, {diffColor}) => {
+/**
+Formats the first difference between two versions to the given `diffColor`. Useful for `prerelease` diffs.
+
+@param {string[]} current @param {string[]} previous @param {ColorName} diffColor
+*/
+const formatFirstDifference = (current, previous, diffColor) => {
 	const firstDifferenceIndex = current.findIndex((part, i) => previous.at(i) !== part);
 	current[firstDifferenceIndex] = `{${diffColor} ${current.at(firstDifferenceIndex)}}`;
 	return current.join('.');
@@ -24,13 +31,19 @@ export default class Version {
 	#version;
 
 	/** @type {SemVerIncrement | undefined} */
-	diff = undefined;
+	#diff = undefined;
 
-	get version() {
+	toString() {
 		return this.#version.version;
 	}
 
-	set version(version) {
+	/**
+	Sets `this.#version` to the given version.
+
+	@param {string} version
+	@throws If `version` is an invalid `SemVer` version.
+	*/
+	#trySetVersion(version) {
 		this.#version = semver.parse(version);
 
 		if (this.#version === null) {
@@ -42,10 +55,10 @@ export default class Version {
 
 	/**
 	@param {string} version - A valid `SemVer` version.
-	@param {SemVerIncrement} [increment] - Optionally increment `version`. If valid, `Version.diff` will be defined as the difference between `version` and the new version.
+	@param {SemVerIncrement} [increment] - Optionally increment `version`.
 	*/
 	constructor(version, increment) {
-		this.version = version;
+		this.#trySetVersion(version);
 
 		if (increment) {
 			if (!isSemVerIncrement(increment)) {
@@ -57,14 +70,13 @@ export default class Version {
 	}
 
 	/**
-	Sets a new version based on `input`. If `input` is a valid `SemVer` increment, `Version.version` will be incrememnted by that amount and `Version.diff` will be set to `input`. If `input` is a valid `SemVer` version, `Version.version` will be set to `input` if it is greater than the current version,
+	Sets a new version based on `input`. If `input` is a valid `SemVer` increment, the current version will be incremented by that amount. If `input` is a valid `SemVer` version, the current version will be set to `input` if it is greater than the current version.
 
 	@param {string | SemVerIncrement} input - A new valid `SemVer` version or a `SemVer` increment to increase the current version by.
 	@throws If `input` is not a valid `SemVer` version or increment, or if `input` is a valid `SemVer` version but is not greater than the current version.
 	*/
 	setFrom(input) {
-		// Use getter - reference may change
-		const oldVersion = this.version;
+		const previousVersion = this.toString();
 
 		if (isSemVerIncrement(input)) {
 			this.#version.inc(input);
@@ -74,64 +86,98 @@ export default class Version {
 			}
 
 			if (this.#isGreaterThanOrEqualTo(input)) {
-				throw new Error(`New version \`${input}\` should be higher than current version \`${this.version}\`.`);
+				throw new Error(`New version \`${input}\` should be higher than current version \`${this.toString()}\`.`);
 			}
 
-			this.version = input;
+			this.#trySetVersion(input);
 		}
 
-		this.diff = semver.diff(oldVersion, this.#version);
+		// Set `this.#diff` to format version diffs
+		this.#diff = semver.diff(previousVersion, this.#version);
 		return this;
 	}
 
 	/**
+	Formats the current version with `options.color`, pretty-printing the version's diff with `options.diffColor` if possible.
+
+	If the current version has never been changed, providing `options.previousVersion` will allow pretty-printing the diff. It must be provided to format diffs between `prerelease` versions.
 
 	@param {object} options
-	@param {import('chalk').ColorName} [options.color = 'dim']
-	@param {import('chalk').ColorName} [options.diffColor = 'cyan']
+	@param {ColorName} [options.color = 'dim']
+	@param {ColorName} [options.diffColor = 'cyan']
 	@param {string | SemVerInstance} [options.previousVersion]
 	@returns {string} A color-formatted version string.
 	*/
-	format({color = 'dim', diffColor = 'cyan', previousVersion} = {}) {
-		if (!this.diff) {
-			return chalk(`{${color} ${this.version}}`);
+	format({color = 'dim', diffColor = 'cyan', previousVersion} = {}) { // TODO: `ColorName` type could be better to allow e.g. bgRed.blue
+		if (typeof previousVersion === 'string') {
+			const previousSemver = semver.parse(previousVersion);
+
+			if (previousSemver === null) {
+				throw new Error(`Previous version \`${previousVersion}\` should be a valid \`SemVer\` version.`);
+			}
+
+			previousVersion = previousSemver;
+		}
+
+		// TODO: should previousVersion take precendence over this.#diff?
+		if (!this.#diff) {
+			if (!previousVersion) {
+				return chalk(`{${color} ${this.toString()}}`);
+			}
+
+			// TODO: maybe allow passing a Version instance too?
+			this.#diff = semver.diff(previousVersion, this.#version);
 		}
 
 		const {major, minor, patch, prerelease} = this.#version;
 		const previousPrerelease = semver.prerelease(previousVersion);
 
 		if (prerelease && previousPrerelease) {
-			const prereleaseDiff = formatFirstDifference(prerelease, previousPrerelease, {diffColor});
+			const prereleaseDiff = formatFirstDifference(prerelease, previousPrerelease, diffColor);
 			return chalk(`{${color} ${major}.${minor}.${patch}-${prereleaseDiff}}`);
 		}
 
 		/* eslint-disable indent, unicorn/no-nested-ternary, operator-linebreak, no-multi-spaces */
 		return (
-			this.diff === 'major'      ? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}}`) :
-			this.diff === 'minor'      ? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}}`) :
-			this.diff === 'patch'      ? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}}`) :
-			this.diff === 'premajor'   ? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) :
-			this.diff === 'preminor'   ? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) :
-			this.diff === 'prepatch'   ? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}-{${diffColor} ${prerelease.join('.')}}}`) :
-			this.diff === 'prerelease' ? chalk(`{${color} ${major}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) : '' // TODO: throw error if somehow invalid????
+			this.#diff === 'major'      ? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}}`) :
+			this.#diff === 'minor'      ? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}}`) :
+			this.#diff === 'patch'      ? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}}`) :
+			this.#diff === 'premajor'   ? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) :
+			this.#diff === 'preminor'   ? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) :
+			this.#diff === 'prepatch'   ? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}-{${diffColor} ${prerelease.join('.')}}}`) :
+			this.#diff === 'prerelease' ? chalk(`{${color} ${major}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) : '' // TODO: throw error if somehow invalid????
 		);
 		/* eslint-enable indent, unicorn/no-nested-ternary, operator-linebreak, no-multi-spaces */
 	}
 
+	/**
+	If the current version satisifes the given `SemVer` range.
+
+	@param {string} range
+	@throws If `range` is invalid.
+	*/
 	satisfies(range) {
 		if (!semver.validRange(range)) {
 			throw new Error(`Range \`${range}\` is not a valid \`SemVer\` range.`);
 		}
 
-		return semver.satisfies(this.version, range, {
+		return semver.satisfies(this.#version, range, {
 			includePrerelease: true,
 		});
 	}
 
+	/**
+	If the current version has any `prerelease` components.
+	*/
 	isPrerelease() {
 		return Boolean(semver.prerelease(this.#version));
 	}
 
+	/**
+	If the current version is the same as or higher than the given version.
+
+	@param {string} otherVersion
+	*/
 	#isGreaterThanOrEqualTo(otherVersion) {
 		return semver.gte(this.#version, otherVersion);
 	}
