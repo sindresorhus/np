@@ -228,8 +228,7 @@ test.serial('should not fail when prerelease version of private package without 
 	);
 });
 
-// TODO: not sure why failing
-test.serial.failing('should fail when git tag already exists', createFixture, [{
+test.serial('should fail when git tag already exists', createFixture, [{
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: 'vvb',
 }], async ({t, testedModule: prerequisiteTasks}) => {
