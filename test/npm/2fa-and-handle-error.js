@@ -1,6 +1,10 @@
 import test from 'ava';
-import enable2fa, {getEnable2faArgs} from '../../source/npm/enable-2fa.js';
-import handleNpmError from '../../source/npm/handle-npm-error.js';
+import {getEnable2faArgs} from '../../source/npm/enable-2fa.js';
+//
+// import enable2fa, {getEnable2faArgs} from '../../source/npm/enable-2fa.js';
+// import handleNpmError from '../../source/npm/handle-npm-error.js';
+
+// TODO: update for #693
 
 test('getEnable2faArgs - no options', t => {
 	t.deepEqual(getEnable2faArgs('np'), ['access', '2fa-required', 'np']);

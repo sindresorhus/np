@@ -1,5 +1,7 @@
 import test from 'ava';
-import publish, {getPackagePublishArguments} from '../../source/npm/publish.js';
+import {getPackagePublishArguments} from '../../source/npm/publish.js';
+//
+// import publish, {getPackagePublishArguments} from '../../source/npm/publish.js';
 
 test('getPackagePublishArguments - no options set', t => {
 	t.deepEqual(
