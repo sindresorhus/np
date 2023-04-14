@@ -91,6 +91,40 @@ test('git-util.verifyTagDoesNotExistOnRemote - does not exist', createFixture, [
 
 // TODO: git-util.verifyTagDoesNotExistOnRemote - test when tagExistsOnRemote() errors
 
+test('git-util.pushGraceful - succeeds', createFixture, [{
+	command: 'git push --follow-tags',
+	exitCode: 0,
+}], async ({t, testedModule: git}) => {
+	await t.notThrowsAsync(
+		git.pushGraceful(),
+	);
+});
+
+test('git-util.pushGraceful - fails w/ remote on GitHub and bad branch permission', createFixture, [
+	{
+		command: 'git push --follow-tags',
+		stderr: 'GH006',
+	},
+	{
+		command: 'git push --tags',
+		exitCode: 0,
+	},
+], async ({t, testedModule: git}) => {
+	const {pushed, reason} = await git.pushGraceful(true);
+
+	t.is(pushed, 'tags');
+	t.is(reason, 'Branch protection: np can`t push the commits. Push them manually.');
+});
+
+test('git-util.pushGraceful - throws', createFixture, [{
+	command: 'git push --follow-tags',
+	exitCode: 1,
+}], async ({t, testedModule: git}) => {
+	await t.throwsAsync(
+		git.pushGraceful(false),
+	);
+});
+
 test('git-util.verifyRecentGitVersion - satisfied', createFixture, [{
 	command: 'git version',
 	stdout: 'git version 2.12.0', // One higher than minimum
