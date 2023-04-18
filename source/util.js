@@ -1,5 +1,6 @@
 import path from 'node:path';
 import {readPackageUp} from 'read-pkg-up';
+import {parsePackage} from 'read-pkg';
 import issueRegex from 'issue-regex';
 import terminalLink from 'terminal-link';
 import {execa} from 'execa';
@@ -83,8 +84,8 @@ export const getNewFiles = async rootDir => {
 };
 
 export const getNewDependencies = async (newPkg, rootDir) => {
-	let oldPkg = await git.readFileFromLastRelease(path.resolve(rootDir, 'package.json'));
-	oldPkg = JSON.parse(oldPkg);
+	const oldPkgFile = await git.readFileFromLastRelease(path.resolve(rootDir, 'package.json'));
+	const oldPkg = parsePackage(oldPkgFile);
 
 	const newDependencies = [];
 

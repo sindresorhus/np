@@ -23,18 +23,20 @@ const makeExecaStub = commands => {
 	return stub;
 };
 
-const _stubExeca = (source, importMeta) => async commands => {
+const stubExeca = commands => {
 	const execaStub = makeExecaStub(commands);
 
-	return esmock(source, importMeta, {}, {
+	return {
 		execa: {
-			execa: async (...args) => execaStub.resolves(execa(...args))(...args),
+			async execa(...args) {
+				execaStub.resolves(execa(...args));
+				return execaStub(...args);
+			},
 		},
-	});
+	};
 };
 
 export const _createFixture = (source, importMeta) => test.macro(async (t, commands, assertions) => {
-	const stubExeca = _stubExeca(source, importMeta);
-	const testedModule = await stubExeca(commands);
+	const testedModule = await esmock(source, importMeta, {}, stubExeca(commands));
 	await assertions({t, testedModule});
 });

@@ -170,6 +170,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		}
 	}
 
+	// Non-interactive mode - return before prompting
 	if (options.version) {
 		return {
 			...options,
@@ -215,6 +216,7 @@ const ui = async (options, {pkg, rootDir}) => {
 	}
 
 	const needsPrereleaseTag = answers => options.runPublish && (answers.version?.isPrerelease() || answers.customVersion?.isPrerelease()) && !options.tag;
+	const canBePublishedPublicly = options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted') && !npm.isExternalRegistry(pkg);
 
 	const answers = await inquirer.prompt({
 		version: {
@@ -238,7 +240,28 @@ const ui = async (options, {pkg, rootDir}) => {
 			type: 'input',
 			message: 'Version',
 			when: answers => answers.version === undefined,
-			filter: input => new Version(oldVersion).setFrom(input), // Version error handling does validation
+			filter(input) {
+				if (SEMVER_INCREMENTS.includes(input)) {
+					throw new Error('Custom version should not be a `SemVer` increment.');
+				}
+
+				const version = new Version(oldVersion);
+
+				try {
+					// Version error handling does validation
+					version.setFrom(input);
+				} catch (error) {
+					if (error.message.includes('valid `SemVer` version')) {
+						throw new Error(`Custom version \`${input}\` should be a valid \`SemVer\` version.`);
+					}
+
+					error.message = error.message.replace('New', 'Custom');
+
+					throw error;
+				}
+
+				return version;
+			},
 		},
 		tag: {
 			type: 'list',
@@ -275,7 +298,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		},
 		publishScoped: {
 			type: 'confirm',
-			when: isScoped(pkg.name) && options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted') && !npm.isExternalRegistry(pkg),
+			when: isScoped(pkg.name) && canBePublishedPublicly,
 			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false,
 		},

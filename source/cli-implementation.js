@@ -101,6 +101,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 try {
 	const {pkg, rootDir} = await util.readPkg(cli.flags.contents);
 
+	// TODO: move defaults to meow flags?
 	const defaultFlags = {
 		cleanup: true,
 		tests: true,
@@ -121,6 +122,7 @@ try {
 	// Workaround for unintended auto-casing behavior from `meow`.
 	if ('2Fa' in flags) {
 		flags['2fa'] = flags['2Fa'];
+		// TODO: delete flags['2Fa']?
 	}
 
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !pkg.private;
@@ -131,14 +133,15 @@ try {
 	};
 
 	// Use current (latest) version when 'releaseDraftOnly', otherwise try to use the first argument.
-	const version = flags.releaseDraftOnly ? pkg.version : (cli.input.at(0) ?? false); // TODO: can this be undefined?
+	const version = flags.releaseDraftOnly ? pkg.version : cli.input.at(0);
 
-	const branch = flags.branch || await git.defaultBranch();
+	const branch = flags.branch ?? await git.defaultBranch();
+
 	const options = await ui({
 		...flags,
+		runPublish,
 		availability,
 		version,
-		runPublish,
 		branch,
 	}, {pkg, rootDir});
 

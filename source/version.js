@@ -3,7 +3,7 @@ import {template as chalk} from 'chalk-template';
 
 /** @type {string[]} Allowed `SemVer` release types. */
 export const SEMVER_INCREMENTS = semver.RELEASE_TYPES.sort();
-const SEMVER_INCREMENTS_LIST = `\`${SEMVER_INCREMENTS.join('`, `')}\``;
+export const SEMVER_INCREMENTS_LIST = `\`${SEMVER_INCREMENTS.join('`, `')}\``;
 
 /** @typedef {semver.SemVer} SemVerInstance */
 /** @typedef {semver.ReleaseType} SemVerIncrement */
