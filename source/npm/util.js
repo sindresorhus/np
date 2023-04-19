@@ -8,7 +8,7 @@ import chalk from 'chalk';
 import Version from '../version.js';
 import * as util from '../util.js';
 
-const version = async () => {
+export const version = async () => {
 	const {stdout} = await execa('npm', ['--version']);
 	return stdout;
 };
