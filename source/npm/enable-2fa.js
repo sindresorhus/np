@@ -1,9 +1,12 @@
 import {execa} from 'execa';
 import {from, catchError} from 'rxjs';
+import semver from 'semver';
 import handleNpmError from './handle-npm-error.js';
+import {version as npmVersionCheck} from './util.js';
 
-export const getEnable2faArgs = (packageName, options) => {
-	const args = ['access', '2fa-required', packageName];
+export const getEnable2faArgs = async (packageName, options) => {
+	const npmVersion = await npmVersionCheck();
+	const args = semver.satisfies(npmVersion, '>=9.0.0') ? ['access', 'set', 'mfa=publish', packageName] : ['access', '2fa-required', packageName];
 
 	if (options && options.otp) {
 		args.push('--otp', options.otp);
