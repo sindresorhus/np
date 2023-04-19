@@ -3,10 +3,11 @@ import test from 'ava';
 import {npPkg, npRootDir as rootDir} from '../source/util.js';
 import {cliPasses} from './_helpers/verify-cli.js';
 
-const cli = path.resolve(rootDir, 'source/cli-implementation.js');
+const cli = path.resolve(rootDir, 'source', 'cli-implementation.js');
 
 // TODO: update help text in readme
 test('flags: --help', cliPasses, cli, '--help', [
+	'',
 	'A better `npm publish`',
 	'',
 	'Usage',
@@ -38,6 +39,7 @@ test('flags: --help', cliPasses, cli, '--help', [
 	'$ np 1.0.2',
 	'$ np 1.0.2-beta.3 --tag=beta',
 	'$ np 1.0.2-beta.3 --tag=beta --contents=dist',
+	'',
 ]);
 
 test('flags: --version', cliPasses, cli, '--version', [npPkg.version]);

@@ -2,7 +2,7 @@
 import test from 'ava';
 import {execa} from 'execa';
 
-const trim = stdout => stdout.trim().split('\n').map(line => line.trim());
+const trim = stdout => stdout.split('\n').map(line => line.trim());
 
 const _verifyCli = shouldPass => test.macro(async (t, binPath, args, expectedLines) => {
 	const {exitCode, stdout} = await execa(binPath, [args].flat(), {reject: false});
