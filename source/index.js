@@ -133,7 +133,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 				enabled: () => options.yarn === false,
 				task() {
 					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production'];
-					return exec('npm', [...args, '--engine-strict']);
+					return exec('pnpm', [...args, '--engine-strict']);
 				},
 			},
 		]);
@@ -208,7 +208,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 					args.push('--message', options.message);
 				}
 
-				return exec('npm', args);
+				return exec('pnpm', args);
 			},
 		},
 	]);
