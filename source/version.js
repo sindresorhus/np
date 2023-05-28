@@ -58,9 +58,17 @@ export default class Version {
 	}
 
 	static verifyRequirementSatisfied(dependency, version) {
-		const depRange = pkg.engines[dependency];
-		if (!new Version(version).satisfies(depRange)) {
-			throw new Error(`Please upgrade to ${dependency}${depRange}`);
+		if (!pkg.engines?.node) {
+			throw new Error('Please include a `engines.node` field in your package.json');
+		}
+
+		const versionRange = pkg.engines?.[dependency];
+		if (!versionRange) {
+			return;
+		}
+
+		if (!new Version(version).satisfies(versionRange)) {
+			throw new Error(`Please upgrade to ${dependency}${versionRange}`);
 		}
 	}
 

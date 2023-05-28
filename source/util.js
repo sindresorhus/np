@@ -89,8 +89,8 @@ export const getNewDependencies = async (newPkg, rootDir) => {
 
 	const newDependencies = [];
 
-	for (const dependency of Object.keys(newPkg.dependencies)) {
-		if (!oldPkg.dependencies[dependency]) {
+	for (const dependency of Object.keys(newPkg.dependencies ?? {})) {
+		if (!oldPkg.dependencies?.[dependency]) {
 			newDependencies.push(dependency);
 		}
 	}
