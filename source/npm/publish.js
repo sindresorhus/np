@@ -26,7 +26,7 @@ export const getPackagePublishArguments = options => {
 
 const pkgPublish = (pkgManager, options) => execa(pkgManager, getPackagePublishArguments(options));
 
-const publish = (context, pkgManager, task, options) => {
+const publish = (context, pkgManager, task, options) =>
 	from(pkgPublish(pkgManager, options)).pipe(
 		catchError(error => handleNpmError(error, task, otp => {
 			context.otp = otp;
@@ -34,6 +34,5 @@ const publish = (context, pkgManager, task, options) => {
 			return pkgPublish(pkgManager, {...options, otp});
 		})),
 	);
-};
 
 export default publish;
