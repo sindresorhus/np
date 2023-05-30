@@ -155,6 +155,6 @@ try {
 
 	console.log(`\n ${newPkg.name} ${newPkg.version} published 🎉`);
 } catch (error) {
-	console.error(`\n${logSymbols.error} ${error.message}`);
+	console.error(`\n${logSymbols.error} ${error?.stack ?? error}`);
 	gracefulExit(1);
 }
