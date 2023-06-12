@@ -89,6 +89,7 @@ export const getNewDependencies = async (newPkg, rootDir) => {
 	try {
 		oldPkg = await git.readFileFromLastRelease(path.resolve(rootDir, 'package.json'));
 	} catch {
+		// Handle first time publish
 		return Object.keys(newPkg.dependencies ?? {});
 	}
 
