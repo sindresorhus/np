@@ -98,7 +98,7 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 	}
 
 	if (newFiles.firstTime.length > 0) {
-		messages.push(`The following new files will be published for the first time:\n${util.joinList(newFiles.firstTime)}\n\nPlease make sure only the intended files are published.`);
+		messages.push(`The following new files will be published for the first time:\n${util.joinList(newFiles.firstTime)}\n\nPlease make sure only the intended files are listed.`);
 	}
 
 	if (newDependencies.length > 0) {
