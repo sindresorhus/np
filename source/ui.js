@@ -94,15 +94,15 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 
 	const messages = [];
 	if (newFiles.unpublished.length > 0) {
-		messages.push(`The following new files will not be part of your published package:\n${util.joinList(newFiles.unpublished)}\n\nIf you intended to publish them, add them to 'files' in your package.json.`);
+		messages.push(`The following new files will not be part of your published package:\n${util.joinList(newFiles.unpublished)}\n\nIf you intended to publish them, add them to the \`files\` field in package.json.`);
 	}
 
 	if (newFiles.firstTime.length > 0) {
-		messages.push(`The following new files will be published for the first time:\n${util.joinList(newFiles.firstTime)}\n\nPlease make sure you intended to do that.`);
+		messages.push(`The following new files will be published for the first time:\n${util.joinList(newFiles.firstTime)}\n\nPlease make sure only the intended files are published.`);
 	}
 
 	if (newDependencies.length > 0) {
-		messages.push(`The following new dependencies will be part of your published package:\n${util.joinList(newDependencies)}\n\nPlease make sure you intended to do that.`);
+		messages.push(`The following new dependencies will be part of your published package:\n${util.joinList(newDependencies)}\n\nPlease make sure these new dependencies are intentional.`);
 	}
 
 	if (!isInteractive()) {
