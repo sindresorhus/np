@@ -12,7 +12,7 @@ import {asyncExitHook} from 'exit-hook';
 import logSymbols from 'log-symbols';
 import prerequisiteTasks from './prerequisite-tasks.js';
 import gitTasks from './git-tasks.js';
-import publish from './npm/publish.js';
+import publish, {getPackagePublishArguments} from './npm/publish.js';
 import enable2fa from './npm/enable-2fa.js';
 import releaseTaskHelper from './release-task-helper.js';
 import * as util from './util.js';
@@ -207,7 +207,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 				title: `Publishing package using ${pkgManagerName}`,
 				skip() {
 					if (options.preview) {
-						const args = publish.getPackagePublishArguments(options);
+						const args = getPackagePublishArguments(options);
 						return `[Preview] Command not executed: ${pkgManager} ${args.join(' ')}.`;
 					}
 				},

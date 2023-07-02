@@ -84,13 +84,21 @@ export const getNewFiles = async rootDir => {
 };
 
 export const getNewDependencies = async (newPkg, rootDir) => {
-	const oldPkgFile = await git.readFileFromLastRelease(path.resolve(rootDir, 'package.json'));
+	let oldPkgFile;
+
+	try {
+		oldPkgFile = await git.readFileFromLastRelease(path.resolve(rootDir, 'package.json'));
+	} catch {
+		// Handle first time publish
+		return Object.keys(newPkg.dependencies ?? {});
+	}
+
 	const oldPkg = parsePackage(oldPkgFile);
 
 	const newDependencies = [];
 
-	for (const dependency of Object.keys(newPkg.dependencies)) {
-		if (!oldPkg.dependencies[dependency]) {
+	for (const dependency of Object.keys(newPkg.dependencies ?? {})) {
+		if (!oldPkg.dependencies?.[dependency]) {
 			newDependencies.push(dependency);
 		}
 	}
