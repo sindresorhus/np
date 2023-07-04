@@ -11,7 +11,7 @@ const prerequisiteTasks = (input, pkg, options) => {
 	let newVersion;
 
 	const tasks = [
-		{ // TODO: consolidate tasks in move to listr2
+		{
 			title: 'Ping npm registry',
 			enabled: () => !pkg.private && !isExternalRegistry,
 			task: async () => npm.checkConnection(),

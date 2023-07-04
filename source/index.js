@@ -89,7 +89,6 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 
 	const shouldEnable2FA = options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !npm.isExternalRegistry(pkg);
 
-	// TODO: move tasks to subdirectory
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
