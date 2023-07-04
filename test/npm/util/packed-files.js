@@ -1,7 +1,7 @@
 import path from 'node:path';
 import test from 'ava';
-import {getFilesToBePacked} from '../../source/npm/util.js';
-import {runIfExists} from '../_helpers/util.js';
+import {getFilesToBePacked} from '../../../source/npm/util.js';
+import {runIfExists} from '../../_helpers/util.js';
 
 const getFixture = name => path.resolve('test', 'fixtures', 'files', name);
 

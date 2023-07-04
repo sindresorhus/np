@@ -1,8 +1,5 @@
 import test from 'ava';
 import {_createFixture} from '../_helpers/stub-execa.js';
-//
-// import enable2fa, {getEnable2faArgs} from '../../source/npm/enable-2fa.js';
-// import handleNpmError from '../../source/npm/handle-npm-error.js';
 
 /** @type {ReturnType<typeof _createFixture<import('../../source/npm/enable-2fa.js')>>} */
 const createFixture = _createFixture('../../source/npm/enable-2fa.js', import.meta.url);
@@ -18,7 +15,7 @@ for (const {version, accessArgs} of npmVersionFixtures) {
 		stdout: version,
 	}];
 
-	test(`npm v${version} - getEnable2faArgs - no options`, createFixture, npmVersionCommand,
+	test(`npm v${version} - no options`, createFixture, npmVersionCommand,
 		async ({t, testedModule: {getEnable2faArgs}}) => {
 			t.deepEqual(
 				await getEnable2faArgs('np'),
@@ -27,7 +24,7 @@ for (const {version, accessArgs} of npmVersionFixtures) {
 		},
 	);
 
-	test(`npm v${version} - getEnable2faArgs - options, no otp`, createFixture, npmVersionCommand,
+	test(`npm v${version} - options, no otp`, createFixture, npmVersionCommand,
 		async ({t, testedModule: {getEnable2faArgs}}) => {
 			t.deepEqual(
 				await getEnable2faArgs('np', {confirm: true}),
@@ -36,7 +33,7 @@ for (const {version, accessArgs} of npmVersionFixtures) {
 		},
 	);
 
-	test(`npm v${version} - getEnable2faArgs - options, with otp`, createFixture, npmVersionCommand,
+	test(`npm v${version} - options, with otp`, createFixture, npmVersionCommand,
 		async ({t, testedModule: {getEnable2faArgs}}) => {
 			t.deepEqual(
 				await getEnable2faArgs('np', {otp: '123456'}),
