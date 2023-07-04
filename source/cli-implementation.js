@@ -56,18 +56,22 @@ const cli = meow(`
 		},
 		cleanup: {
 			type: 'boolean',
+			default: true,
 		},
 		tests: {
 			type: 'boolean',
+			default: true,
 		},
 		yolo: {
 			type: 'boolean',
 		},
 		publish: {
 			type: 'boolean',
+			default: true,
 		},
 		releaseDraft: {
 			type: 'boolean',
+			default: true,
 		},
 		releaseDraftOnly: {
 			type: 'boolean',
@@ -77,6 +81,7 @@ const cli = meow(`
 		},
 		yarn: {
 			type: 'boolean',
+			default: hasYarn(),
 		},
 		contents: {
 			type: 'string',
@@ -89,6 +94,7 @@ const cli = meow(`
 		},
 		'2fa': {
 			type: 'boolean',
+			default: true,
 		},
 		message: {
 			type: 'string',
@@ -101,23 +107,13 @@ updateNotifier({pkg: cli.pkg}).notify();
 try {
 	const {pkg, rootDir} = await util.readPkg(cli.flags.contents);
 
-	// TODO: move defaults to meow flags?
-	const defaultFlags = {
-		cleanup: true,
-		tests: true,
-		publish: true,
-		releaseDraft: true,
-		yarn: hasYarn(),
-		'2fa': true,
-	};
-
 	const localConfig = await config(rootDir);
-
 	const flags = {
-		...defaultFlags,
 		...localConfig,
 		...cli.flags,
 	};
+
+	console.log(flags);
 
 	// Workaround for unintended auto-casing behavior from `meow`.
 	if ('2Fa' in flags) {
