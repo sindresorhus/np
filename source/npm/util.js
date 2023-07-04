@@ -45,7 +45,7 @@ export const username = async ({externalRegistry}) => {
 	}
 };
 
-export const isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
+export const isExternalRegistry = pkg => typeof pkg.publishConfig?.registry === 'string';
 
 export const collaborators = async pkg => {
 	const packageName = pkg.name;
@@ -53,7 +53,7 @@ export const collaborators = async pkg => {
 
 	const npmVersion = await version();
 	// TODO: remove old command when targeting Node.js 18
-	const args = new Version(npmVersion).satisfies('>=9.0.0')
+	const args = new Version(npmVersion).satisfies('<9.0.0')
 		? ['access', 'list', 'collaborators', packageName, '--json']
 		: ['access', 'ls-collaborators', packageName];
 
@@ -133,8 +133,8 @@ export const verifyRecentNpmVersion = async () => {
 	util.validateEngineVersionSatisfies('npm', npmVersion);
 };
 
-export const checkIgnoreStrategy = ({files}, rootDir) => {
-	const npmignoreExistsInPackageRootDir = pathExists(path.resolve(rootDir, '.npmignore'));
+export const checkIgnoreStrategy = async ({files}, rootDir) => {
+	const npmignoreExistsInPackageRootDir = await pathExists(path.resolve(rootDir, '.npmignore'));
 
 	if (!files && !npmignoreExistsInPackageRootDir) {
 		console.log(`

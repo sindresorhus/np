@@ -7,7 +7,7 @@ const testUi = test.macro(async (t, version, tags, answers, assertions) => {
 	const ui = await mockInquirer({t, answers: {confirm: true, ...answers}, mocks: {
 		'./npm/util.js': {
 			getRegistryUrl: sinon.stub().resolves(''),
-			checkIgnoreStrategy: sinon.stub(),
+			checkIgnoreStrategy: sinon.stub().resolves(),
 			prereleaseTags: sinon.stub().resolves(tags),
 		},
 		'./util.js': {

@@ -129,7 +129,7 @@ const ui = async (options, {pkg, rootDir}) => {
 	const releaseBranch = options.branch;
 
 	if (options.runPublish) {
-		npm.checkIgnoreStrategy(pkg, rootDir);
+		await npm.checkIgnoreStrategy(pkg, rootDir);
 
 		const answerIgnoredFiles = await checkNewFilesAndDependencies(pkg, rootDir);
 		if (!answerIgnoredFiles) {
