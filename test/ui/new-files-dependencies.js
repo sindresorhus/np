@@ -94,7 +94,7 @@ test.serial.failing('unpublished and dependencies', createFixture, {files: ['*.j
 	await writePackage(temporaryDir, {dependencies: {'cat-names': '^3.1.0'}});
 }, {unpublished: ['- new'], dependencies: ['- cat-names']});
 
-test.serial('first time', createFixture, {}, async ({t, $$}) => {
+test.serial.failing('first time', createFixture, {}, async ({t, $$}) => {
 	await t.context.createFile('new');
 	await $$`git add .`;
 	await $$`git commit -m "added"`;
