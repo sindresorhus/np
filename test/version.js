@@ -5,6 +5,7 @@ import semver from 'semver';
 import Version from '../source/version.js';
 
 const INCREMENT_LIST = '`major`, `minor`, `patch`, `premajor`, `preminor`, `prepatch`, `prerelease`';
+const INCREMENT_LIST_OR = '`major`, `minor`, `patch`, `premajor`, `preminor`, `prepatch`, or `prerelease`';
 
 /** @param {string} input - Place `{ }` around the version parts to be highlighted. */
 const makeNewFormattedVersion = input => {
@@ -36,8 +37,8 @@ test('new Version - invalid w/ valid increment', t => {
 
 test('new Version - valid w/ invalid increment', t => {
 	t.throws(
-		() => new Version('1.0.0', '2.0.0'), // TODO: join last as 'or'?
-		{message: `Increment \`2.0.0\` should be one of ${INCREMENT_LIST}.`},
+		() => new Version('1.0.0', '2.0.0'),
+		{message: `Increment \`2.0.0\` should be one of ${INCREMENT_LIST_OR}.`},
 	);
 });
 

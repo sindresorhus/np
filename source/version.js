@@ -4,10 +4,11 @@ import {template as chalk} from 'chalk-template';
 /** @type {string[]} Allowed `SemVer` release types. */
 export const SEMVER_INCREMENTS = semver.RELEASE_TYPES.sort();
 export const SEMVER_INCREMENTS_LIST = `\`${SEMVER_INCREMENTS.join('`, `')}\``;
+const SEMVER_INCREMENTS_LIST_LAST_OR = `\`${SEMVER_INCREMENTS.slice(0, -1).join('`, `')}\`, or \`${SEMVER_INCREMENTS.slice(-1)}\``;
 
 /** @typedef {semver.SemVer} SemVerInstance */
 /** @typedef {semver.ReleaseType} SemVerIncrement */
-/** @typedef {import('chalk').ColorName} ColorName */
+/** @typedef {import('chalk').ColorName | import('chalk').ModifierName} ColorName */
 
 /** @param {string} input @returns {input is SemVerIncrement} */
 const isSemVerIncrement = input => SEMVER_INCREMENTS.includes(input);
@@ -62,7 +63,7 @@ export default class Version {
 
 		if (increment) {
 			if (!isSemVerIncrement(increment)) {
-				throw new Error(`Increment \`${increment}\` should be one of ${SEMVER_INCREMENTS_LIST}.`);
+				throw new Error(`Increment \`${increment}\` should be one of ${SEMVER_INCREMENTS_LIST_LAST_OR}.`);
 			}
 
 			this.setFrom(increment);

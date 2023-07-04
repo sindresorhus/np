@@ -4,7 +4,7 @@ import {execa} from 'execa';
 import pTimeout from 'p-timeout';
 import ow from 'ow';
 import npmName from 'npm-name';
-import chalk from 'chalk';
+import chalk from 'chalk-template';
 import Version from '../version.js';
 import * as util from '../util.js';
 
@@ -137,8 +137,8 @@ export const checkIgnoreStrategy = async ({files}, rootDir) => {
 	const npmignoreExistsInPackageRootDir = await pathExists(path.resolve(rootDir, '.npmignore'));
 
 	if (!files && !npmignoreExistsInPackageRootDir) {
-		console.log(`
-		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
+		console.log(chalk`
+		\n{bold.yellow Warning:} No {bold.cyan files} field specified in {bold.magenta package.json} nor is a {bold.magenta .npmignore} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
 		`);
 	}
 };

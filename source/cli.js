@@ -11,6 +11,5 @@ if (!importLocal(import.meta.url)) {
 		log('Using global install of np.');
 	}
 
-	// TODO: what is this even doing?
 	await import('./cli-implementation.js');
 }
