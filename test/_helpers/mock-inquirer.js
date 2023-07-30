@@ -7,6 +7,7 @@ import mapObject from 'map-obj';
 // NOTE: This only handles prompts of type 'input', 'list', and 'confirm'. If other prompt types are added, they must be implemented here.
 // Based on https://gist.github.com/yyx990803/f61f347b6892078c40a9e8e77b9bd984
 
+// TODO: log with AVA instead (NODE_DEBUG-'np-test')
 const log = debuglog('np-test');
 
 /** @typedef {import('ava').ExecutionContext<Record<string, never>>} ExecutionContext */
@@ -186,12 +187,21 @@ const fixRelativeMocks = mocks => mapObject(mocks, (key, value) => [key.replace(
 @param {ExecutionContext} o.t
 @param {Answers} o.answers
 @param {import('esmock').MockMap} [o.mocks]
-@returns {Promise<import('../../source/ui.js')>}
+@param {string[]} [o.logs]
 */
-export const mockInquirer = async ({t, answers, mocks = {}}) => (
-	esmock('../../source/ui.js', import.meta.url, {
+export const mockInquirer = async ({t, answers, mocks = {}, logs = []}) => {
+	/** @type {import('../../source/ui.js')} */
+	const ui = await esmock('../../source/ui.js', import.meta.url, {
 		inquirer: {
 			prompt: async prompts => mockPrompt({t, inputAnswers: answers, prompts}),
 		},
-	}, fixRelativeMocks(mocks))
-);
+	}, {
+		...fixRelativeMocks(mocks),
+		// Mock globals
+		import: {
+			console: {log: (...args) => logs.push(...args)},
+		},
+	});
+
+	return {ui, logs};
+};

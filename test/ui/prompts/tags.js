@@ -3,8 +3,8 @@ import sinon from 'sinon';
 import {npPkg} from '../../../source/util.js';
 import {mockInquirer} from '../../_helpers/mock-inquirer.js';
 
-const testUi = test.macro(async (t, version, tags, answers, assertions) => {
-	const ui = await mockInquirer({t, answers: {confirm: true, ...answers}, mocks: {
+const testUi = test.macro(async (t, {version, tags, answers}, assertions) => {
+	const {ui, logs} = await mockInquirer({t, answers: {confirm: true, ...answers}, mocks: {
 		'./npm/util.js': {
 			getRegistryUrl: sinon.stub().resolves(''),
 			checkIgnoreStrategy: sinon.stub().resolves(),
@@ -20,11 +20,6 @@ const testUi = test.macro(async (t, version, tags, answers, assertions) => {
 		},
 	}});
 
-	const consoleLog = console.log;
-	const logs = [];
-
-	globalThis.console.log = (...args) => logs.push(...args);
-
 	const results = await ui({
 		runPublish: true,
 		availability: {},
@@ -36,56 +31,70 @@ const testUi = test.macro(async (t, version, tags, answers, assertions) => {
 		},
 	});
 
-	globalThis.console.log = consoleLog;
-
 	await assertions({t, results, logs});
 });
 
-test.serial('choose next', testUi, '0.0.0', ['next'], {
-	version: 'prerelease',
-	tag: 'next',
+test('choose next', testUi, {
+	version: '0.0.0',
+	tags: ['next'],
+	answers: {
+		version: 'prerelease',
+		tag: 'next',
+	},
 }, ({t, results: {version, tag}}) => {
 	t.is(version.toString(), '0.0.1-0');
 	t.is(tag, 'next');
 });
 
-test.serial('choose beta', testUi, '0.0.0', ['beta', 'stable'], {
-	version: 'prerelease',
-	tag: 'beta',
+test('choose beta', testUi, {
+	version: '0.0.0',
+	tags: ['beta', 'stable'],
+	answers: {
+		version: 'prerelease',
+		tag: 'beta',
+	},
 }, ({t, results: {version, tag}}) => {
 	t.is(version.toString(), '0.0.1-0');
 	t.is(tag, 'beta');
 });
 
-test.serial('choose custom', testUi, '0.0.0', ['next'], {
-	version: 'prerelease',
-	tag: 'Other (specify)',
-	customTag: 'alpha',
+test('choose custom', testUi, {
+	version: '0.0.0',
+	tags: ['next'],
+	answers: {
+		version: 'prerelease',
+		tag: 'Other (specify)',
+		customTag: 'alpha',
+	},
 }, ({t, results: {version, tag}}) => {
 	t.is(version.toString(), '0.0.1-0');
 	t.is(tag, 'alpha');
 });
 
-test.serial('choose custom - validation', testUi, '0.0.0', ['next'], {
-	version: 'prerelease',
-	tag: 'Other (specify)',
-	customTag: [
-		{
-			input: '',
-			error: 'Please specify a tag, for example, `next`.',
-		},
-		{
-			input: 'latest',
-			error: 'It\'s not possible to publish pre-releases under the `latest` tag. Please specify something else, for example, `next`.',
-		},
-		{
-			input: 'LAteSt',
-			error: 'It\'s not possible to publish pre-releases under the `latest` tag. Please specify something else, for example, `next`.',
-		},
-		{
-			input: 'alpha',
-		},
-	],
+test('choose custom - validation', testUi, {
+	version: '0.0.0',
+	tags: ['next'],
+	answers: {
+		version: 'prerelease',
+		tag: 'Other (specify)',
+		customTag: [
+			{
+				input: '',
+				error: 'Please specify a tag, for example, `next`.',
+			},
+			{
+				input: 'latest',
+				error: 'It\'s not possible to publish pre-releases under the `latest` tag. Please specify something else, for example, `next`.',
+			},
+			{
+				input: 'LAteSt',
+				error: 'It\'s not possible to publish pre-releases under the `latest` tag. Please specify something else, for example, `next`.',
+			},
+			{
+				input: 'alpha',
+			},
+		],
+	},
 }, ({t, results: {version, tag}}) => {
 	t.is(version.toString(), '0.0.1-0');
 	t.is(tag, 'alpha');
@@ -100,9 +109,13 @@ const fixtures = [
 ];
 
 for (const {version, expected} of fixtures) {
-	test.serial(`works for ${version}`, testUi, '0.0.0', ['next'], {
-		version,
-		tag: 'next',
+	test(`works for ${version}`, testUi, {
+		version: '0.0.0',
+		tags: ['next'],
+		answers: {
+			version,
+			tag: 'next',
+		},
 	}, ({t, results: {version, tag}}) => {
 		t.is(version.toString(), expected);
 		t.is(tag, 'next');

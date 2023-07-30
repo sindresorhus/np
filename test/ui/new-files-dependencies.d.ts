@@ -11,10 +11,12 @@ type CommandsFnParameters = [{
 	temporaryDir: string;
 }];
 
+type ListItem = `- ${string}`;
+
 type Expected = {
-	unpublished: Array<`- ${string}`>;
-	firstTime: Array<`- ${string}`>;
-	dependencies: Array<`- ${string}`>;
+	unpublished: ListItem[];
+	firstTime: ListItem[];
+	dependencies: ListItem[];
 };
 
 type AssertionsFnParameters = [{

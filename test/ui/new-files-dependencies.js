@@ -1,7 +1,9 @@
 import test from 'ava';
-import {writePackage} from 'write-pkg';
+import sinon from 'sinon';
 import {execa} from 'execa';
+import {removePackageDependencies, updatePackage} from 'write-pkg';
 import stripAnsi from 'strip-ansi';
+import {readPackage} from 'read-pkg';
 import {createIntegrationTest} from '../_helpers/integration-test.js';
 import {mockInquirer} from '../_helpers/mock-inquirer.js';
 
@@ -21,100 +23,106 @@ const checkFirstTimeFiles = checkLines('The following new files will be publishe
 const checkNewDependencies = checkLines('The following new dependencies will be part of your published package:');
 
 /** @type {import('./new-files-dependencies.d.ts').CreateFixtureMacro} */
-const createFixture = test.macro(async (t, pkg, commands, expected, assertions = async () => {}) => {
+const createFixture = test.macro(async (t, pkg, commands, expected) => {
 	await createIntegrationTest(t, async ({$$, temporaryDir}) => {
 		pkg = {
-			name: 'foo',
+			name: '@np/foo',
 			version: '0.0.0',
 			dependencies: {},
 			...pkg,
 		};
 
-		await writePackage(temporaryDir, pkg);
+		await updatePackage(temporaryDir, pkg);
 
 		await $$`git add .`;
 		await $$`git commit -m "added"`;
 		await $$`git tag v0.0.0`;
 
 		await commands({t, $$, temporaryDir});
+		pkg = await readPackage({cwd: temporaryDir});
 
-		const ui = await mockInquirer({t, answers: {confirm: {confirm: false}}, mocks: {
+		// TODO: describe mocks
+		const {ui, logs: logsArray} = await mockInquirer({t, answers: {confirm: {confirm: false}}, mocks: {
+			'./npm/util.js': {
+				getRegistryUrl: sinon.stub().resolves(''),
+				checkIgnoreStrategy: sinon.stub().resolves(),
+			},
 			'node:process': {cwd: () => temporaryDir},
 			execa: {execa: async (...args) => execa(...args, {cwd: temporaryDir})},
 			'is-interactive': () => false,
 		}});
 
-		// TODO: use esmock if iambumblehead/esmock#198 lands
-		const consoleLog = console.log;
-		let logs = [];
-
-		globalThis.console.log = (...args) => logs.push(...args);
-
 		await ui({runPublish: true, version: 'major'}, {pkg, rootDir: temporaryDir});
-
-		globalThis.console.log = consoleLog;
-		logs = logs.join('').split('\n').map(log => stripAnsi(log));
+		const logs = logsArray.join('').split('\n').map(log => stripAnsi(log));
 
 		const {unpublished, firstTime, dependencies} = expected;
 
-		if (unpublished) {
-			checkNewUnpublished(t, logs, unpublished);
+		const assertions = await t.try(tt => {
+			if (unpublished) {
+				checkNewUnpublished(tt, logs, unpublished);
+			}
+
+			if (firstTime) {
+				checkFirstTimeFiles(tt, logs, firstTime);
+			}
+
+			if (dependencies) {
+				checkNewDependencies(tt, logs, dependencies);
+			}
+		});
+
+		if (!assertions.passed) {
+			t.log('logs:', logs);
+			t.log('pkg:', pkg);
+			t.log('expected:', expected);
 		}
 
-		if (firstTime) {
-			checkFirstTimeFiles(t, logs, firstTime);
-		}
-
-		if (dependencies) {
-			checkNewDependencies(t, logs, dependencies);
-		}
-
-		await assertions({t, $$, temporaryDir, logs});
+		assertions.commit();
 	});
 });
 
-test.serial('unpublished', createFixture, {files: ['*.js']}, async ({t, $$}) => {
+test('unpublished', createFixture, {files: ['*.js']}, async ({t, $$}) => {
 	await t.context.createFile('new');
 	await $$`git add .`;
 	await $$`git commit -m "added"`;
 }, {unpublished: ['- new']});
 
-test.serial('unpublished and first time', createFixture, {files: ['*.js']}, async ({t, $$}) => {
+test('unpublished and first time', createFixture, {files: ['*.js']}, async ({t, $$}) => {
 	await t.context.createFile('new');
 	await t.context.createFile('index.js');
 	await $$`git add .`;
 	await $$`git commit -m "added"`;
 }, {unpublished: ['- new'], firstTime: ['- index.js']});
 
-// TODO: use sindresorhus/write-pkg#21
-test.serial.failing('unpublished and dependencies', createFixture, {files: ['*.js']}, async ({t, $$, temporaryDir}) => {
+test('unpublished and dependencies', createFixture, {files: ['*.js']}, async ({t, $$, temporaryDir}) => {
 	await t.context.createFile('new');
 	await $$`git add .`;
 	await $$`git commit -m "added"`;
-	await writePackage(temporaryDir, {dependencies: {'cat-names': '^3.1.0'}});
+	await updatePackage(temporaryDir, {dependencies: {'cat-names': '^3.1.0'}});
 }, {unpublished: ['- new'], dependencies: ['- cat-names']});
 
-test.serial.failing('first time', createFixture, {}, async ({t, $$}) => {
+test('first time', createFixture, {}, async ({t, $$}) => {
 	await t.context.createFile('new');
 	await $$`git add .`;
 	await $$`git commit -m "added"`;
 }, {firstTime: ['- new']});
 
-test.serial.failing('first time and dependencies', createFixture, {}, async ({t, $$, temporaryDir}) => {
+test('first time and dependencies', createFixture, {}, async ({t, $$, temporaryDir}) => {
 	await t.context.createFile('new');
 	await $$`git add .`;
 	await $$`git commit -m "added"`;
-	await writePackage(temporaryDir, {dependencies: {'cat-names': '^3.1.0'}});
+	await updatePackage(temporaryDir, {dependencies: {'cat-names': '^3.1.0'}});
 }, {firstTime: ['- new'], dependencies: ['- cat-names']});
 
-test.serial.failing('dependencies', createFixture, {dependencies: {'dog-names': '^2.1.0'}}, async ({temporaryDir}) => {
-	await writePackage(temporaryDir, {dependencies: {'cat-names': '^3.1.0'}});
+test('dependencies', createFixture, {dependencies: {'dog-names': '^2.1.0'}}, async ({temporaryDir}) => {
+	await removePackageDependencies(temporaryDir, ['dog-names']);
+	await updatePackage(temporaryDir, {dependencies: {'cat-names': '^3.1.0'}});
 }, {dependencies: ['- cat-names']});
 
-test.serial.failing('unpublished and first time and dependencies', createFixture, {files: ['*.js']}, async ({t, $$, temporaryDir}) => {
+test('unpublished and first time and dependencies', createFixture, {files: ['*.js']}, async ({t, $$, temporaryDir}) => {
 	await t.context.createFile('new');
 	await t.context.createFile('index.js');
 	await $$`git add .`;
 	await $$`git commit -m "added"`;
-	await writePackage(temporaryDir, {dependencies: {'cat-names': '^3.1.0'}});
+	await updatePackage(temporaryDir, {dependencies: {'cat-names': '^3.1.0'}});
 }, {unpublished: ['- new'], firstTime: ['- index.js'], dependencies: ['- cat-names']});
