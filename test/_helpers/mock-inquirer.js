@@ -7,9 +7,6 @@ import mapObject from 'map-obj';
 // NOTE: This only handles prompts of type 'input', 'list', and 'confirm'. If other prompt types are added, they must be implemented here.
 // Based on https://gist.github.com/yyx990803/f61f347b6892078c40a9e8e77b9bd984
 
-// TODO: log with AVA instead (NODE_DEBUG-'np-test')
-const log = debuglog('np-test');
-
 /** @typedef {import('ava').ExecutionContext<Record<string, never>>} ExecutionContext */
 /** @typedef {string | boolean} ShortAnswer */
 /** @typedef {Record<'input' | 'error', string> | Record<'choice', string> | Record<'confirm', boolean>} LongAnswer */
@@ -37,23 +34,23 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 		prompts = promptsObject;
 	}
 
-	log('prompts:', Object.keys(prompts));
+	t.log('prompts:', Object.keys(prompts));
 
 	/* eslint-disable no-await-in-loop */
 	for (const [name, prompt] of Object.entries(prompts)) {
 		if (prompt.when !== undefined) {
 			if (is.boolean(prompt.when) && !prompt.when) {
-				log(`skipping prompt '${name}'`);
+				t.log(`skipping prompt '${name}'`);
 				continue;
 			}
 
 			if (is.function_(prompt.when) && !prompt.when(answers)) {
-				log(`skipping prompt '${name}'`);
+				t.log(`skipping prompt '${name}'`);
 				continue;
 			}
 		}
 
-		log(`getting input for prompt '${name}'`);
+		t.log(`getting input for prompt '${name}'`);
 
 		const setValue = value => {
 			if (prompt.validate) {
@@ -71,16 +68,16 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 			}
 
 			if (is.string(value)) {
-				log(`filtering value '${value}' for prompt '${name}'`);
+				t.log(`filtering value '${value}' for prompt '${name}'`);
 			} else {
-				log(`filtering value for prompt '${name}':`, value);
+				t.log(`filtering value for prompt '${name}':`, value);
 			}
 
 			answers[name] = prompt.filter
 				? prompt.filter(value) // eslint-disable-line unicorn/no-array-callback-reference
 				: value;
 
-			log(`got value '${answers[name]}' for prompt '${name}'`);
+			t.log(`got value '${answers[name]}' for prompt '${name}'`);
 		};
 
 		/** @param {Answer} input */
@@ -96,7 +93,7 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 				choices = prompt.choices;
 			}
 
-			log(`choices for prompt '${name}':`, choices);
+			t.log(`choices for prompt '${name}':`, choices);
 
 			const value = choices.find(choice => {
 				if (is.object(choice)) {
@@ -122,9 +119,9 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 		}
 
 		if (is.string(input)) {
-			log(`found input for prompt '${name}': '${input}'`);
+			t.log(`found input for prompt '${name}': '${input}'`);
 		} else {
-			log(`found input for prompt '${name}':`, input);
+			t.log(`found input for prompt '${name}':`, input);
 		}
 
 		/** @param {Answer} input */
@@ -193,7 +190,16 @@ export const mockInquirer = async ({t, answers, mocks = {}, logs = []}) => {
 	/** @type {import('../../source/ui.js')} */
 	const ui = await esmock('../../source/ui.js', import.meta.url, {
 		inquirer: {
-			prompt: async prompts => mockPrompt({t, inputAnswers: answers, prompts}),
+			async prompt(prompts) {
+				let uiAnswers = {};
+
+				const assertions = await t.try(async tt => {
+					uiAnswers = await mockPrompt({t: tt, inputAnswers: answers, prompts});
+				});
+
+				assertions.commit({retainLogs: !assertions.passed});
+				return uiAnswers;
+			},
 		},
 	}, {
 		...fixRelativeMocks(mocks),
