@@ -1,4 +1,3 @@
-import {debuglog} from 'node:util';
 import esmock from 'esmock';
 import is from '@sindresorhus/is';
 import stripAnsi from 'strip-ansi';
