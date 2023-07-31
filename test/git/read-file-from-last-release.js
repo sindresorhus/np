@@ -8,9 +8,11 @@ const createFixture = _createFixture('../../source/git-util.js');
 test.failing('returns content of a given file', createFixture, async ({t, $$}) => {
 	await $$`git tag v0.0.0`;
 	await t.context.createFile('unicorn.txt', 'unicorn');
-	await $$`git add -A`;
+	await $$`git add .`;
 	await $$`git commit -m "added"`;
 }, async ({t, testedModule: git}) => {
 	const file = await git.readFileFromLastRelease('unicorn.txt');
 	t.is(file, 'unicorn');
 });
+
+test.todo('no previous release');

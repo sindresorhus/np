@@ -6,7 +6,7 @@ const createFixture = _createFixture('../../source/git-util.js');
 
 test('clean', createFixture, async ({t, $$}) => {
 	t.context.createFile('index.js');
-	await $$`git add index.js`;
+	await $$`git add .`;
 	await $$`git commit -m "added"`;
 }, async ({t, testedModule: {verifyWorkingTreeIsClean}}) => {
 	await t.notThrowsAsync(
