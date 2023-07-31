@@ -59,6 +59,7 @@ export const getTagVersionPrefix = pMemoize(async options => {
 	ow(options, ow.object.hasKeys('yarn'));
 
 	try {
+		// TODO: test with 'options.yarn'
 		if (options.yarn) {
 			const {stdout} = await execa('yarn', ['config', 'get', 'version-tag-prefix']);
 			return stdout;
@@ -106,6 +107,7 @@ export const getNewDependencies = async (newPkg, rootDir) => {
 	return newDependencies;
 };
 
+// TODO: test
 export const getPreReleasePrefix = pMemoize(async options => {
 	ow(options, ow.object.hasKeys('yarn'));
 

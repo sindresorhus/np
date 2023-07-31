@@ -23,7 +23,7 @@ export const createIntegrationTest = async (t, assertions) => {
 
 		await createEmptyGitRepo($$, temporaryDir);
 
-		t.context.createFile = async (file, content = '') => fs.writeFile(path.resolve(temporaryDir, file), content);
+		t.context.createFile = async (file, content = '') => fs.outputFile(path.resolve(temporaryDir, file), content);
 		await assertions({$$, temporaryDir});
 	});
 };
