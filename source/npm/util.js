@@ -52,7 +52,7 @@ export const collaborators = async pkg => {
 	ow(packageName, ow.string);
 
 	const npmVersion = await version();
-	// TODO: remove old command when targeting Node.js 18
+	// TODO: Remove old command when targeting Node.js 18
 	const args = new Version(npmVersion).satisfies('>=9.0.0')
 		? ['access', 'list', 'collaborators', packageName, '--json']
 		: ['access', 'ls-collaborators', packageName];

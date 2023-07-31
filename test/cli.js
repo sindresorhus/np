@@ -5,7 +5,6 @@ import {cliPasses} from './_helpers/verify-cli.js';
 
 const cli = path.resolve(rootDir, 'source', 'cli-implementation.js');
 
-// TODO: update help text in readme
 test('flags: --help', cliPasses, cli, '--help', [
 	'',
 	'A better `npm publish`',

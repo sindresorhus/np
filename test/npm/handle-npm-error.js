@@ -18,5 +18,3 @@ test('error code 402 - privately publish scoped package', t => {
 		{message: 'You cannot publish a scoped package privately without a paid plan. Did you mean to publish publicly?'},
 	);
 });
-
-// TODO: OTP test?

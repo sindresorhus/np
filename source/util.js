@@ -59,13 +59,10 @@ export const getTagVersionPrefix = pMemoize(async options => {
 	ow(options, ow.object.hasKeys('yarn'));
 
 	try {
-		// TODO: test with 'options.yarn'
-		if (options.yarn) {
-			const {stdout} = await execa('yarn', ['config', 'get', 'version-tag-prefix']);
-			return stdout;
-		}
+		const {stdout} = options.yarn
+			? await execa('yarn', ['config', 'get', 'version-tag-prefix'])
+			: await execa('npm', ['config', 'get', 'tag-version-prefix']);
 
-		const {stdout} = await execa('npm', ['config', 'get', 'tag-version-prefix']);
 		return stdout;
 	} catch {
 		return 'v';
@@ -107,26 +104,14 @@ export const getNewDependencies = async (newPkg, rootDir) => {
 	return newDependencies;
 };
 
-// TODO: test
 export const getPreReleasePrefix = pMemoize(async options => {
 	ow(options, ow.object.hasKeys('yarn'));
 
 	try {
-		if (options.yarn) {
-			const {stdout} = await execa('yarn', ['config', 'get', 'preId']);
-			if (stdout !== 'undefined') {
-				return stdout;
-			}
+		const packageManager = options.yarn ? 'yarn' : 'npm';
+		const {stdout} = await execa(packageManager, ['config', 'get', 'preId']);
 
-			return '';
-		}
-
-		const {stdout} = await execa('npm', ['config', 'get', 'preId']);
-		if (stdout !== 'undefined') {
-			return stdout;
-		}
-
-		return '';
+		return stdout === 'undefined' ? '' : stdout;
 	} catch {
 		return '';
 	}
@@ -135,6 +120,6 @@ export const getPreReleasePrefix = pMemoize(async options => {
 export const validateEngineVersionSatisfies = (engine, version) => {
 	const engineRange = npPkg.engines[engine];
 	if (!new Version(version).satisfies(engineRange)) {
-		throw new Error(`\`np\` requires ${engine} ${engineRange}`); // TODO: prettify range/engine, capitalize engine
+		throw new Error(`\`np\` requires ${engine} ${engineRange}`);
 	}
 };

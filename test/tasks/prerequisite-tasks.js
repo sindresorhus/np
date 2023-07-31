@@ -112,8 +112,6 @@ test.serial('should fail when user is not authenticated at npm registry', create
 	assertTaskFailed(t, 'Verify user is authenticated');
 });
 
-// TODO: 'Verify user is authenticated' - verify passes if no collaborators
-
 test.serial('should fail when user is not authenticated at external registry', createFixture, [
 	{
 		command: 'npm whoami --registry http://my.io',
@@ -139,6 +137,8 @@ test.serial('should fail when user is not authenticated at external registry', c
 
 	assertTaskFailed(t, 'Verify user is authenticated');
 });
+
+test.serial.todo('should not fail if no collaborators'); // Verify user is authenticated
 
 test.serial('private package: should disable task `verify user is authenticated`', createFixture, [{
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',

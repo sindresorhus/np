@@ -8,7 +8,7 @@ const createFixture = _createFixture('../../source/util.js');
 
 test('reports new dependencies since last release', createFixture, async ({$$, temporaryDir}) => {
 	await updatePackage(temporaryDir, {dependencies: {'dog-names': '^2.1.0'}});
-	await $$`git add -A`;
+	await $$`git add .`;
 	await $$`git commit -m "added"`;
 	await $$`git tag v0.0.0`;
 	await updatePackage(temporaryDir, {dependencies: {'cat-names': '^3.1.0'}});

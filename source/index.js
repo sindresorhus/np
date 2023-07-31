@@ -83,7 +83,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		if (publishStatus === 'FAILED') {
 			await rollback();
 		} else {
-			console.log('\nAborted!'); // TODO: maybe only show 'Aborted!' if user cancels?
+			console.log('\nAborted!');
 		}
 	}, {minimumWait: 2000});
 

@@ -48,8 +48,6 @@ export default class Version {
 		this.#version = semver.parse(version);
 
 		if (this.#version === null) {
-			// TODO: maybe make a custom InvalidSemVerError?
-			// TODO: linkify '`SemVer` version'
 			throw new Error(`Version \`${version}\` should be a valid \`SemVer\` version.`);
 		}
 	}
@@ -109,7 +107,7 @@ export default class Version {
 	@param {string | SemVerInstance} [options.previousVersion]
 	@returns {string} A color-formatted version string.
 	*/
-	format({color = 'dim', diffColor = 'cyan', previousVersion} = {}) { // TODO: `ColorName` type could be better to allow e.g. bgRed.blue
+	format({color = 'dim', diffColor = 'cyan', previousVersion} = {}) {
 		if (typeof previousVersion === 'string') {
 			const previousSemver = semver.parse(previousVersion);
 
@@ -146,7 +144,7 @@ export default class Version {
 			this.#diff === 'premajor'   ? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) :
 			this.#diff === 'preminor'   ? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) :
 			this.#diff === 'prepatch'   ? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}-{${diffColor} ${prerelease.join('.')}}}`) :
-			this.#diff === 'prerelease' ? chalk(`{${color} ${major}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) : '' // TODO: throw error if somehow invalid????
+			this.#diff === 'prerelease' ? chalk(`{${color} ${major}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) : ''
 		);
 		/* eslint-enable indent, unicorn/no-nested-ternary, operator-linebreak, no-multi-spaces */
 	}

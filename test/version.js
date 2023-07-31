@@ -136,12 +136,12 @@ test('format - prerelease as prepatch', t => {
 });
 
 test('format - prerelease with multiple numbers', t => {
-	const newVersion = makeNewFormattedVersion('0.0.{1}-{0.0}'); // TODO: should it be {0}.{0}?
+	const newVersion = makeNewFormattedVersion('0.0.{1}-{0.0}');
 	t.is(new Version('0.0.0').setFrom('0.0.1-0.0').format(), newVersion);
 });
 
 test('format - prerelease with text', t => {
-	const newVersion = makeNewFormattedVersion('0.0.{1}-{alpha.0}'); // TODO: should it be {alpha}.{0}?
+	const newVersion = makeNewFormattedVersion('0.0.{1}-{alpha.0}');
 	t.is(new Version('0.0.0').setFrom('0.0.1-alpha.0').format(), newVersion);
 });
 
