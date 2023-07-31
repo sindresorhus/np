@@ -4,7 +4,7 @@ import {_createFixture} from '../_helpers/integration-test.js';
 /** @type {ReturnType<typeof _createFixture<import('../../source/git-util.js')>>} */
 const createFixture = _createFixture('../../source/git-util.js');
 
-test('removes most previous commit', createFixture, async ({t, $$}) => {
+test('removes latest commit', createFixture, async ({t, $$}) => {
 	await t.context.createFile('index.js');
 	await $$`git add -A`;
 	await $$`git commit -m "added"`;
@@ -17,5 +17,3 @@ test('removes most previous commit', createFixture, async ({t, $$}) => {
 	const {stdout: commitsAfter} = await $$`git log --pretty="%s"`;
 	t.false(commitsAfter.includes('"added"'));
 });
-
-test.todo('test over tags');

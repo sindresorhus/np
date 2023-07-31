@@ -8,7 +8,7 @@ test('returns files added since latest tag', createFixture, async ({t, $$}) => {
 	await $$`git tag v0.0.0`;
 	await t.context.createFile('new');
 	await t.context.createFile('index.js');
-	await $$`git add -A`;
+	await $$`git add .`;
 	await $$`git commit -m "added"`;
 }, async ({t, testedModule: {newFilesSinceLastRelease}, temporaryDir}) => {
 	const newFiles = await newFilesSinceLastRelease(temporaryDir);

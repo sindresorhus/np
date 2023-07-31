@@ -4,35 +4,42 @@ import {_createFixture} from '../_helpers/integration-test.js';
 /** @type {ReturnType<typeof _createFixture<import('../../source/git-util.js')>>} */
 const createFixture = _createFixture('../../source/git-util.js');
 
-// From https://stackoverflow.com/a/3357357/10292952
-const getCommitMessage = async ($$, sha) => $$`git log --format=%B -n 1 ${sha}`;
-
-// TODO: `tagList` always has a minimum length of 1 -> `''.split('\n')` => `['']`
-test.failing('no tags', createFixture, () => {}, async ({t, testedModule: {previousTagOrFirstCommit}}) => {
+test('no tags', createFixture, () => {
+	//
+}, async ({t, testedModule: {previousTagOrFirstCommit}}) => {
 	const result = await previousTagOrFirstCommit();
 	t.is(result, undefined);
 });
 
-test('one tag', createFixture, async ({$$}) => {
+test('one tag - fallback to first commit', createFixture, async ({$$}) => {
 	await $$`git tag v0.0.0`;
-}, async ({t, testedModule: {previousTagOrFirstCommit}, $$}) => {
+}, async ({t, testedModule: {previousTagOrFirstCommit}}) => {
 	const result = await previousTagOrFirstCommit();
-	const {stdout: firstCommitMessage} = await getCommitMessage($$, result);
+	const commitMessage = await t.context.getCommitMessage(result);
 
-	t.is(firstCommitMessage.trim(), '"init1"');
+	t.is(commitMessage, t.context.firstCommitMessage);
 });
 
 test('two tags', createFixture, async ({t, $$}) => {
 	await $$`git tag v0.0.0`;
-
-	await t.context.createFile('new');
-	await $$`git add new`;
-	await $$`git commit -m 'added'`;
-
+	await t.context.commitNewFile();
 	await $$`git tag v1.0.0`;
 }, async ({t, testedModule: {previousTagOrFirstCommit}}) => {
 	const result = await previousTagOrFirstCommit();
 	t.is(result, 'v0.0.0');
+});
+
+test('multiple tags', createFixture, async ({t, $$}) => {
+	await $$`git tag v0.0.0`;
+	/* eslint-disable no-await-in-loop */
+	for (const major of [1, 2, 3, 4]) {
+		await t.context.commitNewFile();
+		await $$`git tag v${major}.0.0`;
+	}
+	/* eslint-enable no-await-in-loop */
+}, async ({t, testedModule: {previousTagOrFirstCommit}}) => {
+	const result = await previousTagOrFirstCommit();
+	t.is(result, 'v3.0.0');
 });
 
 test.todo('test fallback case');

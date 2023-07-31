@@ -22,5 +22,3 @@ test('not clean', createFixture, async ({t}) => {
 		{message: 'Unclean working tree. Commit or stash changes first.'},
 	);
 });
-
-test.todo('add test for when `git status --porcelain` fails');

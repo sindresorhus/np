@@ -12,12 +12,12 @@ test('returns latest tag', createFixture, async ({$$}) => {
 
 test('returns latest tag - multiple set', createFixture, async ({t, $$}) => {
 	await $$`git tag v0.0.0`;
-
-	await t.context.createFile('new');
-	await $$`git add new`;
-	await $$`git commit -m 'added'`;
-
-	await $$`git tag v1.0.0`;
+	/* eslint-disable no-await-in-loop */
+	for (const major of [1, 2, 3, 4]) {
+		await t.context.commitNewFile();
+		await $$`git tag v${major}.0.0`;
+	}
+	/* eslint-enable no-await-in-loop */
 }, async ({t, testedModule: {latestTag}}) => {
-	t.is(await latestTag(), 'v1.0.0');
+	t.is(await latestTag(), 'v4.0.0');
 });

@@ -1,4 +1,5 @@
 /* eslint-disable ava/no-ignored-test-files */
+import crypto from 'node:crypto';
 import path from 'node:path';
 import fs from 'fs-extra';
 import test from 'ava';
@@ -23,7 +24,29 @@ export const createIntegrationTest = async (t, assertions) => {
 
 		await createEmptyGitRepo($$, temporaryDir);
 
+		t.context.firstCommitMessage = '"init1"'; // From createEmptyGitRepo
+
+		// From https://stackoverflow.com/a/3357357/10292952
+		t.context.getCommitMessage = async sha => {
+			const {stdout: commitMessage} = await $$`git log --format=%B -n 1 ${sha}`;
+			return commitMessage.trim();
+		};
+
 		t.context.createFile = async (file, content = '') => fs.outputFile(path.resolve(temporaryDir, file), content);
+
+		t.context.commitNewFile = async () => {
+			await t.context.createFile(`new-${crypto.randomUUID()}`);
+			await $$`git add .`;
+			await $$`git commit -m "added"`;
+
+			const {stdout: lastCommitSha} = await $$`git rev-parse --short HEAD`;
+
+			return {
+				sha: lastCommitSha,
+				commitMessage: await t.context.getCommitMessage(lastCommitSha),
+			};
+		};
+
 		await assertions({$$, temporaryDir});
 	});
 };

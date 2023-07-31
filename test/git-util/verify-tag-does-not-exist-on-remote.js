@@ -24,5 +24,3 @@ test('does not exist', createFixture, [{
 		verifyTagDoesNotExistOnRemote('v0.0.0'),
 	);
 });
-
-test.todo('tagExistsOnRemote() errors');

@@ -6,7 +6,6 @@ const MOCK_COMMIT_HASH = '5063f8a';
 const MOCK_COMMIT_RANGE = `${MOCK_COMMIT_HASH}...master`;
 
 const verifyLinks = test.macro(async (t, {linksSupported}, assertions) => {
-	// TODO: copy terminalLink to allow concurrent tests
 	/** @type {typeof import('../../source/util.js')} */
 	const util = await esmock('../../source/util.js', {}, {
 		'supports-hyperlinks': {

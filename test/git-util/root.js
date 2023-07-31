@@ -10,8 +10,8 @@ test('returns np root dir', async t => {
 	t.is(await root(), npRootDir);
 });
 
-test('returns root dir of temp dir', createFixture, () => {},
-	async ({t, testedModule: git, temporaryDir}) => {
-		t.is(await git.root(), temporaryDir);
-	},
-);
+test('returns root dir of temp dir', createFixture, () => {
+	//
+}, async ({t, testedModule: git, temporaryDir}) => {
+	t.is(await git.root(), temporaryDir);
+});

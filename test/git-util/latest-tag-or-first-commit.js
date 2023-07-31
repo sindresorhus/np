@@ -16,22 +16,18 @@ test('one tag', createFixture, async ({$$}) => {
 
 test('two tags', createFixture, async ({t, $$}) => {
 	await $$`git tag v0.0.0`;
-
-	await t.context.createFile('new');
-	await $$`git add new`;
-	await $$`git commit -m 'added'`;
-
+	await t.context.commitNewFile();
 	await $$`git tag v1.0.0`;
 }, async ({t, testedModule: {latestTagOrFirstCommit}}) => {
 	const result = await latestTagOrFirstCommit();
 	t.is(result, 'v1.0.0');
 });
 
-test('no tags (fallback)', createFixture, async () => {},
-	async ({t, testedModule: {latestTagOrFirstCommit}, $$}) => {
-		const result = await latestTagOrFirstCommit();
-		const {stdout: firstCommitMessage} = await getCommitMessage($$, result);
+test('no tags (fallback)', createFixture, async () => {
+	//
+}, async ({t, testedModule: {latestTagOrFirstCommit}, $$}) => {
+	const result = await latestTagOrFirstCommit();
+	const {stdout: firstCommitMessage} = await getCommitMessage($$, result);
 
-		t.is(firstCommitMessage.trim(), '"init1"');
-	},
-);
+	t.is(firstCommitMessage.trim(), '"init1"');
+});

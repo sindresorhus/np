@@ -4,7 +4,7 @@ import {getTagVersionPrefix, getPreReleasePrefix} from './util.js';
 import Version from './version.js';
 
 const releaseTaskHelper = async (options, pkg) => {
-	const newVersion = new Version(pkg.version, options.version);
+	const newVersion = new Version(pkg.version).setFrom(options.version);
 	let tag = await getTagVersionPrefix(options) + newVersion;
 
 	const isPrerelease = new Version(options.version).isPrerelease();

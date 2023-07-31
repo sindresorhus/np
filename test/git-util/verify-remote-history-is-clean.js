@@ -63,12 +63,12 @@ test('clean fetched remote history', createStubFixture, [
 	);
 });
 
-test('no remote', createIntegrationFixture, async () => {},
-	async ({t, testedModule: {verifyRemoteHistoryIsClean}}) => {
-		const result = await t.notThrowsAsync(
-			verifyRemoteHistoryIsClean(),
-		);
+test('no remote', createIntegrationFixture, async () => {
+	//
+}, async ({t, testedModule: {verifyRemoteHistoryIsClean}}) => {
+	const result = await t.notThrowsAsync(
+		verifyRemoteHistoryIsClean(),
+	);
 
-		t.is(result, undefined);
-	},
-);
+	t.is(result, undefined);
+});

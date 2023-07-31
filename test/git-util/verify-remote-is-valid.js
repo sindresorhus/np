@@ -17,11 +17,11 @@ test('has remote', createStubFixture, [{
 	);
 });
 
-test('no remote', createIntegrationFixture, async () => {},
-	async ({t, testedModule: {verifyRemoteIsValid}}) => {
-		await t.throwsAsync(
-			verifyRemoteIsValid(),
-			{message: /^Git fatal error:/m},
-		);
-	},
-);
+test('no remote', createIntegrationFixture, async () => {
+	//
+}, async ({t, testedModule: {verifyRemoteIsValid}}) => {
+	await t.throwsAsync(
+		verifyRemoteIsValid(),
+		{message: /^Git fatal error:/m},
+	);
+});

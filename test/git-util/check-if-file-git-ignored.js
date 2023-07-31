@@ -1,13 +1,20 @@
-import path from 'node:path';
 import test from 'ava';
-import {npRootDir} from '../../source/util.js';
+import {temporaryDirectory} from 'tempy';
 import {checkIfFileGitIgnored} from '../../source/git-util.js';
 
-const npPkgPath = path.join(npRootDir, 'package.json');
-
-test('np package.json not ignored, yarn.lock is', async t => {
-	t.false(await checkIfFileGitIgnored(npPkgPath));
-	t.true(await checkIfFileGitIgnored(path.resolve(npRootDir, 'yarn.lock')));
+test('returns true for ignored files', async t => {
+	t.true(await checkIfFileGitIgnored('yarn.lock'));
 });
 
-test.todo('throws');
+test('returns false for non-ignored files', async t => {
+	t.false(await checkIfFileGitIgnored('package.json'));
+});
+
+test('errors if path is outside of repo', async t => {
+	const temporary = temporaryDirectory();
+
+	await t.throwsAsync(
+		checkIfFileGitIgnored(`${temporary}/file.js`),
+		{message: /fatal:/},
+	);
+});

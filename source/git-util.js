@@ -33,15 +33,16 @@ export const newFilesSinceLastRelease = async rootDir => {
 };
 
 export const readFileFromLastRelease = async file => {
-	const filePathFromRoot = path.relative(await root(), file);
+	const rootPath = await root();
+	const filePathFromRoot = path.relative(rootPath, path.resolve(rootPath, file));
 	const {stdout: oldFile} = await execa('git', ['show', `${await latestTag()}:${filePathFromRoot}`]);
 	return oldFile;
 };
 
+/** Returns an array of tags, sorted by creation date in ascending order. */
 const tagList = async () => {
-	// Returns the list of tags, sorted by creation date in ascending order.
 	const {stdout} = await execa('git', ['tag', '--sort=creatordate']);
-	return stdout.split('\n');
+	return stdout ? stdout.split('\n') : [];
 };
 
 const firstCommit = async () => {
