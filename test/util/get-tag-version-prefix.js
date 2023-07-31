@@ -7,7 +7,7 @@ import {getTagVersionPrefix as originalGetTagVersionPrefix} from '../../source/u
 const createFixture = _createFixture('../../source/util.js', import.meta.url);
 
 test('returns tag prefix - npm', createFixture, [{
-	command: 'npm config get preId',
+	command: 'npm config get tag-version-prefix',
 	stdout: 'ver',
 }], async ({t, testedModule: {getTagVersionPrefix}}) => {
 	t.is(
@@ -17,7 +17,7 @@ test('returns tag prefix - npm', createFixture, [{
 });
 
 test('returns preId postfix - yarn', createFixture, [{
-	command: 'yarn config get preId',
+	command: 'yarn config get version-tag-prefix',
 	stdout: 'ver',
 }], async ({t, testedModule: {getTagVersionPrefix}}) => {
 	t.is(
@@ -27,7 +27,7 @@ test('returns preId postfix - yarn', createFixture, [{
 });
 
 test('defaults to "v" when command fails', createFixture, [{
-	command: 'npm config get preId',
+	command: 'npm config get tag-version-prefix',
 	exitCode: 1,
 }], async ({t, testedModule: {getTagVersionPrefix}}) => {
 	t.is(
