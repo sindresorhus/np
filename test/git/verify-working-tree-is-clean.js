@@ -5,7 +5,7 @@ import {_createFixture} from '../_helpers/integration-test.js';
 const createFixture = _createFixture('../../source/git-util.js');
 
 test('clean', createFixture, async ({t, $$}) => {
-	t.context.createFile('index.js');
+	await t.context.createFile('index.js');
 	await $$`git add .`;
 	await $$`git commit -m "added"`;
 }, async ({t, testedModule: {verifyWorkingTreeIsClean}}) => {
@@ -15,7 +15,7 @@ test('clean', createFixture, async ({t, $$}) => {
 });
 
 test('not clean', createFixture, async ({t}) => {
-	t.context.createFile('index.js');
+	await t.context.createFile('index.js');
 }, async ({t, testedModule: {verifyWorkingTreeIsClean}}) => {
 	await t.throwsAsync(
 		verifyWorkingTreeIsClean(),
