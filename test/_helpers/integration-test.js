@@ -8,23 +8,25 @@ import {$, execa} from 'execa';
 import {temporaryDirectoryTask} from 'tempy';
 
 const createEmptyGitRepo = async ($$, temporaryDir) => {
+	const firstCommitMessage = '"init1"';
+
 	await $$`git init`;
 
 	// `git tag` needs an initial commit
 	await fs.createFile(path.resolve(temporaryDir, 'temp'));
 	await $$`git add temp`;
-	await $$`git commit -m "init1"`;
+	await $$`git commit -m ${firstCommitMessage}`;
 	await $$`git rm temp`;
 	await $$`git commit -m "init2"`;
+
+	return firstCommitMessage;
 };
 
 export const createIntegrationTest = async (t, assertions) => {
 	await temporaryDirectoryTask(async temporaryDir => {
 		const $$ = $({cwd: temporaryDir});
 
-		await createEmptyGitRepo($$, temporaryDir);
-
-		t.context.firstCommitMessage = '"init1"'; // From createEmptyGitRepo
+		t.context.firstCommitMessage = await createEmptyGitRepo($$, temporaryDir);
 
 		// From https://stackoverflow.com/a/3357357/10292952
 		t.context.getCommitMessage = async sha => {

@@ -3,9 +3,6 @@ import is from '@sindresorhus/is';
 import stripAnsi from 'strip-ansi';
 import mapObject from 'map-obj';
 
-// NOTE: This only handles prompts of type 'input', 'list', and 'confirm'. If other prompt types are added, they must be implemented here.
-// Based on https://gist.github.com/yyx990803/f61f347b6892078c40a9e8e77b9bd984
-
 /** @typedef {import('ava').ExecutionContext<Record<string, never>>} ExecutionContext */
 /** @typedef {string | boolean} ShortAnswer */
 /** @typedef {Record<'input' | 'error', string> | Record<'choice', string> | Record<'confirm', boolean>} LongAnswer */
@@ -14,7 +11,15 @@ import mapObject from 'map-obj';
 /** @typedef {import('inquirer').DistinctQuestion & {name?: never}} Prompt */
 
 /**
-@param {object} o
+Mocks `inquirer.prompt` and answers each prompt in the program with the provided `inputAnswers`.
+
+This only handles prompts of type `input`, `list`, and `confirm`. If other prompt types are added, they must be implemented here.
+
+Logs for debugging are outputted on test failure.
+
+@see https://gist.github.com/yyx990803/f61f347b6892078c40a9e8e77b9bd984
+
+@param {object} o Test input and actual prompts
 @param {ExecutionContext} o.t
 @param {Answers} o.inputAnswers Test input
 @param {Record<string, Prompt> | Prompt[]} o.prompts Actual prompts
@@ -175,17 +180,24 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 	return answers;
 };
 
-/** @param {import('esmock').MockMap} mocks */
+/**
+Fixes relative module paths for use with `esmock`. Allows specifiying the same relative location in test files as in source files.
+@param {import('esmock').MockMap} mocks
+*/
 const fixRelativeMocks = mocks => mapObject(mocks, (key, value) => [key.replace('./', '../../source/'), value]);
 
 /**
-@param {object} o
+Mocks `inquirer` for testing `source/ui.js`.
+
+@param {object} o Test input and optional global mocks
 @param {ExecutionContext} o.t
-@param {Answers} o.answers
-@param {import('esmock').MockMap} [o.mocks]
-@param {string[]} [o.logs]
+@param {Answers} o.answers Test input
+@param {import('esmock').MockMap} [o.mocks] Optional global mocks
 */
-export const mockInquirer = async ({t, answers, mocks = {}, logs = []}) => {
+export const mockInquirer = async ({t, answers, mocks = {}}) => {
+	/** @type {string[]} */
+	const logs = [];
+
 	/** @type {import('../../source/ui.js')} */
 	const ui = await esmock('../../source/ui.js', import.meta.url, {
 		inquirer: {
@@ -202,7 +214,6 @@ export const mockInquirer = async ({t, answers, mocks = {}, logs = []}) => {
 		},
 	}, {
 		...fixRelativeMocks(mocks),
-		// Mock globals
 		import: {
 			console: {log: (...args) => logs.push(...args)},
 		},

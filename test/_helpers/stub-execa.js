@@ -4,13 +4,21 @@ import esmock from 'esmock';
 import sinon from 'sinon';
 import {execa} from 'execa';
 
+/**
+Stubs `execa` to return a specific result when called with the given commands.
+
+A command passes if its exit code is 0, or if there's no exit code and no stderr.
+
+Resolves or throws the given result.
+
+@param {import('execa').ExecaReturnValue[]} commands
+*/
 const makeExecaStub = commands => {
 	const stub = sinon.stub();
 
 	for (const result of commands) {
 		const [command, ...commandArgs] = result.command.split(' ');
 
-		// Command passes if the exit code is 0, or if there's no exit code and no stderr.
 		const passes = result.exitCode === 0 || (!result.exitCode && !result.stderr);
 
 		if (passes) {
