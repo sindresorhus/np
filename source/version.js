@@ -118,13 +118,11 @@ export default class Version {
 			previousVersion = previousSemver;
 		}
 
-		// TODO: should previousVersion take precendence over this.#diff?
 		if (!this.#diff) {
 			if (!previousVersion) {
 				return chalk(`{${color} ${this.toString()}}`);
 			}
 
-			// TODO: maybe allow passing a Version instance too?
 			this.#diff = semver.diff(previousVersion, this.#version);
 		}
 

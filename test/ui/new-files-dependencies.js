@@ -41,7 +41,6 @@ const createFixture = test.macro(async (t, pkg, commands, expected) => {
 		await commands({t, $$, temporaryDir});
 		pkg = await readPackage({cwd: temporaryDir});
 
-		// TODO: describe mocks
 		const {ui, logs: logsArray} = await mockInquirer({t, answers: {confirm: {confirm: false}}, mocks: {
 			'./npm/util.js': {
 				getRegistryUrl: sinon.stub().resolves(''),
