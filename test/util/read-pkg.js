@@ -5,13 +5,13 @@ import esmock from 'esmock';
 import {temporaryDirectory} from 'tempy';
 import {readPkg, npPkg, npRootDir} from '../../source/util.js';
 
-const rootDir = fileURLToPath(new URL('../..', import.meta.url));
+const rootDir = fileURLToPath(new URL('../..', import.meta.url)).slice(0, -1);
 
 test('without packagePath returns np package.json', async t => {
 	const {pkg, rootDir: pkgDir} = await readPkg();
 
 	t.is(pkg.name, 'np');
-	t.is(pkgDir + '/', rootDir);
+	t.is(pkgDir, rootDir);
 });
 
 test('with packagePath', async t => {

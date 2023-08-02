@@ -12,9 +12,9 @@ import Version from './version.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-export const npRootDir = fileURLToPath(new URL('..', import.meta.url));
+const _npRootDir = fileURLToPath(new URL('..', import.meta.url));
 
-export const readPkg = async (packagePath = npRootDir) => {
+export const readPkg = async (packagePath = _npRootDir) => {
 	const packageResult = await readPackageUp({cwd: packagePath});
 
 	if (!packageResult) {
@@ -24,7 +24,8 @@ export const readPkg = async (packagePath = npRootDir) => {
 	return {pkg: packageResult.packageJson, rootDir: path.dirname(packageResult.path)};
 };
 
-export const {pkg: npPkg} = await readPkg(npRootDir);
+// Re-define `npRootDir` for trailing slash consistency
+export const {pkg: npPkg, rootDir: npRootDir} = await readPkg(_npRootDir);
 
 export const linkifyIssues = (url, message) => {
 	if (!(url && terminalLink.isSupported)) {
