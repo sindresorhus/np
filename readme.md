@@ -351,5 +351,4 @@ npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my-awesome-p
 ## Maintainers
 
 - [Sindre Sorhus](https://github.com/sindresorhus)
-- [Sam Verschueren](https://github.com/SamVerschueren)
-- [Itai Steinherz](https://github.com/itaisteinherz)
+- [Tommy Mitchell](https://github.com/tommy-mitchell)
