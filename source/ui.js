@@ -22,7 +22,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 		return {
 			hasCommits: false,
 			hasUnreleasedCommits: false,
-			releaseNotes() {},
+			generateReleaseNotes() {},
 		};
 	}
 
@@ -64,7 +64,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 		return `- ${commitMessage}  ${commitId}`;
 	}).join('\n');
 
-	const releaseNotes = nextTag => commits.map(commit =>
+	const generateReleaseNotes = nextTag => commits.map(commit =>
 		`- ${htmlEscape(commit.message)}  ${commit.id}`,
 	).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 
@@ -74,7 +74,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 	return {
 		hasCommits: true,
 		hasUnreleasedCommits,
-		releaseNotes,
+		generateReleaseNotes,
 	};
 };
 
@@ -151,7 +151,7 @@ const ui = async (options, {pkg, rootDir}) => {
 	}
 
 	const useLatestTag = !options.releaseDraftOnly;
-	const {hasCommits, hasUnreleasedCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
+	const {hasCommits, hasUnreleasedCommits, generateReleaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
 
 	if (hasUnreleasedCommits && options.releaseDraftOnly) {
 		const answers = await inquirer.prompt({
@@ -175,7 +175,7 @@ const ui = async (options, {pkg, rootDir}) => {
 			...options,
 			confirm: true,
 			repoUrl,
-			releaseNotes,
+			generateReleaseNotes,
 		};
 	}
 
@@ -296,7 +296,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		publishScoped: answers.publishScoped,
 		confirm: true,
 		repoUrl,
-		releaseNotes,
+		generateReleaseNotes,
 	};
 };
 
