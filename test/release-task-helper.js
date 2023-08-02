@@ -16,7 +16,12 @@ const verifyRelease = test.macro(async (t, {oldVersion, newVersion, prefixes = {
 	});
 
 	await releaseTaskHelper(
-		{version: newVersion, repoUrl, releaseNotes: sinon.stub()},
+		{
+			version: newVersion,
+			repoUrl,
+			releaseNotes: true,
+			generateReleaseNotes: sinon.stub(),
+		},
 		{version: oldVersion},
 	);
 });

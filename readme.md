@@ -68,6 +68,7 @@ $ np --help
     --contents              Subdirectory to publish
     --no-release-draft      Skips opening a GitHub release draft
     --release-draft-only    Only opens a GitHub release draft for the latest published version
+    --no-release-notes      Skips generating release notes when opening a GitHub release draft
     --test-script           Name of npm run script to run tests before publishing (default: test)
     --no-2fa                Don't enable 2FA on new packages (not recommended)
     --message               Version bump commit message, '%s' will be replaced with version (default: '%s' with npm and 'v%s' with yarn)
@@ -103,6 +104,7 @@ Currently, these are the flags you can configure:
 - `tag` - Publish under a given dist-tag (`latest` by default).
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
+- `releaseNotes` - Auto-generate release notes when opening a GitHub release draft (`true` by default).
 - `testScript` - Name of npm run script to run tests before publishing (`test` by default).
 - `2fa` - Enable 2FA on new packages (`true` by default) (setting this to `false` is not recommended).
 - `message` - The commit message used for the version bump. Any `%s` in the string will be replaced with the new version. By default, npm uses `%s` and Yarn uses `v%s`.
