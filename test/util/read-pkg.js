@@ -1,17 +1,17 @@
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import test from 'ava';
+import esmock from 'esmock';
 import {temporaryDirectory} from 'tempy';
 import {readPkg, npPkg, npRootDir} from '../../source/util.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, '../..');
+const rootDir = fileURLToPath(new URL('../..', import.meta.url));
 
-test('without packagePath', async t => {
+test('without packagePath returns np package.json', async t => {
 	const {pkg, rootDir: pkgDir} = await readPkg();
 
 	t.is(pkg.name, 'np');
-	t.is(pkgDir, rootDir);
+	t.is(pkgDir + '/', rootDir);
 });
 
 test('with packagePath', async t => {
@@ -35,4 +35,15 @@ test('npPkg', t => {
 
 test('npRootDir', t => {
 	t.is(npRootDir, rootDir);
+});
+
+test('npRootDir is correct when process.cwd is different', async t => {
+	const temporaryDir = temporaryDirectory();
+
+	/** @type {import('../../source/util.js')} */
+	const util = await esmock('../../source/util.js', {}, {
+		'node:process': {cwd: temporaryDir},
+	});
+
+	t.is(util.npRootDir, rootDir);
 });

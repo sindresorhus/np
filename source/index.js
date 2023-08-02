@@ -64,7 +64,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 
 		try {
 			// Verify that the package's version has been bumped before deleting the last tag and commit.
-			if (versionInLatestTag === util.readPkg().version && versionInLatestTag !== pkg.version) {
+			if (versionInLatestTag === util.readPkg(rootDir).version && versionInLatestTag !== pkg.version) {
 				await git.deleteTag(latestTag);
 				await git.removeLastCommit();
 			}

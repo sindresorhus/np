@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {readPackageUp} from 'read-pkg-up';
 import {parsePackage} from 'read-pkg';
@@ -11,7 +12,9 @@ import Version from './version.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-export const readPkg = async packagePath => {
+export const npRootDir = fileURLToPath(new URL('..', import.meta.url));
+
+export const readPkg = async (packagePath = npRootDir) => {
 	const packageResult = await readPackageUp({cwd: packagePath});
 
 	if (!packageResult) {
@@ -21,7 +24,7 @@ export const readPkg = async packagePath => {
 	return {pkg: packageResult.packageJson, rootDir: path.dirname(packageResult.path)};
 };
 
-export const {pkg: npPkg, rootDir: npRootDir} = await readPkg();
+export const {pkg: npPkg} = await readPkg(npRootDir);
 
 export const linkifyIssues = (url, message) => {
 	if (!(url && terminalLink.isSupported)) {
