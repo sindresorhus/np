@@ -84,7 +84,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		} else {
 			console.log('\nAborted!');
 		}
-	}, {minimumWait: 2000});
+	}, {wait: 2000});
 
 	const shouldEnable2FA = options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !npm.isExternalRegistry(pkg);
 
