@@ -1,3 +1,4 @@
+import process from 'node:process';
 import test from 'ava';
 import {stripIndent} from 'common-tags';
 import {_createFixture} from '../_helpers/stub-execa.js';
@@ -6,8 +7,8 @@ import {getPreReleasePrefix as originalGetPreReleasePrefix} from '../../source/u
 /** @type {ReturnType<typeof _createFixture<import('../../source/util.js')>>} */
 const createFixture = _createFixture('../../source/util.js', import.meta.url);
 
-test('returns preId postfix if set - npm', createFixture, [{
-	command: 'npm config get preId',
+test('returns preid postfix if set - npm', createFixture, [{
+	command: 'npm config get preid',
 	stdout: 'pre',
 }], async ({t, testedModule: {getPreReleasePrefix}}) => {
 	t.is(
@@ -16,8 +17,8 @@ test('returns preId postfix if set - npm', createFixture, [{
 	);
 });
 
-test('returns preId postfix if set - yarn', createFixture, [{
-	command: 'yarn config get preId',
+test('returns preid postfix if set - yarn', createFixture, [{
+	command: 'yarn config get preid',
 	stdout: 'pre',
 }], async ({t, testedModule: {getPreReleasePrefix}}) => {
 	t.is(
@@ -27,7 +28,7 @@ test('returns preId postfix if set - yarn', createFixture, [{
 });
 
 test('returns empty string if not set - npm', createFixture, [{
-	command: 'npm config get preId',
+	command: 'npm config get preid',
 	stdout: 'undefined',
 }], async ({t, testedModule: {getPreReleasePrefix}}) => {
 	t.is(
@@ -37,7 +38,7 @@ test('returns empty string if not set - npm', createFixture, [{
 });
 
 test('returns empty string if not set - yarn', createFixture, [{
-	command: 'yarn config get preId',
+	command: 'yarn config get preid',
 	stdout: 'undefined',
 }], async ({t, testedModule: {getPreReleasePrefix}}) => {
 	t.is(
@@ -59,4 +60,13 @@ test('no options passed', async t => {
 		originalGetPreReleasePrefix({}),
 		{message: 'Expected object to have keys `["yarn"]`'},
 	);
+});
+
+test.serial('returns actual value', async t => {
+	const originalPreid = process.env.NPM_CONFIG_PREID;
+	process.env.NPM_CONFIG_PREID = 'beta';
+
+	t.is(await originalGetPreReleasePrefix({yarn: false}), 'beta');
+
+	process.env.NPM_CONFIG_PREID = originalPreid;
 });

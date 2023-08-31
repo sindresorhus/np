@@ -1,3 +1,4 @@
+import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {readPackageUp} from 'read-pkg-up';
@@ -12,9 +13,7 @@ import Version from './version.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-const _npRootDir = fileURLToPath(new URL('..', import.meta.url));
-
-export const readPkg = async (packagePath = _npRootDir) => {
+export const readPkg = async (packagePath = process.cwd()) => {
 	const packageResult = await readPackageUp({cwd: packagePath});
 
 	if (!packageResult) {
@@ -23,6 +22,8 @@ export const readPkg = async (packagePath = _npRootDir) => {
 
 	return {pkg: packageResult.packageJson, rootDir: path.dirname(packageResult.path)};
 };
+
+const _npRootDir = fileURLToPath(new URL('..', import.meta.url));
 
 // Re-define `npRootDir` for trailing slash consistency
 export const {pkg: npPkg, rootDir: npRootDir} = await readPkg(_npRootDir);
@@ -113,7 +114,7 @@ export const getPreReleasePrefix = pMemoize(async options => {
 
 	try {
 		const packageManager = options.yarn ? 'yarn' : 'npm';
-		const {stdout} = await execa(packageManager, ['config', 'get', 'preId']);
+		const {stdout} = await execa(packageManager, ['config', 'get', 'preid']);
 
 		return stdout === 'undefined' ? '' : stdout;
 	} catch {

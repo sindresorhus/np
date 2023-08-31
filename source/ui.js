@@ -144,7 +144,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 	} else {
 		const versionText = options.version
-			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version).format()})`)
+			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version, {prereleasePrefix: await util.getPreReleasePrefix(options)}).format()})`)
 			: chalk.dim(`(current: ${oldVersion})`);
 
 		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${versionText}\n`);

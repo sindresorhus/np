@@ -34,6 +34,9 @@ export default class Version {
 	/** @type {SemVerIncrement | undefined} */
 	#diff = undefined;
 
+	/** @type {string | undefined} */
+	#prereleasePrefix = undefined;
+
 	toString() {
 		return this.#version.version;
 	}
@@ -55,8 +58,11 @@ export default class Version {
 	/**
 	@param {string} version - A valid `SemVer` version.
 	@param {SemVerIncrement} [increment] - Optionally increment `version`.
+	@param {object} [options]
+	@param {string} [options.prereleasePrefix] - A prefix to use for `prerelease` versions.
 	*/
-	constructor(version, increment) {
+	constructor(version, increment, {prereleasePrefix} = {}) {
+		this.#prereleasePrefix = prereleasePrefix;
 		this.#trySetVersion(version);
 
 		if (increment) {
@@ -72,13 +78,16 @@ export default class Version {
 	Sets a new version based on `input`. If `input` is a valid `SemVer` increment, the current version will be incremented by that amount. If `input` is a valid `SemVer` version, the current version will be set to `input` if it is greater than the current version.
 
 	@param {string | SemVerIncrement} input - A new valid `SemVer` version or a `SemVer` increment to increase the current version by.
+	@param {object} [options]
+	@param {string} [options.prereleasePrefix] - A prefix to use for `prerelease` versions.
 	@throws If `input` is not a valid `SemVer` version or increment, or if `input` is a valid `SemVer` version but is not greater than the current version.
 	*/
-	setFrom(input) {
+	setFrom(input, {prereleasePrefix = ''} = {}) {
+		this.#prereleasePrefix ??= prereleasePrefix;
 		const previousVersion = this.toString();
 
 		if (isSemVerIncrement(input)) {
-			this.#version.inc(input);
+			this.#version.inc(input, this.#prereleasePrefix);
 		} else {
 			if (isInvalidSemVerVersion(input)) {
 				throw new Error(`New version \`${input}\` should either be one of ${SEMVER_INCREMENTS_LIST}, or a valid \`SemVer\` version.`);
@@ -104,7 +113,7 @@ export default class Version {
 	@param {object} options
 	@param {ColorName} [options.color = 'dim']
 	@param {ColorName} [options.diffColor = 'cyan']
-	@param {string | SemVerInstance} [options.previousVersion]
+	@param {string} [options.prereleasePrefix]
 	@returns {string} A color-formatted version string.
 	*/
 	format({color = 'dim', diffColor = 'cyan', previousVersion} = {}) {

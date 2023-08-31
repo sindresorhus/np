@@ -227,3 +227,8 @@ test('isPrerelease', t => {
 	t.true(new Version('1.0.0-beta').isPrerelease());
 	t.true(new Version('2.0.0-rc.2').isPrerelease());
 });
+
+test('optionally set prereleasePrefix', t => {
+	t.is(new Version('1.0.0', 'prerelease', {prereleasePrefix: 'alpha'}).toString(), '1.0.1-alpha.0');
+	t.is(new Version('1.0.0').setFrom('prerelease', {prereleasePrefix: 'beta'}).toString(), '1.0.1-beta.0');
+});

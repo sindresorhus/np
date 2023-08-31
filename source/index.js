@@ -4,7 +4,6 @@ import {execa} from 'execa';
 import {deleteAsync} from 'del';
 import Listr from 'listr';
 import {merge, throwError, catchError, filter, finalize} from 'rxjs';
-import {readPackageUp} from 'read-pkg-up';
 import hasYarn from 'has-yarn';
 import hostedGitInfo from 'hosted-git-info';
 import onetime from 'onetime';
@@ -281,7 +280,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		console.error(`\n${logSymbols.error} ${pushedObjects.reason}`);
 	}
 
-	const {packageJson: newPkg} = await readPackageUp();
+	const {pkg: newPkg} = await util.readPkg();
 	return newPkg;
 };
 
