@@ -120,7 +120,8 @@ try {
 
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !pkg.private;
 
-	const availability = flags.publish ? await npm.isPackageNameAvailable(pkg) : {
+	// TODO: does this need to run if `runPublish` is false?
+	const availability = runPublish ? await npm.isPackageNameAvailable(pkg) : {
 		isAvailable: false,
 		isUnknown: false,
 	};

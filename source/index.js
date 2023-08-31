@@ -263,6 +263,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 					return '[Preview] GitHub Releases draft will not be opened in preview mode.';
 				}
 			},
+			// TODO: parse version outside of index
 			task: () => releaseTaskHelper(options, pkg),
 		}] : [],
 	], {
