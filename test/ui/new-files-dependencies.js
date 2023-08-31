@@ -51,7 +51,7 @@ const createFixture = test.macro(async (t, pkg, commands, expected) => {
 			'is-interactive': () => false,
 		}});
 
-		await ui({runPublish: true, version: 'major'}, {pkg, rootDir: temporaryDir});
+		await ui({runPublish: true, version: 'major', yarn: false}, {pkg, rootDir: temporaryDir});
 		const logs = logsArray.join('').split('\n').map(log => stripAnsi(log));
 
 		const {unpublished, firstTime, dependencies} = expected;
