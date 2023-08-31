@@ -160,7 +160,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 					let previewText = `[Preview] Command not executed: yarn version --new-version ${input}`;
 
 					if (options.message) {
-						previewText += ` --message '${options.message.replace(/%s/g, input)}'`;
+						previewText += ` --message '${options.message.replaceAll('%s', input)}'`;
 					}
 
 					return `${previewText}.`;
@@ -184,7 +184,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 					let previewText = `[Preview] Command not executed: npm version ${input}`;
 
 					if (options.message) {
-						previewText += ` --message '${options.message.replace(/%s/g, input)}'`;
+						previewText += ` --message '${options.message.replaceAll('%s', input)}'`;
 					}
 
 					return `${previewText}.`;
