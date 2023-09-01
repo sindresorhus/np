@@ -2,7 +2,7 @@ import semver from 'semver';
 import {template as chalk} from 'chalk-template';
 
 /** @type {string[]} Allowed `SemVer` release types. */
-export const SEMVER_INCREMENTS = semver.RELEASE_TYPES.sort();
+export const SEMVER_INCREMENTS = ['patch', 'minor', 'major', 'prepatch', 'preminor', 'premajor', 'prerelease'];
 export const SEMVER_INCREMENTS_LIST = SEMVER_INCREMENTS.join(', ');
 const SEMVER_INCREMENTS_LIST_LAST_OR = `${SEMVER_INCREMENTS.slice(0, -1).join(', ')}, or ${SEMVER_INCREMENTS.slice(-1)}`;
 

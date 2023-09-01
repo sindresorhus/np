@@ -13,7 +13,7 @@ test('flags: --help', cliPasses, cli, '--help', [
 	'$ np <version>',
 	'',
 	'Version can be:',
-	'major | minor | patch | premajor | preminor | prepatch | prerelease | 1.2.3',
+	'patch | minor | major | prepatch | preminor | premajor | prerelease | 1.2.3',
 	'',
 	'Options',
 	'--any-branch           Allow publishing from any branch',

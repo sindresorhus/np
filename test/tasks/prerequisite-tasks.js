@@ -186,7 +186,7 @@ test.serial('should fail when git remote does not exist', createFixture, [{
 test.serial('should fail when version is invalid', async t => {
 	await t.throwsAsync(
 		run(actualPrerequisiteTasks('DDD', {name: 'test', version: '1.0.0'}, {yarn: false})),
-		{message: 'New version `DDD` should either be one of `major`, `minor`, `patch`, `premajor`, `preminor`, `prepatch`, `prerelease`, or a valid `SemVer` version.'},
+		{message: 'New version DDD should either be one of patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid SemVer version.'},
 	);
 
 	assertTaskFailed(t, 'Validate version');
@@ -195,7 +195,7 @@ test.serial('should fail when version is invalid', async t => {
 test.serial('should fail when version is lower than latest version', async t => {
 	await t.throwsAsync(
 		run(actualPrerequisiteTasks('0.1.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
-		{message: 'New version `0.1.0` should be higher than current version `1.0.0`.'},
+		{message: 'New version 0.1.0 should be higher than current version 1.0.0.'},
 	);
 
 	assertTaskFailed(t, 'Validate version');

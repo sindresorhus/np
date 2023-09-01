@@ -27,7 +27,7 @@ const npFails = test.macro(async (t, inputs, message) => {
 
 test('version is invalid', npFails,
 	['foo', '4.x.3'],
-	/New version `(?:foo|4\.x\.3)` should either be one of `major`, `minor`, `patch`, `premajor`, `preminor`, `prepatch`, `prerelease`, or a valid `SemVer` version\./,
+	/New version (?:foo|4\.x\.3) should either be one of patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid SemVer version\./,
 );
 
 test('version is pre-release', npFails,
@@ -37,7 +37,7 @@ test('version is pre-release', npFails,
 
 test('errors on too low version', npFails,
 	['1.0.0', '1.0.0-beta'],
-	/New version `1\.0\.0(?:-beta)?` should be higher than current version `\d+\.\d+\.\d+`/,
+	/New version 1\.0\.0(?:-beta)? should be higher than current version \d+\.\d+\.\d+/,
 );
 
 test('skip enabling 2FA if the package exists', async t => {

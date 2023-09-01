@@ -251,7 +251,7 @@ const ui = async (options, {pkg, rootDir}) => {
 					// Version error handling does validation
 					version.setFrom(input);
 				} catch (error) {
-					if (error.message.includes('valid `SemVer` version')) {
+					if (error.message.includes('valid SemVer version')) {
 						throw new Error(`Custom version ${input} should be a valid SemVer version.`);
 					}
 

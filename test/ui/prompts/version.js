@@ -104,19 +104,19 @@ test('choose custom - validation', testUi, {
 		customVersion: [
 			{
 				input: 'major',
-				error: 'Custom version should not be a `SemVer` increment.',
+				error: 'Custom version should not be a SemVer increment.',
 			},
 			{
 				input: '200',
-				error: 'Custom version `200` should be a valid `SemVer` version.',
+				error: 'Custom version 200 should be a valid SemVer version.',
 			},
 			{
 				input: '0.0.0',
-				error: 'Custom version `0.0.0` should be higher than current version `1.0.0`.',
+				error: 'Custom version 0.0.0 should be higher than current version 1.0.0.',
 			},
 			{
 				input: '1.0.0',
-				error: 'Custom version `1.0.0` should be higher than current version `1.0.0`.',
+				error: 'Custom version 1.0.0 should be higher than current version 1.0.0.',
 			},
 			{
 				input: '2.0.0',

@@ -4,8 +4,8 @@ import {template as chalk} from 'chalk-template';
 import semver from 'semver';
 import Version from '../source/version.js';
 
-const INCREMENT_LIST = 'major, minor, patch, premajor, preminor, prepatch, prerelease';
-const INCREMENT_LIST_OR = 'major, minor, patch, premajor, preminor, prepatch, or prerelease';
+const INCREMENT_LIST = 'patch, minor, major, prepatch, preminor, premajor, prerelease';
+const INCREMENT_LIST_OR = 'patch, minor, major, prepatch, preminor, premajor, or prerelease';
 
 /** @param {string} input - Place `{ }` around the version parts to be highlighted. */
 const makeNewFormattedVersion = input => {
