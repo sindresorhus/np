@@ -59,7 +59,9 @@ const prerequisiteTasks = (input, pkg, options) => {
 		{
 			title: 'Validate version',
 			task() {
-				newVersion = new Version(pkg.version).setFrom(input);
+				newVersion = input instanceof Version
+					? input
+					: new Version(pkg.version).setFrom(input);
 			},
 		},
 		{
