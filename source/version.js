@@ -3,8 +3,8 @@ import {template as chalk} from 'chalk-template';
 
 /** @type {string[]} Allowed `SemVer` release types. */
 export const SEMVER_INCREMENTS = semver.RELEASE_TYPES.sort();
-export const SEMVER_INCREMENTS_LIST = `\`${SEMVER_INCREMENTS.join('`, `')}\``;
-const SEMVER_INCREMENTS_LIST_LAST_OR = `\`${SEMVER_INCREMENTS.slice(0, -1).join('`, `')}\`, or \`${SEMVER_INCREMENTS.slice(-1)}\``;
+export const SEMVER_INCREMENTS_LIST = SEMVER_INCREMENTS.join(', ');
+const SEMVER_INCREMENTS_LIST_LAST_OR = `${SEMVER_INCREMENTS.slice(0, -1).join(', ')}, or ${SEMVER_INCREMENTS.slice(-1)}`;
 
 /** @typedef {semver.SemVer} SemVerInstance */
 /** @typedef {semver.ReleaseType} SemVerIncrement */
@@ -51,7 +51,7 @@ export default class Version {
 		this.#version = semver.parse(version);
 
 		if (this.#version === null) {
-			throw new Error(`Version \`${version}\` should be a valid \`SemVer\` version.`);
+			throw new Error(`Version ${version} should be a valid SemVer version.`);
 		}
 	}
 
@@ -67,7 +67,7 @@ export default class Version {
 
 		if (increment) {
 			if (!isSemVerIncrement(increment)) {
-				throw new Error(`Increment \`${increment}\` should be one of ${SEMVER_INCREMENTS_LIST_LAST_OR}.`);
+				throw new Error(`Increment ${increment} should be one of ${SEMVER_INCREMENTS_LIST_LAST_OR}.`);
 			}
 
 			this.setFrom(increment);
@@ -90,11 +90,11 @@ export default class Version {
 			this.#version.inc(input, this.#prereleasePrefix);
 		} else {
 			if (isInvalidSemVerVersion(input)) {
-				throw new Error(`New version \`${input}\` should either be one of ${SEMVER_INCREMENTS_LIST}, or a valid \`SemVer\` version.`);
+				throw new Error(`New version ${input} should either be one of ${SEMVER_INCREMENTS_LIST}, or a valid SemVer version.`);
 			}
 
 			if (this.#isGreaterThanOrEqualTo(input)) {
-				throw new Error(`New version \`${input}\` should be higher than current version \`${this.toString()}\`.`);
+				throw new Error(`New version ${input} should be higher than current version ${this.toString()}.`);
 			}
 
 			this.#trySetVersion(input);
@@ -121,7 +121,7 @@ export default class Version {
 			const previousSemver = semver.parse(previousVersion);
 
 			if (previousSemver === null) {
-				throw new Error(`Previous version \`${previousVersion}\` should be a valid \`SemVer\` version.`);
+				throw new Error(`Previous version ${previousVersion} should be a valid SemVer version.`);
 			}
 
 			previousVersion = previousSemver;
@@ -164,7 +164,7 @@ export default class Version {
 	*/
 	satisfies(range) {
 		if (!semver.validRange(range)) {
-			throw new Error(`Range \`${range}\` is not a valid \`SemVer\` range.`);
+			throw new Error(`Range ${range} is not a valid SemVer range.`);
 		}
 
 		return semver.satisfies(this.#version, range, {

@@ -4,8 +4,8 @@ import {template as chalk} from 'chalk-template';
 import semver from 'semver';
 import Version from '../source/version.js';
 
-const INCREMENT_LIST = '`major`, `minor`, `patch`, `premajor`, `preminor`, `prepatch`, `prerelease`';
-const INCREMENT_LIST_OR = '`major`, `minor`, `patch`, `premajor`, `preminor`, `prepatch`, or `prerelease`';
+const INCREMENT_LIST = 'major, minor, patch, premajor, preminor, prepatch, prerelease';
+const INCREMENT_LIST_OR = 'major, minor, patch, premajor, preminor, prepatch, or prerelease';
 
 /** @param {string} input - Place `{ }` around the version parts to be highlighted. */
 const makeNewFormattedVersion = input => {
@@ -20,7 +20,7 @@ test('new Version - valid', t => {
 test('new Version - invalid', t => {
 	t.throws(
 		() => new Version('major'),
-		{message: 'Version `major` should be a valid `SemVer` version.'},
+		{message: 'Version major should be a valid SemVer version.'},
 	);
 });
 
@@ -31,21 +31,21 @@ test('new Version - valid w/ valid increment', t => {
 test('new Version - invalid w/ valid increment', t => {
 	t.throws(
 		() => new Version('major', 'major'),
-		{message: 'Version `major` should be a valid `SemVer` version.'},
+		{message: 'Version major should be a valid SemVer version.'},
 	);
 });
 
 test('new Version - valid w/ invalid increment', t => {
 	t.throws(
 		() => new Version('1.0.0', '2.0.0'),
-		{message: `Increment \`2.0.0\` should be one of ${INCREMENT_LIST_OR}.`},
+		{message: `Increment 2.0.0 should be one of ${INCREMENT_LIST_OR}.`},
 	);
 });
 
 test('new Version - invalid w/ invalid increment', t => {
 	t.throws(
 		() => new Version('major', '2.0.0'),
-		{message: 'Version `major` should be a valid `SemVer` version.'},
+		{message: 'Version major should be a valid SemVer version.'},
 	);
 });
 
@@ -57,14 +57,14 @@ test('setFrom - valid input as version', t => {
 test('setFrom - invalid input as version', t => {
 	t.throws(
 		() => new Version('1.0.0').setFrom('200'),
-		{message: `New version \`200\` should either be one of ${INCREMENT_LIST}, or a valid \`SemVer\` version.`},
+		{message: `New version 200 should either be one of ${INCREMENT_LIST}, or a valid SemVer version.`},
 	);
 });
 
 test('setFrom - valid input is not higher than version', t => {
 	t.throws(
 		() => new Version('1.0.0').setFrom('0.2.0'),
-		{message: 'New version `0.2.0` should be higher than current version `1.0.0`.'},
+		{message: 'New version 0.2.0 should be higher than current version 1.0.0.'},
 	);
 });
 
@@ -199,7 +199,7 @@ test('format - previousVersion as SemVer instance', t => {
 test('format - invalid previousVersion', t => {
 	t.throws(
 		() => new Version('1.0.0').format({previousVersion: '000'}),
-		{message: 'Previous version `000` should be a valid `SemVer` version.'},
+		{message: 'Previous version 000 should be a valid SemVer version.'},
 	);
 });
 
@@ -214,7 +214,7 @@ test('satisfies', t => {
 
 	t.throws(
 		() => new Version('1.2.3').satisfies('=>1.0.0'),
-		{message: 'Range `=>1.0.0` is not a valid `SemVer` range.'},
+		{message: 'Range =>1.0.0 is not a valid SemVer range.'},
 	);
 });
 

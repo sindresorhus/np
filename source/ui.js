@@ -242,7 +242,7 @@ const ui = async (options, {pkg, rootDir}) => {
 			when: answers => answers.version === undefined,
 			filter(input) {
 				if (SEMVER_INCREMENTS.includes(input)) {
-					throw new Error('Custom version should not be a `SemVer` increment.');
+					throw new Error('Custom version should not be a SemVer increment.');
 				}
 
 				const version = new Version(oldVersion);
@@ -252,7 +252,7 @@ const ui = async (options, {pkg, rootDir}) => {
 					version.setFrom(input);
 				} catch (error) {
 					if (error.message.includes('valid `SemVer` version')) {
-						throw new Error(`Custom version \`${input}\` should be a valid \`SemVer\` version.`);
+						throw new Error(`Custom version ${input} should be a valid SemVer version.`);
 					}
 
 					error.message = error.message.replace('New', 'Custom');
