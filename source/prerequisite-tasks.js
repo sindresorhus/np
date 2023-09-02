@@ -2,13 +2,13 @@ import process from 'node:process';
 import Listr from 'listr';
 import {execa} from 'execa';
 import Version from './version.js';
+import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
-import {getTagVersionPrefix} from './util.js';
 
 const prerequisiteTasks = (input, pkg, options) => {
 	const isExternalRegistry = npm.isExternalRegistry(pkg);
-	let newVersion = null;
+	let newVersion;
 
 	const tasks = [
 		{
@@ -25,7 +25,7 @@ const prerequisiteTasks = (input, pkg, options) => {
 			enabled: () => options.yarn === true,
 			async task() {
 				const {stdout: yarnVersion} = await execa('yarn', ['--version']);
-				Version.verifyRequirementSatisfied('yarn', yarnVersion);
+				util.validateEngineVersionSatisfies('yarn', yarnVersion);
 			},
 		},
 		{
@@ -59,13 +59,15 @@ const prerequisiteTasks = (input, pkg, options) => {
 		{
 			title: 'Validate version',
 			task() {
-				newVersion = Version.getAndValidateNewVersionFrom(input, pkg.version);
+				newVersion = input instanceof Version
+					? input
+					: new Version(pkg.version).setFrom(input);
 			},
 		},
 		{
 			title: 'Check for pre-release version',
 			task() {
-				if (!pkg.private && new Version(newVersion).isPrerelease() && !options.tag) {
+				if (!pkg.private && newVersion.isPrerelease() && !options.tag) {
 					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 				}
 			},
@@ -75,7 +77,7 @@ const prerequisiteTasks = (input, pkg, options) => {
 			async task() {
 				await git.fetch();
 
-				const tagPrefix = await getTagVersionPrefix(options);
+				const tagPrefix = await util.getTagVersionPrefix(options);
 
 				await git.verifyTagDoesNotExistOnRemote(`${tagPrefix}${newVersion}`);
 			},

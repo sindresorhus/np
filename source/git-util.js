@@ -2,7 +2,7 @@ import path from 'node:path';
 import {execa} from 'execa';
 import escapeStringRegexp from 'escape-string-regexp';
 import ignoreWalker from 'ignore-walk';
-import Version from './version.js';
+import * as util from './util.js';
 
 export const latestTag = async () => {
 	const {stdout} = await execa('git', ['describe', '--abbrev=0', '--tags']);
@@ -33,9 +33,16 @@ export const newFilesSinceLastRelease = async rootDir => {
 };
 
 export const readFileFromLastRelease = async file => {
-	const filePathFromRoot = path.relative(await root(), file);
+	const rootPath = await root();
+	const filePathFromRoot = path.relative(rootPath, path.resolve(rootPath, file));
 	const {stdout: oldFile} = await execa('git', ['show', `${await latestTag()}:${filePathFromRoot}`]);
 	return oldFile;
+};
+
+/** Returns an array of tags, sorted by creation date in ascending order. */
+const tagList = async () => {
+	const {stdout} = await execa('git', ['tag', '--sort=creatordate']);
+	return stdout ? stdout.split('\n') : [];
 };
 
 const firstCommit = async () => {
@@ -97,12 +104,6 @@ export const verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
 	}
 };
 
-export const tagList = async () => {
-	// Returns the list of tags, sorted by creation date in ascending order.
-	const {stdout} = await execa('git', ['tag', '--sort=creatordate']);
-	return stdout.split('\n');
-};
-
 export const isHeadDetached = async () => {
 	try {
 		// Command will fail with code 1 if the HEAD is detached.
@@ -113,7 +114,7 @@ export const isHeadDetached = async () => {
 	}
 };
 
-export const isWorkingTreeClean = async () => {
+const isWorkingTreeClean = async () => {
 	try {
 		const {stdout: status} = await execa('git', ['status', '--porcelain']);
 		if (status !== '') {
@@ -182,7 +183,27 @@ export const fetch = async () => {
 	await execa('git', ['fetch']);
 };
 
-export const tagExistsOnRemote = async tagName => {
+const hasLocalBranch = async branch => {
+	try {
+		await execa('git', ['show-ref', '--verify', '--quiet', `refs/heads/${branch}`]);
+		return true;
+	} catch {
+		return false;
+	}
+};
+
+export const defaultBranch = async () => {
+	for (const branch of ['main', 'master', 'gh-pages']) {
+		// eslint-disable-next-line no-await-in-loop
+		if (await hasLocalBranch(branch)) {
+			return branch;
+		}
+	}
+
+	throw new Error('Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.');
+};
+
+const tagExistsOnRemote = async tagName => {
 	try {
 		const {stdout: revInfo} = await execa('git', ['rev-parse', '--quiet', '--verify', `refs/tags/${tagName}`]);
 
@@ -202,26 +223,6 @@ export const tagExistsOnRemote = async tagName => {
 	}
 };
 
-async function hasLocalBranch(branch) {
-	try {
-		await execa('git', ['show-ref', '--verify', '--quiet', `refs/heads/${branch}`]);
-		return true;
-	} catch {
-		return false;
-	}
-}
-
-export const defaultBranch = async () => {
-	for (const branch of ['main', 'master', 'gh-pages']) {
-		// eslint-disable-next-line no-await-in-loop
-		if (await hasLocalBranch(branch)) {
-			return branch;
-		}
-	}
-
-	throw new Error('Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.');
-};
-
 export const verifyTagDoesNotExistOnRemote = async tagName => {
 	if (await tagExistsOnRemote(tagName)) {
 		throw new Error(`Git tag \`${tagName}\` already exists.`);
@@ -233,22 +234,22 @@ export const commitLogFromRevision = async revision => {
 	return stdout;
 };
 
+const push = async (tagArg = '--follow-tags') => {
+	await execa('git', ['push', tagArg]);
+};
+
 export const pushGraceful = async remoteIsOnGitHub => {
 	try {
 		await push();
 	} catch (error) {
 		if (remoteIsOnGitHub && error.stderr && error.stderr.includes('GH006')) {
 			// Try to push tags only, when commits can't be pushed due to branch protection
-			await execa('git', ['push', '--tags']);
+			await push('--tags');
 			return {pushed: 'tags', reason: 'Branch protection: np can`t push the commits. Push them manually.'};
 		}
 
 		throw error;
 	}
-};
-
-export const push = async () => {
-	await execa('git', ['push', '--follow-tags']);
 };
 
 export const deleteTag = async tagName => {
@@ -267,8 +268,7 @@ const gitVersion = async () => {
 
 export const verifyRecentGitVersion = async () => {
 	const installedVersion = await gitVersion();
-
-	Version.verifyRequirementSatisfied('git', installedVersion);
+	util.validateEngineVersionSatisfies('git', installedVersion);
 };
 
 export const checkIfFileGitIgnored = async pathToFile => {

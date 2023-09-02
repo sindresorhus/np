@@ -4,9 +4,14 @@ import {execa} from 'execa';
 import pTimeout from 'p-timeout';
 import ow from 'ow';
 import npmName from 'npm-name';
-import chalk from 'chalk';
-import semver from 'semver';
+import chalk from 'chalk-template';
 import Version from '../version.js';
+import * as util from '../util.js';
+
+export const version = async () => {
+	const {stdout} = await execa('npm', ['--version']);
+	return stdout;
+};
 
 export const checkConnection = () => pTimeout(
 	(async () => {
@@ -33,18 +38,25 @@ export const username = async ({externalRegistry}) => {
 		const {stdout} = await execa('npm', args);
 		return stdout;
 	} catch (error) {
-		throw new Error(/ENEEDAUTH/.test(error.stderr)
+		const message = /ENEEDAUTH/.test(error.stderr)
 			? 'You must be logged in. Use `npm login` and try again.'
-			: 'Authentication error. Use `npm whoami` to troubleshoot.');
+			: 'Authentication error. Use `npm whoami` to troubleshoot.';
+		throw new Error(message);
 	}
 };
+
+export const isExternalRegistry = pkg => typeof pkg.publishConfig?.registry === 'string';
 
 export const collaborators = async pkg => {
 	const packageName = pkg.name;
 	ow(packageName, ow.string);
 
 	const npmVersion = await version();
-	const args = semver.satisfies(npmVersion, '>=9.0.0') ? ['access', 'list', 'collaborators', packageName, '--json'] : ['access', 'ls-collaborators', packageName];
+	// TODO: Remove old command when targeting Node.js 18
+	const args = new Version(npmVersion).satisfies('>=9.0.0')
+		? ['access', 'list', 'collaborators', packageName, '--json']
+		: ['access', 'ls-collaborators', packageName];
+
 	if (isExternalRegistry(pkg)) {
 		args.push('--registry', pkg.publishConfig.registry);
 	}
@@ -116,24 +128,17 @@ export const isPackageNameAvailable = async pkg => {
 	return availability;
 };
 
-export const isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
-
-export const version = async () => {
-	const {stdout} = await execa('npm', ['--version']);
-	return stdout;
-};
-
 export const verifyRecentNpmVersion = async () => {
 	const npmVersion = await version();
-	Version.verifyRequirementSatisfied('npm', npmVersion);
+	util.validateEngineVersionSatisfies('npm', npmVersion);
 };
 
-export const checkIgnoreStrategy = ({files}, rootDir) => {
-	const npmignoreExistsInPackageRootDir = pathExists(path.resolve(rootDir, '.npmignore'));
+export const checkIgnoreStrategy = async ({files}, rootDir) => {
+	const npmignoreExistsInPackageRootDir = await pathExists(path.resolve(rootDir, '.npmignore'));
 
 	if (!files && !npmignoreExistsInPackageRootDir) {
-		console.log(`
-		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
+		console.log(chalk`
+		\n{bold.yellow Warning:} No {bold.cyan files} field specified in {bold.magenta package.json} nor is a {bold.magenta .npmignore} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
 		`);
 	}
 };

@@ -1,8 +1,7 @@
 import path from 'node:path';
 import test from 'ava';
-import {renameFile} from 'move-file';
-import {getFilesToBePacked} from '../source/npm/util.js';
-import {runIfExists} from './_utils.js';
+import {getFilesToBePacked} from '../../../source/npm/util.js';
+import {runIfExists} from '../../_helpers/util.js';
 
 const getFixture = name => path.resolve('test', 'fixtures', 'files', name);
 
@@ -53,24 +52,15 @@ test('package.json files field and npmignore', verifyPackedFiles, 'files-and-npm
 	'source/index.d.ts',
 ]);
 
-const renameDotGitignore = {
-	async before(fixtureDir) {
-		await renameFile('gitignore', '.gitignore', {cwd: fixtureDir});
-	},
-	async after(fixtureDir) {
-		await renameFile('.gitignore', 'gitignore', {cwd: fixtureDir});
-	},
-};
-
 test('package.json files field and gitignore', verifyPackedFiles, 'gitignore', [
 	'readme.md',
 	'dist/index.js',
-], renameDotGitignore);
+]);
 
 test('npmignore and gitignore', verifyPackedFiles, 'npmignore-and-gitignore', [
 	'readme.md',
 	'dist/index.js',
-], renameDotGitignore);
+]);
 
 test('package.json main field not in files field', verifyPackedFiles, 'main', [
 	'foo.js',

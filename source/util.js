@@ -1,27 +1,32 @@
+import process from 'node:process';
+import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {readPackageUp} from 'read-pkg-up';
+import {parsePackage} from 'read-pkg';
 import issueRegex from 'issue-regex';
 import terminalLink from 'terminal-link';
 import {execa} from 'execa';
 import pMemoize from 'p-memoize';
 import ow from 'ow';
 import chalk from 'chalk';
-import {packageDirectory} from 'pkg-dir';
+import Version from './version.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-export const readPkg = async packagePath => {
-	packagePath = packagePath ? await packageDirectory(packagePath) : await packageDirectory();
-	if (!packagePath) {
+export const readPkg = async (packagePath = process.cwd()) => {
+	const packageResult = await readPackageUp({cwd: packagePath});
+
+	if (!packageResult) {
 		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
 	}
 
-	const {packageJson, path: pkgPath} = await readPackageUp({
-		cwd: packagePath,
-	});
-
-	return {pkg: packageJson, rootDir: path.dirname(pkgPath)};
+	return {pkg: packageResult.packageJson, rootDir: path.dirname(packageResult.path)};
 };
+
+const _npRootDir = fileURLToPath(new URL('..', import.meta.url));
+
+// Re-define `npRootDir` for trailing slash consistency
+export const {pkg: npPkg, rootDir: npRootDir} = await readPkg(_npRootDir);
 
 export const linkifyIssues = (url, message) => {
 	if (!(url && terminalLink.isSupported)) {
@@ -59,12 +64,10 @@ export const getTagVersionPrefix = pMemoize(async options => {
 	ow(options, ow.object.hasKeys('yarn'));
 
 	try {
-		if (options.yarn) {
-			const {stdout} = await execa('yarn', ['config', 'get', 'version-tag-prefix']);
-			return stdout;
-		}
+		const {stdout} = options.yarn
+			? await execa('yarn', ['config', 'get', 'version-tag-prefix'])
+			: await execa('npm', ['config', 'get', 'tag-version-prefix']);
 
-		const {stdout} = await execa('npm', ['config', 'get', 'tag-version-prefix']);
 		return stdout;
 	} catch {
 		return 'v';
@@ -84,16 +87,16 @@ export const getNewFiles = async rootDir => {
 };
 
 export const getNewDependencies = async (newPkg, rootDir) => {
-	let oldPkg;
+	let oldPkgFile;
 
 	try {
-		oldPkg = await git.readFileFromLastRelease(path.resolve(rootDir, 'package.json'));
+		oldPkgFile = await git.readFileFromLastRelease(path.resolve(rootDir, 'package.json'));
 	} catch {
 		// Handle first time publish
 		return Object.keys(newPkg.dependencies ?? {});
 	}
 
-	oldPkg = JSON.parse(oldPkg);
+	const oldPkg = parsePackage(oldPkgFile);
 
 	const newDependencies = [];
 
@@ -110,22 +113,18 @@ export const getPreReleasePrefix = pMemoize(async options => {
 	ow(options, ow.object.hasKeys('yarn'));
 
 	try {
-		if (options.yarn) {
-			const {stdout} = await execa('yarn', ['config', 'get', 'preId']);
-			if (stdout !== 'undefined') {
-				return stdout;
-			}
+		const packageManager = options.yarn ? 'yarn' : 'npm';
+		const {stdout} = await execa(packageManager, ['config', 'get', 'preid']);
 
-			return '';
-		}
-
-		const {stdout} = await execa('npm', ['config', 'get', 'preId']);
-		if (stdout !== 'undefined') {
-			return stdout;
-		}
-
-		return '';
+		return stdout === 'undefined' ? '' : stdout;
 	} catch {
 		return '';
 	}
 });
+
+export const validateEngineVersionSatisfies = (engine, version) => {
+	const engineRange = npPkg.engines[engine];
+	if (!new Version(version).satisfies(engineRange)) {
+		throw new Error(`\`np\` requires ${engine} ${engineRange}`);
+	}
+};

@@ -4,11 +4,10 @@ import githubUrlFromGit from 'github-url-from-git';
 import {htmlEscape} from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
+import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
-import Version from './version.js';
-import prettyVersionDiff from './pretty-version-diff.js';
 
 const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch) => {
 	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
@@ -130,7 +129,7 @@ const ui = async (options, {pkg, rootDir}) => {
 	const releaseBranch = options.branch;
 
 	if (options.runPublish) {
-		npm.checkIgnoreStrategy(pkg, rootDir);
+		await npm.checkIgnoreStrategy(pkg, rootDir);
 
 		const answerIgnoredFiles = await checkNewFilesAndDependencies(pkg, rootDir);
 		if (!answerIgnoredFiles) {
@@ -144,8 +143,9 @@ const ui = async (options, {pkg, rootDir}) => {
 	if (options.releaseDraftOnly) {
 		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 	} else {
-		const newVersion = options.version ? Version.getAndValidateNewVersionFrom(options.version, oldVersion) : undefined;
-		const versionText = chalk.dim(`(current: ${oldVersion}${newVersion ? `, next: ${prettyVersionDiff(oldVersion, newVersion)}` : ''}${chalk.dim(')')}`);
+		const versionText = options.version
+			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version, {prereleasePrefix: await util.getPreReleasePrefix(options)}).format()})`)
+			: chalk.dim(`(current: ${oldVersion})`);
 
 		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${versionText}\n`);
 	}
@@ -170,6 +170,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		}
 	}
 
+	// Non-interactive mode - return before prompting
 	if (options.version) {
 		return {
 			...options,
@@ -214,44 +215,58 @@ const ui = async (options, {pkg, rootDir}) => {
 		}
 	}
 
+	const needsPrereleaseTag = answers => options.runPublish && (answers.version?.isPrerelease() || answers.customVersion?.isPrerelease()) && !options.tag;
+	const canBePublishedPublicly = options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted') && !npm.isExternalRegistry(pkg);
+
 	const answers = await inquirer.prompt({
 		version: {
 			type: 'list',
-			message: 'Select semver increment or specify new version',
-			pageSize: Version.SEMVER_INCREMENTS.length + 2,
-			choices: [...Version.SEMVER_INCREMENTS
-				.map(inc => ({
-					name: `${inc} 	${prettyVersionDiff(oldVersion, inc)}`,
+			message: 'Select SemVer increment or specify new version',
+			pageSize: SEMVER_INCREMENTS.length + 2,
+			choices: [
+				...SEMVER_INCREMENTS.map(inc => ({ // TODO: prerelease prefix here too
+					name: `${inc} 	${new Version(oldVersion, inc).format()}`,
 					value: inc,
 				})),
-			new inquirer.Separator(),
-			{
-				name: 'Other (specify)',
-				value: null,
-			}],
-			filter: input => Version.isValidInput(input) ? new Version(oldVersion).getNewVersionFrom(input) : input,
+				new inquirer.Separator(),
+				{
+					name: 'Other (specify)',
+					value: undefined,
+				},
+			],
+			filter: input => input ? new Version(oldVersion, input) : input,
 		},
 		customVersion: {
 			type: 'input',
 			message: 'Version',
-			when: answers => !answers.version,
-			filter: input => Version.isValidInput(input) ? new Version(pkg.version).getNewVersionFrom(input) : input,
-			validate(input) {
-				if (!Version.isValidInput(input)) {
-					return 'Please specify a valid semver, for example, `1.2.3`. See https://semver.org';
+			when: answers => answers.version === undefined,
+			filter(input) {
+				if (SEMVER_INCREMENTS.includes(input)) {
+					throw new Error('Custom version should not be a SemVer increment.');
 				}
 
-				if (new Version(oldVersion).isLowerThanOrEqualTo(input)) {
-					return `Version must be greater than ${oldVersion}`;
+				const version = new Version(oldVersion);
+
+				try {
+					// Version error handling does validation
+					version.setFrom(input);
+				} catch (error) {
+					if (error.message.includes('valid SemVer version')) {
+						throw new Error(`Custom version ${input} should be a valid SemVer version.`);
+					}
+
+					error.message = error.message.replace('New', 'Custom');
+
+					throw error;
 				}
 
-				return true;
+				return version;
 			},
 		},
 		tag: {
 			type: 'list',
 			message: 'How should this pre-release version be tagged in npm?',
-			when: answers => options.runPublish && (Version.isPrereleaseOrIncrement(answers.customVersion) || Version.isPrereleaseOrIncrement(answers.version)) && !options.tag,
+			when: answers => needsPrereleaseTag(answers),
 			async choices() {
 				const existingPrereleaseTags = await npm.prereleaseTags(pkg.name);
 
@@ -260,7 +275,7 @@ const ui = async (options, {pkg, rootDir}) => {
 					new inquirer.Separator(),
 					{
 						name: 'Other (specify)',
-						value: null,
+						value: undefined,
 					},
 				];
 			},
@@ -268,7 +283,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		customTag: {
 			type: 'input',
 			message: 'Tag',
-			when: answers => options.runPublish && (Version.isPrereleaseOrIncrement(answers.customVersion) || Version.isPrereleaseOrIncrement(answers.version)) && !options.tag && !answers.tag,
+			when: answers => answers.tag === undefined && needsPrereleaseTag(answers),
 			validate(input) {
 				if (input.length === 0) {
 					return 'Please specify a tag, for example, `next`.';
@@ -283,7 +298,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		},
 		publishScoped: {
 			type: 'confirm',
-			when: isScoped(pkg.name) && options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted') && !npm.isExternalRegistry(pkg),
+			when: isScoped(pkg.name) && canBePublishedPublicly,
 			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false,
 		},

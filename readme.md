@@ -73,7 +73,7 @@ $ np --help
     $ np <version>
 
     Version can be:
-      patch | minor | major | prepatch | preminor | premajor | prerelease | 1.2.3
+      major | minor | patch | premajor | preminor | prepatch | prerelease | 1.2.3
 
   Options
     --any-branch            Allow publishing from any branch
@@ -87,7 +87,7 @@ $ np --help
     --no-yarn               Don't use Yarn
     --contents              Subdirectory to publish
     --no-release-draft      Skips opening a GitHub release draft
-    --release-draft-only    Only opens a GitHub release draft
+    --release-draft-only    Only opens a GitHub release draft for the latest published version
     --test-script           Name of npm run script to run tests before publishing (default: test)
     --no-2fa                Don't enable 2FA on new packages (not recommended)
     --message               Version bump commit message. `%s` will be replaced with version. (default: '%s' with npm and 'v%s' with yarn)
@@ -113,7 +113,7 @@ Run `np` without arguments to launch the interactive UI that guides you through 
 Currently, these are the flags you can configure:
 
 - `anyBranch` - Allow publishing from any branch (`false` by default).
-- `branch` - Name of the release branch (`master` by default).
+- `branch` - Name of the release branch (`main` or `master` by default).
 - `cleanup` - Cleanup `node_modules` (`true` by default).
 - `tests` - Run `npm test` (`true` by default).
 - `yolo` - Skip cleanup and testing (`false` by default).
@@ -346,6 +346,8 @@ npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my-awesome-p
 "publishConfig": {
 	"registry": "https://registry.npmjs.org"
 }
+
+Note: On `npm` v9+, the command has been changed to `npm access list collaborators my-awesome-package`.
 ```
 
 ## Maintainers

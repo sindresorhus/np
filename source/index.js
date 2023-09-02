@@ -4,7 +4,6 @@ import {execa} from 'execa';
 import {deleteAsync} from 'del';
 import Listr from 'listr';
 import {merge, throwError, catchError, filter, finalize} from 'rxjs';
-import {readPackageUp} from 'read-pkg-up';
 import hasYarn from 'has-yarn';
 import hostedGitInfo from 'hosted-git-info';
 import onetime from 'onetime';
@@ -64,7 +63,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 
 		try {
 			// Verify that the package's version has been bumped before deleting the last tag and commit.
-			if (versionInLatestTag === util.readPkg().version && versionInLatestTag !== pkg.version) {
+			if (versionInLatestTag === util.readPkg(rootDir).version && versionInLatestTag !== pkg.version) {
 				await git.deleteTag(latestTag);
 				await git.removeLastCommit();
 			}
@@ -85,7 +84,9 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		} else {
 			console.log('\nAborted!');
 		}
-	}, {minimumWait: 2000});
+	}, {wait: 2000});
+
+	const shouldEnable2FA = options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !npm.isExternalRegistry(pkg);
 
 	const tasks = new Listr([
 		{
@@ -97,13 +98,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 			title: 'Git',
 			task: () => gitTasks(options),
 		},
-	], {
-		showSubtasks: false,
-		renderer: options.renderer ?? 'default',
-	});
-
-	if (runCleanup) {
-		tasks.add([
+		...runCleanup ? [
 			{
 				title: 'Cleanup',
 				enabled: () => !hasLockFile,
@@ -136,11 +131,8 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 					return exec('npm', [...args, '--engine-strict']);
 				},
 			},
-		]);
-	}
-
-	if (runTests) {
-		tasks.add([
+		] : [],
+		...runTests ? [
 			{
 				title: 'Running tests using npm',
 				enabled: () => options.yarn === false,
@@ -159,10 +151,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 					}),
 				),
 			},
-		]);
-	}
-
-	tasks.add([
+		] : [],
 		{
 			title: 'Bumping version using Yarn',
 			enabled: () => options.yarn === true,
@@ -171,7 +160,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 					let previewText = `[Preview] Command not executed: yarn version --new-version ${input}`;
 
 					if (options.message) {
-						previewText += ` --message '${options.message.replace(/%s/g, input)}'`;
+						previewText += ` --message '${options.message.replaceAll('%s', input)}'`;
 					}
 
 					return `${previewText}.`;
@@ -195,7 +184,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 					let previewText = `[Preview] Command not executed: npm version ${input}`;
 
 					if (options.message) {
-						previewText += ` --message '${options.message.replace(/%s/g, input)}'`;
+						previewText += ` --message '${options.message.replaceAll('%s', input)}'`;
 					}
 
 					return `${previewText}.`;
@@ -211,10 +200,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 				return exec('npm', args);
 			},
 		},
-	]);
-
-	if (options.runPublish) {
-		tasks.add([
+		...options.runPublish ? [
 			{
 				title: `Publishing package using ${pkgManagerName}`,
 				skip() {
@@ -239,49 +225,37 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 						);
 				},
 			},
-		]);
-
-		const isExternalRegistry = npm.isExternalRegistry(pkg);
-		if (options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !isExternalRegistry) {
-			tasks.add([
-				{
-					title: 'Enabling two-factor authentication',
-					skip() {
-						if (options.preview) {
-							const args = enable2fa.getEnable2faArgs(pkg.name, options);
-							return `[Preview] Command not executed: npm ${args.join(' ')}.`;
-						}
-					},
-					task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp}),
+			...shouldEnable2FA ? [{
+				title: 'Enabling two-factor authentication',
+				skip() {
+					if (options.preview) {
+						const args = enable2fa.getEnable2faArgs(pkg.name, options);
+						return `[Preview] Command not executed: npm ${args.join(' ')}.`;
+					}
 				},
-			]);
-		}
-	} else {
-		publishStatus = 'SUCCESS';
-	}
+				task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp}),
+			}] : [],
+		] : [],
+		{
+			title: 'Pushing tags',
+			async skip() {
+				if (!(await git.hasUpstream())) {
+					return 'Upstream branch not found; not pushing.';
+				}
 
-	tasks.add({
-		title: 'Pushing tags',
-		async skip() {
-			if (!(await git.hasUpstream())) {
-				return 'Upstream branch not found; not pushing.';
-			}
+				if (options.preview) {
+					return '[Preview] Command not executed: git push --follow-tags.';
+				}
 
-			if (options.preview) {
-				return '[Preview] Command not executed: git push --follow-tags.';
-			}
-
-			if (publishStatus === 'FAILED' && options.runPublish) {
-				return 'Couldn\'t publish package to npm; not pushing.';
-			}
+				if (publishStatus === 'FAILED' && options.runPublish) {
+					return 'Couldn\'t publish package to npm; not pushing.';
+				}
+			},
+			async task() {
+				pushedObjects = await git.pushGraceful(isOnGitHub);
+			},
 		},
-		async task() {
-			pushedObjects = await git.pushGraceful(isOnGitHub);
-		},
-	});
-
-	if (options.releaseDraft) {
-		tasks.add({
+		...options.releaseDraft ? [{
 			title: 'Creating release draft on GitHub',
 			enabled: () => isOnGitHub === true,
 			skip() {
@@ -289,8 +263,16 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 					return '[Preview] GitHub Releases draft will not be opened in preview mode.';
 				}
 			},
+			// TODO: parse version outside of index
 			task: () => releaseTaskHelper(options, pkg),
-		});
+		}] : [],
+	], {
+		showSubtasks: false,
+		renderer: options.renderer ?? 'default',
+	});
+
+	if (!options.runPublish) {
+		publishStatus = 'SUCCESS';
 	}
 
 	await tasks.run();
@@ -299,7 +281,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		console.error(`\n${logSymbols.error} ${pushedObjects.reason}`);
 	}
 
-	const {packageJson: newPkg} = await readPackageUp();
+	const {pkg: newPkg} = await util.readPkg();
 	return newPkg;
 };
 

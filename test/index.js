@@ -16,18 +16,18 @@ const defaultOptions = {
 	renderer: 'silent',
 };
 
-const npPkg = await util.readPkg();
+const npPkgResult = await util.readPkg();
 
 const npFails = test.macro(async (t, inputs, message) => {
 	await t.throwsAsync(
-		Promise.all(inputs.map(input => np(input, defaultOptions, npPkg))),
+		Promise.all(inputs.map(input => np(input, defaultOptions, npPkgResult))),
 		{message},
 	);
 });
 
 test('version is invalid', npFails,
 	['foo', '4.x.3'],
-	'Version should be either patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid semver version.',
+	/New version (?:foo|4\.x\.3) should either be one of patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid SemVer version\./,
 );
 
 test('version is pre-release', npFails,
@@ -37,12 +37,13 @@ test('version is pre-release', npFails,
 
 test('errors on too low version', npFails,
 	['1.0.0', '1.0.0-beta'],
-	/New version `1\.0\.0(?:-beta)?` should be higher than current version `\d+\.\d+\.\d+`/,
+	/New version 1\.0\.0(?:-beta)? should be higher than current version \d+\.\d+\.\d+/,
 );
 
 test('skip enabling 2FA if the package exists', async t => {
 	const enable2faStub = sinon.stub();
 
+	/** @type {typeof np} */
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: sinon.stub().returns({pipe: sinon.stub()})},
@@ -62,7 +63,7 @@ test('skip enabling 2FA if the package exists', async t => {
 			isAvailable: false,
 			isUnknown: false,
 		},
-	}, npPkg));
+	}, npPkgResult));
 
 	t.true(enable2faStub.notCalled);
 });
@@ -70,6 +71,7 @@ test('skip enabling 2FA if the package exists', async t => {
 test('skip enabling 2FA if the `2fa` option is false', async t => {
 	const enable2faStub = sinon.stub();
 
+	/** @type {typeof np} */
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: sinon.stub().returns({pipe: sinon.stub()})},
@@ -90,7 +92,7 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 			isUnknown: false,
 		},
 		'2fa': false,
-	}, npPkg));
+	}, npPkgResult));
 
 	t.true(enable2faStub.notCalled);
 });

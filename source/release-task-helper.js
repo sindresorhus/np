@@ -4,18 +4,17 @@ import {getTagVersionPrefix, getPreReleasePrefix} from './util.js';
 import Version from './version.js';
 
 const releaseTaskHelper = async (options, pkg) => {
-	const newVersion = new Version(pkg.version).getNewVersionFrom(options.version);
-	let tag = await getTagVersionPrefix(options) + newVersion;
-	const isPreRelease = new Version(options.version).isPrerelease();
-	if (isPreRelease) {
-		tag += await getPreReleasePrefix(options);
-	}
+	const newVersion = options.releaseDraftOnly
+		? new Version(pkg.version)
+		: new Version(pkg.version).setFrom(options.version, {prereleasePrefix: await getPreReleasePrefix(options)});
+
+	const tag = await getTagVersionPrefix(options) + newVersion.toString();
 
 	const url = newGithubReleaseUrl({
 		repoUrl: options.repoUrl,
 		tag,
 		body: options.releaseNotes(tag),
-		isPrerelease: isPreRelease,
+		isPrerelease: newVersion.isPrerelease(),
 	});
 
 	await open(url);

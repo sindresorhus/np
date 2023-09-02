@@ -2,7 +2,7 @@ import os from 'node:os';
 import isInstalledGlobally from 'is-installed-globally';
 import {cosmiconfig} from 'cosmiconfig';
 
-// TODO: remove when cosmiconfig/cosmiconfig#283 lands
+// TODO: Remove when cosmiconfig/cosmiconfig#283 lands
 const loadESM = async filepath => {
 	const module = await import(filepath);
 	return module.default ?? module;

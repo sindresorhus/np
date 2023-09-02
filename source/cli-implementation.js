@@ -10,7 +10,7 @@ import config from './config.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
-import Version from './version.js';
+import {SEMVER_INCREMENTS} from './version.js';
 import ui from './ui.js';
 import np from './index.js';
 
@@ -19,7 +19,7 @@ const cli = meow(`
 	  $ np <version>
 
 	  Version can be:
-	    ${Version.SEMVER_INCREMENTS.join(' | ')} | 1.2.3
+	    ${SEMVER_INCREMENTS.join(' | ')} | 1.2.3
 
 	Options
 	  --any-branch           Allow publishing from any branch
@@ -56,18 +56,22 @@ const cli = meow(`
 		},
 		cleanup: {
 			type: 'boolean',
+			default: true,
 		},
 		tests: {
 			type: 'boolean',
+			default: true,
 		},
 		yolo: {
 			type: 'boolean',
 		},
 		publish: {
 			type: 'boolean',
+			default: true,
 		},
 		releaseDraft: {
 			type: 'boolean',
+			default: true,
 		},
 		releaseDraftOnly: {
 			type: 'boolean',
@@ -77,6 +81,7 @@ const cli = meow(`
 		},
 		yarn: {
 			type: 'boolean',
+			default: hasYarn(),
 		},
 		contents: {
 			type: 'string',
@@ -89,6 +94,7 @@ const cli = meow(`
 		},
 		'2fa': {
 			type: 'boolean',
+			default: true,
 		},
 		message: {
 			type: 'string',
@@ -101,19 +107,8 @@ updateNotifier({pkg: cli.pkg}).notify();
 try {
 	const {pkg, rootDir} = await util.readPkg(cli.flags.contents);
 
-	const defaultFlags = {
-		cleanup: true,
-		tests: true,
-		publish: true,
-		releaseDraft: true,
-		yarn: hasYarn(),
-		'2fa': true,
-	};
-
 	const localConfig = await config(rootDir);
-
 	const flags = {
-		...defaultFlags,
 		...localConfig,
 		...cli.flags,
 	};
@@ -125,20 +120,22 @@ try {
 
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !pkg.private;
 
-	const availability = flags.publish ? await npm.isPackageNameAvailable(pkg) : {
+	// TODO: does this need to run if `runPublish` is false?
+	const availability = runPublish ? await npm.isPackageNameAvailable(pkg) : {
 		isAvailable: false,
 		isUnknown: false,
 	};
 
-	// Use current (latest) version when 'releaseDraftOnly', otherwise use the first argument.
-	const version = flags.releaseDraftOnly ? pkg.version : (cli.input.length > 0 ? cli.input[0] : false);
+	// Use current (latest) version when 'releaseDraftOnly', otherwise try to use the first argument.
+	const version = flags.releaseDraftOnly ? pkg.version : cli.input.at(0);
 
-	const branch = flags.branch || await git.defaultBranch();
+	const branch = flags.branch ?? await git.defaultBranch();
+
 	const options = await ui({
 		...flags,
+		runPublish,
 		availability,
 		version,
-		runPublish,
 		branch,
 	}, {pkg, rootDir});
 
