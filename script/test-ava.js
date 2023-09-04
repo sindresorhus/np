@@ -1,3 +1,5 @@
+// TODO: remove when avajs/ava#3213 lands
+
 import process from 'node:process';
 import semver from 'semver';
 import {$} from 'execa';
