@@ -93,7 +93,7 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 
 	const messages = [];
 	if (newFiles.unpublished.length > 0) {
-		messages.push(`The following new files will not be part of your published package:\n${util.joinList(newFiles.unpublished)}\n\nIf you intended to publish them, add them to the \`files\` field in package.json.`);
+		messages.push(`The following new files will not be part of your published package:\n${util.groupFilesInFolders(newFiles.unpublished)}\n\nIf you intended to publish them, add them to the \`files\` field in package.json.`);
 	}
 
 	if (newFiles.firstTime.length > 0) {

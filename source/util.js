@@ -76,6 +76,28 @@ export const getTagVersionPrefix = pMemoize(async options => {
 
 export const joinList = list => chalk.reset(list.map(item => `- ${item}`).join('\n'));
 
+export const groupFilesInFolders = (files, groupingMinimumDepth = 1, groupingThresholdCount = 5) => {
+	const groups = {};
+	for (const file of files) {
+		const groupKey = path.join(...file.split(path.sep).slice(0, groupingMinimumDepth));
+		groups[groupKey] = [...groups[groupKey] ?? [], file];
+	}
+
+	const lines = [];
+	for (const [folder, filesInFolder] of Object.entries(groups)) {
+		if (filesInFolder.length > groupingThresholdCount) {
+			lines.push(`- ${folder}/* ${chalk.bold.white(`(${filesInFolder.length} files)`)}`);
+			continue;
+		}
+
+		for (const file of filesInFolder) {
+			lines.push(`- ${file}`);
+		}
+	}
+
+	return chalk.reset(lines.join('\n'));
+};
+
 export const getNewFiles = async rootDir => {
 	const listNewFiles = await git.newFilesSinceLastRelease(rootDir);
 	const listPkgFiles = await npm.getFilesToBePacked(rootDir);
