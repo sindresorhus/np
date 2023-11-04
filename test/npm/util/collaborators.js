@@ -14,7 +14,6 @@ test('pkg.name not a string', async t => {
 });
 
 const npmVersionFixtures = [
-	{version: '8.0.0', accessCommand: 'npm access ls-collaborators np'},
 	{version: '9.0.0', accessCommand: 'npm access list collaborators np --json'},
 ];
 
@@ -66,9 +65,7 @@ for (const {version, accessCommand} of npmVersionFixtures) {
 	test(`npm v${version} - non-existent`, createFixture, [
 		npmVersionCommand,
 		{
-			command: version === '8.0.0'
-				? 'npm access ls-collaborators non-existent'
-				: 'npm access list collaborators non-existent --json',
+			command: 'npm access list collaborators non-existent --json',
 			stderr: 'npm ERR! code E404\nnpm ERR! 404 Not Found',
 		},
 	], async ({t, testedModule: {collaborators}}) => {
@@ -81,9 +78,7 @@ for (const {version, accessCommand} of npmVersionFixtures) {
 	test(`npm v${version} - error`, createFixture, [
 		npmVersionCommand,
 		{
-			command: version === '8.0.0'
-				? 'npm access ls-collaborators @private/pkg'
-				: 'npm access list collaborators @private/pkg --json',
+			command: 'npm access list collaborators @private/pkg --json',
 			stderr: 'npm ERR! code E403\nnpm ERR! 403 403 Forbidden',
 		},
 	], async ({t, testedModule: {collaborators}}) => {

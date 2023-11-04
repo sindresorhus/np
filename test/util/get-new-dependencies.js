@@ -1,5 +1,5 @@
 import test from 'ava';
-import {updatePackage} from 'write-pkg';
+import {updatePackage} from 'write-package';
 import {readPackage} from 'read-pkg';
 import {_createFixture} from '../_helpers/integration-test.js';
 

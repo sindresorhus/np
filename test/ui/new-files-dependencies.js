@@ -1,7 +1,7 @@
 import test from 'ava';
 import sinon from 'sinon';
 import {execa} from 'execa';
-import {removePackageDependencies, updatePackage} from 'write-pkg';
+import {removePackageDependencies, updatePackage} from 'write-package';
 import stripAnsi from 'strip-ansi';
 import {readPackage} from 'read-pkg';
 import {createIntegrationTest} from '../_helpers/integration-test.js';

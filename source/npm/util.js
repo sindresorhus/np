@@ -5,7 +5,6 @@ import pTimeout from 'p-timeout';
 import ow from 'ow';
 import npmName from 'npm-name';
 import chalk from 'chalk-template';
-import Version from '../version.js';
 import * as util from '../util.js';
 
 export const version = async () => {
@@ -51,18 +50,14 @@ export const collaborators = async pkg => {
 	const packageName = pkg.name;
 	ow(packageName, ow.string);
 
-	const npmVersion = await version();
-	// TODO: Remove old command when targeting Node.js 18
-	const args = new Version(npmVersion).satisfies('>=9.0.0')
-		? ['access', 'list', 'collaborators', packageName, '--json']
-		: ['access', 'ls-collaborators', packageName];
+	const arguments_ = ['access', 'list', 'collaborators', packageName, '--json'];
 
 	if (isExternalRegistry(pkg)) {
-		args.push('--registry', pkg.publishConfig.registry);
+		arguments_.push('--registry', pkg.publishConfig.registry);
 	}
 
 	try {
-		const {stdout} = await execa('npm', args);
+		const {stdout} = await execa('npm', arguments_);
 		return stdout;
 	} catch (error) {
 		// Ignore non-existing package error

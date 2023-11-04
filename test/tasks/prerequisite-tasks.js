@@ -96,7 +96,7 @@ test.serial('should fail when user is not authenticated at npm registry', create
 		stdout: 'sindresorhus',
 	},
 	{
-		command: 'npm access ls-collaborators test',
+		command: 'npm access list collaborators test',
 		stdout: '{"sindresorhus": "read"}',
 	},
 ], async ({t, testedModule: prerequisiteTasks}) => {
@@ -116,10 +116,6 @@ test.serial('should fail when user is not authenticated at external registry', c
 	{
 		command: 'npm whoami --registry http://my.io',
 		stdout: 'sindresorhus',
-	},
-	{
-		command: 'npm access ls-collaborators test --registry http://my.io',
-		stdout: '{"sindresorhus": "read"}',
 	},
 	{
 		command: 'npm access list collaborators test --json --registry http://my.io',

@@ -2,7 +2,7 @@ import path from 'node:path';
 import test from 'ava';
 import esmock from 'esmock';
 import {execa} from 'execa';
-import {writePackage} from 'write-pkg';
+import {writePackage} from 'write-package';
 import {createIntegrationTest} from '../_helpers/integration-test.js';
 
 const createNewFilesFixture = test.macro(async (t, input, commands) => {

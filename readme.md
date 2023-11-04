@@ -54,8 +54,8 @@
 
 ## Prerequisite
 
-- Node.js 16 or later
-- npm 7.19.0 or later
+- Node.js 18 or later
+- npm 9 or later
 - Git 2.11 or later
 
 ## Install
@@ -340,14 +340,12 @@ npm ERR! code E403
 npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my-awesome-package/collaborators?format=cli - Forbidden
 ```
 
-…please check whether the command `npm access ls-collaborators my-awesome-package` succeeds. If it doesn't, Yarn has overwritten your registry URL. To fix this, add the correct registry URL to `package.json`:
+…please check whether the command `npm access list collaborators my-awesome-package` succeeds. If it doesn't, Yarn has overwritten your registry URL. To fix this, add the correct registry URL to `package.json`:
 
 ```json
 "publishConfig": {
 	"registry": "https://registry.npmjs.org"
 }
-
-Note: On `npm` v9+, the command has been changed to `npm access list collaborators my-awesome-package`.
 ```
 
 ## Maintainers
