@@ -309,7 +309,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		...options,
 		version: answers.version || answers.customVersion || options.version,
 		tag: answers.tag || answers.customTag || options.tag,
-		publishScoped: answers.publishScoped,
+		publishScoped: answers.publishScoped || options.publishScoped,
 		confirm: true,
 		repoUrl,
 		releaseNotes,
