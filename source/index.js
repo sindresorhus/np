@@ -12,7 +12,7 @@ import logSymbols from 'log-symbols';
 import prerequisiteTasks from './prerequisite-tasks.js';
 import gitTasks from './git-tasks.js';
 import publish, {getPackagePublishArguments} from './npm/publish.js';
-import enable2fa from './npm/enable-2fa.js';
+import enable2fa, { getEnable2faArgs } from './npm/enable-2fa.js';
 import releaseTaskHelper from './release-task-helper.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
@@ -227,9 +227,9 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 			},
 			...shouldEnable2FA ? [{
 				title: 'Enabling two-factor authentication',
-				skip() {
+				async skip() {
 					if (options.preview) {
-						const args = enable2fa.getEnable2faArgs(pkg.name, options);
+						const args = await getEnable2faArgs(pkg.name, options);
 						return `[Preview] Command not executed: npm ${args.join(' ')}.`;
 					}
 				},
