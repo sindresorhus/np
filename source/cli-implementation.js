@@ -13,6 +13,7 @@ import * as npm from './npm/util.js';
 import {SEMVER_INCREMENTS} from './version.js';
 import ui from './ui.js';
 import np from './index.js';
+import { checkIfYarnBerry } from './yarn.js';
 
 const cli = meow(`
 	Usage
@@ -136,20 +137,22 @@ try {
 
 	const branch = flags.branch ?? await git.defaultBranch();
 
+	const isYarnBerry = flags.yarn && await checkIfYarnBerry(pkg)
+
 	const options = await ui({
 		...flags,
 		runPublish,
 		availability,
 		version,
 		branch,
-	}, {pkg, rootDir});
+	}, {pkg, rootDir, isYarnBerry});
 
 	if (!options.confirm) {
 		gracefulExit();
 	}
 
 	console.log(); // Prints a newline for readability
-	const newPkg = await np(options.version, options, {pkg, rootDir});
+	const newPkg = await np(options.version, options, {pkg, rootDir, isYarnBerry});
 
 	if (options.preview || options.releaseDraftOnly) {
 		gracefulExit();
