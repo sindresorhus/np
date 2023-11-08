@@ -100,6 +100,10 @@ const cli = meow(`
 		message: {
 			type: 'string',
 		},
+		publishScoped: {
+			type: 'boolean',
+			default: false,
+		},
 	},
 });
 
