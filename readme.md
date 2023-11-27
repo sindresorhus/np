@@ -254,6 +254,8 @@ To publish [scoped packages](https://docs.npmjs.com/misc/scope#publishing-public
 
 If publishing a scoped package for the first time, `np` will prompt you to ask if you want to publish it publicly.
 
+**Note:** When publishing a scoped package, the first ever version you publish has to be done interactively using `np`. If not, you cannot use `np` to publish future versions of the package.
+
 ### Private Org-scoped packages
 
 To publish a [private Org-scoped package](https://docs.npmjs.com/creating-and-publishing-an-org-scoped-package#publishing-a-private-org-scoped-package), you need to set the access level to `restricted`. You can do that by adding the following to your `package.json`:
