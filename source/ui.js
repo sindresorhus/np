@@ -198,6 +198,10 @@ const ui = async (options, {pkg, rootDir}) => {
 	}
 
 	if (options.availability.isUnknown) {
+		if (!isScoped(pkg.name)) {
+			throw new Error('Unknown availability, but package is not scoped. This shouldn\'t happen');
+		}
+
 		const answers = await inquirer.prompt({
 			confirm: {
 				type: 'confirm',

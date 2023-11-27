@@ -49,7 +49,7 @@
 ### Why not
 
 - Monorepos are not supported.
-- Yarn >= 2 is not supported.
+- Yarn >= 2 and pnpm are not supported.
 - Custom registries are not supported ([but could be with your help](https://github.com/sindresorhus/np/issues/420)).
 - CI is [not an ideal environment](https://github.com/sindresorhus/np/issues/619#issuecomment-994493179) for `np`. It's meant to be used locally as an interactive tool.
 
@@ -253,6 +253,8 @@ To publish [scoped packages](https://docs.npmjs.com/misc/scope#publishing-public
 ```
 
 If publishing a scoped package for the first time, `np` will prompt you to ask if you want to publish it publicly.
+
+**Note:** When publishing a scoped package, the first ever version you publish has to be done interactively using `np`. If not, you cannot use `np` to publish future versions of the package.
 
 ### Private Org-scoped packages
 
