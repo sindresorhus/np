@@ -91,7 +91,9 @@
 		],
 		"environmentVariables": {
 			"FORCE_HYPERLINK": "1",
-			"HOME": "/tmp"
+			"HOME": "/tmp",
+			"GIT_AUTHOR_NAME": "test",
+			"GIT_AUTHOR_EMAIL": "test@example.com"
 		},
 		"nodeArguments": [
 			"--loader=esmock",
