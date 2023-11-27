@@ -38,7 +38,6 @@ const cli = meow(`
 	  --test-script          Name of npm run script to run tests before publishing (default: test)
 	  --no-2fa               Don't enable 2FA on new packages (not recommended)
 	  --message              Version bump commit message, '%s' will be replaced with version (default: '%s' with npm and 'v%s' with yarn)
-	  --publish-scoped       When publishing a scoped package, you need to provide this option to force publish it publically
 
 	Examples
 	  $ np
@@ -100,10 +99,6 @@ const cli = meow(`
 		},
 		message: {
 			type: 'string',
-		},
-		publishScoped: {
-			type: 'boolean',
-			default: false,
 		},
 	},
 });

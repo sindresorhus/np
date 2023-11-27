@@ -325,7 +325,7 @@ const ui = async (options, {pkg, rootDir, isYarnBerry}) => {
 		...options,
 		version: answers.version || answers.customVersion || options.version,
 		tag: answers.tag || answers.customTag || options.tag,
-		publishScoped: answers.publishScoped || options.publishScoped,
+		publishScoped: answers.publishScoped,
 		confirm: true,
 		repoUrl,
 		releaseNotes,
