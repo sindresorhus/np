@@ -49,7 +49,7 @@
 ### Why not
 
 - Monorepos are not supported.
-- Yarn >= 2 is not supported.
+- Yarn >= 2 and pnpm are not supported.
 - Custom registries are not supported ([but could be with your help](https://github.com/sindresorhus/np/issues/420)).
 - CI is [not an ideal environment](https://github.com/sindresorhus/np/issues/619#issuecomment-994493179) for `np`. It's meant to be used locally as an interactive tool.
 
