@@ -1,6 +1,6 @@
 {
 	"name": "np",
-	"version": "8.0.4",
+	"version": "9.0.0",
 	"description": "A better `npm publish`",
 	"license": "MIT",
 	"repository": "sindresorhus/np",
@@ -44,8 +44,8 @@
 		"hosted-git-info": "^7.0.1",
 		"ignore-walk": "^6.0.3",
 		"import-local": "^3.1.0",
-		"inquirer": "^9.2.11",
-		"is-installed-globally": "^0.4.0",
+		"inquirer": "^9.2.12",
+		"is-installed-globally": "^1.0.0",
 		"is-interactive": "^2.0.0",
 		"is-scoped": "^3.0.0",
 		"issue-regex": "^4.1.0",
@@ -55,14 +55,14 @@
 		"meow": "^12.1.1",
 		"new-github-release-url": "^2.0.0",
 		"npm-name": "^7.1.1",
-		"onetime": "^6.0.0",
+		"onetime": "^7.0.0",
 		"open": "^9.1.0",
 		"ow": "^1.1.1",
 		"p-memoize": "^7.1.1",
 		"p-timeout": "^6.1.2",
 		"path-exists": "^5.0.0",
 		"pkg-dir": "^8.0.0",
-		"read-pkg": "^9.0.0",
+		"read-pkg": "^9.0.1",
 		"read-package-up": "^11.0.0",
 		"rxjs": "^7.8.1",
 		"semver": "^7.5.4",
@@ -72,10 +72,10 @@
 	},
 	"devDependencies": {
 		"@sindresorhus/is": "^6.1.0",
-		"@types/semver": "^7.5.4",
+		"@types/semver": "^7.5.6",
 		"ava": "^5.3.1",
 		"common-tags": "^1.8.2",
-		"esmock": "^2.5.9",
+		"esmock": "^2.6.0",
 		"fs-extra": "^11.1.1",
 		"map-obj": "^5.0.2",
 		"sinon": "^17.0.1",
@@ -90,7 +90,12 @@
 			"!test/_helpers"
 		],
 		"environmentVariables": {
-			"FORCE_HYPERLINK": "1"
+			"FORCE_HYPERLINK": "1",
+			"HOME": "/tmp",
+			"GIT_AUTHOR_NAME": "test",
+			"GIT_COMMITTER_NAME": "test",
+			"GIT_AUTHOR_EMAIL": "test@example.com",
+			"GIT_COMMITTER_EMAIL": "test@example.com"
 		},
 		"nodeArguments": [
 			"--loader=esmock",
