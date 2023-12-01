@@ -18,9 +18,9 @@ import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-const exec = (cmd, args) => {
+const exec = (cmd, args, opts) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
-	const cp = execa(cmd, args);
+	const cp = execa(cmd, args, opts);
 
 	return merge(cp.stdout, cp.stderr, cp).pipe(filter(Boolean));
 };
@@ -99,6 +99,9 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 	// Yarn berry doesn't support git commiting/tagging, so use npm
 	const shouldUseYarnForVersioning = options.yarn === true && !isYarnBerry;
 
+	// To prevent the process from hanging due to watch mode (e.g. when running `vitest`)
+	const ciEnvOpts = { env: { CI: 'true' } }
+
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
@@ -146,14 +149,14 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 		] : [],
 		...runTests ? [
 			{
-				title: 'Running tests using npm',
+				title: `Running tests using ${pkgManagerName}`,
 				enabled: () => options.yarn === false,
-				task: () => exec('npm', testCommand),
+				task: () => exec('npm', testCommand, ciEnvOpts),
 			},
 			{
 				title: `Running tests using ${pkgManagerName}`,
 				enabled: () => options.yarn === true,
-				task: () => exec('yarn', testCommand).pipe(
+				task: () => exec('yarn', testCommand, ciEnvOpts).pipe(
 					catchError(error => {
 						if (error.message.includes(`Command "${testScript}" not found`)) {
 							return [];
