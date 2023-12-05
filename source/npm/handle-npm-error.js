@@ -31,7 +31,7 @@ const handleNpmError = (error, task, message, executor) => {
 		|| error.stderr.includes('npm ERR! 402 Payment Required') // Npm
 		|| error.stdout.includes('Response Code: 402 (Payment Required)') // Yarn berry
 	) {
-		throw new Error('You cannot publish a scoped package privately without a paid plan. Did you mean to publish publicly? If so, use the --publish-scoped option');
+		throw new Error('You cannot publish a scoped package privately without a paid plan. Did you mean to publish publicly?');
 	}
 
 	return throwError(() => error);
