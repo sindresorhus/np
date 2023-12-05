@@ -1,6 +1,6 @@
 import listrInput from 'listr-input';
 import chalk from 'chalk';
-import { throwError, catchError } from 'rxjs';
+import {throwError, catchError} from 'rxjs';
 
 const handleNpmError = (error, task, message, executor) => {
 	if (typeof message === 'function') {
@@ -10,7 +10,7 @@ const handleNpmError = (error, task, message, executor) => {
 
 	// `one-time pass` is for npm and `Two factor authentication` is for Yarn.
 	if (error.stderr.includes('one-time pass') || error.stdout.includes('Two factor authentication')) {
-		const { title } = task;
+		const {title} = task;
 		task.title = `${title} ${chalk.yellow('(waiting for input…)')}`;
 
 		return listrInput('Enter OTP:', {
@@ -28,7 +28,7 @@ const handleNpmError = (error, task, message, executor) => {
 	// https://stackoverflow.com/a/44862841/10292952
 	if (
 		error.code === 402
-		|| error.stderr.includes('npm ERR! 402 Payment Required') // npm
+		|| error.stderr.includes('npm ERR! 402 Payment Required') // Npm
 		|| error.stdout.includes('Response Code: 402 (Payment Required)') // Yarn Berry
 	) {
 		throw new Error('You cannot publish a scoped package privately without a paid plan. Did you mean to publish publicly?');
