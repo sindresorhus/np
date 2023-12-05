@@ -18,9 +18,9 @@ import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-const exec = (cmd, args, opts) => {
+const exec = (cmd, args, options) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
-	const cp = execa(cmd, args, opts);
+	const cp = execa(cmd, args, options);
 
 	return merge(cp.stdout, cp.stderr, cp).pipe(filter(Boolean));
 };
@@ -38,9 +38,13 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 
 	function getPackageManagerName() {
 		if (options.yarn === true) {
-			if (isYarnBerry) return 'Yarn berry';
+			if (isYarnBerry) {
+				return 'Yarn berry';
+			}
+
 			return 'Yarn';
 		}
+
 		return 'npm';
 	}
 
@@ -100,7 +104,7 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 	const shouldUseYarnForVersioning = options.yarn === true && !isYarnBerry;
 
 	// To prevent the process from hanging due to watch mode (e.g. when running `vitest`)
-	const ciEnvOpts = { env: { CI: 'true' } }
+	const ciEnvOptions = {env: {CI: 'true'}};
 
 	const tasks = new Listr([
 		{
@@ -121,7 +125,7 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 			{
 				title: `Installing dependencies using ${pkgManagerName}`,
 				enabled: () => options.yarn === true,
-				task: () => {
+				task() {
 					const args = isYarnBerry ? ['install', '--immutable'] : ['install', '--frozen-lockfile', '--production=false'];
 					return exec('yarn', args).pipe(
 						catchError(async error => {
@@ -151,12 +155,12 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 			{
 				title: `Running tests using ${pkgManagerName}`,
 				enabled: () => options.yarn === false,
-				task: () => exec('npm', testCommand, ciEnvOpts),
+				task: () => exec('npm', testCommand, ciEnvOptions),
 			},
 			{
 				title: `Running tests using ${pkgManagerName}`,
 				enabled: () => options.yarn === true,
-				task: () => exec('yarn', testCommand, ciEnvOpts).pipe(
+				task: () => exec('yarn', testCommand, ciEnvOptions).pipe(
 					catchError(error => {
 						if (error.message.includes(`Command "${testScript}" not found`)) {
 							return [];
