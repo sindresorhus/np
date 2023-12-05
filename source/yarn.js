@@ -1,6 +1,6 @@
 import semver from 'semver';
 
-export async function checkIfYarnBerry(pkg) {
+export function checkIfYarnBerry(pkg) {
 	if (typeof pkg.packageManager !== 'string') {
 		return false;
 	}

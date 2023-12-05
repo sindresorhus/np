@@ -132,7 +132,7 @@ try {
 
 	const branch = flags.branch ?? await git.defaultBranch();
 
-	const isYarnBerry = flags.yarn && await checkIfYarnBerry(pkg);
+	const isYarnBerry = flags.yarn && checkIfYarnBerry(pkg);
 
 	const options = await ui({
 		...flags,

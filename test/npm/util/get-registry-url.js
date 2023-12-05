@@ -24,6 +24,16 @@ test('yarn', createFixture, [{
 	);
 });
 
+test('yarn-berry', createFixture, [{
+	command: 'yarn config get npmRegistryServer',
+	stdout: 'https://registry.yarnpkg.com',
+}], async ({t, testedModule: npm}) => {
+	t.is(
+		await npm.getRegistryUrl('yarn-berry', {}),
+		'https://registry.yarnpkg.com',
+	);
+});
+
 test('external', createFixture, [{
 	command: 'npm config get registry --registry http://my-internal-registry.local',
 	stdout: 'http://my-internal-registry.local',

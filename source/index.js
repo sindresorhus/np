@@ -102,6 +102,7 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 
 	// Yarn berry doesn't support git commiting/tagging, so use npm
 	const shouldUseYarnForVersioning = options.yarn === true && !isYarnBerry;
+	const shouldUseNpmForVersioning = options.yarn === false || isYarnBerry;
 
 	// To prevent the process from hanging due to watch mode (e.g. when running `vitest`)
 	const ciEnvOptions = {env: {CI: 'true'}};
@@ -197,7 +198,7 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 		},
 		{
 			title: 'Bumping version using npm',
-			enabled: () => !shouldUseYarnForVersioning,
+			enabled: () => shouldUseNpmForVersioning,
 			skip() {
 				if (options.preview) {
 					let previewText = `[Preview] Command not executed: npm version ${input}`;
