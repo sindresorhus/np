@@ -1,10 +1,10 @@
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import githubUrlFromGit from 'github-url-from-git';
-import { htmlEscape } from 'escape-goat';
+import {htmlEscape} from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
-import Version, { SEMVER_INCREMENTS } from './version.js';
+import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
@@ -21,7 +21,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 		return {
 			hasCommits: false,
 			hasUnreleasedCommits: false,
-			releaseNotes() { },
+			releaseNotes() {},
 		};
 	}
 
@@ -120,10 +120,10 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 };
 
 // eslint-disable-next-line complexity
-const ui = async (options, { pkg, rootDir, isYarnBerry }) => {
+const ui = async (options, {pkg, rootDir, isYarnBerry}) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
-	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, { extraBaseUrls });
+	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 
 	const pkgManager = (() => {
 		if (!options.yarn) {
@@ -160,14 +160,14 @@ const ui = async (options, { pkg, rootDir, isYarnBerry }) => {
 		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 	} else {
 		const versionText = options.version
-			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version, { prereleasePrefix: await util.getPreReleasePrefix(options) }).format()})`)
+			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version, {prereleasePrefix: await util.getPreReleasePrefix(options)}).format()})`)
 			: chalk.dim(`(current: ${oldVersion})`);
 
 		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${versionText}\n`);
 	}
 
 	const useLatestTag = !options.releaseDraftOnly;
-	const { hasCommits, hasUnreleasedCommits, releaseNotes } = await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
+	const {hasCommits, hasUnreleasedCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
 
 	if (hasUnreleasedCommits && options.releaseDraftOnly) {
 		const answers = await inquirer.prompt({
