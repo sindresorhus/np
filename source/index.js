@@ -39,7 +39,7 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 	function getPackageManagerName() {
 		if (options.yarn === true) {
 			if (isYarnBerry) {
-				return 'Yarn berry';
+				return 'Yarn Berry';
 			}
 
 			return 'Yarn';

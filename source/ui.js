@@ -127,7 +127,7 @@ const ui = async (options, {pkg, rootDir, isYarnBerry}) => {
 
 	function getPkgManager() {
 		if (!options.yarn) {
-			return npm;
+			return 'npm';
 		}
 
 		if (isYarnBerry) {
@@ -140,7 +140,7 @@ const ui = async (options, {pkg, rootDir, isYarnBerry}) => {
 	const pkgManager = getPkgManager();
 
 	if (isYarnBerry && npm.isExternalRegistry(pkg)) {
-		throw new Error('External registry not supported yet with yarn berry');
+		throw new Error('External registry is not yet supported with Yarn Berry');
 	}
 
 	const registryUrl = await npm.getRegistryUrl(pkgManager, pkg);
