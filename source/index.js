@@ -18,15 +18,15 @@ import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-const exec = (cmd, args) => {
+const exec = (cmd, args, options) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
-	const cp = execa(cmd, args);
+	const cp = execa(cmd, args, options);
 
 	return merge(cp.stdout, cp.stderr, cp).pipe(filter(Boolean));
 };
 
 // eslint-disable-next-line complexity
-const np = async (input = 'patch', options, {pkg, rootDir}) => {
+const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 	if (!hasYarn() && options.yarn) {
 		throw new Error('Could not use Yarn without yarn.lock file');
 	}
@@ -36,10 +36,22 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		options.cleanup = false;
 	}
 
+	function getPackageManagerName() {
+		if (options.yarn === true) {
+			if (isYarnBerry) {
+				return 'Yarn Berry';
+			}
+
+			return 'Yarn';
+		}
+
+		return 'npm';
+	}
+
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
 	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
-	const pkgManagerName = options.yarn === true ? 'Yarn' : 'npm';
+	const pkgManagerName = getPackageManagerName();
 	const hasLockFile = fs.existsSync(path.resolve(rootDir, options.yarn ? 'yarn.lock' : 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
 	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl)?.type === 'github';
 	const testScript = options.testScript || 'test';
@@ -88,6 +100,13 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 
 	const shouldEnable2FA = options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !npm.isExternalRegistry(pkg);
 
+	// Yarn berry doesn't support git commiting/tagging, so use npm
+	const shouldUseYarnForVersioning = options.yarn === true && !isYarnBerry;
+	const shouldUseNpmForVersioning = options.yarn === false || isYarnBerry;
+
+	// To prevent the process from hanging due to watch mode (e.g. when running `vitest`)
+	const ciEnvOptions = {env: {CI: 'true'}};
+
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
@@ -105,10 +124,11 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 				task: () => deleteAsync('node_modules'),
 			},
 			{
-				title: 'Installing dependencies using Yarn',
+				title: `Installing dependencies using ${pkgManagerName}`,
 				enabled: () => options.yarn === true,
-				task: () => (
-					exec('yarn', ['install', '--frozen-lockfile', '--production=false']).pipe(
+				task() {
+					const args = isYarnBerry ? ['install', '--immutable'] : ['install', '--frozen-lockfile', '--production=false'];
+					return exec('yarn', args).pipe(
 						catchError(async error => {
 							if ((!error.stderr.startsWith('error Your lockfile needs to be updated'))) {
 								return;
@@ -120,8 +140,8 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 
 							throw new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.');
 						}),
-					)
-				),
+					);
+				},
 			},
 			{
 				title: 'Installing dependencies using npm',
@@ -134,14 +154,14 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		] : [],
 		...runTests ? [
 			{
-				title: 'Running tests using npm',
+				title: `Running tests using ${pkgManagerName}`,
 				enabled: () => options.yarn === false,
-				task: () => exec('npm', testCommand),
+				task: () => exec('npm', testCommand, ciEnvOptions),
 			},
 			{
-				title: 'Running tests using Yarn',
+				title: `Running tests using ${pkgManagerName}`,
 				enabled: () => options.yarn === true,
-				task: () => exec('yarn', testCommand).pipe(
+				task: () => exec('yarn', testCommand, ciEnvOptions).pipe(
 					catchError(error => {
 						if (error.message.includes(`Command "${testScript}" not found`)) {
 							return [];
@@ -153,8 +173,8 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 			},
 		] : [],
 		{
-			title: 'Bumping version using Yarn',
-			enabled: () => options.yarn === true,
+			title: `Bumping version using ${pkgManagerName}`,
+			enabled: () => shouldUseYarnForVersioning,
 			skip() {
 				if (options.preview) {
 					let previewText = `[Preview] Command not executed: yarn version --new-version ${input}`;
@@ -178,7 +198,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		},
 		{
 			title: 'Bumping version using npm',
-			enabled: () => options.yarn === false,
+			enabled: () => shouldUseNpmForVersioning,
 			skip() {
 				if (options.preview) {
 					let previewText = `[Preview] Command not executed: npm version ${input}`;
@@ -205,14 +225,14 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 				title: `Publishing package using ${pkgManagerName}`,
 				skip() {
 					if (options.preview) {
-						const args = getPackagePublishArguments(options);
+						const args = getPackagePublishArguments(options, isYarnBerry);
 						return `[Preview] Command not executed: ${pkgManager} ${args.join(' ')}.`;
 					}
 				},
 				task(context, task) {
 					let hasError = false;
 
-					return publish(context, pkgManager, task, options)
+					return publish(context, pkgManager, isYarnBerry, task, options)
 						.pipe(
 							catchError(async error => {
 								hasError = true;

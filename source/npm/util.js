@@ -146,6 +146,11 @@ export const getFilesToBePacked = async rootDir => {
 };
 
 export const getRegistryUrl = async (pkgManager, pkg) => {
+	if (pkgManager === 'yarn-berry') {
+		const {stdout} = await execa('yarn', ['config', 'get', 'npmRegistryServer']);
+		return stdout;
+	}
+
 	const args = ['config', 'get', 'registry'];
 	if (isExternalRegistry(pkg)) {
 		args.push('--registry', pkg.publishConfig.registry);

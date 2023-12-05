@@ -120,11 +120,27 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 };
 
 // eslint-disable-next-line complexity
-const ui = async (options, {pkg, rootDir}) => {
+const ui = async (options, {pkg, rootDir, isYarnBerry}) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
-	const pkgManager = options.yarn ? 'yarn' : 'npm';
+
+	const pkgManager = (() => {
+		if (!options.yarn) {
+			return 'npm';
+		}
+
+		if (isYarnBerry) {
+			return 'yarn-berry';
+		}
+
+		return 'yarn';
+	})();
+
+	if (isYarnBerry && npm.isExternalRegistry(pkg)) {
+		throw new Error('External registry is not yet supported with Yarn Berry');
+	}
+
 	const registryUrl = await npm.getRegistryUrl(pkgManager, pkg);
 	const releaseBranch = options.branch;
 
