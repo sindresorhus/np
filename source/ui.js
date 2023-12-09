@@ -235,8 +235,27 @@ const ui = async (options, {pkg, rootDir, isYarnBerry}) => {
 		}
 	}
 
-	const needsPrereleaseTag = answers => options.runPublish && (answers.version?.isPrerelease() || answers.customVersion?.isPrerelease()) && !options.tag;
-	const canBePublishedPublicly = options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted') && !npm.isExternalRegistry(pkg);
+	const needsPrereleaseTag = answers => (
+		options.runPublish
+		&& (answers.version?.isPrerelease() || answers.customVersion?.isPrerelease())
+		&& !options.tag
+	);
+
+	// Note that inquirer question.when is a bit confusing. Only `false` will cause the question to be skipped.
+	// Any other value like `true` and `undefined` means ask the question.
+	// so we make sure to always return an explicit boolean here to make it less confusing
+	// see https://github.com/SBoudrias/Inquirer.js/pull/1340
+	const needToAskForPublish = (() => {
+		if (!isScoped(pkg.name) || !options.availability.isAvailable || options.availability.isUnknown || !options.runPublish) {
+			return false;
+		}
+
+		if (!pkg.publishConfig) {
+			return true;
+		}
+
+		return pkg.publishConfig.access !== 'restricted' && !npm.isExternalRegistry(pkg);
+	})();
 
 	const answers = await inquirer.prompt({
 		version: {
@@ -318,7 +337,7 @@ const ui = async (options, {pkg, rootDir, isYarnBerry}) => {
 		},
 		publishScoped: {
 			type: 'confirm',
-			when: isScoped(pkg.name) && canBePublishedPublicly,
+			when: needToAskForPublish,
 			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false,
 		},
