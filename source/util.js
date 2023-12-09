@@ -150,3 +150,8 @@ export const validateEngineVersionSatisfies = (engine, version) => {
 		throw new Error(`\`np\` requires ${engine} ${engineRange}`);
 	}
 };
+
+export async function getNpmPackageAccess(name) {
+	const {stdout} = await execa('npm', ['access', 'get', 'status', name, '--json']);
+	return JSON.parse(stdout)[name]; // Note: returns "private" for non-existent packages
+}

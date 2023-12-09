@@ -120,7 +120,7 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 };
 
 // eslint-disable-next-line complexity
-const ui = async (options, {pkg, rootDir, isYarnBerry}) => {
+const ui = async (options, {pkg, rootDir, isYarnBerry = false}) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
@@ -241,12 +241,14 @@ const ui = async (options, {pkg, rootDir, isYarnBerry}) => {
 		&& !options.tag
 	);
 
+	const alreadyPublicScoped = isYarnBerry && options.runPublish && await util.getNpmPackageAccess(pkg.name) === 'public';
+
 	// Note that inquirer question.when is a bit confusing. Only `false` will cause the question to be skipped.
 	// Any other value like `true` and `undefined` means ask the question.
 	// so we make sure to always return an explicit boolean here to make it less confusing
 	// see https://github.com/SBoudrias/Inquirer.js/pull/1340
 	const needToAskForPublish = (() => {
-		if (!isScoped(pkg.name) || !options.availability.isAvailable || options.availability.isUnknown || !options.runPublish) {
+		if (alreadyPublicScoped || !isScoped(pkg.name) || !options.availability.isAvailable || options.availability.isUnknown || !options.runPublish) {
 			return false;
 		}
 
@@ -347,7 +349,7 @@ const ui = async (options, {pkg, rootDir, isYarnBerry}) => {
 		...options,
 		version: answers.version || answers.customVersion || options.version,
 		tag: answers.tag || answers.customTag || options.tag,
-		publishScoped: answers.publishScoped,
+		publishScoped: alreadyPublicScoped || answers.publishScoped,
 		confirm: true,
 		repoUrl,
 		releaseNotes,
