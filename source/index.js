@@ -73,9 +73,14 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 		const latestTag = await git.latestTag();
 		const versionInLatestTag = latestTag.slice(tagVersionPrefix.length);
 
+		async function getPkgVersion() {
+			const pkg = await util.readPkg(rootDir);
+			return pkg.version;
+		}
+
 		try {
 			// Verify that the package's version has been bumped before deleting the last tag and commit.
-			if (versionInLatestTag === util.readPkg(rootDir).version && versionInLatestTag !== pkg.version) {
+			if (versionInLatestTag === await getPkgVersion() && versionInLatestTag !== pkg.version) {
 				await git.deleteTag(latestTag);
 				await git.removeLastCommit();
 			}
