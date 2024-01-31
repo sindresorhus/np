@@ -18,10 +18,10 @@ const prerequisiteTasks = (input, pkg, options, pkgManager) => {
 		},
 		{
 			title: `Check ${pkgManager.cli} version`,
-			task: async () => {
+			async task() {
 				const {stdout: version} = await execa(pkgManager.cli, ['--version']);
 				util.validateEngineVersionSatisfies(pkgManager.cli, version);
-			}
+			},
 		},
 		{
 			title: 'Verify user is authenticated',

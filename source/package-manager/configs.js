@@ -17,7 +17,7 @@ export const pnpmConfig = {
 	installCommand: ['pnpm', ['install']],
 	versionCommand: version => ['pnpm', ['version', version]],
 	tagVersionPrefixCommand: ['pnpm', ['config', 'get', 'tag-version-prefix']],
-	publishCli: 'npm', // pnpm does git cleanliness checks, which np already did, and which fail because when publishing package.json has been updated
+	publishCli: 'npm', // Pnpm does git cleanliness checks, which np already did, and which fail because when publishing package.json has been updated
 	getRegistryCommand: ['pnpm', ['config', 'get', 'registry']],
 	lockfiles: ['pnpm-lock.yaml'],
 };
