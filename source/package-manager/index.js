@@ -34,7 +34,7 @@ export function getPackageManagerConfig(rootDir, pkg) {
 /** @param {import('read-pkg').NormalizedPackageJson} pkg */
 function configFromPackageManagerField(pkg) {
 	if (typeof pkg.packageManager !== 'string') {
-		return npmConfig;
+		return undefined;
 	}
 
 	const [packageManager, version] = pkg.packageManager.split('@');
