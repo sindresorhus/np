@@ -4,10 +4,12 @@ import githubUrlFromGit from 'github-url-from-git';
 import {htmlEscape} from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
+import {execa} from 'execa';
 import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
+import {getPackageManagerConfig} from './package-manager/index.js';
 
 const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch) => {
 	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
@@ -119,29 +121,19 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 	return answers.confirm;
 };
 
-// eslint-disable-next-line complexity
-const ui = async (options, {pkg, rootDir, isYarnBerry = false}) => {
+/** @type {<Options extends typeof import('./cli-implementation.js')['cli']['flags']>(options: Options, context: {rootDir: string; pkg: import('read-pkg').NormalizedPackageJson}) => Promise<Options>} */
+const ui = async (options, {pkg, rootDir}) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 
-	const pkgManager = (() => {
-		if (!options.yarn) {
-			return 'npm';
-		}
+	const packageManagerConfig = getPackageManagerConfig(rootDir, pkg);
 
-		if (isYarnBerry) {
-			return 'yarn-berry';
-		}
-
-		return 'yarn';
-	})();
-
-	if (isYarnBerry && npm.isExternalRegistry(pkg)) {
-		throw new Error('External registry is not yet supported with Yarn Berry');
+	if (packageManagerConfig.throwOnExternalRegistry && npm.isExternalRegistry(pkg)) {
+		throw new Error(`External registry is not yet supported with ${packageManagerConfig.nickname}.`);
 	}
 
-	const registryUrl = await npm.getRegistryUrl(pkgManager, pkg);
+	const {stdout: registryUrl} = await execa(...packageManagerConfig.getRegistryCommand);
 	const releaseBranch = options.branch;
 
 	if (options.runPublish) {
@@ -241,7 +233,7 @@ const ui = async (options, {pkg, rootDir, isYarnBerry = false}) => {
 		&& !options.tag
 	);
 
-	const alreadyPublicScoped = isYarnBerry && options.runPublish && await util.getNpmPackageAccess(pkg.name) === 'public';
+	const alreadyPublicScoped = packageManagerConfig.nickname === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(pkg.name) === 'public';
 
 	// Note that inquirer question.when is a bit confusing. Only `false` will cause the question to be skipped.
 	// Any other value like `true` and `undefined` means ask the question.

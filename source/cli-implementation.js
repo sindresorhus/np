@@ -4,7 +4,6 @@ import 'symbol-observable'; // Important: This needs to be first to prevent weir
 import logSymbols from 'log-symbols';
 import meow from 'meow';
 import updateNotifier from 'update-notifier';
-import hasYarn from 'has-yarn';
 import {gracefulExit} from 'exit-hook';
 import config from './config.js';
 import * as util from './util.js';
@@ -12,10 +11,9 @@ import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 import {SEMVER_INCREMENTS} from './version.js';
 import ui from './ui.js';
-import {checkIfYarnBerry} from './yarn.js';
 import np from './index.js';
 
-const cli = meow(`
+export const cli = meow(`
 	Usage
 	  $ np <version>
 
@@ -31,13 +29,13 @@ const cli = meow(`
 	  --no-publish           Skips publishing
 	  --preview              Show tasks without actually executing them
 	  --tag                  Publish under a given dist-tag
-	  --no-yarn              Don't use Yarn
 	  --contents             Subdirectory to publish
 	  --no-release-draft     Skips opening a GitHub release draft
 	  --release-draft-only   Only opens a GitHub release draft for the latest published version
 	  --test-script          Name of npm run script to run tests before publishing (default: test)
 	  --no-2fa               Don't enable 2FA on new packages (not recommended)
 	  --message              Version bump commit message, '%s' will be replaced with version (default: '%s' with npm and 'v%s' with yarn)
+	  --package-manager	     Use a specific package manager (default: 'packageManager' field in package.json)
 
 	Examples
 	  $ np
@@ -80,9 +78,8 @@ const cli = meow(`
 		tag: {
 			type: 'string',
 		},
-		yarn: {
-			type: 'boolean',
-			default: hasYarn(),
+		packageManager: {
+			type: 'string',
 		},
 		contents: {
 			type: 'string',
@@ -105,7 +102,7 @@ const cli = meow(`
 
 updateNotifier({pkg: cli.pkg}).notify();
 
-try {
+export async function getOptions() {
 	const {pkg, rootDir} = await util.readPkg(cli.flags.contents);
 
 	const localConfig = await config(rootDir);
@@ -117,6 +114,10 @@ try {
 	// Workaround for unintended auto-casing behavior from `meow`.
 	if ('2Fa' in flags) {
 		flags['2fa'] = flags['2Fa'];
+	}
+
+	if (flags.packageManager) {
+		pkg.packageManager = flags.packageManager;
 	}
 
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !pkg.private;
@@ -132,22 +133,26 @@ try {
 
 	const branch = flags.branch ?? await git.defaultBranch();
 
-	const isYarnBerry = flags.yarn && checkIfYarnBerry(pkg);
-
 	const options = await ui({
 		...flags,
 		runPublish,
 		availability,
 		version,
 		branch,
-	}, {pkg, rootDir, isYarnBerry});
+	}, {pkg, rootDir});
+
+	return {options, rootDir, pkg};
+}
+
+try {
+	const {options, rootDir, pkg} = await getOptions();
 
 	if (!options.confirm) {
 		gracefulExit();
 	}
 
 	console.log(); // Prints a newline for readability
-	const newPkg = await np(options.version, options, {pkg, rootDir, isYarnBerry});
+	const newPkg = await np(options.version, options, {pkg, rootDir});
 
 	if (options.preview || options.releaseDraftOnly) {
 		gracefulExit();

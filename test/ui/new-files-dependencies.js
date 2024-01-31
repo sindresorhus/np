@@ -43,7 +43,6 @@ const createFixture = test.macro(async (t, pkg, commands, expected) => {
 
 		const {ui, logs: logsArray} = await mockInquirer({t, answers: {confirm: {confirm: false}}, mocks: {
 			'./npm/util.js': {
-				getRegistryUrl: sinon.stub().resolves(''),
 				checkIgnoreStrategy: sinon.stub().resolves(),
 			},
 			'node:process': {cwd: () => temporaryDir},

@@ -5,7 +5,6 @@ import {mockInquirer} from '../../_helpers/mock-inquirer.js';
 const testUi = test.macro(async (t, {version, answers}, assertions) => {
 	const {ui, logs} = await mockInquirer({t, answers: {confirm: true, ...answers}, mocks: {
 		'./npm/util.js': {
-			getRegistryUrl: sinon.stub().resolves(''),
 			checkIgnoreStrategy: sinon.stub().resolves(),
 		},
 		'./util.js': {

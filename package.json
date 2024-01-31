@@ -11,7 +11,8 @@
 		"node": ">=18",
 		"npm": ">=9",
 		"git": ">=2.11.0",
-		"yarn": ">=1.7.0"
+		"yarn": ">=1.7.0",
+		"pnpm": ">=8"
 	},
 	"scripts": {
 		"test": "xo && ava"
@@ -40,7 +41,6 @@
 		"execa": "^8.0.1",
 		"exit-hook": "^4.0.0",
 		"github-url-from-git": "^1.5.0",
-		"has-yarn": "^3.0.0",
 		"hosted-git-info": "^7.0.1",
 		"ignore-walk": "^6.0.3",
 		"import-local": "^3.1.0",
@@ -52,7 +52,7 @@
 		"listr": "^0.14.3",
 		"listr-input": "^0.2.1",
 		"log-symbols": "^6.0.0",
-		"meow": "^12.1.1",
+		"meow": "^13.1.0",
 		"new-github-release-url": "^2.0.0",
 		"npm-name": "^7.1.1",
 		"onetime": "^7.0.0",
@@ -62,8 +62,8 @@
 		"p-timeout": "^6.1.2",
 		"path-exists": "^5.0.0",
 		"pkg-dir": "^8.0.0",
-		"read-pkg": "^9.0.1",
 		"read-package-up": "^11.0.0",
+		"read-pkg": "^9.0.1",
 		"rxjs": "^7.8.1",
 		"semver": "^7.5.4",
 		"symbol-observable": "^4.0.0",
