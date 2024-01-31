@@ -9,6 +9,7 @@ export type PackageManagerConfig = {
 	versionCommand: (version: string) => [cli: string, args: string[]];
 	publishCli?: string;
 	getRegistryCommand: Command;
+	tagVersionPrefixCommand: Command;
 	throwOnExternalRegistry?: boolean;
 	lockfiles: string[];
 };

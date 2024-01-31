@@ -47,7 +47,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 	const testScript = options.testScript || 'test';
 
 	if (options.releaseDraftOnly) {
-		await releaseTaskHelper(options, pkg);
+		await releaseTaskHelper(options, pkg, pkgManager);
 		return pkg;
 	}
 
@@ -57,7 +57,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 	const rollback = onetime(async () => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
 
-		const tagVersionPrefix = await util.getTagVersionPrefix(options);
+		const tagVersionPrefix = await util.getTagVersionPrefix(pkgManager);
 
 		const latestTag = await git.latestTag();
 		const versionInLatestTag = latestTag.slice(tagVersionPrefix.length);
@@ -101,7 +101,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		{
 			title: 'Prerequisite check',
 			enabled: () => options.runPublish,
-			task: () => prerequisiteTasks(input, pkg, options),
+			task: () => prerequisiteTasks(input, pkg, options, pkgManager),
 		},
 		{
 			title: 'Git',
@@ -230,7 +230,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 				}
 			},
 			// TODO: parse version outside of index
-			task: () => releaseTaskHelper(options, pkg),
+			task: () => releaseTaskHelper(options, pkg, pkgManager),
 		}] : [],
 	], {
 		showSubtasks: false,

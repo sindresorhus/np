@@ -60,13 +60,10 @@ export const linkifyCommitRange = (url, commitRange) => {
 	return terminalLink(commitRange, `${url}/compare/${commitRange}`);
 };
 
-export const getTagVersionPrefix = pMemoize(async options => {
-	ow(options, ow.object.hasKeys('yarn'));
-
+/** @type {(config: import('./package-manager/types.js').PackageManagerConfig) => Promise<string>} */
+export const getTagVersionPrefix = pMemoize(async config => {
 	try {
-		const {stdout} = options.yarn
-			? await execa('yarn', ['config', 'get', 'version-tag-prefix'])
-			: await execa('npm', ['config', 'get', 'tag-version-prefix']);
+		const {stdout} = await execa(...config.tagVersionPrefixCommand);
 
 		return stdout;
 	} catch {

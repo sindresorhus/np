@@ -6,7 +6,7 @@ import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-const prerequisiteTasks = (input, pkg, options) => {
+const prerequisiteTasks = (input, pkg, options, pkgManager) => {
 	const isExternalRegistry = npm.isExternalRegistry(pkg);
 	let newVersion;
 
@@ -77,7 +77,7 @@ const prerequisiteTasks = (input, pkg, options) => {
 			async task() {
 				await git.fetch();
 
-				const tagPrefix = await util.getTagVersionPrefix(options);
+				const tagPrefix = await util.getTagVersionPrefix(pkgManager);
 
 				await git.verifyTagDoesNotExistOnRemote(`${tagPrefix}${newVersion}`);
 			},
