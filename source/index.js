@@ -177,7 +177,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 							catchError(error => handleNpmError(error, task, otp => {
 								context.otp = otp;
 
-								return exec(publishCli, getPackagePublishArguments({...options, otp}));
+								return execa(publishCli, getPackagePublishArguments({...options, otp}));
 							})),
 						)
 						.pipe(
