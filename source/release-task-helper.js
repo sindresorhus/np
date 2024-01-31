@@ -6,7 +6,7 @@ import Version from './version.js';
 const releaseTaskHelper = async (options, pkg, pkgManager) => {
 	const newVersion = options.releaseDraftOnly
 		? new Version(pkg.version)
-		: new Version(pkg.version).setFrom(options.version.toString(), {prereleasePrefix: await getPreReleasePrefix(options)});
+		: new Version(pkg.version).setFrom(options.version.toString(), {prereleasePrefix: await getPreReleasePrefix(pkgManager)});
 
 	const tag = await getTagVersionPrefix(pkgManager) + newVersion.toString();
 

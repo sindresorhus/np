@@ -17,16 +17,11 @@ const prerequisiteTasks = (input, pkg, options, pkgManager) => {
 			task: async () => npm.checkConnection(),
 		},
 		{
-			title: 'Check npm version',
-			task: async () => npm.verifyRecentNpmVersion(),
-		},
-		{
-			title: 'Check yarn version',
-			enabled: () => options.yarn === true,
-			async task() {
-				const {stdout: yarnVersion} = await execa('yarn', ['--version']);
-				util.validateEngineVersionSatisfies('yarn', yarnVersion);
-			},
+			title: `Check ${pkgManager.cli} version`,
+			task: async () => {
+				const {stdout: version} = await execa(pkgManager.cli, ['--version']);
+				util.validateEngineVersionSatisfies(pkgManager.cli, version);
+			}
 		},
 		{
 			title: 'Verify user is authenticated',

@@ -128,12 +128,10 @@ export const getNewDependencies = async (newPkg, rootDir) => {
 	return newDependencies;
 };
 
-export const getPreReleasePrefix = pMemoize(async options => {
-	ow(options, ow.object.hasKeys('yarn'));
-
+/** @type {(config: import('./package-manager/types.js').PackageManagerConfig) => Promise<string>} */
+export const getPreReleasePrefix = pMemoize(async config => {
 	try {
-		const packageManager = options.yarn ? 'yarn' : 'npm';
-		const {stdout} = await execa(packageManager, ['config', 'get', 'preid']);
+		const {stdout} = await execa(config.cli, ['config', 'get', 'preid']);
 
 		return stdout === 'undefined' ? '' : stdout;
 	} catch {

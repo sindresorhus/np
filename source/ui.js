@@ -127,13 +127,13 @@ const ui = async (options, {pkg, rootDir}) => {
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 
-	const packageManagerConfig = getPackageManagerConfig(rootDir, pkg);
+	const pkgManager = getPackageManagerConfig(rootDir, pkg);
 
-	if (packageManagerConfig.throwOnExternalRegistry && npm.isExternalRegistry(pkg)) {
-		throw new Error(`External registry is not yet supported with ${packageManagerConfig.nickname}.`);
+	if (pkgManager.throwOnExternalRegistry && npm.isExternalRegistry(pkg)) {
+		throw new Error(`External registry is not yet supported with ${pkgManager.nickname}.`);
 	}
 
-	const {stdout: registryUrl} = await execa(...packageManagerConfig.getRegistryCommand);
+	const {stdout: registryUrl} = await execa(...pkgManager.getRegistryCommand);
 	const releaseBranch = options.branch;
 
 	if (options.runPublish) {
@@ -152,7 +152,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 	} else {
 		const versionText = options.version
-			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version, {prereleasePrefix: await util.getPreReleasePrefix(options)}).format()})`)
+			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version, {prereleasePrefix: await util.getPreReleasePrefix(pkgManager)}).format()})`)
 			: chalk.dim(`(current: ${oldVersion})`);
 
 		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${versionText}\n`);
@@ -233,7 +233,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		&& !options.tag
 	);
 
-	const alreadyPublicScoped = packageManagerConfig.nickname === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(pkg.name) === 'public';
+	const alreadyPublicScoped = pkgManager.nickname === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(pkg.name) === 'public';
 
 	// Note that inquirer question.when is a bit confusing. Only `false` will cause the question to be skipped.
 	// Any other value like `true` and `undefined` means ask the question.
