@@ -1,7 +1,7 @@
 import {execa} from 'execa';
 import {deleteAsync} from 'del';
 import Listr from 'listr';
-import {merge, catchError, filter, finalize} from 'rxjs';
+import {merge, catchError, filter, finalize, from} from 'rxjs';
 import hostedGitInfo from 'hosted-git-info';
 import onetime from 'onetime';
 import {asyncExitHook} from 'exit-hook';
@@ -168,10 +168,11 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 						return `[Preview] Command not executed: ${publishCli} ${args.join(' ')}.`;
 					}
 				},
+				/** @type {(context, task) => Listr.ListrTaskResult<any>} */
 				task(context, task) {
 					let hasError = false;
 
-					return exec(publishCli, getPackagePublishArguments(options))
+					return from(execa(publishCli, getPackagePublishArguments(options)))
 						.pipe(
 							catchError(error => handleNpmError(error, task, otp => {
 								context.otp = otp;
