@@ -33,7 +33,7 @@ const exec = (cmd, args, options) => {
 
 const np = async (input = 'patch', options, {pkg, rootDir}) => {
 	const pkgManager = getPackageManagerConfig(rootDir, pkg);
-	const publishCli = options.publishCli || pkgManager.cli;
+	const publishCli = pkgManager.publishCli || pkgManager.cli;
 
 	// TODO: Remove sometime far in the future
 	if (options.skipCleanup) {
