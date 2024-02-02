@@ -27,7 +27,7 @@ const exec = (cmd, args, options) => {
 
 /**
  * @param {string} input
- * @param {any | typeof import('./cli-implementation.js').cli['unnormalizedFlags']} options
+ * @param {import('./cli-implementation.js').Options} options
  * @param {{pkg: import('read-pkg').NormalizedPackageJson; rootDir: string}} context
  */
 
@@ -115,21 +115,16 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		{
 			title: `Installing dependencies using ${pkgManager.nickname}`,
 			enabled: () => runCleanup,
-			task() {
-				return exec(...pkgManager.installCommand).pipe(
-					catchError(async error => {
-						const isLockfileComplaint = error.stderr.startsWith('error Your lockfile needs to be updated');
-
-						if (isLockfileComplaint && await git.checkIfFileGitIgnored(lockfile.filename)) {
-							return;
-						}
-
-						throw new Error(`Lockfile is outdated. Run ${printCommand(pkgManager.installCommand)}, commit the updated lockfile and try again.`, {
-							cause: error,
-						});
-					}),
-				);
-			},
+			task: () => new Listr([
+				{
+					title: 'Running install command',
+					task: () => exec(...pkgManager.installCommand),
+				},
+				{
+					title: 'Checking working tree is still clean', // If lockfile was out of date and tracked by git, this will fail
+					task: () => git.verifyWorkingTreeIsClean(),
+				},
+			]),
 		},
 		{
 			title: 'Running tests',

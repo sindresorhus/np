@@ -1,16 +1,21 @@
 /** @type {import('./types.d.ts').PackageManagerConfig} */
-
 export const npmConfig = {
 	cli: 'npm',
 	nickname: 'npm',
-	installCommand: ['npm', ['install', '--engine-strict']],
+	installCommand: ['npm', ['ci', '--engine-strict']],
 	versionCommand: version => ['npm', ['version', version]],
 	getRegistryCommand: ['npm', ['config', 'get', 'registry']],
 	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix']],
 	lockfiles: ['package-lock.json', 'npm-shrinkwrap.json'],
 };
-/** @type {import('./types.d.ts').PackageManagerConfig} */
 
+/** @type {import('./types.d.ts').PackageManagerConfig} */
+export const npmConfigNoLockfile = {
+	...npmConfig,
+	installCommand: ['npm', ['install', '--engine-strict']],
+};
+
+/** @type {import('./types.d.ts').PackageManagerConfig} */
 export const pnpmConfig = {
 	cli: 'pnpm',
 	nickname: 'pnpm',
@@ -21,23 +26,23 @@ export const pnpmConfig = {
 	getRegistryCommand: ['pnpm', ['config', 'get', 'registry']],
 	lockfiles: ['pnpm-lock.yaml'],
 };
-/** @type {import('./types.d.ts').PackageManagerConfig} */
 
+/** @type {import('./types.d.ts').PackageManagerConfig} */
 export const yarnConfig = {
 	cli: 'yarn',
 	nickname: 'yarn',
-	installCommand: ['yarn', ['install', '--frozen-lockfile', '--production=false']],
+	installCommand: ['yarn', ['install', '--production=false']],
 	getRegistryCommand: ['yarn', ['config', 'get', 'registry']],
 	tagVersionPrefixCommand: ['yarn', ['config', 'get', 'version-tag-prefix']],
 	versionCommand: version => ['yarn', ['version', '--new-version', version]],
 	lockfiles: ['yarn.lock'],
 };
-/** @type {import('./types.d.ts').PackageManagerConfig} */
 
+/** @type {import('./types.d.ts').PackageManagerConfig} */
 export const yarnBerryConfig = {
 	cli: 'yarn',
 	nickname: 'yarn-berry',
-	installCommand: ['yarn', ['install', '--immutable']],
+	installCommand: ['yarn', ['install']],
 	versionCommand: version => ['yarn', ['version', '--new-version', version]],
 	tagVersionPrefixCommand: ['yarn', ['config', 'get', 'version-tag-prefix']],
 	publishCli: 'npm', // Yarn berry doesn't support git committing/tagging, so use npm

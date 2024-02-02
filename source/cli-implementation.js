@@ -102,6 +102,8 @@ export const cli = meow(`
 
 updateNotifier({pkg: cli.pkg}).notify();
 
+/** @typedef {Awaited<ReturnType<typeof getOptions>>['options']} Options */
+
 export async function getOptions() {
 	const {pkg, rootDir} = await util.readPkg(cli.flags.contents);
 

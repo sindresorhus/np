@@ -121,7 +121,10 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 	return answers.confirm;
 };
 
-/** @type {<Options extends typeof import('./cli-implementation.js')['cli']['flags']>(options: Options, context: {rootDir: string; pkg: import('read-pkg').NormalizedPackageJson}) => Promise<Options>} */
+/**
+ * @param {typeof import('./cli-implementation.js').cli['flags']} options 
+ * @param {{pkg: import('read-pkg').NormalizedPackageJson; rootDir: string}} context
+ */
 const ui = async (options, {pkg, rootDir}) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
