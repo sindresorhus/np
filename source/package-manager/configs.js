@@ -12,7 +12,7 @@ export const npmConfig = {
 /** @type {import('./types.d.ts').PackageManagerConfig} */
 export const npmConfigNoLockfile = {
 	...npmConfig,
-	installCommand: ['npm', ['install', '--engine-strict']],
+	installCommand: ['npm', ['install', '--no-package-lock', '--no-production', '--engine-strict']],
 };
 
 /** @type {import('./types.d.ts').PackageManagerConfig} */
