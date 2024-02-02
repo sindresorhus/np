@@ -21,7 +21,7 @@ export function getPackageManagerConfig(rootDir, pkg) {
 	let config = configFromPackageManagerField(pkg);
 
 	if (config === npmConfig && !findLockFile(rootDir, config)) {
-		config = npmConfigNoLockfile
+		config = npmConfigNoLockfile;
 	}
 
 	return config || configFromLockfile(rootDir) || npmConfig;
