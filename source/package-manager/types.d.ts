@@ -7,7 +7,7 @@ export type PackageManagerConfig = {
 	/** The main CLI, e.g. the `npm` in `npm install`, `npm test` etc. */
 	cli: PackageManager;
 	/** How the package manager should be referred to in user-facing messages (since there are two different configs for some, e.g. yarn and yarn-berry) */
-	nickname: string;
+	id: string;
 	/** How to install packages, e.g. `["npm", ["install"]]` */
 	installCommand: Command;
 	/** Given a verison string, return a version command e.g. `version => ["npm", ["version", version]]` */

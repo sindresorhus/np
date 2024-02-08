@@ -113,7 +113,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 			task: () => deleteAsync('node_modules'),
 		},
 		{
-			title: `Installing dependencies using ${pkgManager.nickname}`,
+			title: `Installing dependencies using ${pkgManager.id}`,
 			enabled: () => runCleanup,
 			task: () => new Listr([
 				{

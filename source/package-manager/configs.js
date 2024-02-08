@@ -1,7 +1,7 @@
 /** @type {import('./types.d.ts').PackageManagerConfig} */
 export const npmConfig = {
 	cli: 'npm',
-	nickname: 'npm',
+	id: 'npm',
 	installCommand: ['npm', ['ci', '--engine-strict']],
 	versionCommand: version => ['npm', ['version', version]],
 	getRegistryCommand: ['npm', ['config', 'get', 'registry']],
@@ -18,7 +18,7 @@ export const npmConfigNoLockfile = {
 /** @type {import('./types.d.ts').PackageManagerConfig} */
 export const pnpmConfig = {
 	cli: 'pnpm',
-	nickname: 'pnpm',
+	id: 'pnpm',
 	installCommand: ['pnpm', ['install']],
 	versionCommand: version => ['pnpm', ['version', version]],
 	tagVersionPrefixCommand: ['pnpm', ['config', 'get', 'tag-version-prefix']],
@@ -30,7 +30,7 @@ export const pnpmConfig = {
 /** @type {import('./types.d.ts').PackageManagerConfig} */
 export const yarnConfig = {
 	cli: 'yarn',
-	nickname: 'yarn',
+	id: 'yarn',
 	installCommand: ['yarn', ['install', '--production=false']],
 	getRegistryCommand: ['yarn', ['config', 'get', 'registry']],
 	tagVersionPrefixCommand: ['yarn', ['config', 'get', 'version-tag-prefix']],
@@ -41,7 +41,7 @@ export const yarnConfig = {
 /** @type {import('./types.d.ts').PackageManagerConfig} */
 export const yarnBerryConfig = {
 	cli: 'yarn',
-	nickname: 'yarn-berry',
+	id: 'yarn-berry',
 	installCommand: ['yarn', ['install']],
 	versionCommand: version => ['yarn', ['version', '--new-version', version]],
 	tagVersionPrefixCommand: ['yarn', ['config', 'get', 'version-tag-prefix']],

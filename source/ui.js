@@ -133,7 +133,7 @@ const ui = async (options, {pkg, rootDir}) => {
 	const pkgManager = getPackageManagerConfig(rootDir, pkg);
 
 	if (pkgManager.throwOnExternalRegistry && npm.isExternalRegistry(pkg)) {
-		throw new Error(`External registry is not yet supported with ${pkgManager.nickname}.`);
+		throw new Error(`External registry is not yet supported with ${pkgManager.id}.`);
 	}
 
 	const {stdout: registryUrl} = await execa(...pkgManager.getRegistryCommand);
@@ -236,7 +236,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		&& !options.tag
 	);
 
-	const alreadyPublicScoped = pkgManager.nickname === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(pkg.name) === 'public';
+	const alreadyPublicScoped = pkgManager.id === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(pkg.name) === 'public';
 
 	// Note that inquirer question.when is a bit confusing. Only `false` will cause the question to be skipped.
 	// Any other value like `true` and `undefined` means ask the question.
