@@ -122,9 +122,9 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 };
 
 /**
- * @param {typeof import('./cli-implementation.js').cli['flags']} options
- * @param {{pkg: import('read-pkg').NormalizedPackageJson; rootDir: string}} context
- */
+@param {typeof import('./cli-implementation.js').cli['flags']} options
+@param {{pkg: import('read-pkg').NormalizedPackageJson; rootDir: string}} context
+*/
 const ui = async (options, {pkg, rootDir}) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];

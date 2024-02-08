@@ -26,11 +26,10 @@ const exec = (cmd, args, options) => {
 };
 
 /**
- * @param {string} input
- * @param {import('./cli-implementation.js').Options} options
- * @param {{pkg: import('read-pkg').NormalizedPackageJson; rootDir: string}} context
- */
-
+@param {string} input
+@param {import('./cli-implementation.js').Options} options
+@param {{pkg: import('read-pkg').NormalizedPackageJson; rootDir: string}} context
+*/
 const np = async (input = 'patch', options, {pkg, rootDir}) => {
 	const pkgManager = getPackageManagerConfig(rootDir, pkg);
 	const publishCli = pkgManager.publishCli || pkgManager.cli;

@@ -4,9 +4,9 @@ import semver from 'semver';
 import {npmConfig, yarnBerryConfig, pnpmConfig, yarnConfig, npmConfigNoLockfile} from './configs.js';
 
 /**
- * @param {string} rootDir
- * @param {import('./types.d.ts').PackageManagerConfig} config
- */
+@param {string} rootDir
+@param {import('./types.d.ts').PackageManagerConfig} config
+*/
 export function findLockFile(rootDir, config) {
 	return config.lockfiles
 		.map(filename => ({filename, filepath: path.resolve(rootDir || '.', filename)}))
@@ -14,9 +14,9 @@ export function findLockFile(rootDir, config) {
 }
 
 /**
- * @param {string} rootDir
- * @param {import('read-pkg').NormalizedPackageJson} pkg
- */
+@param {string} rootDir
+@param {import('read-pkg').NormalizedPackageJson} pkg
+*/
 export function getPackageManagerConfig(rootDir, pkg) {
 	let config = configFromPackageManagerField(pkg);
 
