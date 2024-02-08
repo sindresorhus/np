@@ -9,7 +9,7 @@ import {npmConfig, yarnBerryConfig, pnpmConfig, yarnConfig, npmConfigNoLockfile}
  */
 export function findLockFile(rootDir, config) {
 	return config.lockfiles
-		.map(filename => ({filename, filepath: path.resolve(rootDir, filename)}))
+		.map(filename => ({filename, filepath: path.resolve(rootDir || '.', filename)}))
 		.find(({filepath}) => fs.existsSync(filepath));
 }
 

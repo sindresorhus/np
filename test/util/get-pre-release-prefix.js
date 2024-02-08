@@ -12,7 +12,7 @@ test('returns preid postfix if set - npm', createFixture, [{
 	stdout: 'pre',
 }], async ({t, testedModule: {getPreReleasePrefix}}) => {
 	t.is(
-		await getPreReleasePrefix({yarn: false}),
+		await getPreReleasePrefix({cli: 'npm'}),
 		'pre',
 	);
 });
@@ -22,7 +22,7 @@ test('returns preid postfix if set - yarn', createFixture, [{
 	stdout: 'pre',
 }], async ({t, testedModule: {getPreReleasePrefix}}) => {
 	t.is(
-		await getPreReleasePrefix({yarn: true}),
+		await getPreReleasePrefix({cli: 'yarn'}),
 		'pre',
 	);
 });
@@ -32,7 +32,7 @@ test('returns empty string if not set - npm', createFixture, [{
 	stdout: 'undefined',
 }], async ({t, testedModule: {getPreReleasePrefix}}) => {
 	t.is(
-		await getPreReleasePrefix({yarn: false}),
+		await getPreReleasePrefix({cli: 'npm'}),
 		'',
 	);
 });
@@ -42,7 +42,7 @@ test('returns empty string if not set - yarn', createFixture, [{
 	stdout: 'undefined',
 }], async ({t, testedModule: {getPreReleasePrefix}}) => {
 	t.is(
-		await getPreReleasePrefix({yarn: true}),
+		await getPreReleasePrefix({cli: 'yarn'}),
 		'',
 	);
 });
@@ -52,13 +52,13 @@ test('no options passed', async t => {
 		originalGetPreReleasePrefix(),
 		{message: stripIndent`
 			Expected argument to be of type \`object\` but received type \`undefined\`
-			Expected object to have keys \`["yarn"]\`
+			Expected object to have keys \`["cli"]\`
 		`},
 	);
 
 	await t.throwsAsync(
 		originalGetPreReleasePrefix({}),
-		{message: 'Expected object to have keys `["yarn"]`'},
+		{message: 'Expected object to have keys `["cli"]`'},
 	);
 });
 
@@ -66,7 +66,7 @@ test.serial('returns actual value', async t => {
 	const originalPreid = process.env.NPM_CONFIG_PREID;
 	process.env.NPM_CONFIG_PREID = 'beta';
 
-	t.is(await originalGetPreReleasePrefix({yarn: false}), 'beta');
+	t.is(await originalGetPreReleasePrefix({cli: 'npm'}), 'beta');
 
 	process.env.NPM_CONFIG_PREID = originalPreid;
 });

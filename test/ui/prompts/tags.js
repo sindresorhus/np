@@ -17,6 +17,9 @@ const testUi = test.macro(async (t, {version, tags, answers}, assertions) => {
 			latestTagOrFirstCommit: sinon.stub().resolves(`v${npPkg.version}`),
 			commitLogFromRevision: sinon.stub().resolves(''),
 		},
+		'./package-manager/index.js': {
+			findLockFile: sinon.stub().resolves(undefined),
+		}
 	}});
 
 	const results = await ui({

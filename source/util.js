@@ -1,3 +1,4 @@
+import ow from 'ow'
 import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -61,6 +62,8 @@ export const linkifyCommitRange = (url, commitRange) => {
 
 /** @type {(config: import('./package-manager/types.js').PackageManagerConfig) => Promise<string>} */
 export const getTagVersionPrefix = pMemoize(async config => {
+	ow(config, ow.object.hasKeys('tagVersionPrefixCommand'));
+
 	try {
 		const {stdout} = await execa(...config.tagVersionPrefixCommand);
 
@@ -129,6 +132,8 @@ export const getNewDependencies = async (newPkg, rootDir) => {
 
 /** @type {(config: import('./package-manager/types.js').PackageManagerConfig) => Promise<string>} */
 export const getPreReleasePrefix = pMemoize(async config => {
+	ow(config, ow.object.hasKeys('cli'));
+
 	try {
 		const {stdout} = await execa(config.cli, ['config', 'get', 'preid']);
 
