@@ -5,7 +5,7 @@ import {npPkg} from '../../source/util.js';
 import {SilentRenderer} from '../_helpers/listr-renderer.js';
 import {_createFixture} from '../_helpers/stub-execa.js';
 import {run, assertTaskFailed, assertTaskDisabled} from '../_helpers/listr.js';
-import {npmConfig, yarnConfig} from '../../source/package-manager/configs.js'
+import {npmConfig, yarnConfig} from '../../source/package-manager/configs.js';
 
 /** @type {ReturnType<typeof _createFixture<import('../../source/prerequisite-tasks.js')>>} */
 const createFixture = _createFixture('../../source/prerequisite-tasks.js', import.meta.url);

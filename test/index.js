@@ -42,7 +42,7 @@ test('errors on too low version', npFails,
 
 const fakeExecaReturn = () => Object.assign(
 	Promise.resolve({pipe: sinon.stub()}),
-	{stdout: '', stderr: ''}
+	{stdout: '', stderr: ''},
 );
 
 test('skip enabling 2FA if the package exists', async t => {

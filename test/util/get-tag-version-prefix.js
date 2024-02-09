@@ -2,7 +2,7 @@ import test from 'ava';
 import {stripIndent} from 'common-tags';
 import {_createFixture} from '../_helpers/stub-execa.js';
 import {getTagVersionPrefix as originalGetTagVersionPrefix} from '../../source/util.js';
-import {npmConfig, yarnConfig} from '../../source/package-manager/configs.js'
+import {npmConfig, yarnConfig} from '../../source/package-manager/configs.js';
 
 /** @type {ReturnType<typeof _createFixture<import('../../source/util.js')>>} */
 const createFixture = _createFixture('../../source/util.js', import.meta.url);

@@ -19,7 +19,7 @@ const testUi = test.macro(async (t, {version, tags, answers}, assertions) => {
 		},
 		'./package-manager/index.js': {
 			findLockFile: sinon.stub().resolves(undefined),
-		}
+		},
 	}});
 
 	const results = await ui({
