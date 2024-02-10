@@ -92,7 +92,7 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 		'../source/npm/publish.js': sinon.stub().returns({pipe: sinon.stub()}),
 	});
 
-	await (npMock('1.0.0', {
+	await t.notThrowsAsync(npMock('1.0.0', {
 		...defaultOptions,
 		availability: {
 			isAvailable: true,
