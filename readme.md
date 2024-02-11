@@ -276,9 +276,9 @@ Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in pack
 }
 ```
 
-### Package Managers
+### Package managers
 
-If a package manager is not set in package.json, via configuration (`packageManager`), or via the CLI (`--package-manager`), `np` will attempt to infer the best package manager to user by looking for lockfiles. But it's recommended to set the [`packageManager` field](https://nodejs.org/api/packages.html#packagemanager) in your package.json to be consistent with other tools. See also [corepack docs](https://nodejs.org/api/corepack.html).
+If a package manager is not set in package.json, via configuration (`packageManager`), or via the CLI (`--package-manager`), `np` will attempt to infer the best package manager to use by looking for lockfiles. But it's recommended to set the [`packageManager` field](https://nodejs.org/api/packages.html#packagemanager) in your package.json to be consistent with other tools. See also the [corepack docs](https://nodejs.org/api/corepack.html).
 
 ### Publish with a CI
 
