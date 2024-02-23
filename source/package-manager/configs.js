@@ -18,7 +18,6 @@ export const pnpmConfig = {
 	installCommandNoLockfile: ['pnpm', ['install']],
 	versionCommand: version => ['pnpm', ['version', version]],
 	tagVersionPrefixCommand: ['pnpm', ['config', 'get', 'tag-version-prefix']],
-	publishCli: ['npm'], // Pnpm does git cleanliness checks, which np already did, and which fail because when publishing package.json has been updated
 	getRegistryCommand: ['pnpm', ['config', 'get', 'registry']],
 	lockfiles: ['pnpm-lock.yaml'],
 };
@@ -45,7 +44,7 @@ export const yarnBerryConfig = {
 	versionCommand: version => ['npm', ['version', version]],
 	tagVersionPrefixCommand: ['yarn', ['config', 'get', 'version-tag-prefix']],
 	// Yarn berry offloads publishing to npm, e.g. `yarn npm publish x.y.z`
-	publishCli: ['yarn', ['npm']],
+	publishCommand: args => ['yarn', ['npm', ...args]],
 	getRegistryCommand: ['yarn', ['config', 'get', 'npmRegistryServer']],
 	throwOnExternalRegistry: true,
 	lockfiles: ['yarn.lock'],

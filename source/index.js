@@ -32,7 +32,6 @@ const exec = (cmd, args, options) => {
 */
 const np = async (input = 'patch', options, {pkg, rootDir}) => {
 	const pkgManager = getPackageManagerConfig(rootDir, pkg);
-	const [publishCommand, publishArgsPrefix = []] = pkgManager.publishCli || [pkgManager.cli];
 
 	// TODO: Remove sometime far in the future
 	if (options.skipCleanup) {
@@ -96,9 +95,11 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 	// To prevent the process from hanging due to watch mode (e.g. when running `vitest`)
 	const ciEnvOptions = {env: {CI: 'true'}};
 
-	function getPackagePublishArguments(options) {
-		const args = getAdditionalPackagePublishArguments(options);
-		return [...publishArgsPrefix, ...args];
+	/** @param {typeof options} _options */
+	function getPublishCommand(_options) {
+		const publishCommand = pkgManager.publishCommand || (args => [pkgManager.cli, args]);
+		const args = getAdditionalPackagePublishArguments(_options);
+		return publishCommand(args);
 	}
 
 	const tasks = new Listr([
@@ -166,20 +167,20 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 				title: 'Publishing package',
 				skip() {
 					if (options.preview) {
-						const args = getPackagePublishArguments(options);
-						return `[Preview] Command not executed: ${publishCommand} ${args.join(' ')}.`;
+						const command = getPublishCommand(options);
+						return `[Preview] Command not executed: ${printCommand(command)}.`;
 					}
 				},
 				/** @type {(context, task) => Listr.ListrTaskResult<any>} */
 				task(context, task) {
 					let hasError = false;
 
-					return from(execa(publishCommand, getPackagePublishArguments(options)))
+					return from(execa(...getPublishCommand(options)))
 						.pipe(
 							catchError(error => handleNpmError(error, task, otp => {
 								context.otp = otp;
 
-								return execa(publishCommand, getPackagePublishArguments({...options, otp}));
+								return execa(...getPublishCommand({...options, otp}));
 							})),
 						)
 						.pipe(

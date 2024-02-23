@@ -29,12 +29,12 @@ export type PackageManagerConfig = {
 	/**
  	Given a version string, return a version command e.g. `version => ["npm", ["version", version]]`.
   	*/
-	versionCommand: (version: string) => [command: string, args: string[]];
+	versionCommand: (version: string) => [cli: string, args: string[]];
 
 	/**
- 	Use a different CLI (and prefix args) to do the actual publish. Defaults to [`cli`].
+ 	Modify the actual publish command. Defaults to `args => [config.cli, args]`.
   	*/
-	publishCli?: [command: string, prefixArgs?: string[]];
+	publishCommand?: (args: string[]) => Command;
 
 	/**
  	CLI command which is expected to output the npm registry to use, e.g. `['npm', ['config', 'get', 'registry']]`.
