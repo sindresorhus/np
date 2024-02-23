@@ -17,19 +17,24 @@ export type PackageManagerConfig = {
 	id: string;
 
 	/**
- 	How to install packages, e.g. `["npm", ["install"]]`.
+ 	How to install packages when there is a lockfile, e.g. `["npm", ["install"]]`.
   	*/
 	installCommand: Command;
 
 	/**
- 	Given a version string, return a version command e.g. `version => ["npm", ["version", version]]`.
-  	*/
-	versionCommand: (version: string) => [cli: string, args: string[]];
+	How to install packages when there is no lockfile, e.g. `["npm", ["install"]]`.
+	*/
+	installCommandNoLockfile: Command;
 
 	/**
- 	Use a different CLI to do the actual publish. Defaults to `cli`.
+ 	Given a version string, return a version command e.g. `version => ["npm", ["version", version]]`.
   	*/
-	publishCli?: string;
+	versionCommand: (version: string) => [command: string, args: string[]];
+
+	/**
+ 	Use a different CLI (and prefix args) to do the actual publish. Defaults to [`cli`].
+  	*/
+	publishCli?: [command: string, prefixArgs?: string[]];
 
 	/**
  	CLI command which is expected to output the npm registry to use, e.g. `['npm', ['config', 'get', 'registry']]`.

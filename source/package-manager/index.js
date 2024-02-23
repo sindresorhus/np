@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import semver from 'semver';
-import {npmConfig, yarnBerryConfig, pnpmConfig, yarnConfig, npmConfigNoLockfile} from './configs.js';
+import {npmConfig, yarnBerryConfig, pnpmConfig, yarnConfig} from './configs.js';
 
 /**
 @param {string} rootDir
@@ -18,12 +18,7 @@ export function findLockFile(rootDir, config) {
 @param {import('read-pkg').NormalizedPackageJson} pkg
 */
 export function getPackageManagerConfig(rootDir, pkg) {
-	let config = configFromPackageManagerField(pkg);
-
-	if (config === npmConfig && !findLockFile(rootDir, config)) {
-		config = npmConfigNoLockfile;
-	}
-
+	const config = configFromPackageManagerField(pkg);
 	return config || configFromLockfile(rootDir) || npmConfig;
 }
 

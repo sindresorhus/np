@@ -8,7 +8,7 @@ import {asyncExitHook} from 'exit-hook';
 import logSymbols from 'log-symbols';
 import prerequisiteTasks from './prerequisite-tasks.js';
 import gitTasks from './git-tasks.js';
-import {getPackagePublishArguments} from './npm/publish.js';
+import {getPackagePublishArguments as getAdditionalPackagePublishArguments} from './npm/publish.js';
 import enable2fa, {getEnable2faArgs} from './npm/enable-2fa.js';
 import releaseTaskHelper from './release-task-helper.js';
 import * as util from './util.js';
@@ -32,7 +32,7 @@ const exec = (cmd, args, options) => {
 */
 const np = async (input = 'patch', options, {pkg, rootDir}) => {
 	const pkgManager = getPackageManagerConfig(rootDir, pkg);
-	const publishCli = pkgManager.publishCli || pkgManager.cli;
+	const [publishCommand, publishArgsPrefix = []] = pkgManager.publishCli || [pkgManager.cli];
 
 	// TODO: Remove sometime far in the future
 	if (options.skipCleanup) {
@@ -96,6 +96,11 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 	// To prevent the process from hanging due to watch mode (e.g. when running `vitest`)
 	const ciEnvOptions = {env: {CI: 'true'}};
 
+	function getPackagePublishArguments(options) {
+		const args = getAdditionalPackagePublishArguments(options);
+		return [...publishArgsPrefix, ...args];
+	}
+
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
@@ -117,7 +122,10 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 			task: () => new Listr([
 				{
 					title: 'Running install command',
-					task: () => exec(...pkgManager.installCommand),
+					task() {
+						const installCommand = lockfile ? pkgManager.installCommand : pkgManager.installCommandNoLockfile;
+						return exec(...installCommand);
+					},
 				},
 				{
 					title: 'Checking working tree is still clean', // If lockfile was out of date and tracked by git, this will fail
@@ -159,19 +167,19 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 				skip() {
 					if (options.preview) {
 						const args = getPackagePublishArguments(options);
-						return `[Preview] Command not executed: ${publishCli} ${args.join(' ')}.`;
+						return `[Preview] Command not executed: ${publishCommand} ${args.join(' ')}.`;
 					}
 				},
 				/** @type {(context, task) => Listr.ListrTaskResult<any>} */
 				task(context, task) {
 					let hasError = false;
 
-					return from(execa(publishCli, getPackagePublishArguments(options)))
+					return from(execa(publishCommand, getPackagePublishArguments(options)))
 						.pipe(
 							catchError(error => handleNpmError(error, task, otp => {
 								context.otp = otp;
 
-								return execa(publishCli, getPackagePublishArguments({...options, otp}));
+								return execa(publishCommand, getPackagePublishArguments({...options, otp}));
 							})),
 						)
 						.pipe(
