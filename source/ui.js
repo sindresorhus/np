@@ -5,11 +5,11 @@ import {htmlEscape} from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
 import {execa} from 'execa';
+import {getPackageManagerConfig} from './package-manager/index.js';
 import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
-import {getPackageManagerConfig} from './package-manager/index.js';
 
 const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch) => {
 	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
@@ -122,7 +122,7 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 };
 
 /**
-@param {typeof import('./cli-implementation.js').cli['flags']} options
+@param {import('./cli-implementation.js').CLI['flags']} options
 @param {{pkg: import('read-pkg').NormalizedPackageJson; rootDir: string}} context
 */
 const ui = async (options, {pkg, rootDir}) => {

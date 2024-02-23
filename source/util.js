@@ -1,13 +1,13 @@
 import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import ow from 'ow';
 import {readPackageUp} from 'read-package-up';
 import {parsePackage} from 'read-pkg';
 import issueRegex from 'issue-regex';
 import terminalLink from 'terminal-link';
 import {execa} from 'execa';
 import pMemoize from 'p-memoize';
+import ow from 'ow';
 import chalk from 'chalk';
 import Version from './version.js';
 import * as git from './git-util.js';

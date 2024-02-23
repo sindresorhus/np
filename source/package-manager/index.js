@@ -1,16 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import semver from 'semver';
-import {npmConfig, yarnBerryConfig, pnpmConfig, yarnConfig} from './configs.js';
+import * as configs from './configs.js';
 
 /**
 @param {string} rootDir
 @param {import('./types.d.ts').PackageManagerConfig} config
 */
-export function findLockFile(rootDir, config) {
+export function findLockfile(rootDir, config) {
 	return config.lockfiles
-		.map(filename => ({filename, filepath: path.resolve(rootDir || '.', filename)}))
-		.find(({filepath}) => fs.existsSync(filepath));
+		.map(filename => path.resolve(rootDir || '.', filename))
+		.find(filepath => fs.existsSync(filepath));
 }
 
 /**
@@ -19,7 +19,7 @@ export function findLockFile(rootDir, config) {
 */
 export function getPackageManagerConfig(rootDir, pkg) {
 	const config = configFromPackageManagerField(pkg);
-	return config || configFromLockfile(rootDir) || npmConfig;
+	return config || configFromLockfile(rootDir) || configs.npmConfig;
 }
 
 /** @param {import('read-pkg').NormalizedPackageJson} pkg */
@@ -31,27 +31,27 @@ function configFromPackageManagerField(pkg) {
 	const [packageManager, version] = pkg.packageManager.split('@');
 
 	if (packageManager === 'yarn' && version && semver.gte(version, '2.0.0')) {
-		return yarnBerryConfig;
+		return configs.yarnBerryConfig;
 	}
 
 	if (packageManager === 'npm') {
-		return npmConfig;
+		return configs.npmConfig;
 	}
 
 	if (packageManager === 'pnpm') {
-		return pnpmConfig;
+		return configs.pnpmConfig;
 	}
 
 	if (packageManager === 'yarn') {
-		return yarnConfig;
+		return configs.yarnConfig;
 	}
 
 	throw new Error(`Invalid package manager: ${pkg.packageManager}`);
 }
 
 /** @param {string} rootDir */
-function configFromLockfile(rootDir, options = [npmConfig, pnpmConfig, yarnConfig]) {
-	return options.find(config => findLockFile(rootDir, config));
+function configFromLockfile(rootDir, options = [configs.npmConfig, configs.pnpmConfig, configs.yarnConfig]) {
+	return options.find(config => findLockfile(rootDir, config));
 }
 
 /** @param {import('./types.d.ts').Command} command */

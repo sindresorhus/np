@@ -8,14 +8,14 @@ import {asyncExitHook} from 'exit-hook';
 import logSymbols from 'log-symbols';
 import prerequisiteTasks from './prerequisite-tasks.js';
 import gitTasks from './git-tasks.js';
-import {getPackagePublishArguments as getAdditionalPackagePublishArguments} from './npm/publish.js';
+import {getPackagePublishArguments} from './npm/publish.js';
 import enable2fa, {getEnable2faArgs} from './npm/enable-2fa.js';
+import handleNpmError from './npm/handle-npm-error.js';
 import releaseTaskHelper from './release-task-helper.js';
+import {findLockfile, getPackageManagerConfig, printCommand} from './package-manager/index.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
-import {findLockFile, getPackageManagerConfig, printCommand} from './package-manager/index.js';
-import handleNpmError from './npm/handle-npm-error.js';
 
 /** @type {(cmd: string, args: string[], options?: import('execa').Options) => any} */
 const exec = (cmd, args, options) => {
@@ -40,7 +40,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const lockfile = findLockFile(rootDir, pkgManager);
+	const lockfile = findLockfile(rootDir, pkgManager);
 	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl)?.type === 'github';
 	const testScript = options.testScript || 'test';
 
@@ -98,7 +98,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 	/** @param {typeof options} _options */
 	function getPublishCommand(_options) {
 		const publishCommand = pkgManager.publishCommand || (args => [pkgManager.cli, args]);
-		const args = getAdditionalPackagePublishArguments(_options);
+		const args = getPackagePublishArguments(_options);
 		return publishCommand(args);
 	}
 

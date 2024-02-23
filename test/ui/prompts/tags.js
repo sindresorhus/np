@@ -18,7 +18,7 @@ const testUi = test.macro(async (t, {version, tags, answers}, assertions) => {
 			commitLogFromRevision: sinon.stub().resolves(''),
 		},
 		'./package-manager/index.js': {
-			findLockFile: sinon.stub().resolves(undefined),
+			findLockfile: sinon.stub().resolves(undefined),
 		},
 	}});
 

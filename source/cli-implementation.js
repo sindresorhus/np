@@ -13,7 +13,9 @@ import {SEMVER_INCREMENTS} from './version.js';
 import ui from './ui.js';
 import np from './index.js';
 
-export const cli = meow(`
+/** @typedef {typeof cli} CLI */
+
+const cli = meow(`
 	Usage
 	  $ np <version>
 
