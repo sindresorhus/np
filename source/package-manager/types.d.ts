@@ -42,8 +42,8 @@ export type PackageManagerConfig = {
 	getRegistryCommand: Command;
 
 	/**
-        CLI command expected to output the version tag prefix (often "v"). e,g. `['npm', ['config', 'get', 'tag-version-prefix']]`
-	*/
+ 	CLI command expected to output the version tag prefix (often "v"). e,g. `['npm', ['config', 'get', 'tag-version-prefix']]`.
+  	*/
 	tagVersionPrefixCommand: Command;
 
 	/**
