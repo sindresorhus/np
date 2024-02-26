@@ -31,7 +31,7 @@ test('version is invalid', npFails,
 );
 
 test('version is pre-release', npFails,
-	['premajor', 'preminor', 'prepatch', 'prerelease', '10.0.0-0', '10.0.0-beta'],
+	['premajor', 'preminor', 'prepatch', 'prerelease', '100.0.0-0', '100.0.0-beta'],
 	'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag',
 );
 
