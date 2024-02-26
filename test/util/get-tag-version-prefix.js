@@ -40,10 +40,12 @@ test('defaults to "v" when command fails', createFixture, [{
 test('no options passed', async t => {
 	await t.throwsAsync(
 		originalGetTagVersionPrefix(),
-		{message: stripIndent`
+		{
+			message: stripIndent`
 			Expected argument to be of type \`object\` but received type \`undefined\`
 			Expected object to have keys \`["tagVersionPrefixCommand"]\`
-		`},
+		`,
+		},
 	);
 
 	await t.throwsAsync(

@@ -50,10 +50,12 @@ test('returns empty string if not set - yarn', createFixture, [{
 test('no options passed', async t => {
 	await t.throwsAsync(
 		originalGetPreReleasePrefix(),
-		{message: stripIndent`
+		{
+			message: stripIndent`
 			Expected argument to be of type \`object\` but received type \`undefined\`
 			Expected object to have keys \`["cli"]\`
-		`},
+		`,
+		},
 	);
 
 	await t.throwsAsync(

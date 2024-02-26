@@ -2,7 +2,7 @@ import process from 'node:process';
 import test from 'ava';
 import {npmConfig, yarnConfig} from '../../source/package-manager/configs.js';
 import actualPrerequisiteTasks from '../../source/prerequisite-tasks.js';
-import {npPkg} from '../../source/util.js';
+import {npPackage} from '../../source/util.js';
 import {SilentRenderer} from '../_helpers/listr-renderer.js';
 import {_createFixture} from '../_helpers/stub-execa.js';
 import {run, assertTaskFailed, assertTaskDisabled} from '../_helpers/listr.js';
@@ -61,7 +61,7 @@ test.serial('should fail when npm version does not match range in `package.json`
 		stdout: '',
 	},
 ], async ({t, testedModule: prerequisiteTasks}) => {
-	const depRange = npPkg.engines.npm;
+	const depRange = npPackage.engines.npm;
 
 	await t.throwsAsync(
 		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
@@ -81,7 +81,7 @@ test.serial('should fail when yarn version does not match range in `package.json
 		stdout: '',
 	},
 ], async ({t, testedModule: prerequisiteTasks}) => {
-	const depRange = npPkg.engines.yarn;
+	const depRange = npPackage.engines.yarn;
 
 	await t.throwsAsync(
 		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, yarnConfig)),
@@ -156,7 +156,7 @@ test.serial('should fail when git version does not match range in `package.json`
 	command: 'git version',
 	stdout: 'git version 1.0.0',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	const depRange = npPkg.engines.git;
+	const depRange = npPackage.engines.git;
 
 	await t.throwsAsync(
 		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),

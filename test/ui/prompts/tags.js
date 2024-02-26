@@ -1,32 +1,34 @@
 import test from 'ava';
 import sinon from 'sinon';
-import {npPkg} from '../../../source/util.js';
+import {npPackage} from '../../../source/util.js';
 import {mockInquirer} from '../../_helpers/mock-inquirer.js';
 
 const testUi = test.macro(async (t, {version, tags, answers}, assertions) => {
-	const {ui, logs} = await mockInquirer({t, answers: {confirm: true, ...answers}, mocks: {
-		'./npm/util.js': {
-			checkIgnoreStrategy: sinon.stub().resolves(),
-			prereleaseTags: sinon.stub().resolves(tags),
+	const {ui, logs} = await mockInquirer({
+		t, answers: {confirm: true, ...answers}, mocks: {
+			'./npm/util.js': {
+				checkIgnoreStrategy: sinon.stub().resolves(),
+				prereleaseTags: sinon.stub().resolves(tags),
+			},
+			'./util.js': {
+				getNewFiles: sinon.stub().resolves({unpublished: [], firstTime: []}),
+				getNewDependencies: sinon.stub().resolves([]),
+			},
+			'./git-util.js': {
+				latestTagOrFirstCommit: sinon.stub().resolves(`v${npPackage.version}`),
+				commitLogFromRevision: sinon.stub().resolves(''),
+			},
+			'./package-manager/index.js': {
+				findLockfile: sinon.stub().resolves(undefined),
+			},
 		},
-		'./util.js': {
-			getNewFiles: sinon.stub().resolves({unpublished: [], firstTime: []}),
-			getNewDependencies: sinon.stub().resolves([]),
-		},
-		'./git-util.js': {
-			latestTagOrFirstCommit: sinon.stub().resolves(`v${npPkg.version}`),
-			commitLogFromRevision: sinon.stub().resolves(''),
-		},
-		'./package-manager/index.js': {
-			findLockfile: sinon.stub().resolves(undefined),
-		},
-	}});
+	});
 
 	const results = await ui({
 		runPublish: true,
 		availability: {},
 	}, {
-		pkg: {
+		package_: {
 			name: 'foo',
 			version,
 			files: ['*'],

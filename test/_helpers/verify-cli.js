@@ -4,8 +4,8 @@ import {execa} from 'execa';
 
 const trim = stdout => stdout.split('\n').map(line => line.trim());
 
-const _verifyCli = shouldPass => test.macro(async (t, binPath, args, expectedLines) => {
-	const {exitCode, stdout} = await execa(binPath, [args].flat(), {reject: false});
+const _verifyCli = shouldPass => test.macro(async (t, binaryPath, arguments_, expectedLines) => {
+	const {exitCode, stdout} = await execa(binaryPath, [arguments_].flat(), {reject: false});
 	const receivedLines = trim(stdout);
 
 	t.deepEqual(receivedLines, expectedLines, 'CLI output different than expectations!');

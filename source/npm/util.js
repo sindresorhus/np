@@ -27,14 +27,14 @@ export const checkConnection = () => pTimeout(
 );
 
 export const username = async ({externalRegistry}) => {
-	const args = ['whoami'];
+	const arguments_ = ['whoami'];
 
 	if (externalRegistry) {
-		args.push('--registry', externalRegistry);
+		arguments_.push('--registry', externalRegistry);
 	}
 
 	try {
-		const {stdout} = await execa('npm', args);
+		const {stdout} = await execa('npm', arguments_);
 		return stdout;
 	} catch (error) {
 		const message = /ENEEDAUTH/.test(error.stderr)
@@ -44,16 +44,16 @@ export const username = async ({externalRegistry}) => {
 	}
 };
 
-export const isExternalRegistry = pkg => typeof pkg.publishConfig?.registry === 'string';
+export const isExternalRegistry = package_ => typeof package_.publishConfig?.registry === 'string';
 
-export const collaborators = async pkg => {
-	const packageName = pkg.name;
+export const collaborators = async package_ => {
+	const packageName = package_.name;
 	ow(packageName, ow.string);
 
 	const arguments_ = ['access', 'list', 'collaborators', packageName, '--json'];
 
-	if (isExternalRegistry(pkg)) {
-		arguments_.push('--registry', pkg.publishConfig.registry);
+	if (isExternalRegistry(package_)) {
+		arguments_.push('--registry', package_.publishConfig.registry);
 	}
 
 	try {
@@ -101,21 +101,21 @@ export const prereleaseTags = async packageName => {
 	return tags;
 };
 
-export const isPackageNameAvailable = async pkg => {
-	const args = [pkg.name];
+export const isPackageNameAvailable = async package_ => {
+	const arguments_ = [package_.name];
 	const availability = {
 		isAvailable: false,
 		isUnknown: false,
 	};
 
-	if (isExternalRegistry(pkg)) {
-		args.push({
-			registryUrl: pkg.publishConfig.registry,
+	if (isExternalRegistry(package_)) {
+		arguments_.push({
+			registryUrl: package_.publishConfig.registry,
 		});
 	}
 
 	try {
-		availability.isAvailable = await npmName(...args) || false;
+		availability.isAvailable = await npmName(...arguments_) || false;
 	} catch {
 		availability.isUnknown = true;
 	}
@@ -128,18 +128,18 @@ export const verifyRecentNpmVersion = async () => {
 	util.validateEngineVersionSatisfies('npm', npmVersion);
 };
 
-export const checkIgnoreStrategy = async ({files}, rootDir) => {
-	const npmignoreExistsInPackageRootDir = await pathExists(path.resolve(rootDir, '.npmignore'));
+export const checkIgnoreStrategy = async ({files}, rootDirectory) => {
+	const npmignoreExistsInPackageRootDirectory = await pathExists(path.resolve(rootDirectory, '.npmignore'));
 
-	if (!files && !npmignoreExistsInPackageRootDir) {
+	if (!files && !npmignoreExistsInPackageRootDirectory) {
 		console.log(chalk`
 		\n{bold.yellow Warning:} No {bold.cyan files} field specified in {bold.magenta package.json} nor is a {bold.magenta .npmignore} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
 		`);
 	}
 };
 
-export const getFilesToBePacked = async rootDir => {
-	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json'], {cwd: rootDir});
+export const getFilesToBePacked = async rootDirectory => {
+	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json'], {cwd: rootDirectory});
 
 	const {files} = JSON.parse(stdout).at(0);
 	return files.map(file => file.path);

@@ -17,14 +17,14 @@ const makeExecaStub = commands => {
 	const stub = sinon.stub();
 
 	for (const result of commands) {
-		const [command, ...commandArgs] = result.command.split(' ');
+		const [command, ...commandArguments] = result.command.split(' ');
 
 		const passes = result.exitCode === 0 || (!result.exitCode && !result.stderr);
 
 		if (passes) {
-			stub.withArgs(command, commandArgs).resolves(result);
+			stub.withArgs(command, commandArguments).resolves(result);
 		} else {
-			stub.withArgs(command, commandArgs).rejects(Object.assign(new Error(), result)); // eslint-disable-line unicorn/error-message
+			stub.withArgs(command, commandArguments).rejects(Object.assign(new Error(), result)); // eslint-disable-line unicorn/error-message
 		}
 	}
 
@@ -36,9 +36,9 @@ const stubExeca = commands => {
 
 	return {
 		execa: {
-			async execa(...args) {
-				execaStub.resolves(execa(...args));
-				return execaStub(...args);
+			async execa(...arguments_) {
+				execaStub.resolves(execa(...arguments_));
+				return execaStub(...arguments_);
 			},
 		},
 	};

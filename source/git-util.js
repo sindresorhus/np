@@ -14,7 +14,7 @@ export const root = async () => {
 	return stdout;
 };
 
-export const newFilesSinceLastRelease = async rootDir => {
+export const newFilesSinceLastRelease = async rootDirectory => {
 	try {
 		const {stdout} = await execa('git', ['diff', '--name-only', '--diff-filter=A', await latestTag(), 'HEAD']);
 		if (stdout.trim().length === 0) {
@@ -26,7 +26,7 @@ export const newFilesSinceLastRelease = async rootDir => {
 	} catch {
 		// Get all files under version control
 		return ignoreWalker({
-			path: rootDir,
+			path: rootDirectory,
 			ignoreFiles: ['.gitignore'],
 		});
 	}
@@ -234,8 +234,8 @@ export const commitLogFromRevision = async revision => {
 	return stdout;
 };
 
-const push = async (tagArg = '--follow-tags') => {
-	await execa('git', ['push', tagArg]);
+const push = async (tagArgument = '--follow-tags') => {
+	await execa('git', ['push', tagArgument]);
 };
 
 export const pushGraceful = async remoteIsOnGitHub => {

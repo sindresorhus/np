@@ -5,7 +5,7 @@ type Context = {
 	createFile: (file: string, content?: string) => Promise<void>;
 };
 
-type CommandsFnParameters = [{
+type CommandsFunctionParameters = [{
 	t: ExecutionContext<Context>;
 	$$: Execa$<string>;
 	temporaryDir: string;
@@ -19,7 +19,7 @@ type Expected = {
 	dependencies: ListItem[];
 };
 
-type AssertionsFnParameters = [{
+type AssertionsFunctionParameters = [{
 	t: ExecutionContext<Context>;
 	$$: Execa$<string>;
 	temporaryDir: string;
@@ -27,8 +27,8 @@ type AssertionsFnParameters = [{
 }];
 
 export type CreateFixtureMacro = Macro<[
-	pkg: PackageJson,
-	commands: (...arguments_: CommandsFnParameters) => Promise<void>,
+	package_: PackageJson,
+	commands: (...arguments_: CommandsFunctionParameters) => Promise<void>,
 	expected: Expected,
-	assertions: (...arguments_: AssertionsFnParameters) => Promise<void>,
+	assertions: (...arguments_: AssertionsFunctionParameters) => Promise<void>,
 ], Context>;

@@ -11,22 +11,22 @@ type Context = {
 	}>;
 };
 
-type CommandsFnParameters = [{
+type CommandsFunctionParameters = [{
 	t: ExecutionContext<Context>;
 	$$: Execa$<string>;
-	temporaryDir: string;
+	temporaryDirectory: string;
 }];
 
-type AssertionsFnParameters<MockType> = [{
+type AssertionsFunctionParameters<MockType> = [{
 	t: ExecutionContext<Context>;
 	testedModule: MockType;
 	$$: Execa$<string>;
-	temporaryDir: string;
+	temporaryDirectory: string;
 }];
 
 export type CreateFixtureMacro<MockType> = Macro<[
-	commands: (...arguments_: CommandsFnParameters) => Promise<void>,
-	assertions: (...arguments_: AssertionsFnParameters<MockType>) => Promise<void>,
+	commands: (...arguments_: CommandsFunctionParameters) => Promise<void>,
+	assertions: (...arguments_: AssertionsFunctionParameters<MockType>) => Promise<void>,
 ], Context>;
 
 export function _createFixture<MockType>(source: string): CreateFixtureMacro<MockType>;

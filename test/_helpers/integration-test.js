@@ -7,13 +7,13 @@ import esmock from 'esmock';
 import {$, execa} from 'execa';
 import {temporaryDirectoryTask} from 'tempy';
 
-const createEmptyGitRepo = async ($$, temporaryDir) => {
+const createEmptyGitRepo = async ($$, temporaryDirectory) => {
 	const firstCommitMessage = '"init1"';
 
 	await $$`git init`;
 
 	// `git tag` needs an initial commit
-	await fs.createFile(path.resolve(temporaryDir, 'temp'));
+	await fs.createFile(path.resolve(temporaryDirectory, 'temp'));
 	await $$`git add temp`;
 	await $$`git commit -m ${firstCommitMessage}`;
 	await $$`git rm temp`;
@@ -23,10 +23,10 @@ const createEmptyGitRepo = async ($$, temporaryDir) => {
 };
 
 export const createIntegrationTest = async (t, assertions) => {
-	await temporaryDirectoryTask(async temporaryDir => {
-		const $$ = $({cwd: temporaryDir});
+	await temporaryDirectoryTask(async temporaryDirectory => {
+		const $$ = $({cwd: temporaryDirectory});
 
-		t.context.firstCommitMessage = await createEmptyGitRepo($$, temporaryDir);
+		t.context.firstCommitMessage = await createEmptyGitRepo($$, temporaryDirectory);
 
 		// From https://stackoverflow.com/a/3357357/10292952
 		t.context.getCommitMessage = async sha => {
@@ -34,7 +34,7 @@ export const createIntegrationTest = async (t, assertions) => {
 			return commitMessage.trim();
 		};
 
-		t.context.createFile = async (file, content = '') => fs.outputFile(path.resolve(temporaryDir, file), content);
+		t.context.createFile = async (file, content = '') => fs.outputFile(path.resolve(temporaryDirectory, file), content);
 
 		t.context.commitNewFile = async () => {
 			await t.context.createFile(`new-${crypto.randomUUID()}`);
@@ -49,18 +49,20 @@ export const createIntegrationTest = async (t, assertions) => {
 			};
 		};
 
-		await assertions({$$, temporaryDir});
+		await assertions({$$, temporaryDirectory});
 	});
 };
 
 export const _createFixture = source => test.macro(async (t, commands, assertions) => {
-	await createIntegrationTest(t, async ({$$, temporaryDir}) => {
+	await createIntegrationTest(t, async ({$$, temporaryDirectory}) => {
 		const testedModule = await esmock(source, {}, {
-			'node:process': {cwd: () => temporaryDir},
-			execa: {execa: async (...args) => execa(...args, {cwd: temporaryDir})},
+			'node:process': {cwd: () => temporaryDirectory},
+			execa: {execa: async (...arguments_) => execa(...arguments_, {cwd: temporaryDirectory})},
 		});
 
-		await commands({t, $$, temporaryDir});
-		await assertions({t, testedModule, $$, temporaryDir});
+		await commands({t, $$, temporaryDirectory});
+		await assertions({
+			t, testedModule, $$, temporaryDirectory,
+		});
 	});
 });

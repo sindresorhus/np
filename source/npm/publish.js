@@ -1,21 +1,21 @@
 export const getPackagePublishArguments = options => {
-	const args = ['publish'];
+	const arguments_ = ['publish'];
 
 	if (options.contents) {
-		args.push(options.contents);
+		arguments_.push(options.contents);
 	}
 
 	if (options.tag) {
-		args.push('--tag', options.tag);
+		arguments_.push('--tag', options.tag);
 	}
 
 	if (options.otp) {
-		args.push('--otp', options.otp);
+		arguments_.push('--otp', options.otp);
 	}
 
 	if (options.publishScoped) {
-		args.push('--access', 'public');
+		arguments_.push('--access', 'public');
 	}
 
-	return args;
+	return arguments_;
 };

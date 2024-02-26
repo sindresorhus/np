@@ -1,9 +1,9 @@
 import path from 'node:path';
 import test from 'ava';
-import {npPkg, npRootDir as rootDir} from '../source/util.js';
+import {npPackage, npRootDirectory as rootDirectory} from '../source/util.js';
 import {cliPasses} from './_helpers/verify-cli.js';
 
-const cli = path.resolve(rootDir, 'source', 'cli-implementation.js');
+const cli = path.resolve(rootDirectory, 'source', 'cli-implementation.js');
 
 test('flags: --help', cliPasses, cli, '--help', [
 	'',
@@ -41,4 +41,4 @@ test('flags: --help', cliPasses, cli, '--help', [
 	'',
 ]);
 
-test('flags: --version', cliPasses, cli, '--version', [npPkg.version]);
+test('flags: --version', cliPasses, cli, '--version', [npPackage.version]);

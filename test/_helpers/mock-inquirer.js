@@ -215,7 +215,7 @@ export const mockInquirer = async ({t, answers, mocks = {}}) => {
 	}, {
 		...fixRelativeMocks(mocks),
 		import: {
-			console: {log: (...args) => logs.push(...args)},
+			console: {log: (...arguments_) => logs.push(...arguments_)},
 		},
 	});
 

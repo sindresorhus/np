@@ -6,32 +6,32 @@ import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-const prerequisiteTasks = (input, pkg, options, pkgManager) => {
-	const isExternalRegistry = npm.isExternalRegistry(pkg);
+const prerequisiteTasks = (input, package_, options, packageManager) => {
+	const isExternalRegistry = npm.isExternalRegistry(package_);
 	let newVersion;
 
 	const tasks = [
 		{
 			title: 'Ping npm registry',
-			enabled: () => !pkg.private && !isExternalRegistry,
+			enabled: () => !package_.private && !isExternalRegistry,
 			task: async () => npm.checkConnection(),
 		},
 		{
-			title: `Check ${pkgManager.cli} version`,
+			title: `Check ${packageManager.cli} version`,
 			async task() {
-				const {stdout: version} = await execa(pkgManager.cli, ['--version']);
-				util.validateEngineVersionSatisfies(pkgManager.cli, version);
+				const {stdout: version} = await execa(packageManager.cli, ['--version']);
+				util.validateEngineVersionSatisfies(packageManager.cli, version);
 			},
 		},
 		{
 			title: 'Verify user is authenticated',
-			enabled: () => process.env.NODE_ENV !== 'test' && !pkg.private,
+			enabled: () => process.env.NODE_ENV !== 'test' && !package_.private,
 			async task() {
 				const username = await npm.username({
-					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false,
+					externalRegistry: isExternalRegistry ? package_.publishConfig.registry : false,
 				});
 
-				const collaborators = await npm.collaborators(pkg);
+				const collaborators = await npm.collaborators(package_);
 				if (!collaborators) {
 					return;
 				}
@@ -56,13 +56,13 @@ const prerequisiteTasks = (input, pkg, options, pkgManager) => {
 			task() {
 				newVersion = input instanceof Version
 					? input
-					: new Version(pkg.version).setFrom(input);
+					: new Version(package_.version).setFrom(input);
 			},
 		},
 		{
 			title: 'Check for pre-release version',
 			task() {
-				if (!pkg.private && newVersion.isPrerelease() && !options.tag) {
+				if (!package_.private && newVersion.isPrerelease() && !options.tag) {
 					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 				}
 			},
@@ -72,7 +72,7 @@ const prerequisiteTasks = (input, pkg, options, pkgManager) => {
 			async task() {
 				await git.fetch();
 
-				const tagPrefix = await util.getTagVersionPrefix(pkgManager);
+				const tagPrefix = await util.getTagVersionPrefix(packageManager);
 
 				await git.verifyTagDoesNotExistOnRemote(`${tagPrefix}${newVersion}`);
 			},

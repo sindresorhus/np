@@ -1,7 +1,13 @@
 import {execa} from 'execa';
 import {deleteAsync} from 'del';
 import Listr from 'listr';
-import {merge, catchError, filter, finalize, from} from 'rxjs';
+import {
+	merge,
+	catchError,
+	filter,
+	finalize,
+	from,
+} from 'rxjs';
 import hostedGitInfo from 'hosted-git-info';
 import onetime from 'onetime';
 import {asyncExitHook} from 'exit-hook';
@@ -9,7 +15,7 @@ import logSymbols from 'log-symbols';
 import prerequisiteTasks from './prerequisite-tasks.js';
 import gitTasks from './git-tasks.js';
 import {getPackagePublishArguments} from './npm/publish.js';
-import enable2fa, {getEnable2faArgs} from './npm/enable-2fa.js';
+import enable2fa, {getEnable2faArguments} from './npm/enable-2fa.js';
 import handleNpmError from './npm/handle-npm-error.js';
 import releaseTaskHelper from './release-task-helper.js';
 import {findLockfile, getPackageManagerConfig, printCommand} from './package-manager/index.js';
@@ -18,20 +24,20 @@ import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
 /** @type {(cmd: string, args: string[], options?: import('execa').Options) => any} */
-const exec = (cmd, args, options) => {
+const exec = (command, arguments_, options) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
-	const cp = execa(cmd, args, options);
+	const subProcess = execa(command, arguments_, options);
 
-	return merge(cp.stdout, cp.stderr, cp).pipe(filter(Boolean));
+	return merge(subProcess.stdout, subProcess.stderr, subProcess).pipe(filter(Boolean));
 };
 
 /**
 @param {string} input
 @param {import('./cli-implementation.js').Options} options
-@param {{pkg: import('read-pkg').NormalizedPackageJson; rootDir: string}} context
+@param {{package_: import('read-pkg').NormalizedPackageJson; rootDirectory: string}} context
 */
-const np = async (input = 'patch', options, {pkg, rootDir}) => {
-	const pkgManager = getPackageManagerConfig(rootDir, pkg);
+const np = async (input = 'patch', options, {package_, rootDirectory}) => {
+	const packageManager = getPackageManagerConfig(rootDirectory, package_);
 
 	// TODO: Remove sometime far in the future
 	if (options.skipCleanup) {
@@ -40,13 +46,13 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const lockfile = findLockfile(rootDir, pkgManager);
+	const lockfile = findLockfile(rootDirectory, packageManager);
 	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl)?.type === 'github';
 	const testScript = options.testScript || 'test';
 
 	if (options.releaseDraftOnly) {
-		await releaseTaskHelper(options, pkg, pkgManager);
-		return pkg;
+		await releaseTaskHelper(options, package_, packageManager);
+		return package_;
 	}
 
 	let publishStatus = 'UNKNOWN';
@@ -55,19 +61,19 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 	const rollback = onetime(async () => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
 
-		const tagVersionPrefix = await util.getTagVersionPrefix(pkgManager);
+		const tagVersionPrefix = await util.getTagVersionPrefix(packageManager);
 
 		const latestTag = await git.latestTag();
 		const versionInLatestTag = latestTag.slice(tagVersionPrefix.length);
 
-		async function getPkgVersion() {
-			const pkg = await util.readPkg(rootDir);
-			return pkg.version;
+		async function getPackageVersion() {
+			const package_ = await util.readPackage(rootDirectory);
+			return package_.version;
 		}
 
 		try {
 			// Verify that the package's version has been bumped before deleting the last tag and commit.
-			if (versionInLatestTag === await getPkgVersion() && versionInLatestTag !== pkg.version) {
+			if (versionInLatestTag === await getPackageVersion() && versionInLatestTag !== package_.version) {
 				await git.deleteTag(latestTag);
 				await git.removeLastCommit();
 			}
@@ -90,23 +96,23 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		}
 	}, {wait: 2000});
 
-	const shouldEnable2FA = options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !npm.isExternalRegistry(pkg);
+	const shouldEnable2FA = options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !package_.private && !npm.isExternalRegistry(package_);
 
 	// To prevent the process from hanging due to watch mode (e.g. when running `vitest`)
 	const ciEnvOptions = {env: {CI: 'true'}};
 
 	/** @param {typeof options} _options */
 	function getPublishCommand(_options) {
-		const publishCommand = pkgManager.publishCommand || (args => [pkgManager.cli, args]);
-		const args = getPackagePublishArguments(_options);
-		return publishCommand(args);
+		const publishCommand = packageManager.publishCommand || (arguments_ => [packageManager.cli, arguments_]);
+		const arguments_ = getPackagePublishArguments(_options);
+		return publishCommand(arguments_);
 	}
 
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
 			enabled: () => options.runPublish,
-			task: () => prerequisiteTasks(input, pkg, options, pkgManager),
+			task: () => prerequisiteTasks(input, package_, options, packageManager),
 		},
 		{
 			title: 'Git',
@@ -118,13 +124,13 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 			task: () => deleteAsync('node_modules'),
 		},
 		{
-			title: `Installing dependencies using ${pkgManager.id}`,
+			title: `Installing dependencies using ${packageManager.id}`,
 			enabled: () => runCleanup,
 			task: () => new Listr([
 				{
 					title: 'Running install command',
 					task() {
-						const installCommand = lockfile ? pkgManager.installCommand : pkgManager.installCommandNoLockfile;
+						const installCommand = lockfile ? packageManager.installCommand : packageManager.installCommandNoLockfile;
 						return exec(...installCommand);
 					},
 				},
@@ -137,29 +143,29 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		{
 			title: 'Running tests',
 			enabled: () => runTests,
-			task: () => exec(pkgManager.cli, ['run', testScript], ciEnvOptions),
+			task: () => exec(packageManager.cli, ['run', testScript], ciEnvOptions),
 		},
 		{
 			title: 'Bumping version',
 			skip() {
 				if (options.preview) {
-					const [cli, args] = pkgManager.versionCommand(input);
+					const [cli, arguments_] = packageManager.versionCommand(input);
 
 					if (options.message) {
-						args.push('--message', options.message.replaceAll('%s', input));
+						arguments_.push('--message', options.message.replaceAll('%s', input));
 					}
 
-					return `[Preview] Command not executed: ${printCommand([cli, args])}`;
+					return `[Preview] Command not executed: ${printCommand([cli, arguments_])}`;
 				}
 			},
 			task() {
-				const [cli, args] = pkgManager.versionCommand(input);
+				const [cli, arguments_] = packageManager.versionCommand(input);
 
 				if (options.message) {
-					args.push('--message', options.message);
+					arguments_.push('--message', options.message);
 				}
 
-				return exec(cli, args);
+				return exec(cli, arguments_);
 			},
 		},
 		...options.runPublish ? [
@@ -199,11 +205,11 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 				title: 'Enabling two-factor authentication',
 				async skip() {
 					if (options.preview) {
-						const args = await getEnable2faArgs(pkg.name, options);
-						return `[Preview] Command not executed: npm ${args.join(' ')}.`;
+						const arguments_ = await getEnable2faArguments(package_.name, options);
+						return `[Preview] Command not executed: npm ${arguments_.join(' ')}.`;
 					}
 				},
-				task: (context, task) => enable2fa(task, pkg.name, {otp: context.otp}),
+				task: (context, task) => enable2fa(task, package_.name, {otp: context.otp}),
 			}] : [],
 		] : [],
 		{
@@ -234,7 +240,7 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 				}
 			},
 			// TODO: parse version outside of index
-			task: () => releaseTaskHelper(options, pkg, pkgManager),
+			task: () => releaseTaskHelper(options, package_, packageManager),
 		}] : [],
 	], {
 		showSubtasks: false,
@@ -251,8 +257,8 @@ const np = async (input = 'patch', options, {pkg, rootDir}) => {
 		console.error(`\n${logSymbols.error} ${pushedObjects.reason}`);
 	}
 
-	const {pkg: newPkg} = await util.readPkg();
-	return newPkg;
+	const {package_: newPackage} = await util.readPackage();
+	return newPackage;
 };
 
 export default np;

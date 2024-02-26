@@ -107,9 +107,9 @@ updateNotifier({pkg: cli.pkg}).notify();
 /** @typedef {Awaited<ReturnType<typeof getOptions>>['options']} Options */
 
 export async function getOptions() {
-	const {pkg, rootDir} = await util.readPkg(cli.flags.contents);
+	const {package_, rootDirectory} = await util.readPackage(cli.flags.contents);
 
-	const localConfig = await config(rootDir);
+	const localConfig = await config(rootDirectory);
 	const flags = {
 		...localConfig,
 		...cli.flags,
@@ -121,19 +121,19 @@ export async function getOptions() {
 	}
 
 	if (flags.packageManager) {
-		pkg.packageManager = flags.packageManager;
+		package_.packageManager = flags.packageManager;
 	}
 
-	const runPublish = !flags.releaseDraftOnly && flags.publish && !pkg.private;
+	const runPublish = !flags.releaseDraftOnly && flags.publish && !package_.private;
 
 	// TODO: does this need to run if `runPublish` is false?
-	const availability = runPublish ? await npm.isPackageNameAvailable(pkg) : {
+	const availability = runPublish ? await npm.isPackageNameAvailable(package_) : {
 		isAvailable: false,
 		isUnknown: false,
 	};
 
 	// Use current (latest) version when 'releaseDraftOnly', otherwise try to use the first argument.
-	const version = flags.releaseDraftOnly ? pkg.version : cli.input.at(0);
+	const version = flags.releaseDraftOnly ? package_.version : cli.input.at(0);
 
 	const branch = flags.branch ?? await git.defaultBranch();
 
@@ -143,26 +143,26 @@ export async function getOptions() {
 		availability,
 		version,
 		branch,
-	}, {pkg, rootDir});
+	}, {package_, rootDirectory});
 
-	return {options, rootDir, pkg};
+	return {options, rootDirectory, package_};
 }
 
 try {
-	const {options, rootDir, pkg} = await getOptions();
+	const {options, rootDirectory, package_} = await getOptions();
 
 	if (!options.confirm) {
 		gracefulExit();
 	}
 
 	console.log(); // Prints a newline for readability
-	const newPkg = await np(options.version, options, {pkg, rootDir});
+	const newPackage = await np(options.version, options, {package_, rootDirectory});
 
 	if (options.preview || options.releaseDraftOnly) {
 		gracefulExit();
 	}
 
-	console.log(`\n ${newPkg.name} ${newPkg.version} published 🎉`);
+	console.log(`\n ${newPackage.name} ${newPackage.version} published 🎉`);
 } catch (error) {
 	console.error(`\n${logSymbols.error} ${error?.stack ?? error}`);
 	gracefulExit(1);

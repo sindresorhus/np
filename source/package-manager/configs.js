@@ -44,7 +44,7 @@ export const yarnBerryConfig = {
 	versionCommand: version => ['npm', ['version', version]],
 	tagVersionPrefixCommand: ['yarn', ['config', 'get', 'version-tag-prefix']],
 	// Yarn berry offloads publishing to npm, e.g. `yarn npm publish x.y.z`
-	publishCommand: args => ['yarn', ['npm', ...args]],
+	publishCommand: arguments_ => ['yarn', ['npm', ...arguments_]],
 	getRegistryCommand: ['yarn', ['config', 'get', 'npmRegistryServer']],
 	throwOnExternalRegistry: true,
 	lockfiles: ['yarn.lock'],

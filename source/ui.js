@@ -79,9 +79,9 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 	};
 };
 
-const checkNewFilesAndDependencies = async (pkg, rootDir) => {
-	const newFiles = await util.getNewFiles(rootDir);
-	const newDependencies = await util.getNewDependencies(pkg, rootDir);
+const checkNewFilesAndDependencies = async (package_, rootDirectory) => {
+	const newFiles = await util.getNewFiles(rootDirectory);
+	const newDependencies = await util.getNewDependencies(package_, rootDirectory);
 
 	const noNewUnpublishedFiles = !newFiles.unpublished || newFiles.unpublished.length === 0;
 	const noNewFirstTimeFiles = !newFiles.firstTime || newFiles.firstTime.length === 0;
@@ -123,26 +123,26 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 
 /**
 @param {import('./cli-implementation.js').CLI['flags']} options
-@param {{pkg: import('read-pkg').NormalizedPackageJson; rootDir: string}} context
+@param {{package_: import('read-pkg').NormalizedPackageJson; rootDirectory: string}} context
 */
-const ui = async (options, {pkg, rootDir}) => {
-	const oldVersion = pkg.version;
+const ui = async (options, {package_, rootDirectory}) => {
+	const oldVersion = package_.version;
 	const extraBaseUrls = ['gitlab.com'];
-	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
+	const repoUrl = package_.repository && githubUrlFromGit(package_.repository.url, {extraBaseUrls});
 
-	const pkgManager = getPackageManagerConfig(rootDir, pkg);
+	const packageManager = getPackageManagerConfig(rootDirectory, package_);
 
-	if (pkgManager.throwOnExternalRegistry && npm.isExternalRegistry(pkg)) {
-		throw new Error(`External registry is not yet supported with ${pkgManager.id}.`);
+	if (packageManager.throwOnExternalRegistry && npm.isExternalRegistry(package_)) {
+		throw new Error(`External registry is not yet supported with ${packageManager.id}.`);
 	}
 
-	const {stdout: registryUrl} = await execa(...pkgManager.getRegistryCommand);
+	const {stdout: registryUrl} = await execa(...packageManager.getRegistryCommand);
 	const releaseBranch = options.branch;
 
 	if (options.runPublish) {
-		await npm.checkIgnoreStrategy(pkg, rootDir);
+		await npm.checkIgnoreStrategy(package_, rootDirectory);
 
-		const answerIgnoredFiles = await checkNewFilesAndDependencies(pkg, rootDir);
+		const answerIgnoredFiles = await checkNewFilesAndDependencies(package_, rootDirectory);
 		if (!answerIgnoredFiles) {
 			return {
 				...options,
@@ -152,13 +152,13 @@ const ui = async (options, {pkg, rootDir}) => {
 	}
 
 	if (options.releaseDraftOnly) {
-		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
+		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(package_.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 	} else {
 		const versionText = options.version
-			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version, {prereleasePrefix: await util.getPreReleasePrefix(pkgManager)}).format()})`)
+			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version, {prereleasePrefix: await util.getPreReleasePrefix(packageManager)}).format()})`)
 			: chalk.dim(`(current: ${oldVersion})`);
 
-		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${versionText}\n`);
+		console.log(`\nPublish a new version of ${chalk.bold.magenta(package_.name)} ${versionText}\n`);
 	}
 
 	const useLatestTag = !options.releaseDraftOnly;
@@ -209,15 +209,15 @@ const ui = async (options, {pkg, rootDir}) => {
 	}
 
 	if (options.availability.isUnknown) {
-		if (!isScoped(pkg.name)) {
+		if (!isScoped(package_.name)) {
 			throw new Error('Unknown availability, but package is not scoped. This shouldn\'t happen');
 		}
 
 		const answers = await inquirer.prompt({
 			confirm: {
 				type: 'confirm',
-				when: isScoped(pkg.name) && options.runPublish,
-				message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(pkg.name)}. Do you want to try and publish it anyway?`,
+				when: isScoped(package_.name) && options.runPublish,
+				message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(package_.name)}. Do you want to try and publish it anyway?`,
 				default: false,
 			},
 		});
@@ -236,22 +236,22 @@ const ui = async (options, {pkg, rootDir}) => {
 		&& !options.tag
 	);
 
-	const alreadyPublicScoped = pkgManager.id === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(pkg.name) === 'public';
+	const alreadyPublicScoped = packageManager.id === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(package_.name) === 'public';
 
 	// Note that inquirer question.when is a bit confusing. Only `false` will cause the question to be skipped.
 	// Any other value like `true` and `undefined` means ask the question.
 	// so we make sure to always return an explicit boolean here to make it less confusing
 	// see https://github.com/SBoudrias/Inquirer.js/pull/1340
 	const needToAskForPublish = (() => {
-		if (alreadyPublicScoped || !isScoped(pkg.name) || !options.availability.isAvailable || options.availability.isUnknown || !options.runPublish) {
+		if (alreadyPublicScoped || !isScoped(package_.name) || !options.availability.isAvailable || options.availability.isUnknown || !options.runPublish) {
 			return false;
 		}
 
-		if (!pkg.publishConfig) {
+		if (!package_.publishConfig) {
 			return true;
 		}
 
-		return pkg.publishConfig.access !== 'restricted' && !npm.isExternalRegistry(pkg);
+		return package_.publishConfig.access !== 'restricted' && !npm.isExternalRegistry(package_);
 	})();
 
 	const answers = await inquirer.prompt({
@@ -260,9 +260,9 @@ const ui = async (options, {pkg, rootDir}) => {
 			message: 'Select SemVer increment or specify new version',
 			pageSize: SEMVER_INCREMENTS.length + 2,
 			choices: [
-				...SEMVER_INCREMENTS.map(inc => ({ // TODO: prerelease prefix here too
-					name: `${inc} 	${new Version(oldVersion, inc).format()}`,
-					value: inc,
+				...SEMVER_INCREMENTS.map(increment => ({ // TODO: prerelease prefix here too
+					name: `${increment} 	${new Version(oldVersion, increment).format()}`,
+					value: increment,
 				})),
 				new inquirer.Separator(),
 				{
@@ -304,7 +304,7 @@ const ui = async (options, {pkg, rootDir}) => {
 			message: 'How should this pre-release version be tagged in npm?',
 			when: answers => needsPrereleaseTag(answers),
 			async choices() {
-				const existingPrereleaseTags = await npm.prereleaseTags(pkg.name);
+				const existingPrereleaseTags = await npm.prereleaseTags(package_.name);
 
 				return [
 					...existingPrereleaseTags,
@@ -335,7 +335,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		publishScoped: {
 			type: 'confirm',
 			when: needToAskForPublish,
-			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
+			message: `This scoped repo ${chalk.bold.magenta(package_.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false,
 		},
 	});

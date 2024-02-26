@@ -6,12 +6,12 @@ import {runIfExists} from '../../_helpers/util.js';
 const getFixture = name => path.resolve('test', 'fixtures', 'files', name);
 
 const verifyPackedFiles = test.macro(async (t, fixture, expectedFiles, {before, after} = {}) => {
-	const fixtureDir = getFixture(fixture);
+	const fixtureDirectory = getFixture(fixture);
 
-	await runIfExists(before, fixtureDir);
-	t.teardown(async () => runIfExists(after, fixtureDir));
+	await runIfExists(before, fixtureDirectory);
+	t.teardown(async () => runIfExists(after, fixtureDirectory));
 
-	const files = await getFilesToBePacked(fixtureDir);
+	const files = await getFilesToBePacked(fixtureDirectory);
 	t.deepEqual(files.sort(), [...expectedFiles, 'package.json'].sort(), 'Files different from expectations!');
 });
 

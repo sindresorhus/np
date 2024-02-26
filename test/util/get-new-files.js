@@ -6,26 +6,26 @@ import {writePackage} from 'write-package';
 import {createIntegrationTest} from '../_helpers/integration-test.js';
 
 const createNewFilesFixture = test.macro(async (t, input, commands) => {
-	const {pkgFiles, expected: {unpublished, firstTime}} = input;
+	const {packageFiles, expected: {unpublished, firstTime}} = input;
 
-	await createIntegrationTest(t, async ({$$, temporaryDir}) => {
+	await createIntegrationTest(t, async ({$$, temporaryDirectory}) => {
 		/** @type {import('../../source/util.js')} */
 		const {getNewFiles} = await esmock('../../source/util.js', {}, {
-			'node:process': {cwd: () => temporaryDir},
-			execa: {execa: async (...args) => execa(...args, {cwd: temporaryDir})},
+			'node:process': {cwd: () => temporaryDirectory},
+			execa: {execa: async (...arguments_) => execa(...arguments_, {cwd: temporaryDirectory})},
 		});
 
-		await commands({t, $$, temporaryDir});
+		await commands({t, $$, temporaryDirectory});
 
-		await writePackage(temporaryDir, {
+		await writePackage(temporaryDirectory, {
 			name: 'foo',
 			version: '0.0.0',
-			...pkgFiles.length > 0 ? {files: pkgFiles} : {},
+			...packageFiles.length > 0 ? {files: packageFiles} : {},
 		});
 
 		const assertions = await t.try(async tt => {
 			tt.deepEqual(
-				await getNewFiles(temporaryDir),
+				await getNewFiles(temporaryDirectory),
 				{unpublished, firstTime},
 			);
 		});
@@ -39,7 +39,7 @@ const createNewFilesFixture = test.macro(async (t, input, commands) => {
 });
 
 test('files to package with tags added', createNewFilesFixture, {
-	pkgFiles: ['*.js'],
+	packageFiles: ['*.js'],
 	expected: {
 		unpublished: ['new'],
 		firstTime: ['index.js'],
@@ -53,7 +53,7 @@ test('files to package with tags added', createNewFilesFixture, {
 });
 
 test('file `new` to package without tags added', createNewFilesFixture, {
-	pkgFiles: ['index.js'],
+	packageFiles: ['index.js'],
 	expected: {
 		unpublished: ['new'],
 		firstTime: ['index.js', 'package.json'],
@@ -69,7 +69,7 @@ test('file `new` to package without tags added', createNewFilesFixture, {
 	const filePath2 = path.join(longPath, 'file2');
 
 	test('files with long pathnames added', createNewFilesFixture, {
-		pkgFiles: ['*.js'],
+		packageFiles: ['*.js'],
 		expected: {
 			unpublished: [filePath1, filePath2],
 			firstTime: [],
@@ -84,7 +84,7 @@ test('file `new` to package without tags added', createNewFilesFixture, {
 })();
 
 test('no new files added', createNewFilesFixture, {
-	pkgFiles: [],
+	packageFiles: [],
 	expected: {
 		unpublished: [],
 		firstTime: [],
@@ -94,7 +94,7 @@ test('no new files added', createNewFilesFixture, {
 });
 
 test('ignores .git and .github files', createNewFilesFixture, {
-	pkgFiles: ['*.js'],
+	packageFiles: ['*.js'],
 	expected: {
 		unpublished: [],
 		firstTime: ['index.js'],

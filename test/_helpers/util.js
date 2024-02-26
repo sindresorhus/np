@@ -1,9 +1,9 @@
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 
-export const runIfExists = async (func, ...args) => {
-	if (typeof func === 'function') {
-		await func(...args);
+export const runIfExists = async (function_, ...arguments_) => {
+	if (typeof function_ === 'function') {
+		await function_(...arguments_);
 	}
 };
 

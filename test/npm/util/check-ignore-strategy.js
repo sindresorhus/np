@@ -9,13 +9,13 @@ const checkIgnoreStrategy = test.macro(async (t, {fixture = '', files, expected 
 
 	/** @type {import('../../../source/npm/util.js')} */
 	const {checkIgnoreStrategy} = await esmock('../../../source/npm/util.js', {
-		import: {console: {log: (...args) => output = args.join('')}}, // eslint-disable-line no-return-assign
+		import: {console: {log: (...arguments_) => output = arguments_.join('')}}, // eslint-disable-line no-return-assign
 	});
 
-	const fixtureDir = path.resolve('test/fixtures/files', fixture);
-	const pkg = files ? {files} : {};
+	const fixtureDirectory = path.resolve('test/fixtures/files', fixture);
+	const package_ = files ? {files} : {};
 
-	await checkIgnoreStrategy(pkg, fixtureDir);
+	await checkIgnoreStrategy(package_, fixtureDirectory);
 
 	output = stripAnsi(output).trim();
 	t.is(output, expected);

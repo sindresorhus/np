@@ -6,7 +6,7 @@ import * as npm from '../../../source/npm/util.js';
 /** @type {ReturnType<typeof _createFixture<import('../../../source/npm/util.js')>>} */
 const createFixture = _createFixture('../../../source/npm/util.js', import.meta.url);
 
-test('pkg.name not a string', async t => {
+test('package.name not a string', async t => {
 	await t.throwsAsync(
 		npm.collaborators({name: 1}),
 		{message: 'Expected argument to be of type `string` but received type `number`'},

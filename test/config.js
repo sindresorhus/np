@@ -7,44 +7,44 @@ const testedModulePath = '../source/config.js';
 const getFixture = fixture => path.resolve('test', 'fixtures', 'config', fixture);
 const getFixtures = fixtures => fixtures.map(fixture => getFixture(fixture));
 
-const getConfigsWhenGlobalBinaryIsUsed = async homedir => {
-	const pathsPkgDir = getFixtures(['pkg-dir', 'local1', 'local2', 'local3']);
+const getConfigsWhenGlobalBinaryIsUsed = async homeDirectory => {
+	const pathsPackageDirectory = getFixtures(['pkg-dir', 'local1', 'local2', 'local3']);
 
-	const promises = pathsPkgDir.map(async pathPkgDir => {
+	const promises = pathsPackageDirectory.map(async pathPackageDirectory => {
 		const getConfig = await esmock(testedModulePath, {
 			'is-installed-globally': true,
-			'node:os': {homedir: () => homedir},
+			'node:os': {homedir: () => homeDirectory},
 		});
-		return getConfig(pathPkgDir);
+		return getConfig(pathPackageDirectory);
 	});
 
 	return Promise.all(promises);
 };
 
-const getConfigsWhenLocalBinaryIsUsed = async pathPkgDir => {
-	const homedirs = getFixtures(['homedir1', 'homedir2', 'homedir3']);
+const getConfigsWhenLocalBinaryIsUsed = async pathPackageDirectory => {
+	const homeDirectories = getFixtures(['homedir1', 'homedir2', 'homedir3']);
 
-	const promises = homedirs.map(async homedir => {
+	const promises = homeDirectories.map(async homedir => {
 		const getConfig = await esmock(testedModulePath, {
 			'is-installed-globally': false,
 			'node:os': {homedir: () => homedir},
 		});
-		return getConfig(pathPkgDir);
+		return getConfig(pathPackageDirectory);
 	});
 
 	return Promise.all(promises);
 };
 
-const useGlobalBinary = test.macro(async (t, homedir, source) => {
-	const configs = await getConfigsWhenGlobalBinaryIsUsed(getFixture(homedir));
+const useGlobalBinary = test.macro(async (t, homeDirectory, source) => {
+	const configs = await getConfigsWhenGlobalBinaryIsUsed(getFixture(homeDirectory));
 
 	for (const config of configs) {
 		t.deepEqual(config, {source});
 	}
 });
 
-const useLocalBinary = test.macro(async (t, pkgDir, source) => {
-	const configs = await getConfigsWhenLocalBinaryIsUsed(getFixture(pkgDir));
+const useLocalBinary = test.macro(async (t, packageDirectory, source) => {
+	const configs = await getConfigsWhenLocalBinaryIsUsed(getFixture(packageDirectory));
 
 	for (const config of configs) {
 		t.deepEqual(config, {source});

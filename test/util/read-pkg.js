@@ -3,47 +3,47 @@ import path from 'node:path';
 import test from 'ava';
 import esmock from 'esmock';
 import {temporaryDirectory} from 'tempy';
-import {readPkg, npPkg, npRootDir} from '../../source/util.js';
+import {readPackage, npPackage, npRootDirectory} from '../../source/util.js';
 
-const rootDir = fileURLToPath(new URL('../..', import.meta.url)).slice(0, -1);
+const rootDirectory = fileURLToPath(new URL('../..', import.meta.url)).slice(0, -1);
 
 test('without packagePath returns np package.json', async t => {
-	const {pkg, rootDir: pkgDir} = await readPkg();
+	const {package_, rootDirectory: packageDirectory} = await readPackage();
 
-	t.is(pkg.name, 'np');
-	t.is(pkgDir, rootDir);
+	t.is(package_.name, 'np');
+	t.is(packageDirectory, rootDirectory);
 });
 
 test('with packagePath', async t => {
-	const fixtureDir = path.resolve(rootDir, 'test/fixtures/files/one-file');
-	const {pkg, rootDir: pkgDir} = await readPkg(fixtureDir);
+	const fixtureDirectory = path.resolve(rootDirectory, 'test/fixtures/files/one-file');
+	const {package_, rootDirectory: packageDirectory} = await readPackage(fixtureDirectory);
 
-	t.is(pkg.name, 'foo');
-	t.is(pkgDir, fixtureDir);
+	t.is(package_.name, 'foo');
+	t.is(packageDirectory, fixtureDirectory);
 });
 
 test('no package.json', async t => {
 	await t.throwsAsync(
-		readPkg(temporaryDirectory()),
+		readPackage(temporaryDirectory()),
 		{message: 'No `package.json` found. Make sure the current directory is a valid package.'},
 	);
 });
 
-test('npPkg', t => {
-	t.is(npPkg.name, 'np');
+test('npPackage', t => {
+	t.is(npPackage.name, 'np');
 });
 
-test('npRootDir', t => {
-	t.is(npRootDir, rootDir);
+test('npRootDirectory', t => {
+	t.is(npRootDirectory, rootDirectory);
 });
 
-test('npRootDir is correct when process.cwd is different', async t => {
-	const temporaryDir = temporaryDirectory();
+test('npRootDirectory is correct when process.cwd is different', async t => {
+	const cwd = temporaryDirectory();
 
 	/** @type {import('../../source/util.js')} */
 	const util = await esmock('../../source/util.js', {}, {
-		'node:process': {cwd: temporaryDir},
+		'node:process': {cwd},
 	});
 
-	t.is(util.npRootDir, rootDir);
+	t.is(util.npRootDirectory, rootDirectory);
 });

@@ -11,10 +11,10 @@ const SEMVER_INCREMENTS_LIST_LAST_OR = `${SEMVER_INCREMENTS.slice(0, -1).join(',
 /** @typedef {import('chalk').ColorName | import('chalk').ModifierName} ColorName */
 
 /** @param {string} input @returns {input is SemVerIncrement} */
-const isSemVerIncrement = input => SEMVER_INCREMENTS.includes(input);
+const isSemVersionIncrement = input => SEMVER_INCREMENTS.includes(input);
 
 /** @param {string} input */
-const isInvalidSemVerVersion = input => Boolean(!semver.valid(input));
+const isInvalidSemVersion = input => Boolean(!semver.valid(input));
 
 /**
 Formats the first difference between two versions to the given `diffColor`. Useful for `prerelease` diffs.
@@ -66,7 +66,7 @@ export default class Version {
 		this.#trySetVersion(version);
 
 		if (increment) {
-			if (!isSemVerIncrement(increment)) {
+			if (!isSemVersionIncrement(increment)) {
 				throw new Error(`Increment ${increment} should be one of ${SEMVER_INCREMENTS_LIST_LAST_OR}.`);
 			}
 
@@ -86,10 +86,10 @@ export default class Version {
 		this.#prereleasePrefix ??= prereleasePrefix;
 		const previousVersion = this.toString();
 
-		if (isSemVerIncrement(input)) {
+		if (isSemVersionIncrement(input)) {
 			this.#version.inc(input, this.#prereleasePrefix);
 		} else {
-			if (isInvalidSemVerVersion(input)) {
+			if (isInvalidSemVersion(input)) {
 				throw new Error(`New version ${input} should either be one of ${SEMVER_INCREMENTS_LIST}, or a valid SemVer version.`);
 			}
 

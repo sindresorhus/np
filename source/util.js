@@ -13,20 +13,20 @@ import Version from './version.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-export const readPkg = async (packagePath = process.cwd()) => {
+export const readPackage = async (packagePath = process.cwd()) => {
 	const packageResult = await readPackageUp({cwd: packagePath});
 
 	if (!packageResult) {
 		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
 	}
 
-	return {pkg: packageResult.packageJson, rootDir: path.dirname(packageResult.path)};
+	return {package_: packageResult.packageJson, rootDirectory: path.dirname(packageResult.path)};
 };
 
-const _npRootDir = fileURLToPath(new URL('..', import.meta.url));
+const _npRootDirectory = fileURLToPath(new URL('..', import.meta.url));
 
-// Re-define `npRootDir` for trailing slash consistency
-export const {pkg: npPkg, rootDir: npRootDir} = await readPkg(_npRootDir);
+// Re-define `npRootDirectory` for trailing slash consistency.
+export const {package_: npPackage, rootDirectory: npRootDirectory} = await readPackage(_npRootDirectory);
 
 export const linkifyIssues = (url, message) => {
 	if (!(url && terminalLink.isSupported)) {
@@ -97,32 +97,32 @@ export const groupFilesInFolders = (files, groupingMinimumDepth = 1, groupingThr
 	return chalk.reset(lines.join('\n'));
 };
 
-export const getNewFiles = async rootDir => {
-	const listNewFiles = await git.newFilesSinceLastRelease(rootDir);
-	const listPkgFiles = await npm.getFilesToBePacked(rootDir);
+export const getNewFiles = async rootDirectory => {
+	const listNewFiles = await git.newFilesSinceLastRelease(rootDirectory);
+	const listPackageFiles = await npm.getFilesToBePacked(rootDirectory);
 
 	return {
-		unpublished: listNewFiles.filter(file => !listPkgFiles.includes(file) && !file.startsWith('.git')),
-		firstTime: listNewFiles.filter(file => listPkgFiles.includes(file)),
+		unpublished: listNewFiles.filter(file => !listPackageFiles.includes(file) && !file.startsWith('.git')),
+		firstTime: listNewFiles.filter(file => listPackageFiles.includes(file)),
 	};
 };
 
-export const getNewDependencies = async (newPkg, rootDir) => {
-	let oldPkgFile;
+export const getNewDependencies = async (newPackage, rootDirectory) => {
+	let oldPackageFile;
 
 	try {
-		oldPkgFile = await git.readFileFromLastRelease(path.resolve(rootDir, 'package.json'));
+		oldPackageFile = await git.readFileFromLastRelease(path.resolve(rootDirectory, 'package.json'));
 	} catch {
 		// Handle first time publish
-		return Object.keys(newPkg.dependencies ?? {});
+		return Object.keys(newPackage.dependencies ?? {});
 	}
 
-	const oldPkg = parsePackage(oldPkgFile);
+	const oldPackage = parsePackage(oldPackageFile);
 
 	const newDependencies = [];
 
-	for (const dependency of Object.keys(newPkg.dependencies ?? {})) {
-		if (!oldPkg.dependencies?.[dependency]) {
+	for (const dependency of Object.keys(newPackage.dependencies ?? {})) {
+		if (!oldPackage.dependencies?.[dependency]) {
 			newDependencies.push(dependency);
 		}
 	}
@@ -144,7 +144,7 @@ export const getPreReleasePrefix = pMemoize(async config => {
 });
 
 export const validateEngineVersionSatisfies = (engine, version) => {
-	const engineRange = npPkg.engines[engine];
+	const engineRange = npPackage.engines[engine];
 	if (!new Version(version).satisfies(engineRange)) {
 		throw new Error(`\`np\` requires ${engine} ${engineRange}`);
 	}

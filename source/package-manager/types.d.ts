@@ -34,7 +34,7 @@ export type PackageManagerConfig = {
 	/**
  	Modify the actual publish command. Defaults to `args => [config.cli, args]`.
   	*/
-	publishCommand?: (args: string[]) => Command;
+	publishCommand?: (arguments_: string[]) => Command;
 
 	/**
  	CLI command which is expected to output the npm registry to use, e.g. `['npm', ['config', 'get', 'registry']]`.

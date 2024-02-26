@@ -10,11 +10,11 @@ const createFixture = test.macro(async (t, {name = 'foo', npmNameStub, expected,
 		'npm-name': npmNameStub,
 	});
 
-	const pkg = isExternalRegistry
+	const package_ = isExternalRegistry
 		? {name, publishConfig: {registry: externalRegistry}}
 		: {name};
 
-	const availability = await npm.isPackageNameAvailable(pkg);
+	const availability = await npm.isPackageNameAvailable(package_);
 	t.like(availability, expected);
 });
 

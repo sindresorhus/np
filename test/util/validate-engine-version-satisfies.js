@@ -1,8 +1,8 @@
 import test from 'ava';
-import {validateEngineVersionSatisfies, npPkg} from '../../source/util.js';
+import {validateEngineVersionSatisfies, npPackage} from '../../source/util.js';
 
 const testEngineRanges = test.macro((t, engine, {above, below}) => {
-	const range = npPkg.engines[engine];
+	const range = npPackage.engines[engine];
 
 	t.notThrows(
 		() => validateEngineVersionSatisfies(engine, above), // Above minimum

@@ -16,11 +16,11 @@ const defaultOptions = {
 	renderer: 'silent',
 };
 
-const npPkgResult = await util.readPkg();
+const npPackageResult = await util.readPackage();
 
 const npFails = test.macro(async (t, inputs, message) => {
 	await t.throwsAsync(
-		Promise.all(inputs.map(input => np(input, defaultOptions, npPkgResult))),
+		Promise.all(inputs.map(input => np(input, defaultOptions, npPackageResult))),
 		{message},
 	);
 });
@@ -69,7 +69,7 @@ test('skip enabling 2FA if the package exists', async t => {
 			isAvailable: false,
 			isUnknown: false,
 		},
-	}, npPkgResult));
+	}, npPackageResult));
 
 	t.true(enable2faStub.notCalled);
 });
@@ -99,7 +99,7 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 			isUnknown: false,
 		},
 		'2fa': false,
-	}, npPkgResult));
+	}, npPackageResult));
 
 	t.true(enable2faStub.notCalled);
 });
