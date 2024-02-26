@@ -6,7 +6,7 @@ import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-const prerequisiteTasks = (input, pkg, options) => {
+const prerequisiteTasks = (input, pkg, options, pkgManager) => {
 	const isExternalRegistry = npm.isExternalRegistry(pkg);
 	let newVersion;
 
@@ -17,15 +17,10 @@ const prerequisiteTasks = (input, pkg, options) => {
 			task: async () => npm.checkConnection(),
 		},
 		{
-			title: 'Check npm version',
-			task: async () => npm.verifyRecentNpmVersion(),
-		},
-		{
-			title: 'Check yarn version',
-			enabled: () => options.yarn === true,
+			title: `Check ${pkgManager.cli} version`,
 			async task() {
-				const {stdout: yarnVersion} = await execa('yarn', ['--version']);
-				util.validateEngineVersionSatisfies('yarn', yarnVersion);
+				const {stdout: version} = await execa(pkgManager.cli, ['--version']);
+				util.validateEngineVersionSatisfies(pkgManager.cli, version);
 			},
 		},
 		{
@@ -77,7 +72,7 @@ const prerequisiteTasks = (input, pkg, options) => {
 			async task() {
 				await git.fetch();
 
-				const tagPrefix = await util.getTagVersionPrefix(options);
+				const tagPrefix = await util.getTagVersionPrefix(pkgManager);
 
 				await git.verifyTagDoesNotExistOnRemote(`${tagPrefix}${newVersion}`);
 			},

@@ -1,23 +1,23 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import {execa} from 'execa';
 import {deleteAsync} from 'del';
 import Listr from 'listr';
-import {merge, throwError, catchError, filter, finalize} from 'rxjs';
-import hasYarn from 'has-yarn';
+import {merge, catchError, filter, finalize, from} from 'rxjs';
 import hostedGitInfo from 'hosted-git-info';
 import onetime from 'onetime';
 import {asyncExitHook} from 'exit-hook';
 import logSymbols from 'log-symbols';
 import prerequisiteTasks from './prerequisite-tasks.js';
 import gitTasks from './git-tasks.js';
-import publish, {getPackagePublishArguments} from './npm/publish.js';
+import {getPackagePublishArguments} from './npm/publish.js';
 import enable2fa, {getEnable2faArgs} from './npm/enable-2fa.js';
+import handleNpmError from './npm/handle-npm-error.js';
 import releaseTaskHelper from './release-task-helper.js';
+import {findLockfile, getPackageManagerConfig, printCommand} from './package-manager/index.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
+/** @type {(cmd: string, args: string[], options?: import('execa').Options) => any} */
 const exec = (cmd, args, options) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
 	const cp = execa(cmd, args, options);
@@ -25,40 +25,27 @@ const exec = (cmd, args, options) => {
 	return merge(cp.stdout, cp.stderr, cp).pipe(filter(Boolean));
 };
 
-// eslint-disable-next-line complexity
-const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
-	if (!hasYarn() && options.yarn) {
-		throw new Error('Could not use Yarn without yarn.lock file');
-	}
+/**
+@param {string} input
+@param {import('./cli-implementation.js').Options} options
+@param {{pkg: import('read-pkg').NormalizedPackageJson; rootDir: string}} context
+*/
+const np = async (input = 'patch', options, {pkg, rootDir}) => {
+	const pkgManager = getPackageManagerConfig(rootDir, pkg);
 
 	// TODO: Remove sometime far in the future
 	if (options.skipCleanup) {
 		options.cleanup = false;
 	}
 
-	function getPackageManagerName() {
-		if (options.yarn === true) {
-			if (isYarnBerry) {
-				return 'Yarn Berry';
-			}
-
-			return 'Yarn';
-		}
-
-		return 'npm';
-	}
-
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const pkgManager = options.yarn === true ? 'yarn' : 'npm';
-	const pkgManagerName = getPackageManagerName();
-	const hasLockFile = fs.existsSync(path.resolve(rootDir, options.yarn ? 'yarn.lock' : 'package-lock.json')) || fs.existsSync(path.resolve(rootDir, 'npm-shrinkwrap.json'));
+	const lockfile = findLockfile(rootDir, pkgManager);
 	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl)?.type === 'github';
 	const testScript = options.testScript || 'test';
-	const testCommand = options.testScript ? ['run', testScript] : [testScript];
 
 	if (options.releaseDraftOnly) {
-		await releaseTaskHelper(options, pkg);
+		await releaseTaskHelper(options, pkg, pkgManager);
 		return pkg;
 	}
 
@@ -68,7 +55,7 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 	const rollback = onetime(async () => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
 
-		const tagVersionPrefix = await util.getTagVersionPrefix(options);
+		const tagVersionPrefix = await util.getTagVersionPrefix(pkgManager);
 
 		const latestTag = await git.latestTag();
 		const versionInLatestTag = latestTag.slice(tagVersionPrefix.length);
@@ -105,139 +92,97 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 
 	const shouldEnable2FA = options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !pkg.private && !npm.isExternalRegistry(pkg);
 
-	// Yarn berry doesn't support git commiting/tagging, so use npm
-	const shouldUseYarnForVersioning = options.yarn === true && !isYarnBerry;
-	const shouldUseNpmForVersioning = options.yarn === false || isYarnBerry;
-
 	// To prevent the process from hanging due to watch mode (e.g. when running `vitest`)
 	const ciEnvOptions = {env: {CI: 'true'}};
+
+	/** @param {typeof options} _options */
+	function getPublishCommand(_options) {
+		const publishCommand = pkgManager.publishCommand || (args => [pkgManager.cli, args]);
+		const args = getPackagePublishArguments(_options);
+		return publishCommand(args);
+	}
 
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
 			enabled: () => options.runPublish,
-			task: () => prerequisiteTasks(input, pkg, options),
+			task: () => prerequisiteTasks(input, pkg, options, pkgManager),
 		},
 		{
 			title: 'Git',
 			task: () => gitTasks(options),
 		},
-		...runCleanup ? [
-			{
-				title: 'Cleanup',
-				enabled: () => !hasLockFile,
-				task: () => deleteAsync('node_modules'),
-			},
-			{
-				title: `Installing dependencies using ${pkgManagerName}`,
-				enabled: () => options.yarn === true,
-				task() {
-					const args = isYarnBerry ? ['install', '--immutable'] : ['install', '--frozen-lockfile', '--production=false'];
-					return exec('yarn', args).pipe(
-						catchError(async error => {
-							if ((!error.stderr.startsWith('error Your lockfile needs to be updated'))) {
-								return;
-							}
-
-							if (await git.checkIfFileGitIgnored('yarn.lock')) {
-								return;
-							}
-
-							throw new Error('yarn.lock file is outdated. Run yarn, commit the updated lockfile and try again.');
-						}),
-					);
-				},
-			},
-			{
-				title: 'Installing dependencies using npm',
-				enabled: () => options.yarn === false,
-				task() {
-					const args = hasLockFile ? ['ci'] : ['install', '--no-package-lock', '--no-production'];
-					return exec('npm', [...args, '--engine-strict']);
-				},
-			},
-		] : [],
-		...runTests ? [
-			{
-				title: `Running tests using ${pkgManagerName}`,
-				enabled: () => options.yarn === false,
-				task: () => exec('npm', testCommand, ciEnvOptions),
-			},
-			{
-				title: `Running tests using ${pkgManagerName}`,
-				enabled: () => options.yarn === true,
-				task: () => exec('yarn', testCommand, ciEnvOptions).pipe(
-					catchError(error => {
-						if (error.message.includes(`Command "${testScript}" not found`)) {
-							return [];
-						}
-
-						return throwError(() => error);
-					}),
-				),
-			},
-		] : [],
 		{
-			title: `Bumping version using ${pkgManagerName}`,
-			enabled: () => shouldUseYarnForVersioning,
-			skip() {
-				if (options.preview) {
-					let previewText = `[Preview] Command not executed: yarn version --new-version ${input}`;
-
-					if (options.message) {
-						previewText += ` --message '${options.message.replaceAll('%s', input)}'`;
-					}
-
-					return `${previewText}.`;
-				}
-			},
-			task() {
-				const args = ['version', '--new-version', input];
-
-				if (options.message) {
-					args.push('--message', options.message);
-				}
-
-				return exec('yarn', args);
-			},
+			title: 'Cleanup',
+			enabled: () => runCleanup && !lockfile,
+			task: () => deleteAsync('node_modules'),
 		},
 		{
-			title: 'Bumping version using npm',
-			enabled: () => shouldUseNpmForVersioning,
+			title: `Installing dependencies using ${pkgManager.id}`,
+			enabled: () => runCleanup,
+			task: () => new Listr([
+				{
+					title: 'Running install command',
+					task() {
+						const installCommand = lockfile ? pkgManager.installCommand : pkgManager.installCommandNoLockfile;
+						return exec(...installCommand);
+					},
+				},
+				{
+					title: 'Checking working tree is still clean', // If lockfile was out of date and tracked by git, this will fail
+					task: () => git.verifyWorkingTreeIsClean(),
+				},
+			]),
+		},
+		{
+			title: 'Running tests',
+			enabled: () => runTests,
+			task: () => exec(pkgManager.cli, ['run', testScript], ciEnvOptions),
+		},
+		{
+			title: 'Bumping version',
 			skip() {
 				if (options.preview) {
-					let previewText = `[Preview] Command not executed: npm version ${input}`;
+					const [cli, args] = pkgManager.versionCommand(input);
 
 					if (options.message) {
-						previewText += ` --message '${options.message.replaceAll('%s', input)}'`;
+						args.push('--message', options.message.replaceAll('%s', input));
 					}
 
-					return `${previewText}.`;
+					return `[Preview] Command not executed: ${printCommand([cli, args])}`;
 				}
 			},
 			task() {
-				const args = ['version', input];
+				const [cli, args] = pkgManager.versionCommand(input);
 
 				if (options.message) {
 					args.push('--message', options.message);
 				}
 
-				return exec('npm', args);
+				return exec(cli, args);
 			},
 		},
 		...options.runPublish ? [
 			{
-				title: `Publishing package using ${pkgManagerName}`,
+				title: 'Publishing package',
 				skip() {
 					if (options.preview) {
-						const args = getPackagePublishArguments(options, isYarnBerry);
-						return `[Preview] Command not executed: ${pkgManager} ${args.join(' ')}.`;
+						const command = getPublishCommand(options);
+						return `[Preview] Command not executed: ${printCommand(command)}.`;
 					}
 				},
+				/** @type {(context, task) => Listr.ListrTaskResult<any>} */
 				task(context, task) {
 					let hasError = false;
 
-					return publish(context, pkgManager, isYarnBerry, task, options)
+					return from(execa(...getPublishCommand(options)))
+						.pipe(
+							catchError(error => handleNpmError(error, task, otp => {
+								context.otp = otp;
+
+								return execa(...getPublishCommand({...options, otp}));
+							})),
+						)
 						.pipe(
 							catchError(async error => {
 								hasError = true;
@@ -289,7 +234,7 @@ const np = async (input = 'patch', options, {pkg, rootDir, isYarnBerry}) => {
 				}
 			},
 			// TODO: parse version outside of index
-			task: () => releaseTaskHelper(options, pkg),
+			task: () => releaseTaskHelper(options, pkg, pkgManager),
 		}] : [],
 	], {
 		showSubtasks: false,

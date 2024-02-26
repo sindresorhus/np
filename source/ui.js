@@ -4,6 +4,8 @@ import githubUrlFromGit from 'github-url-from-git';
 import {htmlEscape} from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
+import {execa} from 'execa';
+import {getPackageManagerConfig} from './package-manager/index.js';
 import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
@@ -119,29 +121,22 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 	return answers.confirm;
 };
 
-// eslint-disable-next-line complexity
-const ui = async (options, {pkg, rootDir, isYarnBerry = false}) => {
+/**
+@param {import('./cli-implementation.js').CLI['flags']} options
+@param {{pkg: import('read-pkg').NormalizedPackageJson; rootDir: string}} context
+*/
+const ui = async (options, {pkg, rootDir}) => {
 	const oldVersion = pkg.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
 
-	const pkgManager = (() => {
-		if (!options.yarn) {
-			return 'npm';
-		}
+	const pkgManager = getPackageManagerConfig(rootDir, pkg);
 
-		if (isYarnBerry) {
-			return 'yarn-berry';
-		}
-
-		return 'yarn';
-	})();
-
-	if (isYarnBerry && npm.isExternalRegistry(pkg)) {
-		throw new Error('External registry is not yet supported with Yarn Berry');
+	if (pkgManager.throwOnExternalRegistry && npm.isExternalRegistry(pkg)) {
+		throw new Error(`External registry is not yet supported with ${pkgManager.id}.`);
 	}
 
-	const registryUrl = await npm.getRegistryUrl(pkgManager, pkg);
+	const {stdout: registryUrl} = await execa(...pkgManager.getRegistryCommand);
 	const releaseBranch = options.branch;
 
 	if (options.runPublish) {
@@ -160,7 +155,7 @@ const ui = async (options, {pkg, rootDir, isYarnBerry = false}) => {
 		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 	} else {
 		const versionText = options.version
-			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version, {prereleasePrefix: await util.getPreReleasePrefix(options)}).format()})`)
+			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version, {prereleasePrefix: await util.getPreReleasePrefix(pkgManager)}).format()})`)
 			: chalk.dim(`(current: ${oldVersion})`);
 
 		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${versionText}\n`);
@@ -241,7 +236,7 @@ const ui = async (options, {pkg, rootDir, isYarnBerry = false}) => {
 		&& !options.tag
 	);
 
-	const alreadyPublicScoped = isYarnBerry && options.runPublish && await util.getNpmPackageAccess(pkg.name) === 'public';
+	const alreadyPublicScoped = pkgManager.id === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(pkg.name) === 'public';
 
 	// Note that inquirer question.when is a bit confusing. Only `false` will cause the question to be skipped.
 	// Any other value like `true` and `undefined` means ask the question.

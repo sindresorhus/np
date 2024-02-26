@@ -6,7 +6,6 @@ import {mockInquirer} from '../../_helpers/mock-inquirer.js';
 const testUi = test.macro(async (t, {version, tags, answers}, assertions) => {
 	const {ui, logs} = await mockInquirer({t, answers: {confirm: true, ...answers}, mocks: {
 		'./npm/util.js': {
-			getRegistryUrl: sinon.stub().resolves(''),
 			checkIgnoreStrategy: sinon.stub().resolves(),
 			prereleaseTags: sinon.stub().resolves(tags),
 		},
@@ -17,6 +16,9 @@ const testUi = test.macro(async (t, {version, tags, answers}, assertions) => {
 		'./git-util.js': {
 			latestTagOrFirstCommit: sinon.stub().resolves(`v${npPkg.version}`),
 			commitLogFromRevision: sinon.stub().resolves(''),
+		},
+		'./package-manager/index.js': {
+			findLockfile: sinon.stub().resolves(undefined),
 		},
 	}});
 

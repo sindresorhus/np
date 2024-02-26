@@ -40,18 +40,24 @@ test('errors on too low version', npFails,
 	/New version 1\.0\.0(?:-beta)? should be higher than current version \d+\.\d+\.\d+/,
 );
 
+const fakeExecaReturn = () => Object.assign(
+	Promise.resolve({pipe: sinon.stub()}),
+	{stdout: '', stderr: ''},
+);
+
 test('skip enabling 2FA if the package exists', async t => {
 	const enable2faStub = sinon.stub();
 
 	/** @type {typeof np} */
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
-		execa: {execa: sinon.stub().returns({pipe: sinon.stub()})},
+		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
 		'../source/prerequisite-tasks.js': sinon.stub(),
 		'../source/git-tasks.js': sinon.stub(),
 		'../source/git-util.js': {
 			hasUpstream: sinon.stub().returns(true),
 			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
 		},
 		'../source/npm/enable-2fa.js': enable2faStub,
 		'../source/npm/publish.js': sinon.stub().returns({pipe: sinon.stub()}),
@@ -74,12 +80,13 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 	/** @type {typeof np} */
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
-		execa: {execa: sinon.stub().returns({pipe: sinon.stub()})},
+		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
 		'../source/prerequisite-tasks.js': sinon.stub(),
 		'../source/git-tasks.js': sinon.stub(),
 		'../source/git-util.js': {
 			hasUpstream: sinon.stub().returns(true),
 			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
 		},
 		'../source/npm/enable-2fa.js': enable2faStub,
 		'../source/npm/publish.js': sinon.stub().returns({pipe: sinon.stub()}),

@@ -60,13 +60,12 @@ export const linkifyCommitRange = (url, commitRange) => {
 	return terminalLink(commitRange, `${url}/compare/${commitRange}`);
 };
 
-export const getTagVersionPrefix = pMemoize(async options => {
-	ow(options, ow.object.hasKeys('yarn'));
+/** @type {(config: import('./package-manager/types.js').PackageManagerConfig) => Promise<string>} */
+export const getTagVersionPrefix = pMemoize(async config => {
+	ow(config, ow.object.hasKeys('tagVersionPrefixCommand'));
 
 	try {
-		const {stdout} = options.yarn
-			? await execa('yarn', ['config', 'get', 'version-tag-prefix'])
-			: await execa('npm', ['config', 'get', 'tag-version-prefix']);
+		const {stdout} = await execa(...config.tagVersionPrefixCommand);
 
 		return stdout;
 	} catch {
@@ -131,12 +130,12 @@ export const getNewDependencies = async (newPkg, rootDir) => {
 	return newDependencies;
 };
 
-export const getPreReleasePrefix = pMemoize(async options => {
-	ow(options, ow.object.hasKeys('yarn'));
+/** @type {(config: import('./package-manager/types.js').PackageManagerConfig) => Promise<string>} */
+export const getPreReleasePrefix = pMemoize(async config => {
+	ow(config, ow.object.hasKeys('cli'));
 
 	try {
-		const packageManager = options.yarn ? 'yarn' : 'npm';
-		const {stdout} = await execa(packageManager, ['config', 'get', 'preid']);
+		const {stdout} = await execa(config.cli, ['config', 'get', 'preid']);
 
 		return stdout === 'undefined' ? '' : stdout;
 	} catch {

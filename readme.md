@@ -74,7 +74,7 @@ $ np --help
     $ np <version>
 
     Version can be:
-      major | minor | patch | premajor | preminor | prepatch | prerelease | 1.2.3
+      patch | minor | major | prepatch | preminor | premajor | prerelease | 1.2.3
 
   Options
     --any-branch            Allow publishing from any branch
@@ -85,13 +85,13 @@ $ np --help
     --no-publish            Skips publishing
     --preview               Show tasks without actually executing them
     --tag                   Publish under a given dist-tag
-    --no-yarn               Don't use Yarn
     --contents              Subdirectory to publish
     --no-release-draft      Skips opening a GitHub release draft
     --release-draft-only    Only opens a GitHub release draft for the latest published version
     --test-script           Name of npm run script to run tests before publishing (default: test)
     --no-2fa                Don't enable 2FA on new packages (not recommended)
-    --message               Version bump commit message. `%s` will be replaced with version. (default: '%s' with npm and 'v%s' with yarn)
+    --message               Version bump commit message, '%s' will be replaced with version (default: '%s' with npm and 'v%s' with yarn)
+    --package-manager       Use a specific package manager (default: 'packageManager' field in package.json)
 
   Examples
     $ np
@@ -121,21 +121,21 @@ Currently, these are the flags you can configure:
 - `publish` - Publish (`true` by default).
 - `preview` - Show tasks without actually executing them (`false` by default).
 - `tag` - Publish under a given dist-tag (`latest` by default).
-- `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
 - `testScript` - Name of npm run script to run tests before publishing (`test` by default).
 - `2fa` - Enable 2FA on new packages (`true` by default) (setting this to `false` is not recommended).
 - `message` - The commit message used for the version bump. Any `%s` in the string will be replaced with the new version. By default, npm uses `%s` and Yarn uses `v%s`.
+- `packageManager` - Set the package manager to be used. Defaults to the [packageManager field in package.json](https://nodejs.org/api/packages.html#packagemanager), so only use if you can't update package.json for some reason.
 
-For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
+For example, this configures `np` to use `unit-test` as a test script, and to use `dist` as the subdirectory to publish:
 
 `package.json`
 ```json
 {
 	"name": "superb-package",
 	"np": {
-		"yarn": false,
+		"testScript": "unit-test",
 		"contents": "dist"
 	}
 }
@@ -144,7 +144,7 @@ For example, this configures `np` to never use Yarn and to use `dist` as the sub
 `.np-config.json`
 ```json
 {
-	"yarn": false,
+	"testScript": "unit-test",
 	"contents": "dist"
 }
 ```
@@ -152,7 +152,7 @@ For example, this configures `np` to never use Yarn and to use `dist` as the sub
 `.np-config.js` or `.np-config.cjs`
 ```js
 module.exports = {
-	yarn: false,
+	testScript: 'unit-test',
 	contents: 'dist'
 };
 ```
@@ -160,7 +160,7 @@ module.exports = {
 `.np-config.mjs`
 ```js
 export default {
-	yarn: false,
+	testScript: 'unit-test',
 	contents: 'dist'
 };
 ```
@@ -275,6 +275,10 @@ Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in pack
 	"registry": "https://my-internal-registry.local"
 }
 ```
+
+### Package managers
+
+If a package manager is not set in package.json, via configuration (`packageManager`), or via the CLI (`--package-manager`), `np` will attempt to infer the best package manager to use by looking for lockfiles. But it's recommended to set the [`packageManager` field](https://nodejs.org/api/packages.html#packagemanager) in your package.json to be consistent with other tools. See also the [corepack docs](https://nodejs.org/api/corepack.html).
 
 ### Publish with a CI
 

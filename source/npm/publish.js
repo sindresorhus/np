@@ -1,9 +1,5 @@
-import {execa} from 'execa';
-import {from, catchError} from 'rxjs';
-import handleNpmError from './handle-npm-error.js';
-
-export const getPackagePublishArguments = (options, isYarnBerry) => {
-	const args = isYarnBerry ? ['npm', 'publish'] : ['publish'];
+export const getPackagePublishArguments = options => {
+	const args = ['publish'];
 
 	if (options.contents) {
 		args.push(options.contents);
@@ -23,16 +19,3 @@ export const getPackagePublishArguments = (options, isYarnBerry) => {
 
 	return args;
 };
-
-const pkgPublish = (pkgManager, isYarnBerry, options) => execa(pkgManager, getPackagePublishArguments(options, isYarnBerry));
-
-const publish = (context, pkgManager, isYarnBerry, task, options) =>
-	from(pkgPublish(pkgManager, isYarnBerry, options)).pipe(
-		catchError(error => handleNpmError(error, task, otp => {
-			context.otp = otp;
-
-			return pkgPublish(pkgManager, isYarnBerry, {...options, otp});
-		})),
-	);
-
-export default publish;

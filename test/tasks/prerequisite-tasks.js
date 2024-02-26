@@ -1,5 +1,6 @@
 import process from 'node:process';
 import test from 'ava';
+import {npmConfig, yarnConfig} from '../../source/package-manager/configs.js';
 import actualPrerequisiteTasks from '../../source/prerequisite-tasks.js';
 import {npPkg} from '../../source/util.js';
 import {SilentRenderer} from '../_helpers/listr-renderer.js';
@@ -21,7 +22,7 @@ test.serial('public-package published on npm registry: should fail when npm regi
 	stderr: 'failed',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('1.0.0', {name: 'test'}, {})),
+		run(prerequisiteTasks('1.0.0', {name: 'test'}, {}, npmConfig)),
 		{message: 'Connection to npm registry failed'},
 	);
 
@@ -33,7 +34,7 @@ test.serial('private package: should disable task pinging npm registry', createF
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {yarn: false})),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {}, npmConfig)),
 	);
 
 	assertTaskDisabled(t, 'Ping npm registry');
@@ -44,7 +45,7 @@ test.serial('external registry: should disable task pinging npm registry', creat
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {yarn: false})),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {}, npmConfig)),
 	);
 
 	assertTaskDisabled(t, 'Ping npm registry');
@@ -63,7 +64,7 @@ test.serial('should fail when npm version does not match range in `package.json`
 	const depRange = npPkg.engines.npm;
 
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
 		{message: `\`np\` requires npm ${depRange}`},
 	);
 
@@ -83,7 +84,7 @@ test.serial('should fail when yarn version does not match range in `package.json
 	const depRange = npPkg.engines.yarn;
 
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: true})),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, yarnConfig)),
 		{message: `\`np\` requires yarn ${depRange}`},
 	);
 
@@ -103,7 +104,7 @@ test.serial('should fail when user is not authenticated at npm registry', create
 	process.env.NODE_ENV = 'P';
 
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
 		{message: 'You do not have write permissions required to publish this package.'},
 	);
 
@@ -125,7 +126,7 @@ test.serial('should fail when user is not authenticated at external registry', c
 	process.env.NODE_ENV = 'P';
 
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {yarn: false})),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {}, npmConfig)),
 		{message: 'You do not have write permissions required to publish this package.'},
 	);
 
@@ -143,7 +144,7 @@ test.serial('private package: should disable task `verify user is authenticated`
 	process.env.NODE_ENV = 'P';
 
 	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {yarn: false})),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {}, npmConfig)),
 	);
 
 	process.env.NODE_ENV = 'test';
@@ -158,7 +159,7 @@ test.serial('should fail when git version does not match range in `package.json`
 	const depRange = npPkg.engines.git;
 
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
 		{message: `\`np\` requires git ${depRange}`},
 	);
 
@@ -172,7 +173,7 @@ test.serial('should fail when git remote does not exist', createFixture, [{
 	stderr: 'not found',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
 		{message: 'not found'},
 	);
 
@@ -181,7 +182,7 @@ test.serial('should fail when git remote does not exist', createFixture, [{
 
 test.serial('should fail when version is invalid', async t => {
 	await t.throwsAsync(
-		run(actualPrerequisiteTasks('DDD', {name: 'test', version: '1.0.0'}, {yarn: false})),
+		run(actualPrerequisiteTasks('DDD', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
 		{message: 'New version DDD should either be one of patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid SemVer version.'},
 	);
 
@@ -190,7 +191,7 @@ test.serial('should fail when version is invalid', async t => {
 
 test.serial('should fail when version is lower than latest version', async t => {
 	await t.throwsAsync(
-		run(actualPrerequisiteTasks('0.1.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
+		run(actualPrerequisiteTasks('0.1.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
 		{message: 'New version 0.1.0 should be higher than current version 1.0.0.'},
 	);
 
@@ -199,7 +200,7 @@ test.serial('should fail when version is lower than latest version', async t => 
 
 test.serial('should fail when prerelease version of public package without dist tag given', async t => {
 	await t.throwsAsync(
-		run(actualPrerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {yarn: false})),
+		run(actualPrerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
 		{message: 'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag'},
 	);
 
@@ -211,7 +212,7 @@ test.serial('should not fail when prerelease version of public package with dist
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {yarn: false, tag: 'pre'})),
+		run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {tag: 'pre'}, npmConfig)),
 	);
 });
 
@@ -220,7 +221,7 @@ test.serial('should not fail when prerelease version of private package without 
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0', private: true}, {yarn: false})),
+		run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0', private: true}, {}, npmConfig)),
 	);
 });
 
@@ -229,7 +230,7 @@ test.serial('should fail when git tag already exists', createFixture, [{
 	stdout: 'vvb',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
 		{message: 'Git tag `v2.0.0` already exists.'},
 	);
 
@@ -241,6 +242,6 @@ test.serial('checks should pass', createFixture, [{
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {yarn: false})),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
 	);
 });
