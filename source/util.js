@@ -7,11 +7,16 @@ import issueRegex from 'issue-regex';
 import terminalLink from 'terminal-link';
 import {execa} from 'execa';
 import pMemoize from 'p-memoize';
-import ow from 'ow';
 import chalk from 'chalk';
 import Version from './version.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
+
+export const assert = (condition, message) => {
+	if (!condition) {
+		throw new Error(message);
+	}
+};
 
 export const readPackage = async (packagePath = process.cwd()) => {
 	const packageResult = await readPackageUp({cwd: packagePath});
@@ -62,7 +67,7 @@ export const linkifyCommitRange = (url, commitRange) => {
 
 /** @type {(config: import('./package-manager/types.js').PackageManagerConfig) => Promise<string>} */
 export const getTagVersionPrefix = pMemoize(async config => {
-	ow(config, ow.object.hasKeys('tagVersionPrefixCommand'));
+	assert(config && Object.hasOwn(config, 'tagVersionPrefixCommand'), 'Config is missing key `tagVersionPrefixCommand`');
 
 	try {
 		const {stdout} = await execa(...config.tagVersionPrefixCommand);
@@ -132,7 +137,7 @@ export const getNewDependencies = async (newPackage, rootDirectory) => {
 
 /** @type {(config: import('./package-manager/types.js').PackageManagerConfig) => Promise<string>} */
 export const getPreReleasePrefix = pMemoize(async config => {
-	ow(config, ow.object.hasKeys('cli'));
+	assert(config && Object.hasOwn(config, 'cli'), 'Config is missing key `cli`');
 
 	try {
 		const {stdout} = await execa(config.cli, ['config', 'get', 'preid']);
