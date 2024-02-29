@@ -34,6 +34,7 @@ test('main', createFixture, [{
 });
 
 // TODO: this is timing out, seemingly the command isn't matching for Sinon
+// eslint-disable-next-line ava/no-skip-test
 test.skip('external registry', createFixture, [{
 	command: `${accessCommand()} --registry http://my-internal-registry.local`,
 	stdout: collaboratorsStdout,
