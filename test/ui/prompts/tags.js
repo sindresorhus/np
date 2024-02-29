@@ -1,5 +1,6 @@
 import test from 'ava';
 import sinon from 'sinon';
+import {npmConfig as packageManager} from '../../../source/package-manager/configs.js';
 import {npPackage} from '../../../source/util.js';
 import {mockInquirer} from '../../_helpers/mock-inquirer.js';
 
@@ -25,6 +26,7 @@ const testUi = test.macro(async (t, {version, tags, answers}, assertions) => {
 	});
 
 	const results = await ui({
+		packageManager,
 		runPublish: true,
 		availability: {},
 	}, {

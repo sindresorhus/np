@@ -4,6 +4,7 @@ import {execa} from 'execa';
 import {removePackageDependencies, updatePackage} from 'write-package';
 import stripAnsi from 'strip-ansi';
 import {readPackage} from 'read-pkg';
+import {npmConfig as packageManager} from '../../source/package-manager/configs.js';
 import {createIntegrationTest} from '../_helpers/integration-test.js';
 import {mockInquirer} from '../_helpers/mock-inquirer.js';
 
@@ -52,7 +53,7 @@ const createFixture = test.macro(async (t, package_, commands, expected) => {
 			},
 		});
 
-		await ui({runPublish: true, version: 'major', yarn: false}, {package_, rootDirectory: temporaryDirectory});
+		await ui({runPublish: true, version: 'major', packageManager}, {package_, rootDirectory: temporaryDirectory});
 		const logs = logsArray.join('').split('\n').map(log => stripAnsi(log));
 
 		const {unpublished, firstTime, dependencies} = expected;

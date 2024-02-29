@@ -1,6 +1,7 @@
 import test from 'ava';
 import sinon from 'sinon';
 import esmock from 'esmock';
+import {npmConfig as packageManager} from '../source/package-manager/configs.js';
 import * as util from '../source/util.js';
 import np from '../source/index.js';
 
@@ -8,6 +9,7 @@ const defaultOptions = {
 	cleanup: true,
 	tests: true,
 	publish: true,
+	packageManager,
 	runPublish: true,
 	availability: {
 		isAvailable: false,

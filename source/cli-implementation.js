@@ -5,6 +5,7 @@ import logSymbols from 'log-symbols';
 import meow from 'meow';
 import updateNotifier from 'update-notifier';
 import {gracefulExit} from 'exit-hook';
+import {getPackageManagerConfig} from './package-manager/index.js';
 import config from './config.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
@@ -106,7 +107,7 @@ updateNotifier({pkg: cli.pkg}).notify();
 
 /** @typedef {Awaited<ReturnType<typeof getOptions>>['options']} Options */
 
-export async function getOptions() {
+async function getOptions() {
 	const {package_, rootDirectory} = await util.readPackage(cli.flags.contents);
 
 	const localConfig = await config(rootDirectory);
@@ -124,6 +125,12 @@ export async function getOptions() {
 		package_.packageManager = flags.packageManager;
 	}
 
+	const packageManager = getPackageManagerConfig(rootDirectory, package_);
+
+	if (packageManager.throwOnExternalRegistry && npm.isExternalRegistry(package_)) {
+		throw new Error(`External registry is not yet supported with ${packageManager.id}.`);
+	}
+
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !package_.private;
 
 	// TODO: does this need to run if `runPublish` is false?
@@ -139,13 +146,18 @@ export async function getOptions() {
 
 	const options = await ui({
 		...flags,
+		packageManager,
 		runPublish,
 		availability,
 		version,
 		branch,
 	}, {package_, rootDirectory});
 
-	return {options, rootDirectory, package_};
+	return {
+		options: {...options, packageManager},
+		rootDirectory,
+		package_,
+	};
 }
 
 try {

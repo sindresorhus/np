@@ -18,7 +18,7 @@ import {getPackagePublishArguments} from './npm/publish.js';
 import enable2fa, {getEnable2faArguments} from './npm/enable-2fa.js';
 import handleNpmError from './npm/handle-npm-error.js';
 import releaseTaskHelper from './release-task-helper.js';
-import {findLockfile, getPackageManagerConfig, printCommand} from './package-manager/index.js';
+import {findLockfile, printCommand} from './package-manager/index.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
@@ -36,9 +36,7 @@ const exec = (command, arguments_, options) => {
 @param {import('./cli-implementation.js').Options} options
 @param {{package_: import('read-pkg').NormalizedPackageJson; rootDirectory: string}} context
 */
-const np = async (input = 'patch', options, {package_, rootDirectory}) => {
-	const packageManager = getPackageManagerConfig(rootDirectory, package_);
-
+const np = async (input = 'patch', {packageManager, ...options}, {package_, rootDirectory}) => {
 	// TODO: Remove sometime far in the future
 	if (options.skipCleanup) {
 		options.cleanup = false;
