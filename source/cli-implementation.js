@@ -126,7 +126,6 @@ export async function getOptions() {
 
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !package_.private;
 
-	// TODO: does this need to run if `runPublish` is false?
 	const availability = runPublish ? await npm.isPackageNameAvailable(package_) : {
 		isAvailable: false,
 		isUnknown: false,
