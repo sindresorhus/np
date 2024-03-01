@@ -9,7 +9,7 @@ const createFixture = _createFixture('../../../source/npm/util.js', import.meta.
 test('package.name not a string', async t => {
 	await t.throwsAsync(
 		npm.collaborators({name: 1}),
-		{message: 'Expected argument to be of type `string` but received type `number`'},
+		{message: 'Package name is required'},
 	);
 });
 

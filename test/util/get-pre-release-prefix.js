@@ -1,6 +1,5 @@
 import process from 'node:process';
 import test from 'ava';
-import {stripIndent} from 'common-tags';
 import {_createFixture} from '../_helpers/stub-execa.js';
 import {getPreReleasePrefix as originalGetPreReleasePrefix} from '../../source/util.js';
 
@@ -50,17 +49,12 @@ test('returns empty string if not set - yarn', createFixture, [{
 test('no options passed', async t => {
 	await t.throwsAsync(
 		originalGetPreReleasePrefix(),
-		{
-			message: stripIndent`
-			Expected argument to be of type \`object\` but received type \`undefined\`
-			Expected object to have keys \`["cli"]\`
-		`,
-		},
+		{message: 'Config is missing key `cli`'},
 	);
 
 	await t.throwsAsync(
 		originalGetPreReleasePrefix({}),
-		{message: 'Expected object to have keys `["cli"]`'},
+		{message: 'Config is missing key `cli`'},
 	);
 });
 

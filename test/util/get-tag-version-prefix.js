@@ -1,5 +1,4 @@
 import test from 'ava';
-import {stripIndent} from 'common-tags';
 import {_createFixture} from '../_helpers/stub-execa.js';
 import {getTagVersionPrefix as originalGetTagVersionPrefix} from '../../source/util.js';
 import {npmConfig, yarnConfig} from '../../source/package-manager/configs.js';
@@ -40,16 +39,11 @@ test('defaults to "v" when command fails', createFixture, [{
 test('no options passed', async t => {
 	await t.throwsAsync(
 		originalGetTagVersionPrefix(),
-		{
-			message: stripIndent`
-			Expected argument to be of type \`object\` but received type \`undefined\`
-			Expected object to have keys \`["tagVersionPrefixCommand"]\`
-		`,
-		},
+		{message: 'Config is missing key `tagVersionPrefixCommand`'},
 	);
 
 	await t.throwsAsync(
 		originalGetTagVersionPrefix({}),
-		{message: 'Expected object to have keys `["tagVersionPrefixCommand"]`'},
+		{message: 'Config is missing key `tagVersionPrefixCommand`'},
 	);
 });

@@ -2,7 +2,6 @@ import path from 'node:path';
 import {pathExists} from 'path-exists';
 import {execa} from 'execa';
 import pTimeout from 'p-timeout';
-import ow from 'ow';
 import npmName from 'npm-name';
 import chalk from 'chalk-template';
 import * as util from '../util.js';
@@ -48,7 +47,7 @@ export const isExternalRegistry = package_ => typeof package_.publishConfig?.reg
 
 export const collaborators = async package_ => {
 	const packageName = package_.name;
-	ow(packageName, ow.string);
+	util.assert(typeof packageName === 'string', 'Package name is required');
 
 	const arguments_ = ['access', 'list', 'collaborators', packageName, '--json'];
 
@@ -70,7 +69,7 @@ export const collaborators = async package_ => {
 };
 
 export const prereleaseTags = async packageName => {
-	ow(packageName, ow.string);
+	util.assert(typeof packageName === 'string', 'Package name is required');
 
 	let tags = [];
 	try {
