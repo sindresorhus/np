@@ -5,7 +5,6 @@ import {htmlEscape} from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
 import {execa} from 'execa';
-import {getPackageManagerConfig} from './package-manager/index.js';
 import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
@@ -125,16 +124,10 @@ const checkNewFilesAndDependencies = async (package_, rootDirectory) => {
 @param {import('./cli-implementation.js').CLI['flags']} options
 @param {{package_: import('read-pkg').NormalizedPackageJson; rootDirectory: string}} context
 */
-const ui = async (options, {package_, rootDirectory}) => {
+const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { // eslint-disable-line complexity
 	const oldVersion = package_.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = package_.repository && githubUrlFromGit(package_.repository.url, {extraBaseUrls});
-
-	const packageManager = getPackageManagerConfig(rootDirectory, package_);
-
-	if (packageManager.throwOnExternalRegistry && npm.isExternalRegistry(package_)) {
-		throw new Error(`External registry is not yet supported with ${packageManager.id}.`);
-	}
 
 	const {stdout: registryUrl} = await execa(...packageManager.getRegistryCommand);
 	const releaseBranch = options.branch;
