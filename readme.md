@@ -45,7 +45,7 @@
 - Warns about the possibility of extraneous files being published
 - See exactly what will be executed with [preview mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
 - Supports [GitHub Packages](https://github.com/features/packages)
-- Supports Yarn and pnpm
+- Supports npm 9+, Yarn (Classic and Berry), and pnpm 8+
 
 ### Why not
 
