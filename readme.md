@@ -45,11 +45,11 @@
 - Warns about the possibility of extraneous files being published
 - See exactly what will be executed with [preview mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
 - Supports [GitHub Packages](https://github.com/features/packages)
+- Supports npm 9+, Yarn (Classic and Berry), and pnpm 8+
 
 ### Why not
 
 - Monorepos are not supported.
-- pnpm is not supported.
 - Custom registries are not supported ([but could be with your help](https://github.com/sindresorhus/np/issues/420)).
 - CI is [not an ideal environment](https://github.com/sindresorhus/np/issues/619#issuecomment-994493179) for `np`. It's meant to be used locally as an interactive tool.
 
