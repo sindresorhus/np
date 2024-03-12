@@ -143,7 +143,7 @@ export const getFilesToBePacked = async rootDirectory => {
 	try {
 		const {files} = JSON.parse(stdout).at(0);
 		return files.map(file => file.path);
-	} catch (cause) {
-		throw new Error('Failed to parse output of npm pack', { cause });
+	} catch (error) {
+		throw new Error('Failed to parse output of npm pack', {cause: error});
 	}
 };
