@@ -138,8 +138,12 @@ export const checkIgnoreStrategy = async ({files}, rootDirectory) => {
 };
 
 export const getFilesToBePacked = async rootDirectory => {
-	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json'], {cwd: rootDirectory});
+	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json', '--silent'], {cwd: rootDirectory});
 
-	const {files} = JSON.parse(stdout).at(0);
-	return files.map(file => file.path);
+	try {
+		const {files} = JSON.parse(stdout).at(0);
+		return files.map(file => file.path);
+	} catch (error) {
+		throw new Error('Failed to parse output of npm pack', {cause: error});
+	}
 };
