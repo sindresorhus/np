@@ -17,7 +17,7 @@ export const pnpmConfig = {
 	installCommand: ['pnpm', ['install']],
 	installCommandNoLockfile: ['pnpm', ['install']],
 	versionCommand: version => ['pnpm', ['version', version]],
-	// pnpm config doesn't have `v` as a default tag version prefix, so to get consistent default behavior, use npm.
+	// Pnpm config doesn't have `v` as a default tag version prefix, so to get consistent default behavior, use npm.
 	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix']],
 	getRegistryCommand: ['pnpm', ['config', 'get', 'registry']],
 	lockfiles: ['pnpm-lock.yaml'],
