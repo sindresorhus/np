@@ -10,7 +10,7 @@ const handleNpmError = (error, task, message, executor) => {
 
 	// `one-time pass` is for npm and `Two factor authentication` is for Yarn.
 	if (
-		error.stderr.includes('one-time pass') // npm
+		error.stderr.includes('one-time pass') // Npm
 		|| error.stdout.includes('Two factor authentication') // Yarn v1
 		|| error.stdout.includes('One-time password:') // Yarn berry
 	) {
