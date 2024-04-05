@@ -14,7 +14,7 @@ import {asyncExitHook} from 'exit-hook';
 import logSymbols from 'log-symbols';
 import prerequisiteTasks from './prerequisite-tasks.js';
 import gitTasks from './git-tasks.js';
-import {getPackagePublishArguments} from './npm/publish.js';
+import {getPackagePublishArguments, runPublish} from './npm/publish.js';
 import enable2fa, {getEnable2faArguments} from './npm/enable-2fa.js';
 import handleNpmError from './npm/handle-npm-error.js';
 import releaseTaskHelper from './release-task-helper.js';
@@ -179,12 +179,12 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 				task(context, task) {
 					let hasError = false;
 
-					return from(execa(...getPublishCommand(options)))
+					return from(runPublish(getPublishCommand(options)))
 						.pipe(
 							catchError(error => handleNpmError(error, task, otp => {
 								context.otp = otp;
 
-								return execa(...getPublishCommand({...options, otp}));
+								return runPublish(getPublishCommand({...options, otp}));
 							})),
 						)
 						.pipe(
