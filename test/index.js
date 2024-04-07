@@ -62,7 +62,10 @@ test('skip enabling 2FA if the package exists', async t => {
 			verifyWorkingTreeIsClean: sinon.stub(),
 		},
 		'../source/npm/enable-2fa.js': enable2faStub,
-		'../source/npm/publish.js': sinon.stub().returns({pipe: sinon.stub()}),
+		'../source/npm/publish.js': {
+			getPackagePublishArguments: sinon.stub().returns([]),
+			runPublish: sinon.stub().returns(fakeExecaReturn()),
+		},
 	});
 
 	await t.notThrowsAsync(npMock('1.0.0', {
@@ -91,7 +94,10 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 			verifyWorkingTreeIsClean: sinon.stub(),
 		},
 		'../source/npm/enable-2fa.js': enable2faStub,
-		'../source/npm/publish.js': sinon.stub().returns({pipe: sinon.stub()}),
+		'../source/npm/publish.js': {
+			getPackagePublishArguments: sinon.stub().returns([]),
+			runPublish: sinon.stub().returns(fakeExecaReturn()),
+		},
 	});
 
 	await t.notThrowsAsync(npMock('1.0.0', {

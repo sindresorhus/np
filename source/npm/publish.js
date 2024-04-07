@@ -1,3 +1,5 @@
+import {execa} from 'execa';
+
 export const getPackagePublishArguments = options => {
 	const arguments_ = ['publish'];
 
@@ -19,3 +21,16 @@ export const getPackagePublishArguments = options => {
 
 	return arguments_;
 };
+
+export function runPublish(arguments_) {
+	const cp = execa(...arguments_);
+
+	cp.stdout.on('data', chunk => {
+		// https://github.com/yarnpkg/berry/blob/a3e5695186f2aec3a68810acafc6c9b1e45191da/packages/plugin-npm/sources/npmHttpUtils.ts#L541
+		if (chunk.toString('utf8').includes('One-time password:')) {
+			cp.kill();
+		}
+	});
+
+	return cp;
+}
