@@ -141,6 +141,7 @@ export const getFilesToBePacked = async rootDirectory => {
 	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json', '--silent'], {cwd: rootDirectory});
 
 	try {
+		// TODO: Remove this once [npm/cli#7354](https://github.com/npm/cli/issues/7354) is resolved.
 		const cleanStdout = stdout.replace(/^[^[]*\[/, '[').trim();
 		const {files} = JSON.parse(cleanStdout).at(0);
 		return files.map(file => file.path);
