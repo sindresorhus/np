@@ -141,7 +141,9 @@ export const getFilesToBePacked = async rootDirectory => {
 	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json', '--silent'], {cwd: rootDirectory});
 
 	try {
-		const {files} = JSON.parse(stdout).at(0);
+		// TODO: Remove this once [npm/cli#7354](https://github.com/npm/cli/issues/7354) is resolved.
+		const cleanStdout = stdout.replace(/^[^[]*\[/, '[').trim();
+		const {files} = JSON.parse(cleanStdout).at(0);
 		return files.map(file => file.path);
 	} catch (error) {
 		throw new Error('Failed to parse output of npm pack', {cause: error});
