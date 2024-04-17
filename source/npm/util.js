@@ -139,7 +139,10 @@ export const checkIgnoreStrategy = async ({files}, rootDirectory) => {
 
 export const getFilesToBePacked = async rootDirectory => {
 	const {stdout} = await execa('npm', [
-		'pack', '--dry-run', '--json', '--silent',
+		'pack',
+		'--dry-run',
+		'--json',
+		'--silent',
 		// TODO: Remove this once [npm/cli#7354](https://github.com/npm/cli/issues/7354) is resolved.
 		'--foreground-scripts=false',
 	], {cwd: rootDirectory});
