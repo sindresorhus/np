@@ -17,7 +17,7 @@ export const pnpmConfig = {
 	installCommand: ['pnpm', ['install']],
 	installCommandNoLockfile: ['pnpm', ['install']],
 	versionCommand: version => ['pnpm', ['version', version]],
-	// pnpm config doesn't have `v` as a default tag version prefix, so to get consistent default behavior, use npm.
+	// By default, pnpm config returns `undefined` instead of `v` for tag-version-prefix, so for consistent default behavior, use npm.
 	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix']],
 	// Disable duplicated pnpm Git checks
 	publishCommand: arguments_ => ['pnpm', [...arguments_, '--no-git-checks']],
