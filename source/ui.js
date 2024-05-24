@@ -65,7 +65,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 	}).join('\n');
 
 	const releaseNotes = nextTag => commits.map(commit =>
-		`- ${htmlEscape(commit.message)}  ${commit.id}`,
+		`- ${htmlEscape(commit.message)} ${commit.id}`,
 	).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 
 	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText);
