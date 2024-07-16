@@ -127,12 +127,7 @@ async function getOptions() {
 
 	const packageManager = getPackageManagerConfig(rootDirectory, package_);
 
-	if (
-		packageManager.throwOnExternalRegistry
-		&& npm.isExternalRegistry(package_)
-		// NPM default registry https://github.com/npm/pneumatic-tubes/blob/1064fbb461464cc0fe18bd2790a176aa92bd63fd/index.js#L35
-		&& package_.publishConfig.registry !== 'https://registry.npmjs.org'
-	) {
+	if (packageManager.throwOnExternalRegistry && npm.isExternalRegistry(package_)) {
 		throw new Error(`External registry is not yet supported with ${packageManager.id}.`);
 	}
 

@@ -43,7 +43,12 @@ export const username = async ({externalRegistry}) => {
 	}
 };
 
-export const isExternalRegistry = package_ => typeof package_.publishConfig?.registry === 'string';
+// NPM default registry https://github.com/npm/pneumatic-tubes/blob/1064fbb461464cc0fe18bd2790a176aa92bd63fd/index.js#L35
+const NPM_DEFAULT_REGISTRY = 'https://registry.npmjs.org';
+export const isExternalRegistry = package_ => {
+	const registry = package_.publishConfig?.registry;
+	return typeof registry === 'string' && registry !== NPM_DEFAULT_REGISTRY;
+};
 
 export const collaborators = async package_ => {
 	const packageName = package_.name;
