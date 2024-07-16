@@ -43,7 +43,16 @@ export const username = async ({externalRegistry}) => {
 	}
 };
 
-export const isExternalRegistry = package_ => typeof package_.publishConfig?.registry === 'string';
+const NPM_DEFAULT_REGISTRIES = new Set([
+	// https://docs.npmjs.com/cli/v10/using-npm/registry
+	'https://registry.npmjs.org',
+	// https://docs.npmjs.com/cli/v10/commands/npm-profile#registry
+	'https://registry.npmjs.org/',
+]);
+export const isExternalRegistry = package_ => {
+	const registry = package_.publishConfig?.registry;
+	return typeof registry === 'string' && !NPM_DEFAULT_REGISTRIES.has(registry);
+};
 
 export const collaborators = async package_ => {
 	const packageName = package_.name;
