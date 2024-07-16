@@ -8,4 +8,5 @@ test('main', t => {
 	t.false(npm.isExternalRegistry({publishConfig: {registry: true}}));
 	t.false(npm.isExternalRegistry({publishConfig: 'not an object'}));
 	t.false(npm.isExternalRegistry({publishConfig: {registry: 'https://registry.npmjs.org'}}));
+	t.false(npm.isExternalRegistry({publishConfig: {registry: 'https://registry.npmjs.org/'}}));
 });

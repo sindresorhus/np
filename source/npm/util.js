@@ -43,11 +43,15 @@ export const username = async ({externalRegistry}) => {
 	}
 };
 
-// NPM default registry https://github.com/npm/pneumatic-tubes/blob/1064fbb461464cc0fe18bd2790a176aa92bd63fd/index.js#L35
-const NPM_DEFAULT_REGISTRY = 'https://registry.npmjs.org';
+const NPM_DEFAULT_REGISTRIES = new Set([
+	// https://docs.npmjs.com/cli/v10/using-npm/registry
+	'https://registry.npmjs.org',
+	// https://docs.npmjs.com/cli/v10/commands/npm-profile#registry
+	'https://registry.npmjs.org/'
+]);
 export const isExternalRegistry = package_ => {
 	const registry = package_.publishConfig?.registry;
-	return typeof registry === 'string' && registry !== NPM_DEFAULT_REGISTRY;
+	return typeof registry === 'string' && !NPM_DEFAULT_REGISTRIES.has(registry);
 };
 
 export const collaborators = async package_ => {
