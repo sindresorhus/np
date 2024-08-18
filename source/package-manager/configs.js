@@ -60,9 +60,9 @@ export const bunConfig = {
 	installCommand: ['bun', ['install', '--frozen-lockfile']],
 	installCommandNoLockfile: ['bun', ['install', '--no-save']],
 	versionCommand: version => ['npm', ['version', version]],
-	// Bun doesn't support publishing, so we use npm instead
+	// Bun doesn't support publishing, so we use npm instead. See https://github.com/oven-sh/bun/issues/5050.
 	publishCommand: arguments_ => ['npm', arguments_],
-	// TODO: Bun doesn't support config get registry, this should be added in the future
+	// TODO: Bun doesn't support config get registry, this should be added in the future. See https://github.com/oven-sh/bun/issues/7140
 	getRegistryCommand: ['npm', ['config', 'get', 'registry']],
 	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix']],
 	lockfiles: ['bun.lockb'],
