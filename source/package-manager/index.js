@@ -46,6 +46,10 @@ function configFromPackageManagerField(package_) {
 		return configs.yarnConfig;
 	}
 
+	if (packageManager === 'bun') {
+		return configs.bunConfig;
+	}
+
 	throw new Error(`Invalid package manager: ${package_.packageManager}`);
 }
 
