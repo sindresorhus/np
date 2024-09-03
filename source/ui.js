@@ -66,7 +66,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 
 	const releaseNotes = nextTag => commits.map(commit =>
 		`- ${htmlEscape(commit.message)}  ${commit.id}`,
-	).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
+	).join('\n') + `\n\n---\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 
 	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText);
 	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
