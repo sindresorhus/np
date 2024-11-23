@@ -48,7 +48,7 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 				continue;
 			}
 
-			if (is.function_(prompt.when) && !prompt.when(answers)) {
+			if (is.function(prompt.when) && !prompt.when(answers)) {
 				t.log(`skipping prompt '${name}'`);
 				continue;
 			}
@@ -91,7 +91,7 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 
 			if (is.asyncFunction(prompt.choices)) {
 				choices = await prompt.choices(answers);
-			} else if (is.function_(prompt.choices)) {
+			} else if (is.function(prompt.choices)) {
 				choices = prompt.choices(answers);
 			} else {
 				choices = prompt.choices;
