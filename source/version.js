@@ -30,10 +30,8 @@ const formatFirstDifference = (current, previous, diffColor) => {
 export default class Version {
 	/** @type {SemVerInstance} */
 	#version;
-
 	/** @type {SemVerIncrement | undefined} */
 	#diff = undefined;
-
 	/** @type {string | undefined} */
 	#prereleasePrefix = undefined;
 
