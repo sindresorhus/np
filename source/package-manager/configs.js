@@ -65,5 +65,5 @@ export const bunConfig = {
 	// TODO: Bun doesn't support config get registry, this should be added in the future. See https://github.com/oven-sh/bun/issues/7140
 	getRegistryCommand: ['npm', ['config', 'get', 'registry']],
 	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix']],
-	lockfiles: ['bun.lockb'],
+	lockfiles: ['bun.lockb', 'bun.lock'],
 };
