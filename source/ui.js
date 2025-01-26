@@ -252,6 +252,7 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 			type: 'list',
 			message: 'Select SemVer increment or specify new version',
 			pageSize: SEMVER_INCREMENTS.length + 2,
+			default: 0,
 			choices: [
 				...SEMVER_INCREMENTS.map(increment => ({ // TODO: prerelease prefix here too
 					name: `${increment} 	${new Version(oldVersion, increment).format()}`,
