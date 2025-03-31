@@ -32,7 +32,7 @@ test('linkifyIssues returns raw message if url is not provided', verifyLinks, {
 	t.is(linkifyIssues(undefined, message), message);
 });
 
-test('linkifyIssues returns raw message if terminalLink is not supported', verifyLinks, {
+test('linkifyIssues returns raw message and url if terminalLink is not supported', verifyLinks, {
 	linksSupported: false,
 }, ({t, util: {linkifyIssues}}) => {
 	const message = 'Commit message - fixes #6';
@@ -51,7 +51,7 @@ test('linkifyCommit returns raw commit hash if url is not provided', verifyLinks
 	t.is(linkifyCommit(undefined, MOCK_COMMIT_HASH), MOCK_COMMIT_HASH);
 });
 
-test('linkifyCommit returns raw commit hash if terminalLink is not supported', verifyLinks, {
+test('linkifyCommit returns raw commit hash and url if terminalLink is not supported', verifyLinks, {
 	linksSupported: false,
 }, ({t, util: {linkifyCommit}}) => {
 	t.is(linkifyCommit(MOCK_REPO_URL, MOCK_COMMIT_HASH), MOCK_COMMIT_HASH);
@@ -63,7 +63,7 @@ test('linkifyCommitRange returns raw commitRange if url is not provided', verify
 	t.is(linkifyCommitRange(undefined, MOCK_COMMIT_RANGE), MOCK_COMMIT_RANGE);
 });
 
-test('linkifyCommitRange returns raw commitRange if terminalLink is not supported', verifyLinks, {
+test('linkifyCommitRange returns raw commitRange and url if terminalLink is not supported', verifyLinks, {
 	linksSupported: false,
 }, ({t, util: {linkifyCommitRange}}) => {
 	t.is(linkifyCommitRange(MOCK_REPO_URL, MOCK_COMMIT_RANGE), MOCK_COMMIT_RANGE);
