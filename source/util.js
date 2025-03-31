@@ -34,7 +34,7 @@ const _npRootDirectory = fileURLToPath(new URL('..', import.meta.url));
 export const {package_: npPackage, rootDirectory: npRootDirectory} = await readPackage(_npRootDirectory);
 
 export const linkifyIssues = (url, message) => {
-	if (!(url && terminalLink.isSupported)) {
+	if (!url) {
 		return message;
 	}
 
@@ -50,7 +50,7 @@ export const linkifyIssues = (url, message) => {
 };
 
 export const linkifyCommit = (url, commit) => {
-	if (!(url && terminalLink.isSupported)) {
+	if (!url) {
 		return commit;
 	}
 
@@ -58,7 +58,7 @@ export const linkifyCommit = (url, commit) => {
 };
 
 export const linkifyCommitRange = (url, commitRange) => {
-	if (!(url && terminalLink.isSupported)) {
+	if (!url) {
 		return commitRange;
 	}
 
