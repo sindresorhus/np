@@ -61,7 +61,7 @@
 		"p-memoize": "^7.1.1",
 		"p-timeout": "^6.1.4",
 		"path-exists": "^5.0.0",
-		"pkg-dir": "^8.0.0",
+		"package-directory": "^8.0.0",
 		"read-package-up": "^11.0.0",
 		"read-pkg": "^9.0.1",
 		"rxjs": "^7.8.1",

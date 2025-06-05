@@ -8,7 +8,7 @@ const getFixture = fixture => path.resolve('test', 'fixtures', 'config', fixture
 const getFixtures = fixtures => fixtures.map(fixture => getFixture(fixture));
 
 const getConfigsWhenGlobalBinaryIsUsed = async homeDirectory => {
-	const pathsPackageDirectory = getFixtures(['pkg-dir', 'local1', 'local2', 'local3']);
+	const pathsPackageDirectory = getFixtures(['package-directory', 'local1', 'local2', 'local3']);
 
 	const promises = pathsPackageDirectory.map(async pathPackageDirectory => {
 		const getConfig = await esmock(testedModulePath, {
@@ -72,7 +72,7 @@ test('returns config from home directory when global binary is used and `.np-con
 );
 
 test('returns config from package directory when local binary is used and `package.json` exists in package directory',
-	useLocalBinary, 'pkg-dir', 'package.json',
+	useLocalBinary, 'package-directory', 'package.json',
 );
 
 test('returns config from package directory when local binary is used and `.np-config.json` exists in package directory',
