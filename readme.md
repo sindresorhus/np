@@ -106,7 +106,7 @@ Currently, these are the flags you can configure:
 - `testScript` - Name of npm run script to run tests before publishing (`test` by default).
 - `2fa` - Enable 2FA on new packages (`true` by default) (setting this to `false` is not recommended).
 - `message` - The commit message used for the version bump. Any `%s` in the string will be replaced with the new version. By default, npm uses `%s` and Yarn uses `v%s`.
-- `packageManager` - Set the package manager to be used. Defaults to the [packageManager field in package.json](https://nodejs.org/api/packages.html#packagemanager), so only use if you can't update package.json for some reason.
+- `packageManager` - Set the package manager to be used. Defaults to the [packageManager field in package.json](https://nodejs.org/dist/latest-v16.x/docs/api/all.html#all_packages_packagemanager), so only use if you can't update package.json for some reason.
 
 For example, this configures `np` to use `unit-test` as a test script, and to use `dist` as the subdirectory to publish:
 
