@@ -4,13 +4,20 @@ import path from 'node:path';
 import {readPackageUp} from 'read-package-up';
 import {parsePackage} from 'read-pkg';
 import issueRegex from 'issue-regex';
-import terminalLink from 'terminal-link';
+import createTerminalLink from 'terminal-link';
 import {execa} from 'execa';
 import pMemoize from 'p-memoize';
 import chalk from 'chalk';
 import Version from './version.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
+
+// TODO[terminal-link@>4.0.0]: remove terminal-link wrapper with fallback after https://github.com/sindresorhus/terminal-link/issues/18 is fixed
+/** @type {(text: string, url: string, options?: import('terminal-link').Options) => string} */
+const terminalLink = (text, url, options) => createTerminalLink(text, url, {
+	fallback: (text, url) => `${text} ( ${url} )`,
+	...options,
+});
 
 export const assert = (condition, message) => {
 	if (!condition) {
@@ -34,7 +41,7 @@ const _npRootDirectory = fileURLToPath(new URL('..', import.meta.url));
 export const {package_: npPackage, rootDirectory: npRootDirectory} = await readPackage(_npRootDirectory);
 
 export const linkifyIssues = (url, message) => {
-	if (!(url && terminalLink.isSupported)) {
+	if (!url) {
 		return message;
 	}
 
@@ -50,7 +57,7 @@ export const linkifyIssues = (url, message) => {
 };
 
 export const linkifyCommit = (url, commit) => {
-	if (!(url && terminalLink.isSupported)) {
+	if (!url) {
 		return commit;
 	}
 
@@ -58,7 +65,7 @@ export const linkifyCommit = (url, commit) => {
 };
 
 export const linkifyCommitRange = (url, commitRange) => {
-	if (!(url && terminalLink.isSupported)) {
+	if (!url) {
 		return commitRange;
 	}
 
