@@ -12,7 +12,7 @@ import Version from './version.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-// TODO[terminal-link@>4.0.0]: remove terminal-link wrapper with fallback after https://github.com/sindresorhus/terminal-link/issues/18 is fixed
+// TODO[terminal-link@>5.0.0]: remove terminal-link wrapper with fallback after https://github.com/sindresorhus/terminal-link/issues/18 is fixed
 /** @type {(text: string, url: string, options?: import('terminal-link').Options) => string} */
 const terminalLink = (text, url, options) => createTerminalLink(text, url, {
 	fallback: (text, url) => `${text} ${url}`,
