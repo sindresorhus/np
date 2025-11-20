@@ -5,6 +5,7 @@ import Version from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
+import {getOidcProvider} from './npm/oidc.js';
 
 const prerequisiteTasks = (input, package_, options, packageManager) => {
 	const isExternalRegistry = npm.isExternalRegistry(package_);
@@ -26,6 +27,11 @@ const prerequisiteTasks = (input, package_, options, packageManager) => {
 		{
 			title: 'Verify user is authenticated',
 			enabled: () => process.env.NODE_ENV !== 'test' && !package_.private,
+			skip() {
+				if (getOidcProvider()) {
+					return 'Environment support for OIDC authentication detected - Skipping whoami check';
+				}
+			},
 			async task() {
 				const username = await npm.username({
 					externalRegistry: isExternalRegistry ? package_.publishConfig.registry : false,

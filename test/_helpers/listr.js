@@ -18,3 +18,8 @@ export const assertTaskDisabled = (t, taskTitle) => {
 export const assertTaskDoesntExist = (t, taskTitle) => {
 	t.true(SilentRenderer.tasks.every(task => task.title !== taskTitle), `Task '${taskTitle}' exists!`);
 };
+
+export const assertTaskSkipped = (t, taskTitle) => {
+	const task = SilentRenderer.tasks.find(task => task.title === taskTitle);
+	t.true(task.isSkipped(), `Task '${taskTitle}' was not skipped!`);
+};
