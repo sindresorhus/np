@@ -5,6 +5,7 @@ import {htmlEscape} from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
 import {execa} from 'execa';
+import npa from 'npm-package-arg'; // ✅ agregado
 import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
@@ -127,7 +128,28 @@ const checkNewFilesAndDependencies = async (package_, rootDirectory) => {
 const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { // eslint-disable-line complexity
 	const oldVersion = package_.version;
 	const extraBaseUrls = ['gitlab.com'];
-	const repoUrl = package_.repository && githubUrlFromGit(package_.repository.url, {extraBaseUrls});
+
+	// ✅ Nuevo helper para resolver correctamente shorthands y URLs
+	const getRepoUrl = (pkg, {extraBaseUrls}) => {
+		if (!pkg.repository) return null;
+
+		try {
+			const repo = pkg.repository;
+			const repoString = typeof repo === 'string' ? repo : repo.url;
+
+			const parsed = npa(repoString);
+
+			if (parsed.hosted) {
+				return parsed.hosted.browse();
+			}
+
+			return githubUrlFromGit(repoString, {extraBaseUrls});
+		} catch {
+			return null;
+		}
+	};
+
+	const repoUrl = getRepoUrl(package_, {extraBaseUrls});
 
 	const {stdout: registryUrl} = await execa(...packageManager.getRegistryCommand);
 	const releaseBranch = options.branch;
@@ -174,7 +196,6 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 		}
 	}
 
-	// Non-interactive mode - return before prompting
 	if (options.version) {
 		return {
 			...options,
@@ -231,10 +252,6 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 
 	const alreadyPublicScoped = packageManager.id === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(package_.name) === 'public';
 
-	// Note that inquirer question.when is a bit confusing. Only `false` will cause the question to be skipped.
-	// Any other value like `true` and `undefined` means ask the question.
-	// so we make sure to always return an explicit boolean here to make it less confusing
-	// see https://github.com/SBoudrias/Inquirer.js/pull/1340
 	const needToAskForPublish = (() => {
 		if (alreadyPublicScoped || !isScoped(package_.name) || !options.availability.isAvailable || options.availability.isUnknown || !options.runPublish) {
 			return false;
@@ -254,7 +271,7 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 			pageSize: SEMVER_INCREMENTS.length + 2,
 			default: 0,
 			choices: [
-				...SEMVER_INCREMENTS.map(increment => ({ // TODO: prerelease prefix here too
+				...SEMVER_INCREMENTS.map(increment => ({
 					name: `${increment} 	${new Version(oldVersion, increment).format()}`,
 					value: increment,
 				})),
@@ -278,7 +295,6 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 				const version = new Version(oldVersion);
 
 				try {
-					// Version error handling does validation
 					version.setFrom(input);
 				} catch (error) {
 					if (error.message.includes('valid SemVer version')) {
@@ -286,7 +302,6 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 					}
 
 					error.message = error.message.replace('New', 'Custom');
-
 					throw error;
 				}
 
@@ -346,3 +361,4 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 };
 
 export default ui;
+
