@@ -5,7 +5,7 @@ import {htmlEscape} from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
 import {execa} from 'execa';
-import npa from 'npm-package-arg'; // ✅ agregado
+import npa from 'npm-package-arg';
 import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
@@ -129,12 +129,13 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 	const oldVersion = package_.version;
 	const extraBaseUrls = ['gitlab.com'];
 
-	// ✅ Nuevo helper para resolver correctamente shorthands y URLs
-	const getRepoUrl = (pkg, {extraBaseUrls}) => {
-		if (!pkg.repository) return null;
+	const getRepoUrl = (package__, {extraBaseUrls}) => {
+		if (!package__.repository) {
+			return null;
+		}
 
 		try {
-			const repo = pkg.repository;
+			const repo = package__.repository;
 			const repoString = typeof repo === 'string' ? repo : repo.url;
 
 			const parsed = npa(repoString);
