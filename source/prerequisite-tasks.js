@@ -27,9 +27,8 @@ const prerequisiteTasks = (input, package_, options, packageManager) => {
 			title: 'Verify user is authenticated',
 			enabled: () => process.env.NODE_ENV !== 'test' && !package_.private,
 			async task() {
-				const username = await npm.username({
-					externalRegistry: isExternalRegistry ? package_.publishConfig.registry : false,
-				});
+				const externalRegistry = isExternalRegistry ? package_.publishConfig.registry : false;
+				const username = await npm.username({externalRegistry});
 
 				const collaborators = await npm.collaborators(package_);
 				if (!collaborators) {

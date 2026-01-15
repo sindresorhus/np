@@ -37,8 +37,13 @@ const stubExeca = commands => {
 	return {
 		execa: {
 			async execa(...arguments_) {
-				execaStub.resolves(execa(...arguments_));
-				return execaStub(...arguments_);
+				// Only call real execa if stub doesn't have a match
+				const result = execaStub(...arguments_);
+				if (result === undefined) {
+					return execa(...arguments_);
+				}
+
+				return result;
 			},
 		},
 	};

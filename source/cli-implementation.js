@@ -4,6 +4,7 @@ import 'symbol-observable'; // Important: This needs to be first to prevent weir
 import logSymbols from 'log-symbols';
 import meow from 'meow';
 import updateNotifier from 'update-notifier';
+import isInteractive from 'is-interactive';
 import {gracefulExit} from 'exit-hook';
 import {getPackageManagerConfig} from './package-manager/index.js';
 import config from './config.js';
@@ -164,6 +165,24 @@ try {
 
 	if (!options.confirm) {
 		gracefulExit();
+	}
+
+	// Check authentication early, before Listr starts (so login can be interactive)
+	if (options.runPublish) {
+		const externalRegistry = npm.isExternalRegistry(package_)
+			? package_.publishConfig.registry
+			: false;
+
+		try {
+			await npm.username({externalRegistry});
+		} catch (error) {
+			if (error.isNotLoggedIn && isInteractive()) {
+				console.log('\nYou must be logged in to publish. Running `npm login`...\n');
+				await npm.login({externalRegistry});
+			} else {
+				throw error;
+			}
+		}
 	}
 
 	console.log(); // Prints a newline for readability

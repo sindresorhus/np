@@ -36,11 +36,24 @@ export const username = async ({externalRegistry}) => {
 		const {stdout} = await execa('npm', arguments_);
 		return stdout;
 	} catch (error) {
-		const message = /ENEEDAUTH/.test(error.stderr)
+		const isNotLoggedIn = /ENEEDAUTH|E401/.test(error.stderr);
+		const message = isNotLoggedIn
 			? 'You must be logged in. Use `npm login` and try again.'
 			: 'Authentication error. Use `npm whoami` to troubleshoot.';
-		throw new Error(message);
+		const authError = new Error(message);
+		authError.isNotLoggedIn = isNotLoggedIn;
+		throw authError;
 	}
+};
+
+export const login = async ({externalRegistry}) => {
+	const arguments_ = ['login'];
+
+	if (externalRegistry) {
+		arguments_.push('--registry', externalRegistry);
+	}
+
+	await execa('npm', arguments_, {stdio: 'inherit'});
 };
 
 const NPM_DEFAULT_REGISTRIES = new Set([
