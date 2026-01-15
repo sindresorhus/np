@@ -63,7 +63,7 @@ test('returns config from home directory when global binary is used and `.np-con
 	useGlobalBinary, 'homedir3', 'homedir/.np-config.cjs',
 );
 
-test.failing('returns config from home directory when global binary is used and `.np-config.js` as ESM exists in home directory',
+test('returns config from home directory when global binary is used and `.np-config.js` as ESM exists in home directory',
 	useGlobalBinary, 'homedir4', 'homedir/.np-config.js',
 );
 
@@ -72,7 +72,7 @@ test('returns config from home directory when global binary is used and `.np-con
 );
 
 test('returns config from package directory when local binary is used and `package.json` exists in package directory',
-	useLocalBinary, 'package-directory', 'package.json',
+	useLocalBinary, 'pkg-dir', 'package.json',
 );
 
 test('returns config from package directory when local binary is used and `.np-config.json` exists in package directory',
