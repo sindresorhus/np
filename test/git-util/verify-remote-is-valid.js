@@ -12,9 +12,7 @@ test('has remote', createStubFixture, [{
 	command: 'git ls-remote origin HEAD',
 	exitCode: 0,
 }], async ({t, testedModule: {verifyRemoteIsValid}}) => {
-	await t.notThrowsAsync(
-		verifyRemoteIsValid(),
-	);
+	await t.notThrowsAsync(verifyRemoteIsValid());
 });
 
 test('no remote', createIntegrationFixture, async () => {

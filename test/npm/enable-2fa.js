@@ -15,31 +15,25 @@ for (const {version, accessArgs} of npmVersionFixtures) {
 		stdout: version,
 	}];
 
-	test(`npm v${version} - no options`, createFixture, npmVersionCommand,
-		async ({t, testedModule: {getEnable2faArguments}}) => {
-			t.deepEqual(
-				await getEnable2faArguments('np'),
-				[...accessArgs, 'np'],
-			);
-		},
-	);
+	test(`npm v${version} - no options`, createFixture, npmVersionCommand, async ({t, testedModule: {getEnable2faArguments}}) => {
+		t.deepEqual(
+			await getEnable2faArguments('np'),
+			[...accessArgs, 'np'],
+		);
+	});
 
-	test(`npm v${version} - options, no otp`, createFixture, npmVersionCommand,
-		async ({t, testedModule: {getEnable2faArguments}}) => {
-			t.deepEqual(
-				await getEnable2faArguments('np', {confirm: true}),
-				[...accessArgs, 'np'],
-			);
-		},
-	);
+	test(`npm v${version} - options, no otp`, createFixture, npmVersionCommand, async ({t, testedModule: {getEnable2faArguments}}) => {
+		t.deepEqual(
+			await getEnable2faArguments('np', {confirm: true}),
+			[...accessArgs, 'np'],
+		);
+	});
 
-	test(`npm v${version} - options, with otp`, createFixture, npmVersionCommand,
-		async ({t, testedModule: {getEnable2faArguments}}) => {
-			t.deepEqual(
-				await getEnable2faArguments('np', {otp: '123456'}),
-				[...accessArgs, 'np', '--otp', '123456'],
-			);
-		},
-	);
+	test(`npm v${version} - options, with otp`, createFixture, npmVersionCommand, async ({t, testedModule: {getEnable2faArguments}}) => {
+		t.deepEqual(
+			await getEnable2faArguments('np', {otp: '123456'}),
+			[...accessArgs, 'np', '--otp', '123456'],
+		);
+	});
 }
 

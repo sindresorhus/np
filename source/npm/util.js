@@ -11,19 +11,17 @@ export const version = async () => {
 	return stdout;
 };
 
-export const checkConnection = () => pTimeout(
-	(async () => {
-		try {
-			await execa('npm', ['ping']);
-			return true;
-		} catch {
-			throw new Error('Connection to npm registry failed');
-		}
-	})(), {
-		milliseconds: 15_000,
-		message: 'Connection to npm registry timed out',
-	},
-);
+export const checkConnection = () => pTimeout((async () => {
+	try {
+		await execa('npm', ['ping']);
+		return true;
+	} catch {
+		throw new Error('Connection to npm registry failed');
+	}
+})(), {
+	milliseconds: 15_000,
+	message: 'Connection to npm registry timed out',
+});
 
 export const username = async ({externalRegistry}) => {
 	const arguments_ = ['whoami'];
@@ -53,7 +51,22 @@ export const login = async ({externalRegistry}) => {
 		arguments_.push('--registry', externalRegistry);
 	}
 
-	await execa('npm', arguments_, {stdio: 'inherit'});
+	try {
+		await execa('npm', arguments_, {
+			stdin: 'inherit',
+			stdout: 'inherit',
+			stderr: 'pipe',
+		});
+	} catch (error) {
+		// User canceled the login prompt
+		if (error.stderr?.includes('canceled')) {
+			const cancelError = new Error('Login canceled');
+			cancelError.name = 'ExitPromptError';
+			throw cancelError;
+		}
+
+		throw error;
+	}
 };
 
 const NPM_DEFAULT_REGISTRIES = new Set([

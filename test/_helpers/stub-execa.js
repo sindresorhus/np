@@ -4,6 +4,16 @@ import esmock from 'esmock';
 import sinon from 'sinon';
 import {execa} from 'execa';
 
+// Default stubs for common commands that should pass by default
+const defaultCommands = [
+	{command: 'npm --version', stdout: '10.0.0'},
+	{command: 'npm ping', stdout: ''},
+	{command: 'git version', stdout: 'git version 2.40.0'},
+	{command: 'git ls-remote origin HEAD', stdout: 'abc123\tHEAD'},
+	{command: 'git fetch', stdout: ''},
+	{command: 'git config --get tag.gpgSign', stdout: ''},
+];
+
 /**
 Stubs `execa` to return a specific result when called with the given commands.
 
@@ -16,7 +26,8 @@ Resolves or throws the given result.
 const makeExecaStub = commands => {
 	const stub = sinon.stub();
 
-	for (const result of commands) {
+	// Apply default commands first, then user commands (which can override defaults)
+	for (const result of [...defaultCommands, ...commands]) {
 		const [command, ...commandArguments] = result.command.split(' ');
 
 		const passes = result.exitCode === 0 || (!result.exitCode && !result.stderr);

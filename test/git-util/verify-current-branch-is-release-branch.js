@@ -7,9 +7,7 @@ const createFixture = _createFixture('../../source/git-util.js');
 test('on release branch', createFixture, async ({$$}) => {
 	await $$`git switch -c unicorn`;
 }, async ({t, testedModule: {verifyCurrentBranchIsReleaseBranch}}) => {
-	await t.notThrowsAsync(
-		verifyCurrentBranchIsReleaseBranch('unicorn'),
-	);
+	await t.notThrowsAsync(verifyCurrentBranchIsReleaseBranch('unicorn'));
 });
 
 test('not on release branch', createFixture, async ({$$}) => {

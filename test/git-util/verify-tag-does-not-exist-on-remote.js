@@ -20,7 +20,5 @@ test('does not exist', createFixture, [{
 	stderr: '',
 	stdout: '',
 }], async ({t, testedModule: {verifyTagDoesNotExistOnRemote}}) => {
-	await t.notThrowsAsync(
-		verifyTagDoesNotExistOnRemote('v0.0.0'),
-	);
+	await t.notThrowsAsync(verifyTagDoesNotExistOnRemote('v0.0.0'));
 });

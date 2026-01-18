@@ -51,46 +51,79 @@ const useLocalBinary = test.macro(async (t, packageDirectory, source) => {
 	}
 });
 
-test('returns config from home directory when global binary is used and .np-config-json exists in home directory',
-	useGlobalBinary, 'homedir1', 'homedir/.np-config.json',
+test(
+	'returns config from home directory when global binary is used and .np-config-json exists in home directory',
+	useGlobalBinary,
+	'homedir1',
+	'homedir/.np-config.json',
 );
 
-test('returns config from home directory when global binary is used and `.np-config.js` as CJS exists in home directory',
-	useGlobalBinary, 'homedir2', 'homedir/.np-config.js',
+test(
+	'returns config from home directory when global binary is used and `.np-config.js` as CJS exists in home directory',
+	useGlobalBinary,
+	'homedir2',
+	'homedir/.np-config.js',
 );
 
-test('returns config from home directory when global binary is used and `.np-config.cjs` exists in home directory',
-	useGlobalBinary, 'homedir3', 'homedir/.np-config.cjs',
+test(
+	'returns config from home directory when global binary is used and `.np-config.cjs` exists in home directory',
+	useGlobalBinary,
+	'homedir3',
+	'homedir/.np-config.cjs',
 );
 
-test('returns config from home directory when global binary is used and `.np-config.js` as ESM exists in home directory',
-	useGlobalBinary, 'homedir4', 'homedir/.np-config.js',
+test(
+	'returns config from home directory when global binary is used and `.np-config.js` as ESM exists in home directory',
+	useGlobalBinary,
+	'homedir4',
+	'homedir/.np-config.js',
 );
 
-test('returns config from home directory when global binary is used and `.np-config.mjs` exists in home directory',
-	useGlobalBinary, 'homedir5', 'homedir/.np-config.mjs',
+test(
+	'returns config from home directory when global binary is used and `.np-config.mjs` exists in home directory',
+	useGlobalBinary,
+	'homedir5',
+	'homedir/.np-config.mjs',
 );
 
-test('returns config from package directory when local binary is used and `package.json` exists in package directory',
-	useLocalBinary, 'pkg-dir', 'package.json',
+test(
+	'returns config from package directory when local binary is used and `package.json` exists in package directory',
+	useLocalBinary,
+	'pkg-dir',
+	'package.json',
 );
 
-test('returns config from package directory when local binary is used and `.np-config.json` exists in package directory',
-	useLocalBinary, 'local1', 'packagedir/.np-config.json',
+test(
+	'returns config from package directory when local binary is used and `.np-config.json` exists in package directory',
+	useLocalBinary,
+	'local1',
+	'packagedir/.np-config.json',
 );
 
-test('returns config from package directory when local binary is used and `.np-config.js` as CJS exists in package directory',
-	useLocalBinary, 'local2', 'packagedir/.np-config.js',
+test(
+	'returns config from package directory when local binary is used and `.np-config.js` as CJS exists in package directory',
+	useLocalBinary,
+	'local2',
+	'packagedir/.np-config.js',
 );
 
-test('returns config from package directory when local binary is used and `.np-config.cjs` exists in package directory',
-	useLocalBinary, 'local3', 'packagedir/.np-config.cjs',
+test(
+	'returns config from package directory when local binary is used and `.np-config.cjs` exists in package directory',
+	useLocalBinary,
+	'local3',
+	'packagedir/.np-config.cjs',
 );
 
-test('returns config from package directory when local binary is used and `.np-config.js` as ESM exists in package directory',
-	useLocalBinary, 'local4', 'packagedir/.np-config.js',
+test(
+	'returns config from package directory when local binary is used and `.np-config.js` as ESM exists in package directory',
+	useLocalBinary,
+	'local4',
+	'packagedir/.np-config.js',
 );
 
-test('returns config from package directory when local binary is used and `.np-config.mjs` exists in package directory',
-	useLocalBinary, 'local5', 'packagedir/.np-config.mjs',
+test(
+	'returns config from package directory when local binary is used and `.np-config.mjs` exists in package directory',
+	useLocalBinary,
+	'local5',
+	'packagedir/.np-config.mjs',
 );

@@ -86,7 +86,7 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 
 		/** @param {Answer} input */
 		const chooseValue = async input => {
-			t.is(prompt.type, 'list');
+			t.is(prompt.type, 'select');
 			let choices;
 
 			if (is.asyncFunction(prompt.choices)) {
@@ -133,7 +133,7 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 			if (is.string(input)) {
 				if (['input'].includes(prompt.type)) {
 					setValue(input);
-				} else if (['list'].includes(prompt.type)) {
+				} else if (['select'].includes(prompt.type)) {
 					return chooseValue(input);
 				} else {
 					t.fail('Incorrect input type');

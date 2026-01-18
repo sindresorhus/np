@@ -4,9 +4,8 @@ import {validateEngineVersionSatisfies, npPackage} from '../../source/util.js';
 const testEngineRanges = test.macro((t, engine, {above, below}) => {
 	const range = npPackage.engines[engine];
 
-	t.notThrows(
-		() => validateEngineVersionSatisfies(engine, above), // Above minimum
-	);
+	// Above minimum
+	t.notThrows(() => validateEngineVersionSatisfies(engine, above));
 
 	t.throws(
 		() => validateEngineVersionSatisfies(engine, below), // Below minimum

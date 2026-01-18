@@ -8,9 +8,7 @@ test('satisfied', createFixture, [{
 	command: 'git version',
 	stdout: 'git version 2.12.0', // One higher than minimum
 }], async ({t, testedModule: {verifyRecentGitVersion}}) => {
-	await t.notThrowsAsync(
-		verifyRecentGitVersion(),
-	);
+	await t.notThrowsAsync(verifyRecentGitVersion());
 });
 
 test('not satisfied', createFixture, [{

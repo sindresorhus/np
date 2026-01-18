@@ -8,9 +8,7 @@ test('satisfied', createFixture, [{
 	command: 'npm --version',
 	stdout: '99.20.0', // Higher than minimum
 }], async ({t, testedModule: npm}) => {
-	await t.notThrowsAsync(
-		npm.verifyRecentNpmVersion(),
-	);
+	await t.notThrowsAsync(npm.verifyRecentNpmVersion());
 });
 
 test('not satisfied', createFixture, [{

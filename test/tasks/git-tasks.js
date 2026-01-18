@@ -56,9 +56,7 @@ test.serial('should not fail when current branch not master and publishing from 
 		stdout: '0',
 	},
 ], async ({t, testedModule: gitTasks}) => {
-	await t.notThrowsAsync(
-		run(gitTasks({anyBranch: true})),
-	);
+	await t.notThrowsAsync(run(gitTasks({anyBranch: true})));
 
 	assertTaskDoesntExist(t, 'Check current branch');
 });
@@ -95,9 +93,7 @@ test.serial('should not fail when no remote set up', createFixture, [
 		stderr: 'fatal: no upstream configured for branch \'master\'',
 	},
 ], async ({t, testedModule: gitTasks}) => {
-	await t.notThrowsAsync(
-		run(gitTasks({branch: 'master'})),
-	);
+	await t.notThrowsAsync(run(gitTasks({branch: 'master'})));
 });
 
 test.serial('should fail when remote history differs and changes are fetched', createFixture, [
@@ -178,7 +174,5 @@ test.serial('checks should pass when publishing from master, working tree is cle
 		stdout: '0',
 	},
 ], async ({t, testedModule: gitTasks}) => {
-	await t.notThrowsAsync(
-		run(gitTasks({branch: 'master'})),
-	);
+	await t.notThrowsAsync(run(gitTasks({branch: 'master'})));
 });

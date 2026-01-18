@@ -4,7 +4,6 @@ import sinon from 'sinon';
 import esmock from 'esmock';
 import {npmConfig as packageManager} from '../source/package-manager/configs.js';
 import * as util from '../source/util.js';
-import np from '../source/index.js';
 
 const defaultOptions = {
 	cleanup: true,
@@ -21,27 +20,38 @@ const defaultOptions = {
 
 const npPackageResult = await util.readPackage();
 
+const getNpMock = async () => esmock('../source/index.js', {}, {
+	execa: {execa: sinon.stub().resolves({stdout: '10.0.0', stderr: ''})},
+	'../source/git-util.js': {
+		hasUpstream: sinon.stub().returns(true),
+		pushGraceful: sinon.stub(),
+		verifyWorkingTreeIsClean: sinon.stub(),
+		verifyCurrentBranchIsReleaseBranch: sinon.stub(),
+		verifyRemoteHistoryIsClean: sinon.stub(),
+		verifyRemoteIsValid: sinon.stub(),
+		verifyRecentGitVersion: sinon.stub(),
+		fetch: sinon.stub(),
+		verifyTagDoesNotExistOnRemote: sinon.stub(),
+	},
+	'../source/npm/util.js': {
+		...await import('../source/npm/util.js'),
+		checkConnection: sinon.stub().resolves(),
+	},
+});
+
 const npFails = test.macro(async (t, inputs, message) => {
+	const npMock = await getNpMock();
 	await t.throwsAsync(
-		Promise.all(inputs.map(input => np(input, defaultOptions, npPackageResult))),
+		Promise.all(inputs.map(input => npMock(input, defaultOptions, npPackageResult))),
 		{message},
 	);
 });
 
-test('version is invalid', npFails,
-	['foo', '4.x.3'],
-	/New version (?:foo|4\.x\.3) should either be one of patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid SemVer version\./,
-);
+test('version is invalid', npFails, ['foo', '4.x.3'], /New version (?:foo|4\.x\.3) should either be one of patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid SemVer version\./);
 
-test('version is pre-release', npFails,
-	['premajor', 'preminor', 'prepatch', 'prerelease', '100.0.0-0', '100.0.0-beta'],
-	'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag',
-);
+test('version is pre-release', npFails, ['premajor', 'preminor', 'prepatch', 'prerelease', '100.0.0-0', '100.0.0-beta'], 'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 
-test('errors on too low version', npFails,
-	['1.0.0', '1.0.0-beta'],
-	/New version 1\.0\.0(?:-beta)? should be higher than current version \d+\.\d+\.\d+/,
-);
+test('errors on too low version', npFails, ['1.0.0', '1.0.0-beta'], /New version 1\.0\.0(?:-beta)? should be higher than current version \d+\.\d+\.\d+/);
 
 const fakeExecaReturn = () => Object.assign(
 	Promise.resolve({pipe: sinon.stub()}),
