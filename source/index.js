@@ -7,6 +7,8 @@ import {
 	filter,
 	finalize,
 	from,
+	mergeMap,
+	throwError,
 } from 'rxjs';
 import hostedGitInfo from 'hosted-git-info';
 import onetime from 'onetime';
@@ -188,10 +190,13 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 							})),
 						)
 						.pipe(
-							catchError(async error => {
+							// Note: Cannot use `async` here as the `await` will not finish before the error propagates.
+							catchError(error => {
 								hasError = true;
-								await rollback();
-								throw new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`);
+								return from(rollback()).pipe(
+									mergeMap(() => throwError(() => new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`))),
+									catchError(() => throwError(() => new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`))),
+								);
 							}),
 							finalize(() => {
 								publishStatus = hasError ? 'FAILED' : 'SUCCESS';

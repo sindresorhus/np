@@ -1,3 +1,4 @@
+import process from 'node:process';
 import test from 'ava';
 import sinon from 'sinon';
 import esmock from 'esmock';
@@ -110,4 +111,50 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 	}, npPackageResult));
 
 	t.true(enable2faStub.notCalled);
+});
+
+const fakeExecaReject = error => Object.assign(
+	Promise.reject(Object.assign(new Error(error), {stdout: '', stderr: error})),
+	{stdout: '', stderr: ''},
+);
+
+test('rollback is called when publish fails', async t => {
+	const deleteTagStub = sinon.stub().resolves();
+	const removeLastCommitStub = sinon.stub().resolves();
+
+	/** @type {typeof np} */
+	const npMock = await esmock('../source/index.js', {
+		del: {deleteAsync: sinon.stub()},
+		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
+		'../source/prerequisite-tasks.js': sinon.stub(),
+		'../source/git-tasks.js': sinon.stub(),
+		'../source/git-util.js': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
+			latestTag: sinon.stub().resolves('v1.0.0'),
+			deleteTag: deleteTagStub,
+			removeLastCommit: removeLastCommitStub,
+		},
+		'../source/npm/enable-2fa.js': sinon.stub(),
+		'../source/npm/publish.js': {
+			getPackagePublishArguments: sinon.stub().returns([]),
+			runPublish: sinon.stub().returns(fakeExecaReject('npm ERR! publish failed')),
+		},
+		'../source/util.js': {
+			...util,
+			readPackage: sinon.stub().resolves({version: '1.0.0'}),
+			getTagVersionPrefix: sinon.stub().resolves('v'),
+		},
+	});
+
+	await t.throwsAsync(
+		npMock('1.0.0', {
+			...defaultOptions,
+		}, {package_: {version: '0.9.0'}, rootDirectory: process.cwd()}),
+		{message: /Error publishing package/},
+	);
+
+	t.true(deleteTagStub.calledOnce, 'deleteTag should be called once');
+	t.true(removeLastCommitStub.calledOnce, 'removeLastCommit should be called once');
 });
