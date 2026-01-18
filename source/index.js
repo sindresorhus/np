@@ -30,7 +30,17 @@ const exec = (command, arguments_, options) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
 	const subProcess = execa(command, arguments_, options);
 
-	return merge(subProcess.stdout, subProcess.stderr, subProcess).pipe(filter(Boolean));
+	return merge(subProcess.stdout, subProcess.stderr, subProcess).pipe(
+		filter(Boolean),
+		catchError(error => {
+			// Include stderr in error message for better diagnostics
+			if (error.stderr) {
+				error.message = `${error.shortMessage}\n${error.stderr}`;
+			}
+
+			throw error;
+		}),
+	);
 };
 
 /**
