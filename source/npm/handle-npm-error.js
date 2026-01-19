@@ -9,7 +9,11 @@ const handleNpmError = (error, task, message, executor) => {
 	}
 
 	// `one-time pass` is for npm and `Two factor authentication` is for Yarn.
-	if (error.stderr.includes('one-time pass') || error.stdout.includes('Two factor authentication')) {
+	if (
+		error.stderr.includes('one-time pass') // Npm
+		|| error.stdout.includes('Two factor authentication') // Yarn v1
+		|| error.stdout.includes('One-time password:') // Yarn berry
+	) {
 		const {title} = task;
 		task.title = `${title} ${chalk.yellow('(waiting for input…)')}`;
 
@@ -19,15 +23,17 @@ const handleNpmError = (error, task, message, executor) => {
 				return executor(otp);
 			},
 			autoSubmit: value => value.length === 6,
-		}).pipe(
-			catchError(error => handleNpmError(error, task, 'OTP was incorrect, try again:', executor)),
-		);
+		}).pipe(catchError(error => handleNpmError(error, task, 'OTP was incorrect, try again:', executor)));
 	}
 
 	// Attempting to privately publish a scoped package without the correct npm plan
 	// https://stackoverflow.com/a/44862841/10292952
-	if (error.code === 402 || error.stderr.includes('npm ERR! 402 Payment Required')) {
-		throw new Error('You cannot publish a privately scoped package without a paid plan. Did you mean to publish publicly?');
+	if (
+		error.code === 402
+		|| error.stderr.includes('npm ERR! 402 Payment Required') // Npm/pnpm
+		|| error.stdout.includes('Response Code: 402 (Payment Required)') // Yarn Berry
+	) {
+		throw new Error('You cannot publish a scoped package privately without a paid plan. Did you mean to publish publicly?');
 	}
 
 	return throwError(() => error);

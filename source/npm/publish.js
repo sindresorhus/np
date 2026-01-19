@@ -1,38 +1,36 @@
 import {execa} from 'execa';
-import {from, catchError} from 'rxjs';
-import handleNpmError from './handle-npm-error.js';
 
 export const getPackagePublishArguments = options => {
-	const args = ['publish'];
+	const arguments_ = ['publish'];
 
 	if (options.contents) {
-		args.push(options.contents);
+		arguments_.push(options.contents);
 	}
 
 	if (options.tag) {
-		args.push('--tag', options.tag);
+		arguments_.push('--tag', options.tag);
 	}
 
 	if (options.otp) {
-		args.push('--otp', options.otp);
+		arguments_.push('--otp', options.otp);
 	}
 
 	if (options.publishScoped) {
-		args.push('--access', 'public');
+		arguments_.push('--access', 'public');
 	}
 
-	return args;
+	return arguments_;
 };
 
-const pkgPublish = (pkgManager, options) => execa(pkgManager, getPackagePublishArguments(options));
+export function runPublish(arguments_) {
+	const cp = execa(...arguments_);
 
-const publish = (context, pkgManager, task, options) =>
-	from(pkgPublish(pkgManager, options)).pipe(
-		catchError(error => handleNpmError(error, task, otp => {
-			context.otp = otp;
+	cp.stdout.on('data', chunk => {
+		// https://github.com/yarnpkg/berry/blob/a3e5695186f2aec3a68810acafc6c9b1e45191da/packages/plugin-npm/sources/npmHttpUtils.ts#L541
+		if (chunk.toString('utf8').includes('One-time password:')) {
+			cp.kill();
+		}
+	});
 
-			return pkgPublish(pkgManager, {...options, otp});
-		})),
-	);
-
-export default publish;
+	return cp;
+}

@@ -4,11 +4,11 @@ import githubUrlFromGit from 'github-url-from-git';
 import {htmlEscape} from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
+import {execa} from 'execa';
+import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
-import Version from './version.js';
-import prettyVersionDiff from './pretty-version-diff.js';
 
 const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch) => {
 	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
@@ -65,8 +65,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 	}).join('\n');
 
 	const generateReleaseNotes = nextTag => commits.map(commit =>
-		`- ${htmlEscape(commit.message)}  ${commit.id}`,
-	).join('\n') + `\n\n${repoUrl}/compare/${revision}...${nextTag}`;
+		`- ${htmlEscape(commit.message)}  ${commit.id}`).join('\n') + `\n\n---\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 
 	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText);
 	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
@@ -78,9 +77,9 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 	};
 };
 
-const checkNewFilesAndDependencies = async (pkg, rootDir) => {
-	const newFiles = await util.getNewFiles(rootDir);
-	const newDependencies = await util.getNewDependencies(pkg, rootDir);
+const checkNewFilesAndDependencies = async (package_, rootDirectory) => {
+	const newFiles = await util.getNewFiles(rootDirectory);
+	const newDependencies = await util.getNewDependencies(package_, rootDirectory);
 
 	const noNewUnpublishedFiles = !newFiles.unpublished || newFiles.unpublished.length === 0;
 	const noNewFirstTimeFiles = !newFiles.firstTime || newFiles.firstTime.length === 0;
@@ -94,7 +93,7 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 
 	const messages = [];
 	if (newFiles.unpublished.length > 0) {
-		messages.push(`The following new files will not be part of your published package:\n${util.joinList(newFiles.unpublished)}\n\nIf you intended to publish them, add them to the \`files\` field in package.json.`);
+		messages.push(`The following new files will not be part of your published package:\n${util.groupFilesInFolders(newFiles.unpublished)}\n\nIf you intended to publish them, add them to the \`files\` field in package.json.`);
 	}
 
 	if (newFiles.firstTime.length > 0) {
@@ -120,19 +119,22 @@ const checkNewFilesAndDependencies = async (pkg, rootDir) => {
 	return answers.confirm;
 };
 
-// eslint-disable-next-line complexity
-const ui = async (options, {pkg, rootDir}) => {
-	const oldVersion = pkg.version;
+/**
+@param {import('./cli-implementation.js').CLI['flags']} options
+@param {{package_: import('read-pkg').NormalizedPackageJson; rootDirectory: string}} context
+*/
+const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { // eslint-disable-line complexity
+	const oldVersion = package_.version;
 	const extraBaseUrls = ['gitlab.com'];
-	const repoUrl = pkg.repository && githubUrlFromGit(pkg.repository.url, {extraBaseUrls});
-	const pkgManager = options.yarn ? 'yarn' : 'npm';
-	const registryUrl = await npm.getRegistryUrl(pkgManager, pkg);
+	const repoUrl = package_.repository && githubUrlFromGit(package_.repository.url, {extraBaseUrls});
+
+	const {stdout: registryUrl} = await execa(...packageManager.getRegistryCommand);
 	const releaseBranch = options.branch;
 
 	if (options.runPublish) {
-		npm.checkIgnoreStrategy(pkg, rootDir);
+		await npm.checkIgnoreStrategy(package_, rootDirectory);
 
-		const answerIgnoredFiles = await checkNewFilesAndDependencies(pkg, rootDir);
+		const answerIgnoredFiles = await checkNewFilesAndDependencies(package_, rootDirectory);
 		if (!answerIgnoredFiles) {
 			return {
 				...options,
@@ -142,12 +144,13 @@ const ui = async (options, {pkg, rootDir}) => {
 	}
 
 	if (options.releaseDraftOnly) {
-		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(pkg.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
+		console.log(`\nCreate a release draft on GitHub for ${chalk.bold.magenta(package_.name)} ${chalk.dim(`(current: ${oldVersion})`)}\n`);
 	} else {
-		const newVersion = options.version ? Version.getAndValidateNewVersionFrom(options.version, oldVersion) : undefined;
-		const versionText = chalk.dim(`(current: ${oldVersion}${newVersion ? `, next: ${prettyVersionDiff(oldVersion, newVersion)}` : ''}${chalk.dim(')')}`);
+		const versionText = options.version
+			? chalk.dim(`(current: ${oldVersion}, next: ${new Version(oldVersion, options.version, {prereleasePrefix: await util.getPreReleasePrefix(packageManager)}).format()})`)
+			: chalk.dim(`(current: ${oldVersion})`);
 
-		console.log(`\nPublish a new version of ${chalk.bold.magenta(pkg.name)} ${versionText}\n`);
+		console.log(`\nPublish a new version of ${chalk.bold.magenta(package_.name)} ${versionText}\n`);
 	}
 
 	const useLatestTag = !options.releaseDraftOnly;
@@ -170,6 +173,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		}
 	}
 
+	// Non-interactive mode - return before prompting
 	if (options.version) {
 		return {
 			...options,
@@ -197,11 +201,15 @@ const ui = async (options, {pkg, rootDir}) => {
 	}
 
 	if (options.availability.isUnknown) {
+		if (!isScoped(package_.name)) {
+			throw new Error('Unknown availability, but package is not scoped. This shouldn\'t happen');
+		}
+
 		const answers = await inquirer.prompt({
 			confirm: {
 				type: 'confirm',
-				when: isScoped(pkg.name) && options.runPublish,
-				message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(pkg.name)}. Do you want to try and publish it anyway?`,
+				when: isScoped(package_.name) && options.runPublish,
+				message: `Failed to check availability of scoped repo name ${chalk.bold.magenta(package_.name)}. Do you want to try and publish it anyway?`,
 				default: false,
 			},
 		});
@@ -214,53 +222,89 @@ const ui = async (options, {pkg, rootDir}) => {
 		}
 	}
 
+	const needsPrereleaseTag = answers => (
+		options.runPublish
+		&& (answers.version?.isPrerelease() || answers.customVersion?.isPrerelease())
+		&& !options.tag
+	);
+
+	const alreadyPublicScoped = packageManager.id === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(package_.name) === 'public';
+
+	// Note that inquirer question.when is a bit confusing. Only `false` will cause the question to be skipped.
+	// Any other value like `true` and `undefined` means ask the question.
+	// so we make sure to always return an explicit boolean here to make it less confusing
+	// see https://github.com/SBoudrias/Inquirer.js/pull/1340
+	const needToAskForPublish = (() => {
+		if (alreadyPublicScoped || !isScoped(package_.name) || !options.availability.isAvailable || options.availability.isUnknown || !options.runPublish) {
+			return false;
+		}
+
+		if (!package_.publishConfig) {
+			return true;
+		}
+
+		return package_.publishConfig.access !== 'restricted' && !npm.isExternalRegistry(package_);
+	})();
+
 	const answers = await inquirer.prompt({
 		version: {
-			type: 'list',
-			message: 'Select semver increment or specify new version',
-			pageSize: Version.SEMVER_INCREMENTS.length + 2,
-			choices: [...Version.SEMVER_INCREMENTS
-				.map(inc => ({
-					name: `${inc} 	${prettyVersionDiff(oldVersion, inc)}`,
-					value: inc,
+			type: 'select',
+			message: 'Select SemVer increment or specify new version',
+			pageSize: SEMVER_INCREMENTS.length + 2,
+			default: 0,
+			choices: [
+				...SEMVER_INCREMENTS.map(increment => ({ // TODO: prerelease prefix here too
+					name: `${increment} 	${new Version(oldVersion, increment).format()}`,
+					value: increment,
 				})),
-			new inquirer.Separator(),
-			{
-				name: 'Other (specify)',
-				value: null,
-			}],
-			filter: input => Version.isValidInput(input) ? new Version(oldVersion).getNewVersionFrom(input) : input,
+				new inquirer.Separator(),
+				{
+					name: 'Other (specify)',
+					value: undefined,
+				},
+			],
+			filter: input => input ? new Version(oldVersion, input) : input,
 		},
 		customVersion: {
 			type: 'input',
 			message: 'Version',
-			when: answers => !answers.version,
-			filter: input => Version.isValidInput(input) ? new Version(pkg.version).getNewVersionFrom(input) : input,
-			validate(input) {
-				if (!Version.isValidInput(input)) {
-					return 'Please specify a valid semver, for example, `1.2.3`. See https://semver.org';
+			when: answers => answers.version === undefined,
+			filter(input) {
+				if (SEMVER_INCREMENTS.includes(input)) {
+					throw new Error('Custom version should not be a SemVer increment.');
 				}
 
-				if (new Version(oldVersion).isLowerThanOrEqualTo(input)) {
-					return `Version must be greater than ${oldVersion}`;
+				const version = new Version(oldVersion);
+
+				try {
+					// Version error handling does validation
+					version.setFrom(input);
+				} catch (error) {
+					if (error.message.includes('valid SemVer version')) {
+						throw new Error(`Custom version ${input} should be a valid SemVer version.`);
+					}
+
+					error.message = error.message.replace('New', 'Custom');
+
+					throw error;
 				}
 
-				return true;
+				return version;
 			},
 		},
 		tag: {
-			type: 'list',
+			type: 'select',
 			message: 'How should this pre-release version be tagged in npm?',
-			when: answers => options.runPublish && (Version.isPrereleaseOrIncrement(answers.customVersion) || Version.isPrereleaseOrIncrement(answers.version)) && !options.tag,
+			when: answers => needsPrereleaseTag(answers),
 			async choices() {
-				const existingPrereleaseTags = await npm.prereleaseTags(pkg.name);
+				const existingPrereleaseTags = await npm.prereleaseTags(package_.name);
 
 				return [
 					...existingPrereleaseTags,
 					new inquirer.Separator(),
 					{
 						name: 'Other (specify)',
-						value: null,
+						value: undefined,
 					},
 				];
 			},
@@ -268,7 +312,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		customTag: {
 			type: 'input',
 			message: 'Tag',
-			when: answers => options.runPublish && (Version.isPrereleaseOrIncrement(answers.customVersion) || Version.isPrereleaseOrIncrement(answers.version)) && !options.tag && !answers.tag,
+			when: answers => answers.tag === undefined && needsPrereleaseTag(answers),
 			validate(input) {
 				if (input.length === 0) {
 					return 'Please specify a tag, for example, `next`.';
@@ -283,8 +327,8 @@ const ui = async (options, {pkg, rootDir}) => {
 		},
 		publishScoped: {
 			type: 'confirm',
-			when: isScoped(pkg.name) && options.availability.isAvailable && !options.availability.isUnknown && options.runPublish && (pkg.publishConfig && pkg.publishConfig.access !== 'restricted') && !npm.isExternalRegistry(pkg),
-			message: `This scoped repo ${chalk.bold.magenta(pkg.name)} hasn't been published. Do you want to publish it publicly?`,
+			when: needToAskForPublish,
+			message: `This scoped repo ${chalk.bold.magenta(package_.name)} hasn't been published. Do you want to publish it publicly?`,
 			default: false,
 		},
 	});
@@ -293,7 +337,7 @@ const ui = async (options, {pkg, rootDir}) => {
 		...options,
 		version: answers.version || answers.customVersion || options.version,
 		tag: answers.tag || answers.customTag || options.tag,
-		publishScoped: answers.publishScoped,
+		publishScoped: alreadyPublicScoped || answers.publishScoped,
 		confirm: true,
 		repoUrl,
 		generateReleaseNotes,

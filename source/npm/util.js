@@ -2,55 +2,96 @@ import path from 'node:path';
 import {pathExists} from 'path-exists';
 import {execa} from 'execa';
 import pTimeout from 'p-timeout';
-import ow from 'ow';
 import npmName from 'npm-name';
-import chalk from 'chalk';
-import semver from 'semver';
-import Version from '../version.js';
+import chalk from 'chalk-template';
+import * as util from '../util.js';
 
-export const checkConnection = () => pTimeout(
-	(async () => {
-		try {
-			await execa('npm', ['ping']);
-			return true;
-		} catch {
-			throw new Error('Connection to npm registry failed');
-		}
-	})(), {
-		milliseconds: 15_000,
-		message: 'Connection to npm registry timed out',
-	},
-);
+export const version = async () => {
+	const {stdout} = await execa('npm', ['--version']);
+	return stdout;
+};
+
+export const checkConnection = () => pTimeout((async () => {
+	try {
+		await execa('npm', ['ping']);
+		return true;
+	} catch {
+		throw new Error('Connection to npm registry failed');
+	}
+})(), {
+	milliseconds: 15_000,
+	message: 'Connection to npm registry timed out',
+});
 
 export const username = async ({externalRegistry}) => {
-	const args = ['whoami'];
+	const arguments_ = ['whoami'];
 
 	if (externalRegistry) {
-		args.push('--registry', externalRegistry);
+		arguments_.push('--registry', externalRegistry);
 	}
 
 	try {
-		const {stdout} = await execa('npm', args);
+		const {stdout} = await execa('npm', arguments_);
 		return stdout;
 	} catch (error) {
-		throw new Error(/ENEEDAUTH/.test(error.stderr)
+		const isNotLoggedIn = /ENEEDAUTH|E401/.test(error.stderr);
+		const message = isNotLoggedIn
 			? 'You must be logged in. Use `npm login` and try again.'
-			: 'Authentication error. Use `npm whoami` to troubleshoot.');
+			: 'Authentication error. Use `npm whoami` to troubleshoot.';
+		const authError = new Error(message);
+		authError.isNotLoggedIn = isNotLoggedIn;
+		throw authError;
 	}
 };
 
-export const collaborators = async pkg => {
-	const packageName = pkg.name;
-	ow(packageName, ow.string);
+export const login = async ({externalRegistry}) => {
+	const arguments_ = ['login'];
 
-	const npmVersion = await version();
-	const args = semver.satisfies(npmVersion, '>=9.0.0') ? ['access', 'list', 'collaborators', packageName, '--json'] : ['access', 'ls-collaborators', packageName];
-	if (isExternalRegistry(pkg)) {
-		args.push('--registry', pkg.publishConfig.registry);
+	if (externalRegistry) {
+		arguments_.push('--registry', externalRegistry);
 	}
 
 	try {
-		const {stdout} = await execa('npm', args);
+		await execa('npm', arguments_, {
+			stdin: 'inherit',
+			stdout: 'inherit',
+			stderr: 'pipe',
+		});
+	} catch (error) {
+		// User canceled the login prompt
+		if (error.stderr?.includes('canceled')) {
+			const cancelError = new Error('Login canceled');
+			cancelError.name = 'ExitPromptError';
+			throw cancelError;
+		}
+
+		throw error;
+	}
+};
+
+const NPM_DEFAULT_REGISTRIES = new Set([
+	// https://docs.npmjs.com/cli/v10/using-npm/registry
+	'https://registry.npmjs.org',
+	// https://docs.npmjs.com/cli/v10/commands/npm-profile#registry
+	'https://registry.npmjs.org/',
+]);
+export const isExternalRegistry = package_ => {
+	const registry = package_.publishConfig?.registry;
+	return typeof registry === 'string' && !NPM_DEFAULT_REGISTRIES.has(registry);
+};
+
+export const collaborators = async package_ => {
+	const packageName = package_.name;
+	util.assert(typeof packageName === 'string', 'Package name is required');
+
+	const arguments_ = ['access', 'list', 'collaborators', packageName, '--json'];
+
+	if (isExternalRegistry(package_)) {
+		arguments_.push('--registry', package_.publishConfig.registry);
+	}
+
+	try {
+		const {stdout} = await execa('npm', arguments_);
 		return stdout;
 	} catch (error) {
 		// Ignore non-existing package error
@@ -63,7 +104,7 @@ export const collaborators = async pkg => {
 };
 
 export const prereleaseTags = async packageName => {
-	ow(packageName, ow.string);
+	util.assert(typeof packageName === 'string', 'Package name is required');
 
 	let tags = [];
 	try {
@@ -94,21 +135,21 @@ export const prereleaseTags = async packageName => {
 	return tags;
 };
 
-export const isPackageNameAvailable = async pkg => {
-	const args = [pkg.name];
+export const isPackageNameAvailable = async package_ => {
+	const arguments_ = [package_.name];
 	const availability = {
 		isAvailable: false,
 		isUnknown: false,
 	};
 
-	if (isExternalRegistry(pkg)) {
-		args.push({
-			registryUrl: pkg.publishConfig.registry,
+	if (isExternalRegistry(package_)) {
+		arguments_.push({
+			registryUrl: package_.publishConfig.registry,
 		});
 	}
 
 	try {
-		availability.isAvailable = await npmName(...args) || false;
+		availability.isAvailable = await npmName(...arguments_) || false;
 	} catch {
 		availability.isUnknown = true;
 	}
@@ -116,41 +157,35 @@ export const isPackageNameAvailable = async pkg => {
 	return availability;
 };
 
-export const isExternalRegistry = pkg => typeof pkg.publishConfig === 'object' && typeof pkg.publishConfig.registry === 'string';
-
-export const version = async () => {
-	const {stdout} = await execa('npm', ['--version']);
-	return stdout;
-};
-
 export const verifyRecentNpmVersion = async () => {
 	const npmVersion = await version();
-	Version.verifyRequirementSatisfied('npm', npmVersion);
+	util.validateEngineVersionSatisfies('npm', npmVersion);
 };
 
-export const checkIgnoreStrategy = ({files}, rootDir) => {
-	const npmignoreExistsInPackageRootDir = pathExists(path.resolve(rootDir, '.npmignore'));
+export const checkIgnoreStrategy = async ({files}, rootDirectory) => {
+	const npmignoreExistsInPackageRootDirectory = await pathExists(path.resolve(rootDirectory, '.npmignore'));
 
-	if (!files && !npmignoreExistsInPackageRootDir) {
-		console.log(`
-		\n${chalk.bold.yellow('Warning:')} No ${chalk.bold.cyan('files')} field specified in ${chalk.bold.magenta('package.json')} nor is a ${chalk.bold.magenta('.npmignore')} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
+	if (!files && !npmignoreExistsInPackageRootDirectory) {
+		console.log(chalk`
+		\n{bold.yellow Warning:} No {bold.cyan files} field specified in {bold.magenta package.json} nor is a {bold.magenta .npmignore} file present. Having one of those will prevent you from accidentally publishing development-specific files along with your package's source code to npm.
 		`);
 	}
 };
 
-export const getFilesToBePacked = async rootDir => {
-	const {stdout} = await execa('npm', ['pack', '--dry-run', '--json'], {cwd: rootDir});
+export const getFilesToBePacked = async rootDirectory => {
+	const {stdout} = await execa('npm', [
+		'pack',
+		'--dry-run',
+		'--json',
+		'--silent',
+		// TODO: Remove this once [npm/cli#7354](https://github.com/npm/cli/issues/7354) is resolved.
+		'--foreground-scripts=false',
+	], {cwd: rootDirectory});
 
-	const {files} = JSON.parse(stdout).at(0);
-	return files.map(file => file.path);
-};
-
-export const getRegistryUrl = async (pkgManager, pkg) => {
-	const args = ['config', 'get', 'registry'];
-	if (isExternalRegistry(pkg)) {
-		args.push('--registry', pkg.publishConfig.registry);
+	try {
+		const {files} = JSON.parse(stdout).at(0);
+		return files.map(file => file.path);
+	} catch (error) {
+		throw new Error('Failed to parse output of npm pack', {cause: error});
 	}
-
-	const {stdout} = await execa(pkgManager, args);
-	return stdout;
 };

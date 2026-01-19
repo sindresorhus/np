@@ -2,41 +2,35 @@ import process from 'node:process';
 import Listr from 'listr';
 import {execa} from 'execa';
 import Version from './version.js';
+import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
-import {getTagVersionPrefix} from './util.js';
 
-const prerequisiteTasks = (input, pkg, options) => {
-	const isExternalRegistry = npm.isExternalRegistry(pkg);
-	let newVersion = null;
+const prerequisiteTasks = (input, package_, options, packageManager) => {
+	const isExternalRegistry = npm.isExternalRegistry(package_);
+	let newVersion;
 
 	const tasks = [
 		{
 			title: 'Ping npm registry',
-			enabled: () => !pkg.private && !isExternalRegistry,
+			enabled: () => !package_.private && !isExternalRegistry,
 			task: async () => npm.checkConnection(),
 		},
 		{
-			title: 'Check npm version',
-			task: async () => npm.verifyRecentNpmVersion(),
-		},
-		{
-			title: 'Check yarn version',
-			enabled: () => options.yarn === true,
+			title: `Check ${packageManager.cli} version`,
 			async task() {
-				const {stdout: yarnVersion} = await execa('yarn', ['--version']);
-				Version.verifyRequirementSatisfied('yarn', yarnVersion);
+				const {stdout: version} = await execa(packageManager.cli, ['--version']);
+				util.validateEngineVersionSatisfies(packageManager.cli, version);
 			},
 		},
 		{
 			title: 'Verify user is authenticated',
-			enabled: () => process.env.NODE_ENV !== 'test' && !pkg.private,
+			enabled: () => process.env.NODE_ENV !== 'test' && !package_.private,
 			async task() {
-				const username = await npm.username({
-					externalRegistry: isExternalRegistry ? pkg.publishConfig.registry : false,
-				});
+				const externalRegistry = isExternalRegistry ? package_.publishConfig.registry : false;
+				const username = await npm.username({externalRegistry});
 
-				const collaborators = await npm.collaborators(pkg);
+				const collaborators = await npm.collaborators(package_);
 				if (!collaborators) {
 					return;
 				}
@@ -59,13 +53,15 @@ const prerequisiteTasks = (input, pkg, options) => {
 		{
 			title: 'Validate version',
 			task() {
-				newVersion = Version.getAndValidateNewVersionFrom(input, pkg.version);
+				newVersion = input instanceof Version
+					? input
+					: new Version(package_.version).setFrom(input);
 			},
 		},
 		{
 			title: 'Check for pre-release version',
 			task() {
-				if (!pkg.private && new Version(newVersion).isPrerelease() && !options.tag) {
+				if (!package_.private && newVersion.isPrerelease() && !options.tag) {
 					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 				}
 			},
@@ -75,7 +71,7 @@ const prerequisiteTasks = (input, pkg, options) => {
 			async task() {
 				await git.fetch();
 
-				const tagPrefix = await getTagVersionPrefix(options);
+				const tagPrefix = await util.getTagVersionPrefix(packageManager);
 
 				await git.verifyTagDoesNotExistOnRemote(`${tagPrefix}${newVersion}`);
 			},

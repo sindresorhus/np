@@ -1,26 +1,6 @@
-# np [![XO code style](https://img.shields.io/badge/code_style-XO-5ed9c7.svg)](https://github.com/xojs/xo)
+# np [![XO code style](https://shields.io/badge/code_style-5ed9c7?logo=xo&labelColor=gray&logoSize=auto&logoWidth=20)](https://github.com/xojs/xo)
 
 > A better `npm publish`
-
----
-
-<div align="center">
-	<p>
-		<p>
-			<sup>
-				<a href="https://github.com/sponsors/sindresorhus">My open source work is supported by the community</a>
-			</sup>
-		</p>
-		<sup>Special thanks to:</sup>
-		<br>
-		<br>
-		<a href="https://forwardemail.net">
-			<img src="https://sindresorhus.com/assets/thanks/forward-email-logo.png" width="320">
-		</a>
-	</p>
-</div>
-
----
 
 <img src="media/screenshot.gif" width="688">
 
@@ -45,6 +25,7 @@
 - Warns about the possibility of extraneous files being published
 - See exactly what will be executed with [preview mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
 - Supports [GitHub Packages](https://github.com/features/packages)
+- Supports npm 9+, Yarn (Classic and Berry), pnpm 8+, and Bun
 
 ### Why not
 
@@ -54,8 +35,8 @@
 
 ## Prerequisite
 
-- Node.js 16 or later
-- npm 7.19.0 or later
+- Node.js 18 or later
+- npm 9 or later
 - Git 2.11 or later
 
 ## Install
@@ -84,14 +65,14 @@ $ np --help
     --no-publish            Skips publishing
     --preview               Show tasks without actually executing them
     --tag                   Publish under a given dist-tag
-    --no-yarn               Don't use Yarn
     --contents              Subdirectory to publish
     --no-release-draft      Skips opening a GitHub release draft
-    --release-draft-only    Only opens a GitHub release draft
+    --release-draft-only    Only opens a GitHub release draft for the latest published version
     --no-release-notes      Skips generating release notes when opening a GitHub release draft
     --test-script           Name of npm run script to run tests before publishing (default: test)
     --no-2fa                Don't enable 2FA on new packages (not recommended)
-    --message               Version bump commit message. `%s` will be replaced with version. (default: '%s' with npm and 'v%s' with yarn)
+    --message               Version bump commit message, '%s' will be replaced with version (default: '%s' with npm and 'v%s' with yarn)
+    --package-manager       Use a specific package manager (default: 'packageManager' field in package.json)
 
   Examples
     $ np
@@ -114,29 +95,29 @@ Run `np` without arguments to launch the interactive UI that guides you through 
 Currently, these are the flags you can configure:
 
 - `anyBranch` - Allow publishing from any branch (`false` by default).
-- `branch` - Name of the release branch (`master` by default).
+- `branch` - Name of the release branch (`main` or `master` by default).
 - `cleanup` - Cleanup `node_modules` (`true` by default).
 - `tests` - Run `npm test` (`true` by default).
 - `yolo` - Skip cleanup and testing (`false` by default).
 - `publish` - Publish (`true` by default).
 - `preview` - Show tasks without actually executing them (`false` by default).
 - `tag` - Publish under a given dist-tag (`latest` by default).
-- `yarn` - Use yarn if possible (`true` by default).
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).
 - `releaseNotes` - Auto-generate release notes when opening a GitHub release draft (`true` by default).
 - `testScript` - Name of npm run script to run tests before publishing (`test` by default).
 - `2fa` - Enable 2FA on new packages (`true` by default) (setting this to `false` is not recommended).
 - `message` - The commit message used for the version bump. Any `%s` in the string will be replaced with the new version. By default, npm uses `%s` and Yarn uses `v%s`.
+- `packageManager` - Set the package manager to be used. Defaults to the [packageManager field in package.json](https://nodejs.org/dist/latest-v16.x/docs/api/all.html#all_packages_packagemanager), so only use if you can't update package.json for some reason.
 
-For example, this configures `np` to never use Yarn and to use `dist` as the subdirectory to publish:
+For example, this configures `np` to use `unit-test` as a test script, and to use `dist` as the subdirectory to publish:
 
 `package.json`
 ```json
 {
 	"name": "superb-package",
 	"np": {
-		"yarn": false,
+		"testScript": "unit-test",
 		"contents": "dist"
 	}
 }
@@ -145,7 +126,7 @@ For example, this configures `np` to never use Yarn and to use `dist` as the sub
 `.np-config.json`
 ```json
 {
-	"yarn": false,
+	"testScript": "unit-test",
 	"contents": "dist"
 }
 ```
@@ -153,7 +134,7 @@ For example, this configures `np` to never use Yarn and to use `dist` as the sub
 `.np-config.js` or `.np-config.cjs`
 ```js
 module.exports = {
-	yarn: false,
+	testScript: 'unit-test',
 	contents: 'dist'
 };
 ```
@@ -161,7 +142,7 @@ module.exports = {
 `.np-config.mjs`
 ```js
 export default {
-	yarn: false,
+	testScript: 'unit-test',
 	contents: 'dist'
 };
 ```
@@ -255,6 +236,8 @@ To publish [scoped packages](https://docs.npmjs.com/misc/scope#publishing-public
 
 If publishing a scoped package for the first time, `np` will prompt you to ask if you want to publish it publicly.
 
+**Note:** When publishing a scoped package, the first ever version you publish has to be done interactively using `np`. If not, you cannot use `np` to publish future versions of the package.
+
 ### Private Org-scoped packages
 
 To publish a [private Org-scoped package](https://docs.npmjs.com/creating-and-publishing-an-org-scoped-package#publishing-a-private-org-scoped-package), you need to set the access level to `restricted`. You can do that by adding the following to your `package.json`:
@@ -275,6 +258,10 @@ Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in pack
 }
 ```
 
+### Package managers
+
+If a package manager is not set in package.json, via configuration (`packageManager`), or via the CLI (`--package-manager`), `np` will attempt to infer the best package manager to use by looking for lockfiles. But it's recommended to set the [`packageManager` field](https://nodejs.org/api/packages.html#packagemanager) in your package.json to be consistent with other tools. See also the [corepack docs](https://nodejs.org/api/corepack.html).
+
 ### Publish with a CI
 
 If you use a Continuous Integration server to publish your tagged commits, use the `--no-publish` flag to skip the publishing step of `np`.
@@ -283,8 +270,8 @@ If you use a Continuous Integration server to publish your tagged commits, use t
 
 To publish to `gh-pages` (or any other branch that serves your static assets), install [`branchsite`](https://github.com/enriquecaballero/branchsite), an `np`-like CLI tool aimed to complement `np`, and create an [npm "post" hook](https://docs.npmjs.com/misc/scripts) that runs after `np`.
 
-```
-$ npm install --save-dev branchsite
+```sh
+npm install --save-dev branchsite
 ```
 
 ```json
@@ -342,7 +329,7 @@ npm ERR! code E403
 npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my-awesome-package/collaborators?format=cli - Forbidden
 ```
 
-…please check whether the command `npm access ls-collaborators my-awesome-package` succeeds. If it doesn't, Yarn has overwritten your registry URL. To fix this, add the correct registry URL to `package.json`:
+…please check whether the command `npm access list collaborators my-awesome-package` succeeds. If it doesn't, Yarn has overwritten your registry URL. To fix this, add the correct registry URL to `package.json`:
 
 ```json
 "publishConfig": {
@@ -353,5 +340,4 @@ npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my-awesome-p
 ## Maintainers
 
 - [Sindre Sorhus](https://github.com/sindresorhus)
-- [Sam Verschueren](https://github.com/SamVerschueren)
-- [Itai Steinherz](https://github.com/itaisteinherz)
+- [Tommy Mitchell](https://github.com/tommy-mitchell)
