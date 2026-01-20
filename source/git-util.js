@@ -2,6 +2,7 @@ import path from 'node:path';
 import {execa} from 'execa';
 import escapeStringRegexp from 'escape-string-regexp';
 import ignoreWalker from 'ignore-walk';
+import semver from 'semver';
 import * as util from './util.js';
 
 export const latestTag = async () => {
@@ -39,10 +40,18 @@ export const readFileFromLastRelease = async file => {
 	return oldFile;
 };
 
-/** Returns an array of tags, sorted by creation date in ascending order. */
+/** Returns an array of all tags. */
 const tagList = async () => {
-	const {stdout} = await execa('git', ['tag', '--sort=creatordate']);
+	const {stdout} = await execa('git', ['tag']);
 	return stdout ? stdout.split('\n') : [];
+};
+
+/** Returns an array of tags sorted by semver in ascending order. Non-semver tags are excluded. */
+const tagListSortedBySemver = async () => {
+	const tags = await tagList();
+	return tags
+		.filter(tag => semver.valid(tag))
+		.sort((a, b) => semver.compare(a, b));
 };
 
 const firstCommit = async () => {
@@ -51,7 +60,7 @@ const firstCommit = async () => {
 };
 
 export const previousTagOrFirstCommit = async () => {
-	const tags = await tagList();
+	const tags = await tagListSortedBySemver();
 
 	if (tags.length === 0) {
 		return;
@@ -62,9 +71,14 @@ export const previousTagOrFirstCommit = async () => {
 	}
 
 	try {
-		// Return the tag before the latest one.
+		// Return the tag before the latest one (sorted by semver).
 		const latest = await latestTag();
 		const index = tags.indexOf(latest);
+
+		if (index === -1 || index === 0) {
+			return firstCommit();
+		}
+
 		return tags[index - 1];
 	} catch {
 		// Fallback to the first commit.

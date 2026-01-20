@@ -42,4 +42,22 @@ test('multiple tags', createFixture, async ({t, $$}) => {
 	t.is(result, 'v3.0.0');
 });
 
+test('tags created out of order - should sort by semver not creation date', createFixture, async ({t, $$}) => {
+	// Create tags out of semver order (simulating a hotfix scenario)
+	await $$`git tag v1.0.0`;
+	await t.context.commitNewFile();
+	await $$`git tag v1.2.0`;
+	await t.context.commitNewFile();
+	await $$`git tag v1.2.1`;
+	await t.context.commitNewFile();
+	// Create a hotfix tag for an older version (created after v1.2.1 but semver is lower)
+	await $$`git tag v1.0.1`;
+	await t.context.commitNewFile();
+	await $$`git tag v1.2.2`;
+}, async ({t, testedModule: {previousTagOrFirstCommit}}) => {
+	// Should return v1.2.1 (semver previous), not v1.0.1 (creation date previous)
+	const result = await previousTagOrFirstCommit();
+	t.is(result, 'v1.2.1');
+});
+
 test.todo('test fallback case');
