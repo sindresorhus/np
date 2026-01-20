@@ -8,10 +8,31 @@ test('no options set', t => {
 	);
 });
 
-test('options.contents', t => {
+test('options.contents - normalizes relative path', t => {
 	t.deepEqual(
 		getPackagePublishArguments({contents: 'dist'}),
-		['publish', 'dist'],
+		['publish', './dist'],
+	);
+});
+
+test('options.contents - preserves ./ prefix', t => {
+	t.deepEqual(
+		getPackagePublishArguments({contents: './dist'}),
+		['publish', './dist'],
+	);
+});
+
+test('options.contents - preserves ../ prefix', t => {
+	t.deepEqual(
+		getPackagePublishArguments({contents: '../dist'}),
+		['publish', '../dist'],
+	);
+});
+
+test('options.contents - preserves absolute path', t => {
+	t.deepEqual(
+		getPackagePublishArguments({contents: '/absolute/path'}),
+		['publish', '/absolute/path'],
 	);
 });
 

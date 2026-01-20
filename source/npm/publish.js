@@ -1,10 +1,16 @@
+import path from 'node:path';
 import {execa} from 'execa';
 
 export const getPackagePublishArguments = options => {
 	const arguments_ = ['publish'];
 
 	if (options.contents) {
-		arguments_.push(options.contents);
+		// Normalize to explicit relative path so npm doesn't interpret it as a package name
+		const contents = path.isAbsolute(options.contents) || options.contents.startsWith('.')
+			? options.contents
+			: `./${options.contents}`;
+
+		arguments_.push(contents);
 	}
 
 	if (options.tag) {
