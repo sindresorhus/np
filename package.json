@@ -35,6 +35,7 @@
 	"dependencies": {
 		"chalk": "^5.6.2",
 		"chalk-template": "^1.1.2",
+		"clipboardy": "^5.0.2",
 		"cosmiconfig": "^9.0.0",
 		"del": "^8.0.1",
 		"escape-goat": "^4.0.0",
