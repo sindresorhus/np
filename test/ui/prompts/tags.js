@@ -14,6 +14,7 @@ const testUi = test.macro(async (t, {version, tags, answers}, assertions) => {
 			'./util.js': {
 				getNewFiles: sinon.stub().resolves({unpublished: [], firstTime: []}),
 				getNewDependencies: sinon.stub().resolves([]),
+				getPreReleasePrefix: sinon.stub().resolves(''),
 			},
 			'./git-util.js': {
 				latestTagOrFirstCommit: sinon.stub().resolves(`v${npPackage.version}`),
@@ -21,6 +22,9 @@ const testUi = test.macro(async (t, {version, tags, answers}, assertions) => {
 			},
 			'./package-manager/index.js': {
 				findLockfile: sinon.stub().resolves(undefined),
+			},
+			execa: {
+				execa: sinon.stub().resolves({stdout: 'https://registry.npmjs.org/'}),
 			},
 		},
 	});
@@ -148,6 +152,9 @@ for (const {version} of fixtures) {
 				},
 				'./package-manager/index.js': {
 					findLockfile: sinon.stub().resolves(undefined),
+				},
+				execa: {
+					execa: sinon.stub().resolves({stdout: 'https://registry.npmjs.org/'}),
 				},
 			},
 		});

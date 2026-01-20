@@ -12,10 +12,14 @@ const testUi = test.macro(async (t, {version, answers}, assertions) => {
 			'./util.js': {
 				getNewFiles: sinon.stub().resolves({unpublished: [], firstTime: []}),
 				getNewDependencies: sinon.stub().resolves([]),
+				getPreReleasePrefix: sinon.stub().resolves(''),
 			},
 			'./git-util.js': {
 				latestTagOrFirstCommit: sinon.stub().resolves('v1.0.0'),
 				commitLogFromRevision: sinon.stub().resolves(''),
+			},
+			execa: {
+				execa: sinon.stub().resolves({stdout: 'https://registry.npmjs.org/'}),
 			},
 		},
 	});
