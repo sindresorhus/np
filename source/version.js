@@ -141,17 +141,23 @@ export default class Version {
 			return chalk(`{${color} ${major}.${minor}.${patch}-${prereleaseDiff}}`);
 		}
 
-		/* eslint-disable indent, unicorn/no-nested-ternary, operator-linebreak, no-multi-spaces */
+		/* eslint-disable unicorn/no-nested-ternary */
 		return (
-			this.#diff === 'major'      ? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}}`) :
-			this.#diff === 'minor'      ? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}}`) :
-			this.#diff === 'patch'      ? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}}`) :
-			this.#diff === 'premajor'   ? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) :
-			this.#diff === 'preminor'   ? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) :
-			this.#diff === 'prepatch'   ? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}-{${diffColor} ${prerelease.join('.')}}}`) :
-			this.#diff === 'prerelease' ? chalk(`{${color} ${major}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) : ''
+			this.#diff === 'major'
+				? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}}`)
+				: this.#diff === 'minor'
+					? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}}`)
+					: this.#diff === 'patch'
+						? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}}`)
+						: this.#diff === 'premajor'
+							? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`)
+							: this.#diff === 'preminor'
+								? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}-{${diffColor} ${prerelease.join('.')}}}`)
+								: this.#diff === 'prepatch'
+									? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}-{${diffColor} ${prerelease.join('.')}}}`)
+									: this.#diff === 'prerelease' ? chalk(`{${color} ${major}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) : ''
 		);
-		/* eslint-enable indent, unicorn/no-nested-ternary, operator-linebreak, no-multi-spaces */
+		/* eslint-enable unicorn/no-nested-ternary */
 	}
 
 	/**

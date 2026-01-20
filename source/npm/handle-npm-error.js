@@ -23,9 +23,7 @@ const handleNpmError = (error, task, message, executor) => {
 				return executor(otp);
 			},
 			autoSubmit: value => value.length === 6,
-		}).pipe(
-			catchError(error => handleNpmError(error, task, 'OTP was incorrect, try again:', executor)),
-		);
+		}).pipe(catchError(error => handleNpmError(error, task, 'OTP was incorrect, try again:', executor)));
 	}
 
 	// Attempting to privately publish a scoped package without the correct npm plan

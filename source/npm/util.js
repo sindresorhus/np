@@ -11,19 +11,17 @@ export const version = async () => {
 	return stdout;
 };
 
-export const checkConnection = () => pTimeout(
-	(async () => {
-		try {
-			await execa('npm', ['ping']);
-			return true;
-		} catch {
-			throw new Error('Connection to npm registry failed');
-		}
-	})(), {
-		milliseconds: 15_000,
-		message: 'Connection to npm registry timed out',
-	},
-);
+export const checkConnection = () => pTimeout((async () => {
+	try {
+		await execa('npm', ['ping']);
+		return true;
+	} catch {
+		throw new Error('Connection to npm registry failed');
+	}
+})(), {
+	milliseconds: 15_000,
+	message: 'Connection to npm registry timed out',
+});
 
 export const username = async ({externalRegistry}) => {
 	const arguments_ = ['whoami'];
@@ -36,10 +34,38 @@ export const username = async ({externalRegistry}) => {
 		const {stdout} = await execa('npm', arguments_);
 		return stdout;
 	} catch (error) {
-		const message = /ENEEDAUTH/.test(error.stderr)
+		const isNotLoggedIn = /ENEEDAUTH|E401/.test(error.stderr);
+		const message = isNotLoggedIn
 			? 'You must be logged in. Use `npm login` and try again.'
 			: 'Authentication error. Use `npm whoami` to troubleshoot.';
-		throw new Error(message);
+		const authError = new Error(message);
+		authError.isNotLoggedIn = isNotLoggedIn;
+		throw authError;
+	}
+};
+
+export const login = async ({externalRegistry}) => {
+	const arguments_ = ['login'];
+
+	if (externalRegistry) {
+		arguments_.push('--registry', externalRegistry);
+	}
+
+	try {
+		await execa('npm', arguments_, {
+			stdin: 'inherit',
+			stdout: 'inherit',
+			stderr: 'pipe',
+		});
+	} catch (error) {
+		// User canceled the login prompt
+		if (error.stderr?.includes('canceled')) {
+			const cancelError = new Error('Login canceled');
+			cancelError.name = 'ExitPromptError';
+			throw cancelError;
+		}
+
+		throw error;
 	}
 };
 

@@ -22,7 +22,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 		return {
 			hasCommits: false,
 			hasUnreleasedCommits: false,
-			releaseNotes() {},
+			generateReleaseNotes() {},
 		};
 	}
 
@@ -64,9 +64,8 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 		return `- ${commitMessage}  ${commitId}`;
 	}).join('\n');
 
-	const releaseNotes = nextTag => commits.map(commit =>
-		`- ${htmlEscape(commit.message)}  ${commit.id}`,
-	).join('\n') + `\n\n---\n\n${repoUrl}/compare/${revision}...${nextTag}`;
+	const generateReleaseNotes = nextTag => commits.map(commit =>
+		`- ${htmlEscape(commit.message)}  ${commit.id}`).join('\n') + `\n\n---\n\n${repoUrl}/compare/${revision}...${nextTag}`;
 
 	const commitRange = util.linkifyCommitRange(repoUrl, commitRangeText);
 	console.log(`${chalk.bold('Commits:')}\n${history}\n\n${chalk.bold('Commit Range:')}\n${commitRange}\n\n${chalk.bold('Registry:')}\n${registryUrl}\n`);
@@ -74,7 +73,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 	return {
 		hasCommits: true,
 		hasUnreleasedCommits,
-		releaseNotes,
+		generateReleaseNotes,
 	};
 };
 
@@ -155,7 +154,7 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 	}
 
 	const useLatestTag = !options.releaseDraftOnly;
-	const {hasCommits, hasUnreleasedCommits, releaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
+	const {hasCommits, hasUnreleasedCommits, generateReleaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
 
 	if (hasUnreleasedCommits && options.releaseDraftOnly) {
 		const answers = await inquirer.prompt({
@@ -180,7 +179,7 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 			...options,
 			confirm: true,
 			repoUrl,
-			releaseNotes,
+			generateReleaseNotes,
 		};
 	}
 
@@ -249,7 +248,7 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 
 	const answers = await inquirer.prompt({
 		version: {
-			type: 'list',
+			type: 'select',
 			message: 'Select SemVer increment or specify new version',
 			pageSize: SEMVER_INCREMENTS.length + 2,
 			default: 0,
@@ -294,7 +293,7 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 			},
 		},
 		tag: {
-			type: 'list',
+			type: 'select',
 			message: 'How should this pre-release version be tagged in npm?',
 			when: answers => needsPrereleaseTag(answers),
 			async choices() {
@@ -341,7 +340,7 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 		publishScoped: alreadyPublicScoped || answers.publishScoped,
 		confirm: true,
 		repoUrl,
-		releaseNotes,
+		generateReleaseNotes,
 	};
 };
 

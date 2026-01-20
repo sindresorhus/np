@@ -1,5 +1,9 @@
 import {execa} from 'execa';
 import {deleteAsync} from 'del';
+// NOTE: We intentionally use the original `listr` package instead of `listr2`.
+// listr2's DefaultRenderer uses log-update which has known issues with terminal scrolling
+// that cause it to overwrite content printed before listr2 started (like our inquirer prompts).
+// See: https://github.com/cenk1cenk2/listr2/issues/296
 import Listr from 'listr';
 import {
 	merge,
@@ -7,6 +11,8 @@ import {
 	filter,
 	finalize,
 	from,
+	mergeMap,
+	throwError,
 } from 'rxjs';
 import hostedGitInfo from 'hosted-git-info';
 import onetime from 'onetime';
@@ -28,7 +34,17 @@ const exec = (command, arguments_, options) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
 	const subProcess = execa(command, arguments_, options);
 
-	return merge(subProcess.stdout, subProcess.stderr, subProcess).pipe(filter(Boolean));
+	return merge(subProcess.stdout, subProcess.stderr, subProcess).pipe(
+		filter(Boolean),
+		catchError(error => {
+			// Include stderr in error message for better diagnostics
+			if (error.stderr) {
+				error.message = `${error.shortMessage}\n${error.stderr}`;
+			}
+
+			throw error;
+		}),
+	);
 };
 
 /**
@@ -166,50 +182,55 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 				return exec(cli, arguments_);
 			},
 		},
-		...options.runPublish ? [
-			{
-				title: 'Publishing package',
-				skip() {
-					if (options.preview) {
-						const command = getPublishCommand(options);
-						return `[Preview] Command not executed: ${printCommand(command)}.`;
-					}
-				},
-				/** @type {(context, task) => Listr.ListrTaskResult<any>} */
-				task(context, task) {
-					let hasError = false;
+		...options.runPublish
+			? [
+				{
+					title: 'Publishing package',
+					skip() {
+						if (options.preview) {
+							const command = getPublishCommand(options);
+							return `[Preview] Command not executed: ${printCommand(command)}.`;
+						}
+					},
+					/** @type {(context, task) => Listr.ListrTaskResult<any>} */
+					task(context, task) {
+						let hasError = false;
 
-					return from(runPublish(getPublishCommand(options)))
-						.pipe(
-							catchError(error => handleNpmError(error, task, otp => {
+						return from(runPublish(getPublishCommand(options)))
+							.pipe(catchError(error => handleNpmError(error, task, otp => {
 								context.otp = otp;
 
 								return runPublish(getPublishCommand({...options, otp}));
-							})),
-						)
-						.pipe(
-							catchError(async error => {
-								hasError = true;
-								await rollback();
-								throw new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`);
-							}),
-							finalize(() => {
-								publishStatus = hasError ? 'FAILED' : 'SUCCESS';
-							}),
-						);
+							})))
+							.pipe(
+								// Note: Cannot use `async` here as the `await` will not finish before the error propagates.
+								catchError(error => {
+									hasError = true;
+									return from(rollback()).pipe(
+										mergeMap(() => throwError(() => new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`))),
+										catchError(() => throwError(() => new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`))),
+									);
+								}),
+								finalize(() => {
+									publishStatus = hasError ? 'FAILED' : 'SUCCESS';
+								}),
+							);
+					},
 				},
-			},
-			...shouldEnable2FA ? [{
-				title: 'Enabling two-factor authentication',
-				async skip() {
-					if (options.preview) {
-						const arguments_ = await getEnable2faArguments(package_.name, options);
-						return `[Preview] Command not executed: npm ${arguments_.join(' ')}.`;
-					}
-				},
-				task: (context, task) => enable2fa(task, package_.name, {otp: context.otp}),
-			}] : [],
-		] : [],
+				...shouldEnable2FA
+					? [{
+						title: 'Enabling two-factor authentication',
+						async skip() {
+							if (options.preview) {
+								const arguments_ = await getEnable2faArguments(package_.name, options);
+								return `[Preview] Command not executed: npm ${arguments_.join(' ')}.`;
+							}
+						},
+						task: (context, task) => enable2fa(task, package_.name, {otp: context.otp}),
+					}]
+					: [],
+			]
+			: [],
 		{
 			title: 'Pushing tags',
 			async skip() {
@@ -229,16 +250,18 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 				pushedObjects = await git.pushGraceful(isOnGitHub);
 			},
 		},
-		...options.releaseDraft ? [{
-			title: 'Creating release draft on GitHub',
-			enabled: () => isOnGitHub === true,
-			skip() {
-				if (options.preview) {
-					return '[Preview] GitHub Releases draft will not be opened in preview mode.';
-				}
-			},
-			task: () => releaseTaskHelper(options, package_, packageManager),
-		}] : [],
+		...options.releaseDraft
+			? [{
+				title: 'Creating release draft on GitHub',
+				enabled: () => isOnGitHub === true,
+				skip() {
+					if (options.preview) {
+						return '[Preview] GitHub Releases draft will not be opened in preview mode.';
+					}
+				},
+				task: () => releaseTaskHelper(options, package_, packageManager),
+			}]
+			: [],
 	], {
 		showSubtasks: false,
 		renderer: options.renderer ?? 'default',

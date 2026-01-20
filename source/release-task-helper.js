@@ -13,7 +13,7 @@ const releaseTaskHelper = async (options, package_, packageManager) => {
 	const url = newGithubReleaseUrl({
 		repoUrl: options.repoUrl,
 		tag,
-		body: options.releaseNotes(tag),
+		body: options.releaseNotes ? options.generateReleaseNotes(tag) : '',
 		isPrerelease: newVersion.isPrerelease(),
 	});
 

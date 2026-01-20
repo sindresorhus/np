@@ -1,7 +1,6 @@
 import process from 'node:process';
 import test from 'ava';
 import {npmConfig, yarnConfig} from '../../source/package-manager/configs.js';
-import actualPrerequisiteTasks from '../../source/prerequisite-tasks.js';
 import {npPackage} from '../../source/util.js';
 import {SilentRenderer} from '../_helpers/listr-renderer.js';
 import {_createFixture} from '../_helpers/stub-execa.js';
@@ -15,8 +14,13 @@ import {
 /** @type {ReturnType<typeof _createFixture<import('../../source/prerequisite-tasks.js')>>} */
 const createFixture = _createFixture('../../source/prerequisite-tasks.js', import.meta.url);
 
+test.beforeEach(() => {
+	process.env.NODE_ENV = 'test';
+});
+
 test.afterEach(() => {
 	SilentRenderer.clearTasks();
+	process.env.NODE_ENV = 'test';
 });
 
 test.serial('public-package published on npm registry: should fail when npm registry not pingable', createFixture, [{
@@ -38,9 +42,7 @@ test.serial('private package: should disable task pinging npm registry', createF
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {}, npmConfig)),
-	);
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {}, npmConfig)));
 
 	assertTaskDisabled(t, 'Ping npm registry');
 });
@@ -49,9 +51,7 @@ test.serial('external registry: should disable task pinging npm registry', creat
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {}, npmConfig)),
-	);
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {}, npmConfig)));
 
 	assertTaskDisabled(t, 'Ping npm registry');
 });
@@ -102,7 +102,7 @@ test.serial('should fail when user is not authenticated at npm registry', create
 		stdout: 'sindresorhus',
 	},
 	{
-		command: 'npm access list collaborators test',
+		command: 'npm access list collaborators test --json',
 		stdout: '{"sindresorhus": "read"}',
 	},
 ], async ({t, testedModule: prerequisiteTasks}) => {
@@ -148,9 +148,7 @@ test.serial('private package: should disable task `verify user is authenticated`
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	process.env.NODE_ENV = 'P';
 
-	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {}, npmConfig)),
-	);
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {}, npmConfig)));
 
 	process.env.NODE_ENV = 'test';
 
@@ -185,27 +183,27 @@ test.serial('should fail when git remote does not exist', createFixture, [{
 	assertTaskFailed(t, 'Check git remote');
 });
 
-test.serial('should fail when version is invalid', async t => {
+test.serial('should fail when version is invalid', createFixture, [], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(actualPrerequisiteTasks('DDD', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('DDD', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
 		{message: 'New version DDD should either be one of patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid SemVer version.'},
 	);
 
 	assertTaskFailed(t, 'Validate version');
 });
 
-test.serial('should fail when version is lower than latest version', async t => {
+test.serial('should fail when version is lower than latest version', createFixture, [], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(actualPrerequisiteTasks('0.1.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('0.1.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
 		{message: 'New version 0.1.0 should be higher than current version 1.0.0.'},
 	);
 
 	assertTaskFailed(t, 'Validate version');
 });
 
-test.serial('should fail when prerelease version of public package without dist tag given', async t => {
+test.serial('should fail when prerelease version of public package without dist tag given', createFixture, [], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(actualPrerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
 		{message: 'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag'},
 	);
 
@@ -216,18 +214,14 @@ test.serial('should not fail when prerelease version of public package with dist
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {tag: 'pre'}, npmConfig)),
-	);
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {tag: 'pre'}, npmConfig)));
 });
 
 test.serial('should not fail when prerelease version of private package without dist tag given', createFixture, [{
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0', private: true}, {}, npmConfig)),
-	);
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0', private: true}, {}, npmConfig)));
 });
 
 test.serial('should fail when git tag already exists', createFixture, [{
@@ -246,9 +240,7 @@ test.serial('checks should pass', createFixture, [{
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
-	);
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)));
 });
 
 test.serial('should skip authentication check when OIDC is detected', createFixture, [{

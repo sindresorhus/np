@@ -20,9 +20,7 @@ export const getEnable2faArguments = async (packageName, options) => {
 const enable2fa = (packageName, options) => execa('npm', getEnable2faArguments(packageName, options));
 
 const tryEnable2fa = (task, packageName, options) => {
-	from(enable2fa(packageName, options)).pipe(
-		catchError(error => handleNpmError(error, task, otp => enable2fa(packageName, {otp}))),
-	);
+	from(enable2fa(packageName, options)).pipe(catchError(error => handleNpmError(error, task, otp => enable2fa(packageName, {otp}))));
 };
 
 export default tryEnable2fa;

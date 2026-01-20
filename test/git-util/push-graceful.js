@@ -8,9 +8,7 @@ test('succeeds', createFixture, [{
 	command: 'git push --follow-tags',
 	exitCode: 0,
 }], async ({t, testedModule: {pushGraceful}}) => {
-	await t.notThrowsAsync(
-		pushGraceful(),
-	);
+	await t.notThrowsAsync(pushGraceful());
 });
 
 test('fails w/ remote on GitHub and bad branch permission', createFixture, [
@@ -33,8 +31,6 @@ test('throws', createFixture, [{
 	command: 'git push --follow-tags',
 	exitCode: 1,
 }], async ({t, testedModule: {pushGraceful}}) => {
-	await t.throwsAsync(
-		pushGraceful(false),
-	);
+	await t.throwsAsync(pushGraceful(false));
 });
 

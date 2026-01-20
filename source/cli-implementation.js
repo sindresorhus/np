@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// eslint-disable-next-line import/no-unassigned-import
-import 'symbol-observable'; // Important: This needs to be first to prevent weird Observable incompatibilities
+import process from 'node:process';
 import logSymbols from 'log-symbols';
 import meow from 'meow';
 import updateNotifier from 'update-notifier';
+import isInteractive from 'is-interactive';
 import {gracefulExit} from 'exit-hook';
 import {getPackageManagerConfig} from './package-manager/index.js';
 import config from './config.js';
@@ -35,6 +35,7 @@ const cli = meow(`
 	  --contents             Subdirectory to publish
 	  --no-release-draft     Skips opening a GitHub release draft
 	  --release-draft-only   Only opens a GitHub release draft for the latest published version
+	  --no-release-notes     Skips generating release notes when opening a GitHub release draft
 	  --test-script          Name of npm run script to run tests before publishing (default: test)
 	  --no-2fa               Don't enable 2FA on new packages (not recommended)
 	  --message              Version bump commit message, '%s' will be replaced with version (default: '%s' with npm and 'v%s' with yarn)
@@ -77,6 +78,10 @@ const cli = meow(`
 		},
 		releaseDraftOnly: {
 			type: 'boolean',
+		},
+		releaseNotes: {
+			type: 'boolean',
+			default: true,
 		},
 		tag: {
 			type: 'string',
@@ -133,10 +138,12 @@ async function getOptions() {
 
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !package_.private;
 
-	const availability = runPublish ? await npm.isPackageNameAvailable(package_) : {
-		isAvailable: false,
-		isUnknown: false,
-	};
+	const availability = runPublish
+		? await npm.isPackageNameAvailable(package_)
+		: {
+			isAvailable: false,
+			isUnknown: false,
+		};
 
 	// Use current (latest) version when 'releaseDraftOnly', otherwise try to use the first argument.
 	const version = flags.releaseDraftOnly ? package_.version : cli.input.at(0);
@@ -166,8 +173,26 @@ try {
 		gracefulExit();
 	}
 
+	// Check authentication early, before Listr starts (so login can be interactive)
+	if (options.runPublish) {
+		const externalRegistry = npm.isExternalRegistry(package_)
+			? package_.publishConfig.registry
+			: false;
+
+		try {
+			await npm.username({externalRegistry});
+		} catch (error) {
+			if (error.isNotLoggedIn && isInteractive()) {
+				console.log('\nYou must be logged in to publish. Running `npm login`...\n');
+				await npm.login({externalRegistry});
+			} else {
+				throw error;
+			}
+		}
+	}
+
 	console.log(); // Prints a newline for readability
-	const newPackage = await np(options.version, options, {package_, rootDirectory});
+	const newPackage = await np(options.version.toString(), options, {package_, rootDirectory});
 
 	if (options.preview || options.releaseDraftOnly) {
 		gracefulExit();
@@ -175,6 +200,10 @@ try {
 
 	console.log(`\n ${newPackage.name} ${newPackage.version} published 🎉`);
 } catch (error) {
+	if (error.name === 'ExitPromptError') {
+		process.exit(0);
+	}
+
 	console.error(`\n${logSymbols.error} ${error?.stack ?? error}`);
 	gracefulExit(1);
 }

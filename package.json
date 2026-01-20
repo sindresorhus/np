@@ -1,6 +1,6 @@
 {
 	"name": "np",
-	"version": "10.2.0",
+	"version": "10.3.0",
 	"description": "A better `npm publish`",
 	"license": "MIT",
 	"repository": "sindresorhus/np",
@@ -8,7 +8,7 @@
 	"type": "module",
 	"bin": "./source/cli.js",
 	"engines": {
-		"node": ">=18",
+		"node": ">=20",
 		"npm": ">=9",
 		"git": ">=2.11.0",
 		"yarn": ">=1.7.0",
@@ -33,56 +33,56 @@
 		"commit"
 	],
 	"dependencies": {
-		"chalk": "^5.4.1",
-		"chalk-template": "^1.1.0",
-		"cosmiconfig": "^8.3.6",
-		"del": "^8.0.0",
+		"chalk": "^5.6.2",
+		"chalk-template": "^1.1.2",
+		"cosmiconfig": "^9.0.0",
+		"del": "^8.0.1",
 		"escape-goat": "^4.0.0",
 		"escape-string-regexp": "^5.0.0",
-		"execa": "^8.0.1",
-		"exit-hook": "^4.0.0",
+		"execa": "^9.6.1",
+		"exit-hook": "^5.0.1",
 		"github-url-from-git": "^1.5.0",
-		"hosted-git-info": "^8.0.2",
-		"ignore-walk": "^7.0.0",
+		"hosted-git-info": "^9.0.2",
+		"ignore-walk": "^8.0.0",
 		"import-local": "^3.2.0",
-		"inquirer": "^12.3.2",
+		"inquirer": "^13.2.0",
 		"is-installed-globally": "^1.0.0",
 		"is-interactive": "^2.0.0",
 		"is-scoped": "^3.0.0",
 		"issue-regex": "^4.3.0",
 		"listr": "^0.14.3",
 		"listr-input": "^0.2.1",
-		"log-symbols": "^7.0.0",
-		"meow": "^13.2.0",
+		"log-symbols": "^7.0.1",
+		"meow": "^14.0.0",
 		"new-github-release-url": "^2.0.0",
 		"npm-name": "^8.0.0",
 		"onetime": "^7.0.0",
-		"open": "^10.0.4",
-		"p-memoize": "^7.1.1",
-		"p-timeout": "^6.1.4",
-		"path-exists": "^5.0.0",
+		"open": "^11.0.0",
+		"p-memoize": "^8.0.0",
+		"p-timeout": "^7.0.1",
 		"package-directory": "^8.0.0",
-		"read-package-up": "^11.0.0",
-		"read-pkg": "^9.0.1",
-		"rxjs": "^7.8.1",
-		"semver": "^7.6.0",
+		"path-exists": "^5.0.0",
+		"read-package-up": "^12.0.0",
+		"read-pkg": "^10.0.0",
+		"rxjs": "^7.8.2",
+		"semver": "^7.7.3",
 		"symbol-observable": "^4.0.0",
-		"terminal-link": "^3.0.0",
+		"terminal-link": "^5.0.0",
 		"update-notifier": "^7.3.1"
 	},
 	"devDependencies": {
-		"@sindresorhus/is": "^7.0.1",
-		"@types/semver": "^7.5.8",
-		"ava": "^6.2.0",
+		"@sindresorhus/is": "^7.2.0",
+		"@types/semver": "^7.7.1",
+		"ava": "^6.4.1",
 		"common-tags": "^1.8.2",
-		"esmock": "^2.7.0",
-		"fs-extra": "^11.3.0",
-		"map-obj": "^5.0.2",
-		"sinon": "^19.0.2",
-		"strip-ansi": "^7.1.0",
+		"esmock": "^2.7.3",
+		"fs-extra": "^11.3.3",
+		"map-obj": "^6.0.0",
+		"sinon": "^21.0.1",
+		"strip-ansi": "^7.1.2",
 		"tempy": "^3.1.0",
-		"write-package": "^7.1.0",
-		"xo": "^0.60.0"
+		"write-package": "^7.2.0",
+		"xo": "^1.2.3"
 	},
 	"ava": {
 		"files": [
@@ -92,6 +92,7 @@
 		"environmentVariables": {
 			"FORCE_HYPERLINK": "1",
 			"HOME": "/tmp",
+			"NODE_ENV": "test",
 			"GIT_AUTHOR_NAME": "test",
 			"GIT_COMMITTER_NAME": "test",
 			"GIT_AUTHOR_EMAIL": "test@example.com",
@@ -100,6 +101,11 @@
 		"nodeArguments": [
 			"--loader=esmock",
 			"--no-warnings=ExperimentalWarning"
+		]
+	},
+	"xo": {
+		"ignores": [
+			"test/fixtures"
 		]
 	}
 }

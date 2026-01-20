@@ -33,9 +33,8 @@ const prerequisiteTasks = (input, package_, options, packageManager) => {
 				}
 			},
 			async task() {
-				const username = await npm.username({
-					externalRegistry: isExternalRegistry ? package_.publishConfig.registry : false,
-				});
+				const externalRegistry = isExternalRegistry ? package_.publishConfig.registry : false;
+				const username = await npm.username({externalRegistry});
 
 				const collaborators = await npm.collaborators(package_);
 				if (!collaborators) {

@@ -18,22 +18,35 @@ test('--registry flag', createFixture, [{
 	t.is(await npm.username({externalRegistry: 'http://my.io'}), 'sindresorhus');
 });
 
-test('fails if not logged in', createFixture, [{
+test('fails if not logged in - ENEEDAUTH', createFixture, [{
 	command: 'npm whoami',
 	stderr: 'npm ERR! code ENEEDAUTH',
 }], async ({t, testedModule: npm}) => {
-	await t.throwsAsync(
+	const error = await t.throwsAsync(
 		npm.username({}),
 		{message: 'You must be logged in. Use `npm login` and try again.'},
 	);
+	t.true(error.isNotLoggedIn);
+});
+
+test('fails if not logged in - E401', createFixture, [{
+	command: 'npm whoami',
+	stderr: 'npm error code E401\nnpm error 401 Unauthorized',
+}], async ({t, testedModule: npm}) => {
+	const error = await t.throwsAsync(
+		npm.username({}),
+		{message: 'You must be logged in. Use `npm login` and try again.'},
+	);
+	t.true(error.isNotLoggedIn);
 });
 
 test('fails with authentication error', createFixture, [{
 	command: 'npm whoami',
 	stderr: 'npm ERR! OTP required for authentication',
 }], async ({t, testedModule: npm}) => {
-	await t.throwsAsync(
+	const error = await t.throwsAsync(
 		npm.username({}),
 		{message: 'Authentication error. Use `npm whoami` to troubleshoot.'},
 	);
+	t.false(error.isNotLoggedIn);
 });

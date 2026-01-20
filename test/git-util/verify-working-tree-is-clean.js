@@ -9,9 +9,7 @@ test('clean', createFixture, async ({t, $$}) => {
 	await $$`git add .`;
 	await $$`git commit -m "added"`;
 }, async ({t, testedModule: {verifyWorkingTreeIsClean}}) => {
-	await t.notThrowsAsync(
-		verifyWorkingTreeIsClean(),
-	);
+	await t.notThrowsAsync(verifyWorkingTreeIsClean());
 });
 
 test('not clean', createFixture, async ({t}) => {
