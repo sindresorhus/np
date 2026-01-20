@@ -24,22 +24,54 @@ Resolves or throws the given result.
 @param {import('execa').ExecaReturnValue[]} commands
 */
 const makeExecaStub = commands => {
-	const stub = sinon.stub();
-
-	// Apply default commands first, then user commands (which can override defaults)
-	for (const result of [...defaultCommands, ...commands]) {
+	const normalizedCommands = [...defaultCommands, ...commands].map(result => {
 		const [command, ...commandArguments] = result.command.split(' ');
+		return {
+			...result,
+			command,
+			commandArguments,
+		};
+	});
 
-		const passes = result.exitCode === 0 || (!result.exitCode && !result.stderr);
+	return sinon.stub().callsFake((command, commandArguments = [], options) => {
+		for (let index = normalizedCommands.length - 1; index >= 0; index--) {
+			const result = normalizedCommands[index];
 
-		if (passes) {
-			stub.withArgs(command, commandArguments).resolves(result);
-		} else {
-			stub.withArgs(command, commandArguments).rejects(Object.assign(new Error(), result)); // eslint-disable-line unicorn/error-message
+			if (result.command !== command) {
+				continue;
+			}
+
+			if (!areArgumentsEqual(result.commandArguments, commandArguments)) {
+				continue;
+			}
+
+			if (!matchesOptions(result.options, options)) {
+				continue;
+			}
+
+			const passes = result.exitCode === 0 || (!result.exitCode && !result.stderr);
+
+			if (passes) {
+				return Promise.resolve(result);
+			}
+
+			return Promise.reject(Object.assign(new Error(), result)); // eslint-disable-line unicorn/error-message
 		}
+	});
+};
+
+const areArgumentsEqual = (left, right) => left.length === right.length && left.every((value, index) => value === right[index]);
+
+const matchesOptions = (expectedOptions, actualOptions) => {
+	if (!expectedOptions) {
+		return true;
 	}
 
-	return stub;
+	if (!actualOptions) {
+		return false;
+	}
+
+	return Object.entries(expectedOptions).every(([key, value]) => Object.is(actualOptions[key], value));
 };
 
 const stubExeca = commands => {

@@ -57,7 +57,7 @@ export const _createFixture = source => test.macro(async (t, commands, assertion
 	await createIntegrationTest(t, async ({$$, temporaryDirectory}) => {
 		const testedModule = await esmock(source, {}, {
 			'node:process': {cwd: () => temporaryDirectory},
-			execa: {execa: async (...arguments_) => execa(...arguments_, {cwd: temporaryDirectory})},
+			execa: {execa: async (command, commandArguments, options = {}) => execa(command, commandArguments, {cwd: temporaryDirectory, ...options})},
 		});
 
 		await commands({t, $$, temporaryDirectory});

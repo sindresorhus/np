@@ -59,7 +59,6 @@
 		"onetime": "^7.0.0",
 		"open": "^11.0.0",
 		"p-memoize": "^8.0.0",
-		"p-timeout": "^7.0.1",
 		"package-directory": "^8.0.0",
 		"path-exists": "^5.0.0",
 		"read-package-up": "^12.0.0",

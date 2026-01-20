@@ -5,6 +5,8 @@ import ignoreWalker from 'ignore-walk';
 import semver from 'semver';
 import * as util from './util.js';
 
+const gitNetworkTimeout = 120_000; // 2 minutes for remote git operations
+
 export const latestTag = async () => {
 	const {stdout} = await execa('git', ['describe', '--abbrev=0', '--tags']);
 	return stdout;
@@ -158,7 +160,7 @@ const hasRemote = async () => {
 };
 
 const hasUnfetchedChangesFromRemote = async () => {
-	const {stdout: possibleNewChanges} = await execa('git', ['fetch', '--dry-run']);
+	const {stdout: possibleNewChanges} = await execa('git', ['fetch', '--dry-run'], {timeout: gitNetworkTimeout});
 
 	// There are no unfetched changes if output is empty.
 	return !possibleNewChanges || possibleNewChanges === '';
@@ -187,14 +189,14 @@ export const verifyRemoteHistoryIsClean = async () => {
 
 export const verifyRemoteIsValid = async () => {
 	try {
-		await execa('git', ['ls-remote', 'origin', 'HEAD']);
+		await execa('git', ['ls-remote', 'origin', 'HEAD'], {timeout: gitNetworkTimeout});
 	} catch (error) {
 		throw new Error(error.stderr.replace('fatal:', 'Git fatal error:'));
 	}
 };
 
 export const fetch = async () => {
-	await execa('git', ['fetch']);
+	await execa('git', ['fetch'], {timeout: gitNetworkTimeout});
 };
 
 const hasLocalBranch = async branch => {
@@ -249,7 +251,7 @@ export const commitLogFromRevision = async revision => {
 };
 
 const push = async (tagArgument = '--follow-tags') => {
-	await execa('git', ['push', tagArgument]);
+	await execa('git', ['push', tagArgument], {timeout: gitNetworkTimeout});
 };
 
 export const pushGraceful = async remoteIsOnGitHub => {

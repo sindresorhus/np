@@ -162,6 +162,14 @@ export async function getNpmPackageAccess(package_) {
 		arguments_.push('--registry', package_.publishConfig.registry);
 	}
 
-	const {stdout} = await execa('npm', arguments_);
-	return JSON.parse(stdout)[package_.name]; // Note: returns "private" for non-existent packages
+	try {
+		const {stdout} = await execa('npm', arguments_, {timeout: npm.npmNetworkTimeout});
+		return JSON.parse(stdout)[package_.name]; // Note: returns "private" for non-existent packages
+	} catch (error) {
+		if (error.timedOut) {
+			error.message = 'Connection to npm registry timed out';
+		}
+
+		throw error;
+	}
 }

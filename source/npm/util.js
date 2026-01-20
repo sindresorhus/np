@@ -1,7 +1,6 @@
 import path from 'node:path';
 import {pathExists} from 'path-exists';
 import {execa} from 'execa';
-import pTimeout from 'p-timeout';
 import npmName from 'npm-name';
 import chalk from 'chalk-template';
 import * as util from '../util.js';
@@ -11,17 +10,24 @@ export const version = async () => {
 	return stdout;
 };
 
-export const checkConnection = () => pTimeout((async () => {
+export const npmNetworkTimeout = 15_000; // 15 seconds for npm registry calls
+
+const throwIfNpmTimeout = error => {
+	if (error.timedOut) {
+		error.message = 'Connection to npm registry timed out';
+		throw error;
+	}
+};
+
+export const checkConnection = async () => {
 	try {
-		await execa('npm', ['ping']);
+		await execa('npm', ['ping'], {timeout: npmNetworkTimeout});
 		return true;
-	} catch {
+	} catch (error) {
+		throwIfNpmTimeout(error);
 		throw new Error('Connection to npm registry failed');
 	}
-})(), {
-	milliseconds: 15_000,
-	message: 'Connection to npm registry timed out',
-});
+};
 
 export const username = async ({externalRegistry}) => {
 	const arguments_ = ['whoami'];
@@ -31,9 +37,10 @@ export const username = async ({externalRegistry}) => {
 	}
 
 	try {
-		const {stdout} = await execa('npm', arguments_);
+		const {stdout} = await execa('npm', arguments_, {timeout: npmNetworkTimeout});
 		return stdout;
 	} catch (error) {
+		throwIfNpmTimeout(error);
 		const isNotLoggedIn = /ENEEDAUTH|E401/.test(error.stderr);
 		const message = isNotLoggedIn
 			? 'You must be logged in. Use `npm login` and try again.'
@@ -91,9 +98,10 @@ export const collaborators = async package_ => {
 	}
 
 	try {
-		const {stdout} = await execa('npm', arguments_);
+		const {stdout} = await execa('npm', arguments_, {timeout: npmNetworkTimeout});
 		return stdout;
 	} catch (error) {
+		throwIfNpmTimeout(error);
 		// Ignore non-existing package error
 		if (error.stderr.includes('code E404')) {
 			return false;
@@ -108,10 +116,11 @@ export const prereleaseTags = async packageName => {
 
 	let tags = [];
 	try {
-		const {stdout} = await execa('npm', ['view', '--json', packageName, 'dist-tags']);
+		const {stdout} = await execa('npm', ['view', '--json', packageName, 'dist-tags'], {timeout: npmNetworkTimeout});
 		tags = Object.keys(JSON.parse(stdout))
 			.filter(tag => tag !== 'latest');
 	} catch (error) {
+		throwIfNpmTimeout(error);
 		// HACK: NPM is mixing JSON with plain text errors. Luckily, the error
 		// always starts with 'npm ERR!' (unless you have a debugger attached)
 		// so as a solution, until npm/cli#2740 is fixed, we can remove anything
