@@ -19,8 +19,6 @@ export const getEnable2faArguments = async (packageName, options) => {
 
 const enable2fa = async (packageName, options) => execa('npm', await getEnable2faArguments(packageName, options), {timeout: npmNetworkTimeout});
 
-const tryEnable2fa = (task, packageName, options) => {
-	from(enable2fa(packageName, options)).pipe(catchError(error => handleNpmError(error, task, otp => enable2fa(packageName, {otp}))));
-};
+const tryEnable2fa = (task, packageName, options) => from(enable2fa(packageName, options)).pipe(catchError(error => handleNpmError(error, task, otp => enable2fa(packageName, {otp}))));
 
 export default tryEnable2fa;

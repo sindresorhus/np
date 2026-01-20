@@ -162,8 +162,8 @@ const hasRemote = async () => {
 const hasUnfetchedChangesFromRemote = async () => {
 	const {stdout: possibleNewChanges} = await execa('git', ['fetch', '--dry-run'], {timeout: gitNetworkTimeout});
 
-	// There are no unfetched changes if output is empty.
-	return !possibleNewChanges || possibleNewChanges === '';
+	// There are unfetched changes if output is not empty.
+	return Boolean(possibleNewChanges);
 };
 
 const isRemoteHistoryClean = async () => {
@@ -178,7 +178,7 @@ export const verifyRemoteHistoryIsClean = async () => {
 		return;
 	}
 
-	if (!(await hasUnfetchedChangesFromRemote())) {
+	if (await hasUnfetchedChangesFromRemote()) {
 		throw new Error('Remote history differs. Please run `git fetch` and pull changes.');
 	}
 
