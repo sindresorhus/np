@@ -252,9 +252,7 @@ test.serial('should skip authentication check when OIDC is detected', createFixt
 	process.env.ACTIONS_ID_TOKEN_REQUEST_URL = 'url';
 	process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'token';
 
-	await t.notThrowsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
-	);
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)));
 
 	delete process.env.GITHUB_ACTIONS;
 	delete process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
