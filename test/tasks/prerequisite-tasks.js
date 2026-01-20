@@ -140,6 +140,28 @@ test.serial('should fail when user is not authenticated at external registry', c
 	assertTaskFailed(t, 'Verify user is authenticated');
 });
 
+test.serial('should use publishConfig.registry even when set to official npm registry', createFixture, [
+	{
+		command: 'npm whoami --registry https://registry.npmjs.org/',
+		stdout: 'sindresorhus',
+	},
+	{
+		command: 'npm access list collaborators test --json --registry https://registry.npmjs.org/',
+		stdout: '{"sindresorhus": "read"}',
+	},
+], async ({t, testedModule: prerequisiteTasks}) => {
+	process.env.NODE_ENV = 'P';
+
+	await t.throwsAsync(
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'https://registry.npmjs.org/'}}, {}, npmConfig)),
+		{message: 'You do not have write permissions required to publish this package.'},
+	);
+
+	process.env.NODE_ENV = 'test';
+
+	assertTaskFailed(t, 'Verify user is authenticated');
+});
+
 test.serial.todo('should not fail if no collaborators'); // Verify user is authenticated
 
 test.serial('private package: should disable task `verify user is authenticated`', createFixture, [{

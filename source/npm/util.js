@@ -86,7 +86,7 @@ export const collaborators = async package_ => {
 
 	const arguments_ = ['access', 'list', 'collaborators', packageName, '--json'];
 
-	if (isExternalRegistry(package_)) {
+	if (package_.publishConfig?.registry) {
 		arguments_.push('--registry', package_.publishConfig.registry);
 	}
 
