@@ -4,7 +4,12 @@ import {npmConfig, yarnConfig} from '../../source/package-manager/configs.js';
 import {npPackage} from '../../source/util.js';
 import {SilentRenderer} from '../_helpers/listr-renderer.js';
 import {_createFixture} from '../_helpers/stub-execa.js';
-import {run, assertTaskFailed, assertTaskDisabled} from '../_helpers/listr.js';
+import {
+	run,
+	assertTaskFailed,
+	assertTaskDisabled,
+	assertTaskSkipped,
+} from '../_helpers/listr.js';
 
 /** @type {ReturnType<typeof _createFixture<import('../../source/prerequisite-tasks.js')>>} */
 const createFixture = _createFixture('../../source/prerequisite-tasks.js', import.meta.url);
@@ -236,4 +241,23 @@ test.serial('checks should pass', createFixture, [{
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)));
+});
+
+test.serial('should skip authentication check when OIDC is detected', createFixture, [{
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	process.env.NODE_ENV = 'P';
+	process.env.GITHUB_ACTIONS = 'true';
+	process.env.ACTIONS_ID_TOKEN_REQUEST_URL = 'url';
+	process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'token';
+
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)));
+
+	delete process.env.GITHUB_ACTIONS;
+	delete process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
+	delete process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
+	process.env.NODE_ENV = 'test';
+
+	assertTaskSkipped(t, 'Verify user is authenticated');
 });
