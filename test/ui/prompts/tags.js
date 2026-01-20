@@ -127,3 +127,45 @@ for (const {version, expected} of fixtures) {
 		t.is(tag, 'next');
 	});
 }
+
+// Test that prerelease versions provided via CLI prompt for tag
+for (const {version} of fixtures) {
+	test(`prompts for tag when ${version} is provided via CLI`, async t => {
+		const {ui} = await mockInquirer({
+			t, answers: {tag: 'next', confirm: true}, mocks: {
+				'./npm/util.js': {
+					checkIgnoreStrategy: sinon.stub().resolves(),
+					prereleaseTags: sinon.stub().resolves(['next']),
+				},
+				'./util.js': {
+					getNewFiles: sinon.stub().resolves({unpublished: [], firstTime: []}),
+					getNewDependencies: sinon.stub().resolves([]),
+					getPreReleasePrefix: sinon.stub().resolves(''),
+				},
+				'./git-util.js': {
+					latestTagOrFirstCommit: sinon.stub().resolves(`v${npPackage.version}`),
+					commitLogFromRevision: sinon.stub().resolves(''),
+				},
+				'./package-manager/index.js': {
+					findLockfile: sinon.stub().resolves(undefined),
+				},
+			},
+		});
+
+		const results = await ui({
+			packageManager,
+			runPublish: true,
+			availability: {},
+			version,
+		}, {
+			package_: {
+				name: 'foo',
+				version: '0.0.0',
+				files: ['*'],
+			},
+		});
+
+		// Verify that the tag was set via prompt
+		t.is(results.tag, 'next');
+	});
+}

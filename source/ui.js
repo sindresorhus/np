@@ -174,9 +174,60 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 	}
 
 	// Non-interactive mode - return before prompting
+	// But if it's a prerelease without a tag, we need to prompt for the tag
 	if (options.version) {
+		const prereleasePrefix = await util.getPreReleasePrefix(packageManager);
+		const versionObject = new Version(oldVersion).setFrom(options.version, {prereleasePrefix});
+		const needsTag = options.runPublish && versionObject.isPrerelease() && !options.tag;
+
+		if (!needsTag) {
+			return {
+				...options,
+				confirm: true,
+				repoUrl,
+				generateReleaseNotes,
+			};
+		}
+
+		// Prompt for tag only
+		const answers = await inquirer.prompt({
+			tag: {
+				type: 'select',
+				message: 'How should this pre-release version be tagged in npm?',
+				async choices() {
+					const existingPrereleaseTags = await npm.prereleaseTags(package_.name);
+
+					return [
+						...existingPrereleaseTags,
+						new inquirer.Separator(),
+						{
+							name: 'Other (specify)',
+							value: undefined,
+						},
+					];
+				},
+			},
+			customTag: {
+				type: 'input',
+				message: 'Tag',
+				when: answers => answers.tag === undefined,
+				validate(input) {
+					if (input.length === 0) {
+						return 'Please specify a tag, for example, `next`.';
+					}
+
+					if (input.toLowerCase() === 'latest') {
+						return 'It\'s not possible to publish pre-releases under the `latest` tag. Please specify something else, for example, `next`.';
+					}
+
+					return true;
+				},
+			},
+		});
+
 		return {
 			...options,
+			tag: answers.tag || answers.customTag || options.tag,
 			confirm: true,
 			repoUrl,
 			generateReleaseNotes,
