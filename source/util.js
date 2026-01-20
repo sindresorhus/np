@@ -155,7 +155,13 @@ export const validateEngineVersionSatisfies = (engine, version) => {
 	}
 };
 
-export async function getNpmPackageAccess(name) {
-	const {stdout} = await execa('npm', ['access', 'get', 'status', name, '--json']);
-	return JSON.parse(stdout)[name]; // Note: returns "private" for non-existent packages
+export async function getNpmPackageAccess(package_) {
+	const arguments_ = ['access', 'get', 'status', package_.name, '--json'];
+
+	if (package_.publishConfig?.registry) {
+		arguments_.push('--registry', package_.publishConfig.registry);
+	}
+
+	const {stdout} = await execa('npm', arguments_);
+	return JSON.parse(stdout)[package_.name]; // Note: returns "private" for non-existent packages
 }

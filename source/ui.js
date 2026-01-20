@@ -228,7 +228,7 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 		&& !options.tag
 	);
 
-	const alreadyPublicScoped = packageManager.id === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(package_.name) === 'public';
+	const alreadyPublicScoped = packageManager.id === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(package_) === 'public';
 
 	// Note that inquirer question.when is a bit confusing. Only `false` will cause the question to be skipped.
 	// Any other value like `true` and `undefined` means ask the question.
