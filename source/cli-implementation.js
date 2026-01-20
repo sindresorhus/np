@@ -113,7 +113,11 @@ updateNotifier({pkg: cli.pkg}).notify();
 /** @typedef {Awaited<ReturnType<typeof getOptions>>['options']} Options */
 
 async function getOptions() {
-	const {package_, rootDirectory} = await util.readPackage(cli.flags.contents);
+	// Load config from cwd first to get `contents` option before reading package
+	const initialConfig = await config(process.cwd());
+	const contents = cli.flags.contents ?? initialConfig?.contents;
+
+	const {package_, rootDirectory} = await util.readPackage(contents);
 
 	const localConfig = await config(rootDirectory);
 	const flags = {

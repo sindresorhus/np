@@ -1,6 +1,7 @@
 import path from 'node:path';
 import test from 'ava';
 import esmock from 'esmock';
+import {readPackage} from '../source/util.js';
 
 const testedModulePath = '../source/config.js';
 
@@ -127,3 +128,24 @@ test(
 	'local5',
 	'packagedir/.np-config.mjs',
 );
+
+test('`contents` option in config allows reading package from subdirectory', async t => {
+	const fixtureDirectory = getFixture('contents-option');
+
+	// Load config from fixture directory (simulates loading from process.cwd())
+	const getConfig = await esmock(testedModulePath, {
+		'is-installed-globally': false,
+	});
+
+	const config = await getConfig(fixtureDirectory);
+
+	// Config should have contents option
+	t.is(config.contents, 'dist');
+
+	// Using contents from config should read package from subdirectory
+	const contentsPath = path.join(fixtureDirectory, config.contents);
+	const {package_, rootDirectory} = await readPackage(contentsPath);
+
+	t.is(package_.name, 'from-dist');
+	t.is(rootDirectory, contentsPath);
+});
