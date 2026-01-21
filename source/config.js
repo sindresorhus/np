@@ -3,25 +3,36 @@ import isInstalledGlobally from 'is-installed-globally';
 import {cosmiconfig} from 'cosmiconfig';
 
 export default async function getConfig(rootDirectory) {
-	const searchDirectory = isInstalledGlobally ? os.homedir() : rootDirectory;
-
 	const searchPlaces = [
 		'.np-config.json',
 		'.np-config.js',
 		'.np-config.cjs',
 		'.np-config.mjs',
+		'package.json',
 	];
-
-	if (!isInstalledGlobally) {
-		searchPlaces.push('package.json');
-	}
 
 	const explorer = cosmiconfig('np', {
 		searchPlaces,
-		stopDir: searchDirectory,
+		stopDir: rootDirectory,
 	});
 
-	const {config} = (await explorer.search(searchDirectory)) ?? {};
+	// Always read project config
+	const {config: projectConfig} = (await explorer.search(rootDirectory)) ?? {};
 
-	return config;
+	// When globally installed, also read global config and merge (project wins)
+	if (isInstalledGlobally) {
+		const globalExplorer = cosmiconfig('np', {
+			searchPlaces: searchPlaces.filter(place => place !== 'package.json'),
+			stopDir: os.homedir(),
+		});
+
+		const {config: globalConfig} = (await globalExplorer.search(os.homedir())) ?? {};
+
+		return {
+			...globalConfig,
+			...projectConfig,
+		};
+	}
+
+	return projectConfig;
 }
