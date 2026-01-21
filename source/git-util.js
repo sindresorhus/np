@@ -58,7 +58,9 @@ const tagListSortedBySemver = async () => {
 
 const firstCommit = async () => {
 	const {stdout} = await execa('git', ['rev-list', '--max-parents=0', 'HEAD']);
-	return stdout;
+	// Repository may have multiple initial commits (e.g., from merging unrelated histories).
+	// Return just the first one.
+	return stdout.split('\n')[0];
 };
 
 export const previousTagOrFirstCommit = async () => {
