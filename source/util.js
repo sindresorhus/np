@@ -65,6 +65,95 @@ export const linkifyCommitRange = (url, commitRange) => {
 	return terminalLink(commitRange, `${url}/compare/${commitRange}`);
 };
 
+/*
+Git URL patterns for parsing various formats.
+
+Patterns use greedy matching + cleanRepo logic to handle edge cases like:
+- URLs with double .git suffix (repo.git.git)
+- Repos with .git in their name (my.git.git where repo is my.git)
+
+Using [^\s/?#] to exclude whitespace, query params (?), and fragments (#)
+*/
+const GIT_URL_PATTERNS = [
+	/// https://host/owner/repo.git or https://host/owner/repo
+	// Case-insensitive protocol matching via /i flag
+	{
+		regex: /^https?:\/\/([^\s/?#]+)\/([^\s/?#]+)\/([^\s/?#]+)(\.git)?$/i,
+		transform: (host, owner, repo) => `https://${host}/${owner}/${repo}`,
+	},
+	/// git@host:owner/repo.git (common SSH format)
+	// Using [^\s:?#] and [^\s/?#] creates clear boundaries
+	{
+		regex: /^git@([^\s:?#]+):([^\s/?#]+)\/([^\s/?#]+)\.git$/,
+		transform: (host, owner, repo) => `https://${host}/${owner}/${repo}`,
+	},
+	/// git+https://host/owner/repo.git
+	{
+		regex: /^git\+https:\/\/([^\s/?#]+)\/([^\s/?#]+)\/([^\s/?#]+)\.git$/i,
+		transform: (host, owner, repo) => `https://${host}/${owner}/${repo}`,
+	},
+	/// ssh://git@host/owner/repo.git
+	{
+		regex: /^ssh:\/\/git@([^\s/?#]+)\/([^\s/?#]+)\/([^\s/?#]+)\.git$/i,
+		transform: (host, owner, repo) => `https://${host}/${owner}/${repo}`,
+	},
+];
+
+/**
+Parse a git URL to extract the HTTPS browse URL.
+
+Handles various git URL formats including GitHub Enterprise.
+
+This function uses carefully crafted regex patterns that avoid ReDoS vulnerabilities:
+- All patterns are anchored with ^ and $ to prevent partial matches
+- Character classes use negated sets [^...] which are linear-time
+- No nested quantifiers or overlapping alternatives
+- Greedy quantifiers with explicit bounds prevent exponential backtracking
+
+@param {string} url - The git URL to parse.
+@returns {string | undefined} - The HTTPS browse URL or undefined if parsing fails.
+
+@example
+```
+parseGitUrl('git@github.com:owner/repo.git');
+//=> 'https://github.com/owner/repo'
+
+parseGitUrl('https://github.com/owner/repo.git');
+//=> 'https://github.com/owner/repo'
+
+parseGitUrl('github:owner/repo');
+//=> undefined (use hosted-git-info for this)
+```
+*/
+export const parseGitUrl = url => {
+	if (typeof url !== 'string' || url.length === 0) {
+		return;
+	}
+
+	for (const {regex, transform} of GIT_URL_PATTERNS) {
+		const match = url.match(regex);
+		if (match) {
+			const [, host, owner, repo] = match;
+
+			// Remove .git suffix if present in the captured repo name
+			const cleanRepo = repo.endsWith('.git') ? repo.slice(0, -4) : repo;
+
+			// Validate that none of the components are empty
+			if (!host || !owner || !cleanRepo) {
+				continue;
+			}
+
+			// Validate that owner and repo contain at least one alphanumeric character
+			// This prevents pathological inputs like all dots or special chars
+			if (!/[a-z\d]/i.test(owner) || !/[a-z\d]/i.test(cleanRepo)) {
+				continue;
+			}
+
+			return transform(host, owner, cleanRepo);
+		}
+	}
+};
+
 /** @type {(config: import('./package-manager/types.js').PackageManagerConfig) => Promise<string>} */
 export const getTagVersionPrefix = pMemoize(async config => {
 	assert(config && Object.hasOwn(config, 'tagVersionPrefixCommand'), 'Config is missing key `tagVersionPrefixCommand`');

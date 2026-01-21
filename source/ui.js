@@ -1,6 +1,7 @@
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import githubUrlFromGit from 'github-url-from-git';
+import hostedGitInfo from 'hosted-git-info';
 import {htmlEscape} from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
@@ -153,7 +154,22 @@ const displayUnpublishedFilesWarning = unpublishedFiles => {
 const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { // eslint-disable-line complexity
 	const oldVersion = package_.version;
 	const extraBaseUrls = ['gitlab.com'];
-	const repoUrl = package_.repository && githubUrlFromGit(package_.repository.url, {extraBaseUrls});
+	const repoUrl = package_.repository && (() => {
+		// Try to parse with hosted-git-info first to handle shorthand URLs like "github:foo/bar"
+		const gitInfo = hostedGitInfo.fromUrl(package_.repository.url);
+		if (gitInfo?.browse) {
+			return gitInfo.browse({noCommittish: true});
+		}
+
+		// Fall back to github-url-from-git for GitLab and other known hosts
+		const githubUrl = githubUrlFromGit(package_.repository.url, {extraBaseUrls});
+		if (githubUrl) {
+			return githubUrl;
+		}
+
+		// Final fallback: parse any git URL format (handles GitHub Enterprise and other hosts)
+		return util.parseGitUrl(package_.repository.url);
+	})();
 
 	const {stdout: registryUrl} = await execa(...packageManager.getRegistryCommand);
 	const releaseBranch = options.branch;
