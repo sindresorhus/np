@@ -179,7 +179,8 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 					arguments_.push('--message', options.message);
 				}
 
-				return exec(cli, arguments_);
+				// Inherit stdin to allow GPG password prompts for commit signing
+				return exec(cli, arguments_, {stdin: 'inherit'});
 			},
 		},
 		...options.runPublish
