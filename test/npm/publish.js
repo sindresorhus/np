@@ -1,38 +1,10 @@
 import test from 'ava';
-import {getPackagePublishArguments} from '../../source/npm/publish.js';
+import {getPackagePublishArguments, runPublish} from '../../source/npm/publish.js';
 
 test('no options set', t => {
 	t.deepEqual(
 		getPackagePublishArguments({}),
 		['publish'],
-	);
-});
-
-test('options.contents - normalizes relative path', t => {
-	t.deepEqual(
-		getPackagePublishArguments({contents: 'dist'}),
-		['publish', './dist'],
-	);
-});
-
-test('options.contents - preserves ./ prefix', t => {
-	t.deepEqual(
-		getPackagePublishArguments({contents: './dist'}),
-		['publish', './dist'],
-	);
-});
-
-test('options.contents - preserves ../ prefix', t => {
-	t.deepEqual(
-		getPackagePublishArguments({contents: '../dist'}),
-		['publish', '../dist'],
-	);
-});
-
-test('options.contents - preserves absolute path', t => {
-	t.deepEqual(
-		getPackagePublishArguments({contents: '/absolute/path'}),
-		['publish', '/absolute/path'],
 	);
 });
 
@@ -55,4 +27,9 @@ test('options.publishScoped', t => {
 		getPackagePublishArguments({publishScoped: true}),
 		['publish', '--access', 'public'],
 	);
+});
+
+test('runPublish uses cwd option when provided', async t => {
+	const result = await runPublish(['echo', ['test']], {cwd: '/tmp'});
+	t.is(result.cwd, '/tmp');
 });

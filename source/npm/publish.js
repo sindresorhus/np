@@ -1,17 +1,7 @@
-import path from 'node:path';
 import {execa} from 'execa';
 
 export const getPackagePublishArguments = options => {
 	const arguments_ = ['publish'];
-
-	if (options.contents) {
-		// Normalize to explicit relative path so npm doesn't interpret it as a package name
-		const contents = path.isAbsolute(options.contents) || options.contents.startsWith('.')
-			? options.contents
-			: `./${options.contents}`;
-
-		arguments_.push(contents);
-	}
 
 	if (options.tag) {
 		arguments_.push('--tag', options.tag);
@@ -28,8 +18,17 @@ export const getPackagePublishArguments = options => {
 	return arguments_;
 };
 
-export function runPublish(arguments_) {
-	const cp = execa(...arguments_);
+export function runPublish(arguments_, options = {}) {
+	const execaOptions = {};
+
+	// `npm` 8.5+ has a bug where `npm publish <folder>` publishes from cwd instead of <folder>.
+	// We work around this by changing cwd to the target directory.
+	// https://github.com/npm/cli/issues/5136
+	if (options.cwd) {
+		execaOptions.cwd = options.cwd;
+	}
+
+	const cp = execa(...arguments_, execaOptions);
 
 	cp.stdout.on('data', chunk => {
 		// https://github.com/yarnpkg/berry/blob/a3e5695186f2aec3a68810acafc6c9b1e45191da/packages/plugin-npm/sources/npmHttpUtils.ts#L541
