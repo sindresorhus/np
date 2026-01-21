@@ -55,7 +55,17 @@ function configFromPackageManagerField(package_) {
 
 /** @param {string} rootDirectory */
 function configFromLockfile(rootDirectory, options = [configs.npmConfig, configs.pnpmConfig, configs.yarnConfig]) {
-	return options.find(config => findLockfile(rootDirectory, config));
+	const foundConfig = options.find(config => findLockfile(rootDirectory, config));
+
+	// If yarn.lock is found, check if it's Yarn Berry by looking for .yarnrc.yml
+	if (foundConfig === configs.yarnConfig) {
+		const yarnrcYmlPath = path.resolve(rootDirectory || '.', '.yarnrc.yml');
+		if (fs.existsSync(yarnrcYmlPath)) {
+			return configs.yarnBerryConfig;
+		}
+	}
+
+	return foundConfig;
 }
 
 /** @param {import('./types.d.ts').Command} command */
