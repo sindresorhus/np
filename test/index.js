@@ -1,3 +1,4 @@
+import path from 'node:path';
 import process from 'node:process';
 import test from 'ava';
 import sinon from 'sinon';
@@ -167,4 +168,34 @@ test('rollback is called when publish fails', async t => {
 
 	t.true(deleteTagStub.calledOnce, 'deleteTag should be called once');
 	t.true(removeLastCommitStub.calledOnce, 'removeLastCommit should be called once');
+});
+
+test('publish uses rootDirectory from context as cwd', async t => {
+	const contentsDirectory = path.resolve('dist');
+	let publishCwd;
+
+	/** @type {typeof np} */
+	const npMock = await esmock('../source/index.js', {
+		del: {deleteAsync: sinon.stub()},
+		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
+		'../source/prerequisite-tasks.js': sinon.stub(),
+		'../source/git-tasks.js': sinon.stub(),
+		'../source/git-util.js': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
+		},
+		'../source/npm/enable-2fa.js': sinon.stub(),
+		'../source/npm/publish.js': {
+			getPackagePublishArguments: sinon.stub().returns([]),
+			runPublish: sinon.stub().callsFake((_arguments, options) => {
+				publishCwd = options?.cwd;
+				return fakeObservableReturn();
+			}),
+		},
+	});
+
+	await npMock('1.0.0', defaultOptions, {package_: npPackageResult.package_, rootDirectory: contentsDirectory});
+
+	t.is(publishCwd, contentsDirectory, 'publish should use rootDirectory from context as cwd');
 });
