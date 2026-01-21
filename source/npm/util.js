@@ -110,8 +110,16 @@ export const collaborators = async package_ => {
 		return stdout;
 	} catch (error) {
 		throwIfNpmTimeout(error);
+
 		// Ignore non-existing package error
 		if (error.stderr.includes('code E404')) {
+			return false;
+		}
+
+		// External registries often don't support this endpoint, so ignore errors.
+		// The whoami check is sufficient for verifying authentication.
+		// See: https://github.com/sindresorhus/np/issues/420
+		if (isExternalRegistry(package_)) {
 			return false;
 		}
 
