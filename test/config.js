@@ -152,3 +152,18 @@ test('`contents` option in config allows reading package from subdirectory', asy
 	t.is(package_.name, 'from-dist');
 	t.is(rootDirectory, contentsPath);
 });
+
+test('config values override defaults', async t => {
+	const fixtureDirectory = getFixture('flag-precedence');
+
+	const getConfig = await esmock(testedModulePath, {
+		'is-installed-globally': false,
+	});
+
+	const config = await getConfig(fixtureDirectory);
+
+	// Config should override default values
+	t.is(config.tests, false);
+	t.is(config.cleanup, false);
+	t.is(config.publish, false);
+});

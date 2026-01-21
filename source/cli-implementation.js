@@ -50,6 +50,7 @@ const cli = meow(`
 `, {
 	importMeta: import.meta,
 	booleanDefault: undefined,
+	// Don't use `default` for flags - we apply defaults later so config can override them
 	flags: {
 		anyBranch: {
 			type: 'boolean',
@@ -59,29 +60,24 @@ const cli = meow(`
 		},
 		cleanup: {
 			type: 'boolean',
-			default: true,
 		},
 		tests: {
 			type: 'boolean',
-			default: true,
 		},
 		yolo: {
 			type: 'boolean',
 		},
 		publish: {
 			type: 'boolean',
-			default: true,
 		},
 		releaseDraft: {
 			type: 'boolean',
-			default: true,
 		},
 		releaseDraftOnly: {
 			type: 'boolean',
 		},
 		releaseNotes: {
 			type: 'boolean',
-			default: true,
 		},
 		tag: {
 			type: 'string',
@@ -100,7 +96,6 @@ const cli = meow(`
 		},
 		'2fa': {
 			type: 'boolean',
-			default: true,
 		},
 		message: {
 			type: 'string',
@@ -120,9 +115,20 @@ async function getOptions() {
 	const {package_, rootDirectory} = await util.readPackage(contents);
 
 	const localConfig = await config(rootDirectory);
+
+	// Filter out undefined CLI flags (not provided by user)
+	const explicitCliFlags = Object.fromEntries(Object.entries(cli.flags).filter(([, value]) => value !== undefined));
+
+	// Merge: local config → explicit CLI flags → defaults
 	const flags = {
+		cleanup: true,
+		tests: true,
+		publish: true,
+		releaseDraft: true,
+		releaseNotes: true,
+		'2fa': true,
 		...localConfig,
-		...cli.flags,
+		...explicitCliFlags,
 	};
 
 	// Workaround for unintended auto-casing behavior from `meow`.
