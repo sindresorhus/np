@@ -58,6 +58,11 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 		options.cleanup = false;
 	}
 
+	// If --contents is set, ensure rootDirectory is set to the directory specified by contents
+	if (options.contents) {
+		options.rootDirectory = options.contents;
+	}
+
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
 	const lockfile = findLockfile(rootDirectory, packageManager);
