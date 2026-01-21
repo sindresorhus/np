@@ -265,6 +265,7 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 	], {
 		showSubtasks: false,
 		renderer: options.renderer ?? 'default',
+		clearOutput: !options.preview && !options.releaseDraftOnly,
 	});
 
 	if (!options.runPublish) {
