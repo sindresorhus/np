@@ -1,7 +1,7 @@
 import test from 'ava';
 import {_createFixture} from '../_helpers/stub-execa.js';
 import {getTagVersionPrefix as originalGetTagVersionPrefix} from '../../source/util.js';
-import {npmConfig, yarnConfig} from '../../source/package-manager/configs.js';
+import {npmConfig, yarnConfig, pnpmConfig} from '../../source/package-manager/configs.js';
 
 /** @type {ReturnType<typeof _createFixture<import('../../source/util.js')>>} */
 const createFixture = _createFixture('../../source/util.js', import.meta.url);
@@ -32,6 +32,46 @@ test('defaults to "v" when command fails', createFixture, [{
 }], async ({t, testedModule: {getTagVersionPrefix}}) => {
 	t.is(
 		await getTagVersionPrefix(npmConfig),
+		'v',
+	);
+});
+
+test('returns tag prefix - pnpm (uses npm config)', createFixture, [{
+	command: 'npm config get tag-version-prefix',
+	stdout: 'v',
+}], async ({t, testedModule: {getTagVersionPrefix}}) => {
+	t.is(
+		await getTagVersionPrefix(pnpmConfig),
+		'v',
+	);
+});
+
+test('returns custom tag prefix - pnpm', createFixture, [{
+	command: 'npm config get tag-version-prefix',
+	stdout: 'ver',
+}], async ({t, testedModule: {getTagVersionPrefix}}) => {
+	t.is(
+		await getTagVersionPrefix(pnpmConfig),
+		'ver',
+	);
+});
+
+test('returns empty string tag prefix - pnpm', createFixture, [{
+	command: 'npm config get tag-version-prefix',
+	stdout: '',
+}], async ({t, testedModule: {getTagVersionPrefix}}) => {
+	t.is(
+		await getTagVersionPrefix(pnpmConfig),
+		'',
+	);
+});
+
+test('pnpm defaults to "v" when npm config fails', createFixture, [{
+	command: 'npm config get tag-version-prefix',
+	exitCode: 1,
+}], async ({t, testedModule: {getTagVersionPrefix}}) => {
+	t.is(
+		await getTagVersionPrefix(pnpmConfig),
 		'v',
 	);
 });
