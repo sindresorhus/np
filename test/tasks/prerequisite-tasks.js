@@ -39,6 +39,12 @@ test.serial('public-package published on npm registry: should fail when npm regi
 });
 
 test.serial('private package: should disable task pinging npm registry', createFixture, [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
@@ -48,6 +54,12 @@ test.serial('private package: should disable task pinging npm registry', createF
 });
 
 test.serial('external registry: should disable task pinging npm registry', createFixture, [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
@@ -165,6 +177,12 @@ test.serial('should use publishConfig.registry even when set to official npm reg
 test.serial.todo('should not fail if no collaborators'); // Verify user is authenticated
 
 test.serial('private package: should disable task `verify user is authenticated`', createFixture, [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
@@ -189,6 +207,35 @@ test.serial('should fail when git version does not match range in `package.json`
 	);
 
 	assertTaskFailed(t, 'Check git version');
+});
+
+test.serial('should fail when git user.name is not set', createFixture, [{
+	command: 'git config user.name',
+	exitCode: 1,
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.throwsAsync(
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		{message: /Git user configuration is not set/},
+	);
+
+	assertTaskFailed(t, 'Check git user configuration');
+});
+
+test.serial('should fail when git user.email is not set', createFixture, [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	exitCode: 1,
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.throwsAsync(
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		{message: /Git user configuration is not set/},
+	);
+
+	assertTaskFailed(t, 'Check git user configuration');
 });
 
 test.serial('should fail when git remote does not exist', createFixture, [{
@@ -233,6 +280,12 @@ test.serial('should fail when prerelease version of public package without dist 
 });
 
 test.serial('should not fail when prerelease version of public package with dist tag given', createFixture, [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
@@ -240,6 +293,12 @@ test.serial('should not fail when prerelease version of public package with dist
 });
 
 test.serial('should not fail when prerelease version of private package without dist tag given', createFixture, [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
@@ -247,6 +306,12 @@ test.serial('should not fail when prerelease version of private package without 
 });
 
 test.serial('should fail when git tag already exists', createFixture, [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: 'vvb',
 }], async ({t, testedModule: prerequisiteTasks}) => {
@@ -259,6 +324,12 @@ test.serial('should fail when git tag already exists', createFixture, [{
 });
 
 test.serial('checks should pass', createFixture, [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
@@ -266,6 +337,12 @@ test.serial('checks should pass', createFixture, [{
 });
 
 test.serial('should skip authentication check when OIDC is detected', createFixture, [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {

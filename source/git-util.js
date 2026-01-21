@@ -288,3 +288,20 @@ export const verifyRecentGitVersion = async () => {
 	const installedVersion = await gitVersion();
 	util.validateEngineVersionSatisfies('git', installedVersion);
 };
+
+export const verifyUserConfigIsSet = async () => {
+	const [nameResult, emailResult] = await Promise.allSettled([
+		execa('git', ['config', 'user.name']),
+		execa('git', ['config', 'user.email']),
+	]);
+
+	if (nameResult.status !== 'fulfilled' || !nameResult.value.stdout || emailResult.status !== 'fulfilled' || !emailResult.value.stdout) {
+		throw new Error([
+			'Git user configuration is not set.',
+			'',
+			'Please set your git user name and email:',
+			'  git config --global user.name "Your Name"',
+			'  git config --global user.email "you@example.com"',
+		].join('\n'));
+	}
+};

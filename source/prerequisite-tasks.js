@@ -53,6 +53,10 @@ const prerequisiteTasks = (input, package_, options, packageManager) => {
 			task: async () => git.verifyRecentGitVersion(),
 		},
 		{
+			title: 'Check git user configuration',
+			task: async () => git.verifyUserConfigIsSet(),
+		},
+		{
 			title: 'Check git remote',
 			task: async () => git.verifyRemoteIsValid(),
 		},

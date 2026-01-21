@@ -5,14 +5,17 @@ import {_createFixture} from '../_helpers/integration-test.js';
 const createFixture = _createFixture('../../source/git-util.js');
 
 test('repository with multiple initial commits', createFixture, async ({t, $$}) => {
+	// Get the current branch name before creating orphan branch
+	const {stdout: initialBranch} = await $$`git branch --show-current`;
+
 	// Create a second orphan branch to simulate multiple initial commits
 	await $$`git checkout --orphan other-branch`;
 	await t.context.createFile('other-file');
 	await $$`git add other-file`;
 	await $$`git commit -m orphan`;
 
-	// Merge the orphan branch into main, creating multiple root commits
-	await $$`git checkout main`;
+	// Merge the orphan branch into the initial branch, creating multiple root commits
+	await $$`git checkout ${initialBranch}`;
 	await $$`git merge --allow-unrelated-histories other-branch -m merge`;
 }, async ({t, testedModule: {latestTagOrFirstCommit, commitLogFromRevision}}) => {
 	// This should not throw an error even with multiple initial commits
