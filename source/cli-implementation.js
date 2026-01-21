@@ -10,6 +10,7 @@ import config from './config.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
+import {getOidcProvider} from './npm/oidc.js';
 import {SEMVER_INCREMENTS} from './version.js';
 import ui from './ui.js';
 import np from './index.js';
@@ -193,18 +194,23 @@ try {
 
 	// Check authentication early, before Listr starts (so login can be interactive)
 	if (options.runPublish) {
-		const externalRegistry = npm.isExternalRegistry(package_)
-			? package_.publishConfig.registry
-			: false;
+		// Skip auth check if OIDC is available (will be handled by npm publish itself)
+		if (getOidcProvider()) {
+			console.log('OIDC authentication detected - skipping auth check');
+		} else {
+			const externalRegistry = npm.isExternalRegistry(package_)
+				? package_.publishConfig.registry
+				: false;
 
-		try {
-			await npm.username({externalRegistry});
-		} catch (error) {
-			if (error.isNotLoggedIn && isInteractive()) {
-				console.log('\nYou must be logged in to publish. Running `npm login`...\n');
-				await npm.login({externalRegistry});
-			} else {
-				throw error;
+			try {
+				await npm.username({externalRegistry});
+			} catch (error) {
+				if (error.isNotLoggedIn && isInteractive()) {
+					console.log('\nYou must be logged in to publish. Running `npm login`...\n');
+					await npm.login({externalRegistry});
+				} else {
+					throw error;
+				}
 			}
 		}
 	}
