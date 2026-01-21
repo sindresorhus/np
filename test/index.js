@@ -2,6 +2,7 @@ import process from 'node:process';
 import test from 'ava';
 import sinon from 'sinon';
 import esmock from 'esmock';
+import {of, throwError} from 'rxjs';
 import {npmConfig as packageManager} from '../source/package-manager/configs.js';
 import * as util from '../source/util.js';
 
@@ -58,6 +59,10 @@ const fakeExecaReturn = () => Object.assign(
 	{stdout: '', stderr: ''},
 );
 
+const fakeObservableReturn = () => of('');
+
+const fakeObservableReject = error => throwError(() => Object.assign(new Error(error), {stdout: '', stderr: error}));
+
 test('skip enabling 2FA if the package exists', async t => {
 	const enable2faStub = sinon.stub();
 
@@ -75,7 +80,7 @@ test('skip enabling 2FA if the package exists', async t => {
 		'../source/npm/enable-2fa.js': enable2faStub,
 		'../source/npm/publish.js': {
 			getPackagePublishArguments: sinon.stub().returns([]),
-			runPublish: sinon.stub().returns(fakeExecaReturn()),
+			runPublish: sinon.stub().returns(fakeObservableReturn()),
 		},
 	});
 
@@ -107,7 +112,7 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 		'../source/npm/enable-2fa.js': enable2faStub,
 		'../source/npm/publish.js': {
 			getPackagePublishArguments: sinon.stub().returns([]),
-			runPublish: sinon.stub().returns(fakeExecaReturn()),
+			runPublish: sinon.stub().returns(fakeObservableReturn()),
 		},
 	});
 
@@ -122,11 +127,6 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 
 	t.true(enable2faStub.notCalled);
 });
-
-const fakeExecaReject = error => Object.assign(
-	Promise.reject(Object.assign(new Error(error), {stdout: '', stderr: error})),
-	{stdout: '', stderr: ''},
-);
 
 test('rollback is called when publish fails', async t => {
 	const deleteTagStub = sinon.stub().resolves();
@@ -149,7 +149,7 @@ test('rollback is called when publish fails', async t => {
 		'../source/npm/enable-2fa.js': sinon.stub(),
 		'../source/npm/publish.js': {
 			getPackagePublishArguments: sinon.stub().returns([]),
-			runPublish: sinon.stub().returns(fakeExecaReject('npm ERR! publish failed')),
+			runPublish: sinon.stub().returns(fakeObservableReject('npm ERR! publish failed')),
 		},
 		'../source/util.js': {
 			...util,

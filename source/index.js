@@ -197,7 +197,7 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 					task(context, task) {
 						let hasError = false;
 
-						return from(runPublish(getPublishCommand(options), {cwd: options.rootDirectory}))
+						return runPublish(getPublishCommand(options), {cwd: options.rootDirectory})
 							.pipe(catchError(error => handleNpmError(error, task, otp => {
 								context.otp = otp;
 

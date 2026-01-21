@@ -1,4 +1,6 @@
 import {execa} from 'execa';
+import {merge, filter, catchError} from 'rxjs';
+import open from 'open';
 
 export const getPackagePublishArguments = options => {
 	const arguments_ = ['publish'];
@@ -28,8 +30,7 @@ const publishTimeout = 180_000;
 
 export function runPublish(arguments_, options = {}) {
 	const execaOptions = {
-		// Inherit stdin to allow password/OTP prompts from npm/yarn
-		stdin: 'inherit',
+		stdin: 'pipe',
 		// Timeout to prevent infinite hangs (e.g., from lifecycle scripts in watch mode)
 		timeout: publishTimeout,
 	};
@@ -41,5 +42,52 @@ export function runPublish(arguments_, options = {}) {
 		execaOptions.cwd = options.cwd;
 	}
 
-	return execa(...arguments_, execaOptions);
+	const subprocess = execa(...arguments_, execaOptions);
+
+	let outputBuffer = '';
+
+	const handleAuthPrompt = data => {
+		outputBuffer += data.toString();
+
+		// Detect npm's browser authentication prompt
+		// Example: "Authenticate your account at:\nhttps://www.npmjs.com/auth/cli/xyz"
+		if (outputBuffer.includes('Authenticate your account at:')) {
+			const urlMatch = outputBuffer.match(/https:\/\/www\.npmjs\.com\/auth\/cli\/\S+/);
+			if (urlMatch) {
+				const authUrl = urlMatch[0];
+				// Auto-open browser for authentication (ignore errors if browser fails to open)
+				(async () => {
+					try {
+						await open(authUrl);
+					} catch {}
+				})();
+
+				// Automatically send ENTER to continue (skip "Press ENTER" prompt)
+				subprocess.stdin?.write('\n');
+				// Clear buffer after handling to prevent repeated triggers
+				outputBuffer = '';
+			}
+		}
+
+		// Prevent buffer from growing indefinitely
+		if (outputBuffer.length > 10_000) {
+			outputBuffer = outputBuffer.slice(-5000);
+		}
+	};
+
+	// Monitor both stdout and stderr for the authentication prompt
+	subprocess.stdout?.on('data', handleAuthPrompt);
+	subprocess.stderr?.on('data', handleAuthPrompt);
+
+	return merge(subprocess.stdout, subprocess.stderr, subprocess).pipe(
+		filter(Boolean),
+		catchError(error => {
+			// Include stderr in error message for better diagnostics
+			if (error.stderr) {
+				error.message = `${error.shortMessage}\n${error.stderr}`;
+			}
+
+			throw error;
+		}),
+	);
 }

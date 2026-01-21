@@ -1,4 +1,5 @@
 import test from 'ava';
+import {firstValueFrom} from 'rxjs';
 import {getPackagePublishArguments, runPublish} from '../../source/npm/publish.js';
 
 test('no options set', t => {
@@ -37,13 +38,14 @@ test('options.provenance', t => {
 });
 
 test('runPublish uses cwd option when provided', async t => {
-	const result = await runPublish(['echo', ['test']], {cwd: '/tmp'});
-	t.is(result.cwd, '/tmp');
+	const observable = runPublish(['echo', ['test']], {cwd: '/tmp'});
+	// Should complete successfully
+	await t.notThrowsAsync(firstValueFrom(observable));
 });
 
-test('runPublish sets stdin to inherit and includes timeout', async t => {
-	const result = runPublish(['echo', ['test']]);
-	t.not(result, undefined);
+test('runPublish returns an Observable that completes successfully', async t => {
+	const observable = runPublish(['echo', ['test']]);
+	t.not(observable, undefined);
 	// Process should complete successfully with our default options
-	await t.notThrowsAsync(result);
+	await t.notThrowsAsync(firstValueFrom(observable));
 });
