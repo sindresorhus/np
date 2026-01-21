@@ -162,7 +162,8 @@ const hasRemote = async () => {
 };
 
 const hasUnfetchedChangesFromRemote = async () => {
-	const {stdout: possibleNewChanges} = await execa('git', ['fetch', '--dry-run'], {timeout: gitNetworkTimeout});
+	// Inherit stdin to allow SSH password prompts for password-protected keys
+	const {stdout: possibleNewChanges} = await execa('git', ['fetch', '--dry-run'], {stdin: 'inherit', timeout: gitNetworkTimeout});
 
 	// There are unfetched changes if output is not empty.
 	return Boolean(possibleNewChanges);
@@ -191,14 +192,16 @@ export const verifyRemoteHistoryIsClean = async () => {
 
 export const verifyRemoteIsValid = async () => {
 	try {
-		await execa('git', ['ls-remote', 'origin', 'HEAD'], {timeout: gitNetworkTimeout});
+		// Inherit stdin to allow SSH password prompts for password-protected keys
+		await execa('git', ['ls-remote', 'origin', 'HEAD'], {stdin: 'inherit', timeout: gitNetworkTimeout});
 	} catch (error) {
 		throw new Error(error.stderr.replace('fatal:', 'Git fatal error:'));
 	}
 };
 
 export const fetch = async () => {
-	await execa('git', ['fetch'], {timeout: gitNetworkTimeout});
+	// Inherit stdin to allow SSH password prompts for password-protected keys
+	await execa('git', ['fetch'], {stdin: 'inherit', timeout: gitNetworkTimeout});
 };
 
 const hasLocalBranch = async branch => {
@@ -253,7 +256,8 @@ export const commitLogFromRevision = async revision => {
 };
 
 const push = async (tagArgument = '--follow-tags') => {
-	await execa('git', ['push', tagArgument], {timeout: gitNetworkTimeout});
+	// Inherit stdin to allow SSH password prompts for password-protected keys
+	await execa('git', ['push', tagArgument], {stdin: 'inherit', timeout: gitNetworkTimeout});
 };
 
 export const pushGraceful = async remoteIsOnGitHub => {
