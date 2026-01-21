@@ -29,6 +29,13 @@ test('options.publishScoped', t => {
 	);
 });
 
+test('options.provenance', t => {
+	t.deepEqual(
+		getPackagePublishArguments({provenance: true}),
+		['publish', '--provenance'],
+	);
+});
+
 test('runPublish uses cwd option when provided', async t => {
 	const result = await runPublish(['echo', ['test']], {cwd: '/tmp'});
 	t.is(result.cwd, '/tmp');

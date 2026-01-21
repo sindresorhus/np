@@ -40,6 +40,7 @@ const cli = meow(`
 	  --no-2fa               Don't enable 2FA on new packages (not recommended)
 	  --message              Version bump commit message, '%s' will be replaced with version (default: '%s' with npm and 'v%s' with yarn)
 	  --package-manager      Use a specific package manager (default: 'packageManager' field in package.json)
+	  --provenance           Publish with npm provenance statements (CI-only)
 
 	Examples
 	  $ np
@@ -99,6 +100,9 @@ const cli = meow(`
 		},
 		message: {
 			type: 'string',
+		},
+		provenance: {
+			type: 'boolean',
 		},
 	},
 });

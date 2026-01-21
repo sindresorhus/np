@@ -15,6 +15,10 @@ export const getPackagePublishArguments = options => {
 		arguments_.push('--access', 'public');
 	}
 
+	if (options.provenance) {
+		arguments_.push('--provenance');
+	}
+
 	return arguments_;
 };
 
