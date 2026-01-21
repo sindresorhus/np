@@ -5,8 +5,8 @@ export const npmConfig = {
 	installCommand: ['npm', ['ci', '--engine-strict']],
 	installCommandNoLockfile: ['npm', ['install', '--no-package-lock', '--no-production', '--engine-strict']],
 	versionCommand: version => ['npm', ['version', version]],
-	getRegistryCommand: ['npm', ['config', 'get', 'registry']],
-	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix']],
+	getRegistryCommand: ['npm', ['config', 'get', 'registry', '--workspaces=false']],
+	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix', '--workspaces=false']],
 	lockfiles: ['package-lock.json', 'npm-shrinkwrap.json'],
 };
 
@@ -18,7 +18,7 @@ export const pnpmConfig = {
 	installCommandNoLockfile: ['pnpm', ['install']],
 	versionCommand: version => ['pnpm', ['version', version]],
 	// By default, pnpm config returns `undefined` instead of `v` for tag-version-prefix, so for consistent default behavior, use npm.
-	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix']],
+	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix', '--workspaces=false']],
 	// Disable duplicated pnpm Git checks
 	publishCommand: arguments_ => ['pnpm', [...arguments_, '--no-git-checks']],
 	getRegistryCommand: ['pnpm', ['config', 'get', 'registry']],
@@ -63,7 +63,7 @@ export const bunConfig = {
 	// Bun doesn't support publishing, so we use npm instead. See https://github.com/oven-sh/bun/issues/5050
 	publishCommand: arguments_ => ['npm', arguments_],
 	// TODO: Bun doesn't support config get registry, this should be added in the future. See https://github.com/oven-sh/bun/issues/7140
-	getRegistryCommand: ['npm', ['config', 'get', 'registry']],
-	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix']],
+	getRegistryCommand: ['npm', ['config', 'get', 'registry', '--workspaces=false']],
+	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix', '--workspaces=false']],
 	lockfiles: ['bun.lockb', 'bun.lock'],
 };

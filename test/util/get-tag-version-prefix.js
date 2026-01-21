@@ -7,7 +7,7 @@ import {npmConfig, yarnConfig, pnpmConfig} from '../../source/package-manager/co
 const createFixture = _createFixture('../../source/util.js', import.meta.url);
 
 test('returns tag prefix - npm', createFixture, [{
-	command: 'npm config get tag-version-prefix',
+	command: 'npm config get tag-version-prefix --workspaces=false',
 	stdout: 'ver',
 }], async ({t, testedModule: {getTagVersionPrefix}}) => {
 	t.is(
@@ -27,7 +27,7 @@ test('returns preId postfix - yarn', createFixture, [{
 });
 
 test('defaults to "v" when command fails', createFixture, [{
-	command: 'npm config get tag-version-prefix',
+	command: 'npm config get tag-version-prefix --workspaces=false',
 	exitCode: 1,
 }], async ({t, testedModule: {getTagVersionPrefix}}) => {
 	t.is(
@@ -37,7 +37,7 @@ test('defaults to "v" when command fails', createFixture, [{
 });
 
 test('returns tag prefix - pnpm (uses npm config)', createFixture, [{
-	command: 'npm config get tag-version-prefix',
+	command: 'npm config get tag-version-prefix --workspaces=false',
 	stdout: 'v',
 }], async ({t, testedModule: {getTagVersionPrefix}}) => {
 	t.is(
@@ -47,7 +47,7 @@ test('returns tag prefix - pnpm (uses npm config)', createFixture, [{
 });
 
 test('returns custom tag prefix - pnpm', createFixture, [{
-	command: 'npm config get tag-version-prefix',
+	command: 'npm config get tag-version-prefix --workspaces=false',
 	stdout: 'ver',
 }], async ({t, testedModule: {getTagVersionPrefix}}) => {
 	t.is(
@@ -57,7 +57,7 @@ test('returns custom tag prefix - pnpm', createFixture, [{
 });
 
 test('returns empty string tag prefix - pnpm', createFixture, [{
-	command: 'npm config get tag-version-prefix',
+	command: 'npm config get tag-version-prefix --workspaces=false',
 	stdout: '',
 }], async ({t, testedModule: {getTagVersionPrefix}}) => {
 	t.is(
@@ -67,7 +67,7 @@ test('returns empty string tag prefix - pnpm', createFixture, [{
 });
 
 test('pnpm defaults to "v" when npm config fails', createFixture, [{
-	command: 'npm config get tag-version-prefix',
+	command: 'npm config get tag-version-prefix --workspaces=false',
 	exitCode: 1,
 }], async ({t, testedModule: {getTagVersionPrefix}}) => {
 	t.is(
