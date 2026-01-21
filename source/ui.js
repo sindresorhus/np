@@ -5,10 +5,18 @@ import {htmlEscape} from 'escape-goat';
 import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
 import {execa} from 'execa';
+import semver from 'semver';
 import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
+
+const PRERELEASE_INCREMENTS = new Set([
+	'prepatch',
+	'preminor',
+	'premajor',
+	'prerelease',
+]);
 
 const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch) => {
 	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
@@ -297,11 +305,19 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 		}
 	}
 
-	const needsPrereleaseTag = answers => (
-		options.runPublish
-		&& (answers.version?.isPrerelease() || answers.customVersion?.isPrerelease())
-		&& !options.tag
-	);
+	const needsPrereleaseTag = answers => {
+		if (!options.runPublish || options.tag) {
+			return false;
+		}
+
+		// Check if version is a prerelease increment
+		if (answers.version) {
+			return PRERELEASE_INCREMENTS.has(answers.version);
+		}
+
+		// Check if custom version is a prerelease
+		return answers.customVersion?.isPrerelease();
+	};
 
 	const alreadyPublicScoped = packageManager.id === 'yarn-berry' && options.runPublish && await util.getNpmPackageAccess(package_) === 'public';
 
@@ -318,6 +334,13 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 		return !package_.publishConfig?.access && !npm.isExternalRegistry(package_);
 	})();
 
+	// Extract prerelease identifier from current version if it exists, otherwise use npm config
+	const currentPrerelease = semver.prerelease(oldVersion);
+	// Only use the prefix if it's a string (not a number like in '1.0.0-0')
+	const currentPrereleasePrefix = typeof currentPrerelease?.[0] === 'string' ? currentPrerelease[0] : undefined;
+	const configPrereleasePrefix = await util.getPreReleasePrefix(packageManager);
+	const defaultPrereleasePrefix = currentPrereleasePrefix ?? configPrereleasePrefix;
+
 	const answers = await inquirer.prompt({
 		version: {
 			type: 'select',
@@ -325,8 +348,8 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 			pageSize: SEMVER_INCREMENTS.length + 2,
 			default: 0,
 			choices: [
-				...SEMVER_INCREMENTS.map(increment => ({ // TODO: prerelease prefix here too
-					name: `${increment} 	${new Version(oldVersion, increment).format()}`,
+				...SEMVER_INCREMENTS.map(increment => ({
+					name: `${increment} 	${new Version(oldVersion, increment, {prereleasePrefix: defaultPrereleasePrefix}).format()}`,
 					value: increment,
 				})),
 				new inquirer.Separator(),
@@ -335,7 +358,6 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 					value: undefined,
 				},
 			],
-			filter: input => input ? new Version(oldVersion, input) : input,
 		},
 		customVersion: {
 			type: 'input',
@@ -362,6 +384,20 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 				}
 
 				return version;
+			},
+		},
+		prereleasePrefix: {
+			type: 'input',
+			message: 'Prerelease identifier',
+			// Use || not ?? to treat empty string as falsy (show 'rc' instead of empty default)
+			default: defaultPrereleasePrefix || 'rc',
+			when(answers) {
+				// Only ask when a prerelease increment was selected from the menu
+				if (!answers.version) {
+					return false;
+				}
+
+				return PRERELEASE_INCREMENTS.has(answers.version);
 			},
 		},
 		tag: {
@@ -405,9 +441,21 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 		},
 	});
 
+	// Create Version object with custom prerelease prefix if provided
+	let version;
+	if (answers.version) {
+		// Use || not ?? to treat empty string as falsy (fall back to default/rc)
+		const prereleasePrefix = answers.prereleasePrefix || defaultPrereleasePrefix;
+		version = new Version(oldVersion, answers.version, {prereleasePrefix});
+	} else if (answers.customVersion) {
+		version = answers.customVersion;
+	} else {
+		version = options.version;
+	}
+
 	return {
 		...options,
-		version: answers.version || answers.customVersion || options.version,
+		version,
 		tag: answers.tag || answers.customTag || options.tag,
 		publishScoped: alreadyPublicScoped || answers.publishScoped,
 		confirm: true,

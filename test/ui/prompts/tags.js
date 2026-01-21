@@ -49,6 +49,7 @@ test('choose next', testUi, {
 	tags: ['next'],
 	answers: {
 		version: 'prerelease',
+		prereleasePrefix: '',
 		tag: 'next',
 	},
 }, ({t, results: {version, tag}}) => {
@@ -61,6 +62,7 @@ test('choose beta', testUi, {
 	tags: ['beta', 'stable'],
 	answers: {
 		version: 'prerelease',
+		prereleasePrefix: '',
 		tag: 'beta',
 	},
 }, ({t, results: {version, tag}}) => {
@@ -73,6 +75,7 @@ test('choose custom', testUi, {
 	tags: ['next'],
 	answers: {
 		version: 'prerelease',
+		prereleasePrefix: '',
 		tag: 'Other (specify)',
 		customTag: 'alpha',
 	},
@@ -86,6 +89,7 @@ test('choose custom - validation', testUi, {
 	tags: ['next'],
 	answers: {
 		version: 'prerelease',
+		prereleasePrefix: '',
 		tag: 'Other (specify)',
 		customTag: [
 			{
@@ -124,6 +128,7 @@ for (const {version, expected} of fixtures) {
 		tags: ['next'],
 		answers: {
 			version,
+			prereleasePrefix: '',
 			tag: 'next',
 		},
 	}, ({t, results: {version, tag}}) => {
