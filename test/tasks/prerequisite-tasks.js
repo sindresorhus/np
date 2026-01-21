@@ -54,6 +54,9 @@ test.serial('private package: should disable task pinging npm registry', createF
 });
 
 test.serial('external registry: should disable task pinging npm registry', createFixture, [{
+	command: 'npm view --json test engines --registry http://my.io',
+	stdout: '',
+}, {
 	command: 'git config user.name',
 	stdout: 'Test User',
 }, {
@@ -361,4 +364,293 @@ test.serial('should skip authentication check when OIDC is detected', createFixt
 	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)));
 
 	assertTaskSkipped(t, 'Verify user is authenticated');
+});
+
+test.serial('should fail when dropping Node.js support in a minor release', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify({node: '>=16'}),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.throwsAsync(
+		run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, npmConfig)),
+		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a minor bump.'},
+	);
+
+	assertTaskFailed(t, 'Check for Node.js engine support drop');
+});
+
+test.serial('should fail when dropping Node.js support in a patch release', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify({node: '>=16'}),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.0.1',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.throwsAsync(
+		run(prerequisiteTasks('1.0.1', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, npmConfig)),
+		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a patch bump.'},
+	);
+
+	assertTaskFailed(t, 'Check for Node.js engine support drop');
+});
+
+test.serial('should not fail when dropping Node.js support in a major release', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify({node: '>=16'}),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, npmConfig)));
+});
+
+test.serial('should not fail when dropping Node.js support in a premajor release', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify({node: '>=16'}),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0-0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, npmConfig)));
+});
+
+test.serial('should not fail when engines.node was not previously set', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify({}),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, npmConfig)));
+});
+
+test.serial('should not fail when first publishing a package', createFixture, [{
+	command: 'npm view --json test engines',
+	exitCode: 1,
+	stderr: 'E404 Not Found',
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.0.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.notThrowsAsync(run(prerequisiteTasks('1.0.0', {name: 'test', version: '0.0.0', engines: {node: '>=18'}}, {}, npmConfig)));
+});
+
+test.serial('should not fail when local package has no engines.node', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify({node: '>=16'}),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)));
+});
+
+test.serial('private package: should disable task checking for Node.js engine support drop', createFixture, [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	const package_ = {
+		name: 'test',
+		version: '1.0.0',
+		private: true,
+		engines: {node: '>=18'},
+	};
+
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', package_, {}, npmConfig)));
+
+	assertTaskDisabled(t, 'Check for Node.js engine support drop');
+});
+
+test.serial('should not fail when Node.js minimum version stays the same', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify({node: '>=18'}),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, npmConfig)));
+});
+
+test.serial('should not fail when Node.js minimum version is lowered', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify({node: '>=18'}),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=16'}}, {}, npmConfig)));
+});
+
+test.serial('should fail when dropping Node.js support in a preminor release', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify({node: '>=16'}),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0-0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.throwsAsync(
+		run(prerequisiteTasks('1.1.0-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, npmConfig)),
+		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a preminor bump.'},
+	);
+
+	assertTaskFailed(t, 'Check for Node.js engine support drop');
+});
+
+test.serial('should fail when dropping Node.js support in a prepatch release', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify({node: '>=16'}),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.0.1-0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.throwsAsync(
+		run(prerequisiteTasks('1.0.1-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, npmConfig)),
+		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a prepatch bump.'},
+	);
+
+	assertTaskFailed(t, 'Check for Node.js engine support drop');
+});
+
+test.serial('should fail when dropping Node.js support in a prerelease release', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify({node: '>=16'}),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.0.0-1',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.throwsAsync(
+		run(prerequisiteTasks('1.0.0-1', {name: 'test', version: '1.0.0-0', engines: {node: '>=18'}}, {tag: 'next'}, npmConfig)),
+		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a prerelease bump.'},
+	);
+
+	assertTaskFailed(t, 'Check for Node.js engine support drop');
+});
+
+test.serial('yolo mode: should disable task checking for Node.js engine support drop', createFixture, [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	const package_ = {
+		name: 'test',
+		version: '1.0.0',
+		engines: {node: '>=18'},
+	};
+
+	// Should not throw even though we're dropping Node.js support in a minor release,
+	// because yolo mode skips this check
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', package_, {yolo: true}, npmConfig)));
+
+	assertTaskDisabled(t, 'Check for Node.js engine support drop');
+});
+
+test.serial('external registry: should skip engine check when registry returns error', createFixture, [{
+	command: 'npm view --json test engines --registry http://my.io',
+	exitCode: 1,
+	stderr: 'E405 Method Not Allowed',
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	const package_ = {
+		name: 'test',
+		version: '1.0.0',
+		engines: {node: '>=18'},
+		publishConfig: {registry: 'http://my.io'},
+	};
+
+	// Should not throw even though we're dropping Node.js support in a minor release,
+	// because the external registry doesn't support the npm view endpoint
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', package_, {}, npmConfig)));
 });

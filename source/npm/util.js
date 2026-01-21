@@ -225,3 +225,37 @@ export const getFilesToBePacked = async rootDirectory => {
 		throw new Error('Failed to parse output of npm pack', {cause: error});
 	}
 };
+
+export const getPublishedPackageEngines = async package_ => {
+	const arguments_ = ['view', '--json', package_.name, 'engines'];
+
+	if (package_.publishConfig?.registry) {
+		arguments_.push('--registry', package_.publishConfig.registry);
+	}
+
+	try {
+		const {stdout} = await execa('npm', arguments_, {timeout: npmNetworkTimeout});
+
+		// Handle empty response (package exists but has no engines field)
+		if (stdout.trim() === '') {
+			return undefined;
+		}
+
+		return JSON.parse(stdout);
+	} catch (error) {
+		throwIfNpmTimeout(error);
+
+		// Package doesn't exist yet (first publish)
+		if (error.stderr?.includes('E404')) {
+			return undefined;
+		}
+
+		// External registries often don't support this endpoint, so ignore errors.
+		// See: https://github.com/sindresorhus/np/issues/420
+		if (isExternalRegistry(package_)) {
+			return undefined;
+		}
+
+		throw error;
+	}
+};

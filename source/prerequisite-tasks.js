@@ -1,6 +1,7 @@
 import process from 'node:process';
 import Listr from 'listr';
 import {execa} from 'execa';
+import semver from 'semver';
 import Version from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
@@ -73,6 +74,43 @@ const prerequisiteTasks = (input, package_, options, packageManager) => {
 			task() {
 				if (!package_.private && newVersion.isPrerelease() && !options.tag) {
 					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
+				}
+			},
+		},
+		{
+			title: 'Check for Node.js engine support drop',
+			enabled: () => !options.yolo && !package_.private,
+			async task() {
+				const publishedEngines = await npm.getPublishedPackageEngines(package_);
+
+				// Skip if this is the first publish or if published package has no engines.node
+				if (!publishedEngines?.node) {
+					return;
+				}
+
+				const localNodeEngine = package_.engines?.node;
+
+				// Skip if local package has no engines.node (we can't compare)
+				if (!localNodeEngine) {
+					return;
+				}
+
+				const publishedMinimum = util.getMinimumNodeVersion(publishedEngines.node);
+				const localMinimum = util.getMinimumNodeVersion(localNodeEngine);
+
+				// Skip if we couldn't parse either version
+				if (!publishedMinimum || !localMinimum) {
+					return;
+				}
+
+				// Check if the minimum Node.js version has increased
+				if (semver.gt(localMinimum, publishedMinimum)) {
+					const diff = semver.diff(package_.version, newVersion.toString());
+
+					// Only major and premajor releases are allowed to drop Node.js support
+					if (diff !== 'major' && diff !== 'premajor') {
+						throw new Error(`Dropping Node.js support from ${publishedMinimum} to ${localMinimum} requires a major version bump. The current release is a ${diff} bump.`);
+					}
 				}
 			},
 		},

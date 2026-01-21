@@ -8,6 +8,7 @@ import terminalLink from 'terminal-link';
 import {execa} from 'execa';
 import pMemoize from 'p-memoize';
 import chalk from 'chalk';
+import semver from 'semver';
 import Version from './version.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
@@ -262,3 +263,16 @@ export async function getNpmPackageAccess(package_) {
 		throw error;
 	}
 }
+
+export const getMinimumNodeVersion = range => {
+	if (!range || typeof range !== 'string') {
+		return undefined;
+	}
+
+	try {
+		const minVersion = semver.minVersion(range);
+		return minVersion?.version;
+	} catch {
+		return undefined;
+	}
+};
