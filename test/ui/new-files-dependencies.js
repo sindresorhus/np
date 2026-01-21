@@ -19,7 +19,7 @@ const checkLines = message => (
 	}
 );
 
-const checkNewUnpublished = checkLines('The following new files will not be part of your published package:');
+const checkNewUnpublished = checkLines('⚠ WARNING: The following new files will NOT be published:');
 const checkFirstTimeFiles = checkLines('The following new files will be published for the first time:');
 const checkNewDependencies = checkLines('The following new dependencies will be part of your published package:');
 

@@ -81,21 +81,18 @@ const checkNewFilesAndDependencies = async (package_, rootDirectory) => {
 	const newFiles = await util.getNewFiles(rootDirectory);
 	const newDependencies = await util.getNewDependencies(package_, rootDirectory);
 
-	const noNewUnpublishedFiles = !newFiles.unpublished || newFiles.unpublished.length === 0;
 	const noNewFirstTimeFiles = !newFiles.firstTime || newFiles.firstTime.length === 0;
-	const noNewFiles = noNewUnpublishedFiles && noNewFirstTimeFiles;
-
 	const noNewDependencies = !newDependencies || newDependencies.length === 0;
 
-	if (noNewFiles && noNewDependencies) {
-		return true;
+	// Only prompt for first-time files and new dependencies (things that WILL be published)
+	if (noNewFirstTimeFiles && noNewDependencies) {
+		return {
+			confirmed: true,
+			unpublishedFiles: newFiles.unpublished || [],
+		};
 	}
 
 	const messages = [];
-	if (newFiles.unpublished.length > 0) {
-		messages.push(`The following new files will not be part of your published package:\n${util.groupFilesInFolders(newFiles.unpublished)}\n\nIf you intended to publish them, add them to the \`files\` field in package.json.`);
-	}
-
 	if (newFiles.firstTime.length > 0) {
 		messages.push(`The following new files will be published for the first time:\n${util.joinList(newFiles.firstTime)}\n\nPlease make sure only the intended files are listed.`);
 	}
@@ -106,7 +103,10 @@ const checkNewFilesAndDependencies = async (package_, rootDirectory) => {
 
 	if (!isInteractive()) {
 		console.log(messages.join('\n'));
-		return true;
+		return {
+			confirmed: true,
+			unpublishedFiles: newFiles.unpublished || [],
+		};
 	}
 
 	const answers = await inquirer.prompt([{
@@ -116,7 +116,26 @@ const checkNewFilesAndDependencies = async (package_, rootDirectory) => {
 		default: false,
 	}]);
 
-	return answers.confirm;
+	return {
+		confirmed: answers.confirm,
+		unpublishedFiles: newFiles.unpublished || [],
+	};
+};
+
+const displayUnpublishedFilesWarning = unpublishedFiles => {
+	if (!unpublishedFiles || unpublishedFiles.length === 0) {
+		return;
+	}
+
+	console.log([
+		'',
+		chalk.yellow('⚠ WARNING: The following new files will NOT be published:'),
+		chalk.dim(util.groupFilesInFolders(unpublishedFiles)),
+		'',
+		chalk.yellow('These files are excluded by your package.json "files" field.'),
+		chalk.yellow('If you intended to publish them, add them to the "files" field.'),
+		'',
+	].join('\n'));
 };
 
 /**
@@ -131,14 +150,16 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 	const {stdout: registryUrl} = await execa(...packageManager.getRegistryCommand);
 	const releaseBranch = options.branch;
 
+	let unpublishedFiles;
 	if (options.runPublish) {
 		await npm.checkIgnoreStrategy(package_, rootDirectory);
 
-		const answerIgnoredFiles = await checkNewFilesAndDependencies(package_, rootDirectory);
-		if (!answerIgnoredFiles) {
+		const {confirmed, unpublishedFiles: files} = await checkNewFilesAndDependencies(package_, rootDirectory);
+		unpublishedFiles = files;
+		if (!confirmed) {
 			return {
 				...options,
-				confirm: answerIgnoredFiles,
+				confirm: confirmed,
 			};
 		}
 	}
@@ -155,6 +176,9 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 
 	const useLatestTag = !options.releaseDraftOnly;
 	const {hasCommits, hasUnreleasedCommits, generateReleaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
+
+	// Display unpublished files warning after commit log
+	displayUnpublishedFilesWarning(unpublishedFiles);
 
 	if (hasUnreleasedCommits && options.releaseDraftOnly) {
 		const answers = await inquirer.prompt({
