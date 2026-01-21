@@ -84,7 +84,15 @@ const NPM_DEFAULT_REGISTRIES = new Set([
 ]);
 export const isExternalRegistry = package_ => {
 	const registry = package_.publishConfig?.registry;
-	return typeof registry === 'string' && !NPM_DEFAULT_REGISTRIES.has(registry);
+	if (typeof registry !== 'string') {
+		return false;
+	}
+
+	const normalizedRegistry = registry.trim();
+	const httpsVariant = normalizedRegistry.replace(/^http:\/\//, 'https://');
+
+	return !NPM_DEFAULT_REGISTRIES.has(normalizedRegistry)
+		&& !NPM_DEFAULT_REGISTRIES.has(httpsVariant);
 };
 
 export const collaborators = async package_ => {

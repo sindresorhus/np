@@ -290,11 +290,8 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 			return false;
 		}
 
-		if (!package_.publishConfig) {
-			return true;
-		}
-
-		return package_.publishConfig.access !== 'restricted' && !npm.isExternalRegistry(package_);
+		// Only ask if access is not explicitly set and not using an external registry
+		return !package_.publishConfig?.access && !npm.isExternalRegistry(package_);
 	})();
 
 	const answers = await inquirer.prompt({
