@@ -23,6 +23,7 @@ import gitTasks from './git-tasks.js';
 import {getPackagePublishArguments, runPublish} from './npm/publish.js';
 import enable2fa, {getEnable2faArguments} from './npm/enable-2fa.js';
 import handleNpmError from './npm/handle-npm-error.js';
+import {getOidcProvider} from './npm/oidc.js';
 import releaseTaskHelper from './release-task-helper.js';
 import {findLockfile, printCommand} from './package-manager/index.js';
 import * as util from './util.js';
@@ -110,7 +111,8 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 		}
 	}, {wait: 2000});
 
-	const shouldEnable2FA = options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !package_.private && !npm.isExternalRegistry(package_);
+	// Don't enable 2FA when using OIDC (Trusted Publishing) as it's already managed
+	const shouldEnable2FA = options['2fa'] && options.availability.isAvailable && !options.availability.isUnknown && !package_.private && !npm.isExternalRegistry(package_) && !getOidcProvider();
 
 	// To prevent the process from hanging due to watch mode (e.g. when running `vitest`)
 	const ciEnvOptions = {env: {CI: 'true'}};
