@@ -1,0 +1,8 @@
+{
+	"name": "foo",
+	"version": "0.0.0",
+	"files": ["index.js"],
+	"scripts": {
+		"prepare": "echo '> foo@0.0.0 prepare' && echo '> test prepare script'"
+	}
+}

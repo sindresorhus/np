@@ -71,3 +71,6 @@ test('doesn\'t show files in .github', verifyPackedFiles, 'dot-github', [
 	'index.js',
 ]);
 
+test('handles prepare script output (e.g., Husky)', verifyPackedFiles, 'prepare-script', [
+	'index.js',
+]);

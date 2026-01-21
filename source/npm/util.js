@@ -192,7 +192,11 @@ export const getFilesToBePacked = async rootDirectory => {
 	], {cwd: rootDirectory});
 
 	try {
-		const {files} = JSON.parse(stdout).at(0);
+		// HACK: NPM lifecycle scripts can output text even with --silent and --foreground-scripts=false.
+		// For example, Husky's prepare script outputs "> package@version prepare" and "> husky install".
+		// We extract only the JSON portion by finding the first '[' character.
+		// Related: https://github.com/sindresorhus/np/issues/742
+		const {files} = JSON.parse(stdout.slice(Math.max(0, stdout.indexOf('[')))).at(0);
 		return files.map(file => file.path);
 	} catch (error) {
 		throw new Error('Failed to parse output of npm pack', {cause: error});
