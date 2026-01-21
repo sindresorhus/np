@@ -8,7 +8,7 @@ import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 import {getOidcProvider} from './npm/oidc.js';
 
-const prerequisiteTasks = (input, package_, options, packageManager) => {
+const prerequisiteTasks = (input, package_, options, {packageManager, rootDirectory}) => {
 	const isExternalRegistry = npm.isExternalRegistry(package_);
 	let newVersion;
 
@@ -112,6 +112,13 @@ const prerequisiteTasks = (input, package_, options, packageManager) => {
 						throw new Error(`Dropping Node.js support from ${publishedMinimum} to ${localMinimum} requires a major version bump. The current release is a ${diff} bump.`);
 					}
 				}
+			},
+		},
+		{
+			title: 'Verify package entry points',
+			enabled: () => !options.yolo,
+			async task() {
+				await npm.verifyPackageEntryPoints(package_, rootDirectory);
 			},
 		},
 		{

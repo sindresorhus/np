@@ -31,7 +31,7 @@ test.serial('public-package published on npm registry: should fail when npm regi
 	stderr: 'failed',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('1.0.0', {name: 'test'}, {}, npmConfig)),
+		run(prerequisiteTasks('1.0.0', {name: 'test'}, {}, {packageManager: npmConfig})),
 		{message: 'Connection to npm registry failed'},
 	);
 
@@ -48,7 +48,7 @@ test.serial('private package: should disable task pinging npm registry', createF
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {}, {packageManager: npmConfig})));
 
 	assertTaskDisabled(t, 'Ping npm registry');
 });
@@ -66,7 +66,7 @@ test.serial('external registry: should disable task pinging npm registry', creat
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {}, {packageManager: npmConfig})));
 
 	assertTaskDisabled(t, 'Ping npm registry');
 });
@@ -84,7 +84,7 @@ test.serial('should fail when npm version does not match range in `package.json`
 	const depRange = npPackage.engines.npm;
 
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
 		{message: `\`np\` requires npm ${depRange}`},
 	);
 
@@ -104,7 +104,7 @@ test.serial('should fail when yarn version does not match range in `package.json
 	const depRange = npPackage.engines.yarn;
 
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, yarnConfig)),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: yarnConfig})),
 		{message: `\`np\` requires yarn ${depRange}`},
 	);
 
@@ -124,7 +124,7 @@ test.serial('should fail when user is not authenticated at npm registry', create
 	process.env.NODE_ENV = 'P';
 
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
 		{message: 'You do not have write permissions required to publish this package.'},
 	);
 
@@ -146,7 +146,7 @@ test.serial('should fail when user is not authenticated at external registry', c
 	process.env.NODE_ENV = 'P';
 
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {}, npmConfig)),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {}, {packageManager: npmConfig})),
 		{message: 'You do not have write permissions required to publish this package.'},
 	);
 
@@ -168,7 +168,7 @@ test.serial('should use publishConfig.registry even when set to official npm reg
 	process.env.NODE_ENV = 'P';
 
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'https://registry.npmjs.org/'}}, {}, npmConfig)),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'https://registry.npmjs.org/'}}, {}, {packageManager: npmConfig})),
 		{message: 'You do not have write permissions required to publish this package.'},
 	);
 
@@ -191,7 +191,7 @@ test.serial('private package: should disable task `verify user is authenticated`
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	process.env.NODE_ENV = 'P';
 
-	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {}, {packageManager: npmConfig})));
 
 	process.env.NODE_ENV = 'test';
 
@@ -205,7 +205,7 @@ test.serial('should fail when git version does not match range in `package.json`
 	const depRange = npPackage.engines.git;
 
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
 		{message: `\`np\` requires git ${depRange}`},
 	);
 
@@ -218,7 +218,7 @@ test.serial('should fail when git user.name is not set', createFixture, [{
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
 		{message: /Git user configuration is not set/},
 	);
 
@@ -234,7 +234,7 @@ test.serial('should fail when git user.email is not set', createFixture, [{
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
 		{message: /Git user configuration is not set/},
 	);
 
@@ -248,7 +248,7 @@ test.serial('should fail when git remote does not exist', createFixture, [{
 	stderr: 'not found',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
 		{message: 'not found'},
 	);
 
@@ -257,7 +257,7 @@ test.serial('should fail when git remote does not exist', createFixture, [{
 
 test.serial('should fail when version is invalid', createFixture, [], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('DDD', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('DDD', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
 		{message: 'New version DDD should either be one of patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid SemVer version.'},
 	);
 
@@ -266,7 +266,7 @@ test.serial('should fail when version is invalid', createFixture, [], async ({t,
 
 test.serial('should fail when version is lower than latest version', createFixture, [], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('0.1.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('0.1.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
 		{message: 'New version 0.1.0 should be higher than current version 1.0.0.'},
 	);
 
@@ -275,7 +275,7 @@ test.serial('should fail when version is lower than latest version', createFixtu
 
 test.serial('should fail when prerelease version of public package without dist tag given', createFixture, [], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
 		{message: 'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag'},
 	);
 
@@ -292,7 +292,7 @@ test.serial('should not fail when prerelease version of public package with dist
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {tag: 'pre'}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {tag: 'pre'}, {packageManager: npmConfig})));
 });
 
 test.serial('should not fail when prerelease version of private package without dist tag given', createFixture, [{
@@ -305,7 +305,7 @@ test.serial('should not fail when prerelease version of private package without 
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0', private: true}, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0', private: true}, {}, {packageManager: npmConfig})));
 });
 
 test.serial('should fail when git tag already exists', createFixture, [{
@@ -319,7 +319,7 @@ test.serial('should fail when git tag already exists', createFixture, [{
 	stdout: 'vvb',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)),
+		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
 		{message: 'Git tag `v2.0.0` already exists.'},
 	);
 
@@ -336,7 +336,7 @@ test.serial('checks should pass', createFixture, [{
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})));
 });
 
 test.serial('should skip authentication check when OIDC is detected', createFixture, [{
@@ -361,7 +361,7 @@ test.serial('should skip authentication check when OIDC is detected', createFixt
 		process.env.NODE_ENV = 'test';
 	});
 
-	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})));
 
 	assertTaskSkipped(t, 'Verify user is authenticated');
 });
@@ -380,7 +380,7 @@ test.serial('should fail when dropping Node.js support in a minor release', crea
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, npmConfig)),
+		run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})),
 		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a minor bump.'},
 	);
 
@@ -401,7 +401,7 @@ test.serial('should fail when dropping Node.js support in a patch release', crea
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('1.0.1', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, npmConfig)),
+		run(prerequisiteTasks('1.0.1', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})),
 		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a patch bump.'},
 	);
 
@@ -421,7 +421,7 @@ test.serial('should not fail when dropping Node.js support in a major release', 
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})));
 });
 
 test.serial('should not fail when dropping Node.js support in a premajor release', createFixture, [{
@@ -437,7 +437,7 @@ test.serial('should not fail when dropping Node.js support in a premajor release
 	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0-0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, {packageManager: npmConfig})));
 });
 
 test.serial('should not fail when engines.node was not previously set', createFixture, [{
@@ -453,7 +453,7 @@ test.serial('should not fail when engines.node was not previously set', createFi
 	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})));
 });
 
 test.serial('should not fail when first publishing a package', createFixture, [{
@@ -470,7 +470,7 @@ test.serial('should not fail when first publishing a package', createFixture, [{
 	command: 'git rev-parse --quiet --verify refs/tags/v1.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(run(prerequisiteTasks('1.0.0', {name: 'test', version: '0.0.0', engines: {node: '>=18'}}, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('1.0.0', {name: 'test', version: '0.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})));
 });
 
 test.serial('should not fail when local package has no engines.node', createFixture, [{
@@ -486,7 +486,7 @@ test.serial('should not fail when local package has no engines.node', createFixt
 	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0'}, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})));
 });
 
 test.serial('private package: should disable task checking for Node.js engine support drop', createFixture, [{
@@ -506,7 +506,7 @@ test.serial('private package: should disable task checking for Node.js engine su
 		engines: {node: '>=18'},
 	};
 
-	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', package_, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', package_, {}, {packageManager: npmConfig})));
 
 	assertTaskDisabled(t, 'Check for Node.js engine support drop');
 });
@@ -524,7 +524,7 @@ test.serial('should not fail when Node.js minimum version stays the same', creat
 	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})));
 });
 
 test.serial('should not fail when Node.js minimum version is lowered', createFixture, [{
@@ -540,7 +540,7 @@ test.serial('should not fail when Node.js minimum version is lowered', createFix
 	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=16'}}, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=16'}}, {}, {packageManager: npmConfig})));
 });
 
 test.serial('should fail when dropping Node.js support in a preminor release', createFixture, [{
@@ -557,7 +557,7 @@ test.serial('should fail when dropping Node.js support in a preminor release', c
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('1.1.0-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, npmConfig)),
+		run(prerequisiteTasks('1.1.0-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, {packageManager: npmConfig})),
 		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a preminor bump.'},
 	);
 
@@ -578,7 +578,7 @@ test.serial('should fail when dropping Node.js support in a prepatch release', c
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('1.0.1-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, npmConfig)),
+		run(prerequisiteTasks('1.0.1-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, {packageManager: npmConfig})),
 		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a prepatch bump.'},
 	);
 
@@ -599,7 +599,7 @@ test.serial('should fail when dropping Node.js support in a prerelease release',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
-		run(prerequisiteTasks('1.0.0-1', {name: 'test', version: '1.0.0-0', engines: {node: '>=18'}}, {tag: 'next'}, npmConfig)),
+		run(prerequisiteTasks('1.0.0-1', {name: 'test', version: '1.0.0-0', engines: {node: '>=18'}}, {tag: 'next'}, {packageManager: npmConfig})),
 		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a prerelease bump.'},
 	);
 
@@ -624,7 +624,7 @@ test.serial('yolo mode: should disable task checking for Node.js engine support 
 
 	// Should not throw even though we're dropping Node.js support in a minor release,
 	// because yolo mode skips this check
-	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', package_, {yolo: true}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', package_, {yolo: true}, {packageManager: npmConfig})));
 
 	assertTaskDisabled(t, 'Check for Node.js engine support drop');
 });
@@ -652,5 +652,5 @@ test.serial('external registry: should skip engine check when registry returns e
 
 	// Should not throw even though we're dropping Node.js support in a minor release,
 	// because the external registry doesn't support the npm view endpoint
-	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', package_, {}, npmConfig)));
+	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', package_, {}, {packageManager: npmConfig})));
 });

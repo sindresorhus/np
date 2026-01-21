@@ -1,0 +1,6 @@
+{
+	"name": "missing-bin",
+	"version": "0.0.0",
+	"bin": "./cli.js",
+	"files": ["index.js"]
+}

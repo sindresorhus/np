@@ -226,6 +226,80 @@ export const getFilesToBePacked = async rootDirectory => {
 	}
 };
 
+const isValidEntryPoint = value => typeof value === 'string' && !value.includes('*');
+
+const getExportsFiles = exports => {
+	const files = [];
+
+	const extract = value => {
+		if (isValidEntryPoint(value)) {
+			files.push(value);
+		} else if (typeof value === 'object' && value !== null) {
+			for (const subvalue of Object.values(value)) {
+				extract(subvalue);
+			}
+		}
+	};
+
+	extract(exports);
+	return files;
+};
+
+export const getPackageEntryPoints = package_ => {
+	const entryPoints = [];
+
+	if (isValidEntryPoint(package_.main)) {
+		entryPoints.push({field: 'main', path: package_.main});
+	}
+
+	if (typeof package_.bin === 'string') {
+		if (isValidEntryPoint(package_.bin)) {
+			entryPoints.push({field: 'bin', path: package_.bin});
+		}
+	} else if (typeof package_.bin === 'object' && package_.bin !== null) {
+		for (const [name, binPath] of Object.entries(package_.bin)) {
+			if (isValidEntryPoint(binPath)) {
+				entryPoints.push({field: `bin.${name}`, path: binPath});
+			}
+		}
+	}
+
+	if (package_.exports) {
+		for (const file of getExportsFiles(package_.exports)) {
+			entryPoints.push({field: 'exports', path: file});
+		}
+	}
+
+	return entryPoints;
+};
+
+export const verifyPackageEntryPoints = async (package_, rootDirectory) => {
+	const packedFiles = new Set(await getFilesToBePacked(rootDirectory));
+	const entryPoints = getPackageEntryPoints(package_);
+
+	const seenPaths = new Set();
+	const missingEntryPoints = [];
+
+	for (const entryPoint of entryPoints) {
+		const normalizedPath = entryPoint.path.replace(/^\.\//, '');
+
+		if (seenPaths.has(normalizedPath)) {
+			continue;
+		}
+
+		seenPaths.add(normalizedPath);
+
+		if (!packedFiles.has(normalizedPath)) {
+			missingEntryPoints.push(entryPoint);
+		}
+	}
+
+	if (missingEntryPoints.length > 0) {
+		const missing = missingEntryPoints.map(({field, path: entryPath}) => `  "${field}": ${entryPath}`).join('\n');
+		throw new Error(`Missing entry points in published files:\n${missing}\n\nEnsure these files exist and are included in the "files" field.`);
+	}
+};
+
 export const getPublishedPackageEngines = async package_ => {
 	const arguments_ = ['view', '--json', package_.name, 'engines'];
 

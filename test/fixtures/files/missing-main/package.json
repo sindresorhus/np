@@ -1,0 +1,6 @@
+{
+	"name": "missing-main",
+	"version": "0.0.0",
+	"main": "dist/index.js",
+	"files": ["source"]
+}

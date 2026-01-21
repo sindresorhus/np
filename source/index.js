@@ -126,7 +126,7 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 		{
 			title: 'Prerequisite check',
 			enabled: () => options.runPublish,
-			task: () => prerequisiteTasks(input, package_, options, packageManager),
+			task: () => prerequisiteTasks(input, package_, options, {packageManager, rootDirectory}),
 		},
 		{
 			title: 'Git',
