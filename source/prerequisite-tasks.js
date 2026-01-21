@@ -59,7 +59,7 @@ const prerequisiteTasks = (input, package_, options, {packageManager, rootDirect
 		},
 		{
 			title: 'Check git remote',
-			task: async () => git.verifyRemoteIsValid(),
+			task: async () => git.verifyRemoteIsValid(options.remote),
 		},
 		{
 			title: 'Validate version',

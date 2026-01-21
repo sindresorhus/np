@@ -74,6 +74,7 @@ $ np --help
     --message               Version bump commit message, '%s' will be replaced with version (default: '%s' with npm and 'v%s' with yarn)
     --package-manager       Use a specific package manager (default: 'packageManager' field in package.json)
     --provenance            Publish with npm provenance statements (CI-only)
+    --remote                Git remote to push to (default: origin)
 
   Examples
     $ np
@@ -111,6 +112,7 @@ Currently, these are the flags you can configure:
 - `message` - The commit message used for the version bump. Any `%s` in the string will be replaced with the new version. By default, npm uses `%s` and Yarn uses `v%s`.
 - `packageManager` - Set the package manager to be used. Defaults to the [packageManager field in package.json](https://nodejs.org/dist/latest-v16.x/docs/api/all.html#all_packages_packagemanager), so only use if you can't update package.json for some reason.
 - `provenance` - Publish with [npm provenance statements](https://docs.npmjs.com/generating-provenance-statements) (`false` by default). Requires npm 9.5.0+ and a supported CI environment (GitHub Actions or GitLab CI/CD).
+- `remote` - Git remote to push tags and commits to. Useful when publishing from a fork where `origin` is your fork and `upstream` is the main repository.
 
 For example, this configures `np` to use `unit-test` as a test script, and to use `dist` as the subdirectory to publish:
 

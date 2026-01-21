@@ -235,12 +235,13 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 		{
 			title: 'Pushing tags',
 			async skip() {
-				if (!(await git.hasUpstream())) {
+				if (!options.remote && !(await git.hasUpstream())) {
 					return 'Upstream branch not found; not pushing.';
 				}
 
 				if (options.preview) {
-					return '[Preview] Command not executed: git push --follow-tags.';
+					const remote = options.remote ? `${options.remote} ` : '';
+					return `[Preview] Command not executed: git push ${remote}--follow-tags.`;
 				}
 
 				if (publishStatus === 'FAILED' && options.runPublish) {
@@ -248,7 +249,7 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 				}
 			},
 			async task() {
-				pushedObjects = await git.pushGraceful(isOnGitHub);
+				pushedObjects = await git.pushGraceful(isOnGitHub, options.remote);
 			},
 		},
 		...options.releaseDraft

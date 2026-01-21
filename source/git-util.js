@@ -190,10 +190,10 @@ export const verifyRemoteHistoryIsClean = async () => {
 	}
 };
 
-export const verifyRemoteIsValid = async () => {
+export const verifyRemoteIsValid = async remote => {
 	try {
 		// Inherit stdin to allow SSH password prompts for password-protected keys
-		await execa('git', ['ls-remote', 'origin', 'HEAD'], {stdin: 'inherit', timeout: gitNetworkTimeout});
+		await execa('git', ['ls-remote', remote ?? 'origin', 'HEAD'], {stdin: 'inherit', timeout: gitNetworkTimeout});
 	} catch (error) {
 		throw new Error(error.stderr.replace('fatal:', 'Git fatal error:'));
 	}
@@ -255,18 +255,18 @@ export const commitLogFromRevision = async revision => {
 	return stdout;
 };
 
-const push = async (tagArgument = '--follow-tags') => {
+const push = async (remote, tagArgument = '--follow-tags') => {
 	// Inherit stdin to allow SSH password prompts for password-protected keys
-	await execa('git', ['push', tagArgument], {stdin: 'inherit', timeout: gitNetworkTimeout});
+	await execa('git', ['push', ...(remote ? [remote] : []), tagArgument], {stdin: 'inherit', timeout: gitNetworkTimeout});
 };
 
-export const pushGraceful = async remoteIsOnGitHub => {
+export const pushGraceful = async (remoteIsOnGitHub, remote) => {
 	try {
-		await push();
+		await push(remote);
 	} catch (error) {
 		if (remoteIsOnGitHub && error.stderr && error.stderr.includes('GH006')) {
 			// Try to push tags only, when commits can't be pushed due to branch protection
-			await push('--tags');
+			await push(remote, '--tags');
 			return {pushed: 'tags', reason: 'Branch protection: np can`t push the commits. Push them manually.'};
 		}
 

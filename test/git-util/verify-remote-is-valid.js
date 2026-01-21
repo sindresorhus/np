@@ -23,3 +23,10 @@ test('no remote', createIntegrationFixture, async () => {
 		{message: /^Git fatal error:/m},
 	);
 });
+
+test('has custom remote', createStubFixture, [{
+	command: 'git ls-remote upstream HEAD',
+	exitCode: 0,
+}], async ({t, testedModule: {verifyRemoteIsValid}}) => {
+	await t.notThrowsAsync(verifyRemoteIsValid('upstream'));
+});
