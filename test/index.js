@@ -1,3 +1,4 @@
+import path from 'node:path';
 import process from 'node:process';
 import test from 'ava';
 import sinon from 'sinon';
@@ -167,4 +168,51 @@ test('rollback is called when publish fails', async t => {
 
 	t.true(deleteTagStub.calledOnce, 'deleteTag should be called once');
 	t.true(removeLastCommitStub.calledOnce, 'removeLastCommit should be called once');
+});
+
+test('np uses contents as cwd for publish', async t => {
+	const distDir = path.resolve('test/fixtures/files/dist');
+	const runPublishStub = sinon.stub().resolves({stdout: '', stderr: '', cwd: distDir});
+
+	const np = await esmock('../source/index.js', {
+		del: {deleteAsync: sinon.stub()},
+		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
+		'../source/prerequisite-tasks.js': sinon.stub(),
+		'../source/git-tasks.js': sinon.stub(),
+		'../source/git-util.js': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
+		},
+		'../source/npm/publish.js': {
+			getPackagePublishArguments: sinon.stub().returns(['publish']),
+			runPublish: runPublishStub,
+		},
+		'../source/util.js': {
+			...util,
+			readPackage: sinon.stub().callsFake(async dir => {
+				if (dir === distDir) {
+					return {
+						package_: {name: 'from-dist', version: '2.0.0'},
+						rootDirectory: distDir,
+					};
+				}
+
+				return {
+					package_: {name: 'root', version: '1.0.0'},
+					rootDirectory: dir,
+				};
+			}),
+		},
+	});
+
+	await np('2.0.0', {
+		...defaultOptions,
+		contents: distDir,
+		publish: true,
+		runPublish: true,
+	}, {package_: {name: 'from-dist', version: '2.0.0'}, rootDirectory: distDir});
+
+	t.true(runPublishStub.called);
+	t.is(runPublishStub.firstCall.args[1].cwd, distDir);
 });
