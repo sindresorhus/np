@@ -130,17 +130,24 @@ export const prereleaseTags = async packageName => {
 	} catch (error) {
 		throwIfNpmTimeout(error);
 		// HACK: NPM is mixing JSON with plain text errors. Luckily, the error
-		// always starts with 'npm ERR!' (unless you have a debugger attached)
+		// always starts with 'npm ERR!' (npm <10) or 'npm error' (npm >=10)
 		// so as a solution, until npm/cli#2740 is fixed, we can remove anything
-		// starting with 'npm ERR!'
+		// starting with 'npm ERR!' or 'npm error'
 		/** @type {string} */
 		const errorMessage = error.stderr;
 		const errorJSON = errorMessage
 			.split('\n')
-			.filter(error => !error.startsWith('npm ERR!'))
+			.filter(line => !line.startsWith('npm ERR!') && !line.startsWith('npm error'))
 			.join('\n');
 
-		if (((JSON.parse(errorJSON) || {}).error || {}).code !== 'E404') {
+		try {
+			const parsed = JSON.parse(errorJSON);
+			// Only handle E404 errors gracefully; throw all other errors
+			if (parsed?.error?.code !== 'E404') {
+				throw error;
+			}
+		} catch {
+			// If JSON parsing fails, we can't determine the error type, so throw the original error
 			throw error;
 		}
 	}

@@ -65,6 +65,32 @@ test('non-existent (code 404) - should not throw', createFixture, [{
 	);
 });
 
+test('non-existent with modern npm format (npm >=10) - should not throw', createFixture, [{
+	command: 'npm view --json non-existent dist-tags',
+	stderr: stripIndent`
+		npm error code E404
+		npm error 404 Not Found - GET https://registry.npmjs.org/non-existent - Not found
+		npm error 404
+		npm error 404  The requested resource 'non-existent@*' could not be found or you do not have permission to access it.
+		npm error 404
+		npm error 404 Note that you can also install from a
+		npm error 404 tarball, folder, http url, or git url.
+		{
+			"error": {
+				"code": "E404",
+				"summary": "Not Found - GET https://registry.npmjs.org/non-existent - Not found",
+				"detail": "The requested resource 'non-existent@*' could not be found."
+			}
+		}
+		npm error A complete log of this run can be found in: ~/.npm/_logs/...-debug.log
+	`,
+}], async ({t, testedModule: {prereleaseTags}}) => {
+	t.deepEqual(
+		await prereleaseTags('non-existent'),
+		['next'],
+	);
+});
+
 test('bad permission (code 403) - should throw', createFixture, [{
 	command: 'npm view --json @private/pkg dist-tags',
 	stderr: stripIndent`
