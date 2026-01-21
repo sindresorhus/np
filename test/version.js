@@ -232,3 +232,12 @@ test('optionally set prereleasePrefix', t => {
 	t.is(new Version('1.0.0', 'prerelease', {prereleasePrefix: 'alpha'}).toString(), '1.0.1-alpha.0');
 	t.is(new Version('1.0.0').setFrom('prerelease', {prereleasePrefix: 'beta'}).toString(), '1.0.1-beta.0');
 });
+
+test('setFrom with explicit version and format - for UI display', t => {
+	// This pattern is used in ui.js to display version info when user provides explicit version
+	const currentVersion = '1.0.0';
+	const explicitVersion = '2.5.0';
+	const formattedVersion = new Version(currentVersion).setFrom(explicitVersion).format();
+
+	t.is(formattedVersion, makeNewFormattedVersion('{2}.5.0'));
+});
