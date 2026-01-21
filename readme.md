@@ -337,6 +337,59 @@ npm ERR! 403 Forbidden - GET https://registry.yarnpkg.com/-/package/my-awesome-p
 }
 ```
 
+### np hangs during the "Publishing package" step
+
+If `np` hangs indefinitely during publishing, common causes include:
+
+**Lifecycle scripts that don't exit**
+
+npm automatically runs lifecycle hooks like `prepublish`, `publish`, and `postpublish` during publishing. If these scripts don't exit (e.g., running in watch mode), `np` will hang.
+
+```json
+{
+	"scripts": {
+		"test": "vitest",
+		"publish": "npm run test && np"
+	}
+}
+```
+
+**Solution**: Don't name your scripts `publish`, `prepublish`, or `postpublish` (these are reserved npm lifecycle hooks). Use names like `release` instead:
+
+```json
+{
+	"scripts": {
+		"test": "vitest run",
+		"release": "np"
+	}
+}
+```
+
+**Tests running in watch mode**
+
+If your test script runs in watch mode, it won't exit after running tests.
+
+**Solution**: Ensure your test command exits after running:
+
+```json
+{
+	"scripts": {
+		"test": "vitest run",
+		"test:dev": "vitest"
+	}
+}
+```
+
+**Registry configuration issues**
+
+A missing trailing slash in `.npmrc` registry configuration can cause hangs.
+
+**Solution**: Ensure registry URLs have a trailing slash:
+
+```npmrc
+@ORG:registry=https://npm.pkg.github.com/
+```
+
 ## Maintainers
 
 - [Sindre Sorhus](https://github.com/sindresorhus)

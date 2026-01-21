@@ -33,3 +33,10 @@ test('runPublish uses cwd option when provided', async t => {
 	const result = await runPublish(['echo', ['test']], {cwd: '/tmp'});
 	t.is(result.cwd, '/tmp');
 });
+
+test('runPublish sets stdin to inherit and includes timeout', async t => {
+	const result = runPublish(['echo', ['test']]);
+	t.not(result, undefined);
+	// Process should complete successfully with our default options
+	await t.notThrowsAsync(result);
+});

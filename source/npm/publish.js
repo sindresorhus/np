@@ -18,8 +18,17 @@ export const getPackagePublishArguments = options => {
 	return arguments_;
 };
 
+// 3 minutes timeout for publish operations (like git network operations)
+// Publishing can take time for large packages or slow connections
+const publishTimeout = 180_000;
+
 export function runPublish(arguments_, options = {}) {
-	const execaOptions = {};
+	const execaOptions = {
+		// Inherit stdin to allow password/OTP prompts from npm/yarn
+		stdin: 'inherit',
+		// Timeout to prevent infinite hangs (e.g., from lifecycle scripts in watch mode)
+		timeout: publishTimeout,
+	};
 
 	// `npm` 8.5+ has a bug where `npm publish <folder>` publishes from cwd instead of <folder>.
 	// We work around this by changing cwd to the target directory.
@@ -28,14 +37,5 @@ export function runPublish(arguments_, options = {}) {
 		execaOptions.cwd = options.cwd;
 	}
 
-	const cp = execa(...arguments_, execaOptions);
-
-	cp.stdout.on('data', chunk => {
-		// https://github.com/yarnpkg/berry/blob/a3e5695186f2aec3a68810acafc6c9b1e45191da/packages/plugin-npm/sources/npmHttpUtils.ts#L541
-		if (chunk.toString('utf8').includes('One-time password:')) {
-			cp.kill();
-		}
-	});
-
-	return cp;
+	return execa(...arguments_, execaOptions);
 }
