@@ -381,7 +381,7 @@ test.serial('should fail when dropping Node.js support in a minor release', crea
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
 		run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})),
-		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a minor bump.'},
+		{message: 'Raising minimum Node.js version from 16.0.0 to 18.0.0 requires a major version bump. The current release is a minor bump.'},
 	);
 
 	assertTaskFailed(t, 'Check for Node.js engine support drop');
@@ -402,7 +402,7 @@ test.serial('should fail when dropping Node.js support in a patch release', crea
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
 		run(prerequisiteTasks('1.0.1', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})),
-		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a patch bump.'},
+		{message: 'Raising minimum Node.js version from 16.0.0 to 18.0.0 requires a major version bump. The current release is a patch bump.'},
 	);
 
 	assertTaskFailed(t, 'Check for Node.js engine support drop');
@@ -558,7 +558,7 @@ test.serial('should fail when dropping Node.js support in a preminor release', c
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
 		run(prerequisiteTasks('1.1.0-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, {packageManager: npmConfig})),
-		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a preminor bump.'},
+		{message: 'Raising minimum Node.js version from 16.0.0 to 18.0.0 requires a major version bump. The current release is a preminor bump.'},
 	);
 
 	assertTaskFailed(t, 'Check for Node.js engine support drop');
@@ -579,7 +579,7 @@ test.serial('should fail when dropping Node.js support in a prepatch release', c
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
 		run(prerequisiteTasks('1.0.1-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, {packageManager: npmConfig})),
-		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a prepatch bump.'},
+		{message: 'Raising minimum Node.js version from 16.0.0 to 18.0.0 requires a major version bump. The current release is a prepatch bump.'},
 	);
 
 	assertTaskFailed(t, 'Check for Node.js engine support drop');
@@ -600,7 +600,7 @@ test.serial('should fail when dropping Node.js support in a prerelease release',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
 		run(prerequisiteTasks('1.0.0-1', {name: 'test', version: '1.0.0-0', engines: {node: '>=18'}}, {tag: 'next'}, {packageManager: npmConfig})),
-		{message: 'Dropping Node.js support from 16.0.0 to 18.0.0 requires a major version bump. The current release is a prerelease bump.'},
+		{message: 'Raising minimum Node.js version from 16.0.0 to 18.0.0 requires a major version bump. The current release is a prerelease bump.'},
 	);
 
 	assertTaskFailed(t, 'Check for Node.js engine support drop');
