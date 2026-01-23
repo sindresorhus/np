@@ -129,6 +129,42 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 	t.true(enable2faStub.notCalled);
 });
 
+test('skip enabling 2FA in trusted publishing (OIDC) contexts', async t => {
+	const enable2faStub = sinon.stub();
+
+	/** @type {typeof np} */
+	const npMock = await esmock('../source/index.js', {
+		del: {deleteAsync: sinon.stub()},
+		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
+		'../source/prerequisite-tasks.js': sinon.stub(),
+		'../source/git-tasks.js': sinon.stub(),
+		'../source/git-util.js': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
+		},
+		'../source/npm/enable-2fa.js': enable2faStub,
+		'../source/npm/publish.js': {
+			getPackagePublishArguments: sinon.stub().returns([]),
+			runPublish: sinon.stub().returns(fakeObservableReturn()),
+		},
+		'../source/npm/oidc.js': {
+			getOidcProvider: () => 'github',
+		},
+	});
+
+	await t.notThrowsAsync(npMock('1.0.0', {
+		...defaultOptions,
+		availability: {
+			isAvailable: true,
+			isUnknown: false,
+		},
+		'2fa': true,
+	}, npPackageResult));
+
+	t.true(enable2faStub.notCalled);
+});
+
 test('rollback is called when publish fails', async t => {
 	const deleteTagStub = sinon.stub().resolves();
 	const removeLastCommitStub = sinon.stub().resolves();
