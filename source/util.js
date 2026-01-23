@@ -74,6 +74,7 @@ Patterns use greedy matching + cleanRepo logic to handle edge cases like:
 - Repos with .git in their name (my.git.git where repo is my.git)
 
 Using [^\s/?#] to exclude whitespace, query params (?), and fragments (#)
+Query params and fragments are stripped before matching.
 */
 const GIT_URL_PATTERNS = [
 	/// https://host/owner/repo.git or https://host/owner/repo
@@ -85,20 +86,23 @@ const GIT_URL_PATTERNS = [
 	/// git@host:owner/repo.git (common SSH format)
 	// Using [^\s:?#] and [^\s/?#] creates clear boundaries
 	{
-		regex: /^git@([^\s:?#]+):([^\s/?#]+)\/([^\s/?#]+)\.git$/,
+		regex: /^git@([^\s:?#]+):([^\s/?#]+)\/([^\s/?#]+)(\.git)?$/,
 		transform: (host, owner, repo) => `https://${host}/${owner}/${repo}`,
 	},
 	/// git+https://host/owner/repo.git
 	{
-		regex: /^git\+https:\/\/([^\s/?#]+)\/([^\s/?#]+)\/([^\s/?#]+)\.git$/i,
+		regex: /^git\+https:\/\/([^\s/?#]+)\/([^\s/?#]+)\/([^\s/?#]+)(\.git)?$/i,
 		transform: (host, owner, repo) => `https://${host}/${owner}/${repo}`,
 	},
 	/// ssh://git@host/owner/repo.git
 	{
-		regex: /^ssh:\/\/git@([^\s/?#]+)\/([^\s/?#]+)\/([^\s/?#]+)\.git$/i,
+		regex: /^ssh:\/\/git@([^\s/?#]+)\/([^\s/?#]+)\/([^\s/?#]+)(\.git)?$/i,
 		transform: (host, owner, repo) => `https://${host}/${owner}/${repo}`,
 	},
 ];
+
+const ALPHANUMERIC_REGEX = /[a-z\d]/i;
+const isValidGitPathComponent = value => Boolean(value) && ALPHANUMERIC_REGEX.test(value);
 
 /**
 Parse a git URL to extract the HTTPS browse URL.
@@ -131,8 +135,13 @@ export const parseGitUrl = url => {
 		return;
 	}
 
+	const cleanUrl = url.split(/[?#]/, 1)[0];
+	if (cleanUrl.length === 0) {
+		return;
+	}
+
 	for (const {regex, transform} of GIT_URL_PATTERNS) {
-		const match = url.match(regex);
+		const match = cleanUrl.match(regex);
 		if (match) {
 			const [, host, owner, repo] = match;
 
@@ -140,13 +149,13 @@ export const parseGitUrl = url => {
 			const cleanRepo = repo.endsWith('.git') ? repo.slice(0, -4) : repo;
 
 			// Validate that none of the components are empty
-			if (!host || !owner || !cleanRepo) {
+			if (!host) {
 				continue;
 			}
 
 			// Validate that owner and repo contain at least one alphanumeric character
 			// This prevents pathological inputs like all dots or special chars
-			if (!/[a-z\d]/i.test(owner) || !/[a-z\d]/i.test(cleanRepo)) {
+			if (!isValidGitPathComponent(owner) || !isValidGitPathComponent(cleanRepo)) {
 				continue;
 			}
 

@@ -22,12 +22,60 @@ test('parses SSH URL (git@host:owner/repo.git)', t => {
 	t.is(parseGitUrl('git@github.com:owner/repo.git'), 'https://github.com/owner/repo');
 });
 
+test('parses SSH URL without .git suffix', t => {
+	t.is(parseGitUrl('git@github.com:owner/repo'), 'https://github.com/owner/repo');
+});
+
+test('parses SSH URL with fragment', t => {
+	t.is(parseGitUrl('git@github.com:owner/repo.git#main'), 'https://github.com/owner/repo');
+});
+
+test('parses SSH URL with query', t => {
+	t.is(parseGitUrl('git@github.com:owner/repo.git?ref=main'), 'https://github.com/owner/repo');
+});
+
 test('parses git+https URL', t => {
 	t.is(parseGitUrl('git+https://github.com/owner/repo.git'), 'https://github.com/owner/repo');
 });
 
+test('parses git+https URL without .git suffix', t => {
+	t.is(parseGitUrl('git+https://github.com/owner/repo'), 'https://github.com/owner/repo');
+});
+
+test('parses git+https URL with fragment', t => {
+	t.is(
+		parseGitUrl('git+https://git.company.com/owner/repo.git#main'),
+		'https://git.company.com/owner/repo',
+	);
+});
+
+test('parses git+https URL with query and fragment without .git suffix', t => {
+	t.is(
+		parseGitUrl('git+https://git.company.com/owner/repo?ref=main#readme'),
+		'https://git.company.com/owner/repo',
+	);
+});
+
 test('parses ssh:// URL', t => {
 	t.is(parseGitUrl('ssh://git@github.com/owner/repo.git'), 'https://github.com/owner/repo');
+});
+
+test('parses ssh:// URL without .git suffix', t => {
+	t.is(parseGitUrl('ssh://git@github.com/owner/repo'), 'https://github.com/owner/repo');
+});
+
+test('parses ssh:// URL with query', t => {
+	t.is(
+		parseGitUrl('ssh://git@git.company.com/owner/repo.git?ref=main'),
+		'https://git.company.com/owner/repo',
+	);
+});
+
+test('parses ssh:// URL with fragment without .git suffix', t => {
+	t.is(
+		parseGitUrl('ssh://git@git.company.com/owner/repo#main'),
+		'https://git.company.com/owner/repo',
+	);
 });
 
 // GitHub Enterprise URLs
@@ -41,6 +89,13 @@ test('parses GitHub Enterprise HTTPS URL', t => {
 test('parses GitHub Enterprise SSH URL', t => {
 	t.is(
 		parseGitUrl('git@github.enterprise.com:org/project.git'),
+		'https://github.enterprise.com/org/project',
+	);
+});
+
+test('parses GitHub Enterprise SSH URL without .git suffix', t => {
+	t.is(
+		parseGitUrl('git@github.enterprise.com:org/project'),
 		'https://github.enterprise.com/org/project',
 	);
 });
@@ -84,6 +139,20 @@ test('handles HTTPS URL with port', t => {
 	);
 });
 
+test('handles git+https URL with port', t => {
+	t.is(
+		parseGitUrl('git+https://github.com:443/owner/repo.git'),
+		'https://github.com:443/owner/repo',
+	);
+});
+
+test('handles ssh:// URL with port', t => {
+	t.is(
+		parseGitUrl('ssh://git@github.com:2222/owner/repo.git'),
+		'https://github.com:2222/owner/repo',
+	);
+});
+
 test('handles HTTP URL with custom port', t => {
 	t.is(
 		parseGitUrl('http://git.company.com:8080/team/project.git'),
@@ -113,10 +182,6 @@ test('returns undefined for non-string input (object)', t => {
 });
 
 // Malformed URLs
-test('returns undefined for URL missing .git suffix in SSH format', t => {
-	t.is(parseGitUrl('git@github.com:owner/repo'), undefined);
-});
-
 test('returns undefined for URL with extra slashes', t => {
 	t.is(parseGitUrl('https://github.com//owner//repo.git'), undefined);
 });
@@ -304,9 +369,23 @@ test('handles git+https with custom host', t => {
 	);
 });
 
+test('handles git+https without .git suffix on custom host', t => {
+	t.is(
+		parseGitUrl('git+https://git.example.com/team/project'),
+		'https://git.example.com/team/project',
+	);
+});
+
 test('handles ssh:// with custom host', t => {
 	t.is(
 		parseGitUrl('ssh://git@git.example.com/team/project.git'),
+		'https://git.example.com/team/project',
+	);
+});
+
+test('handles ssh:// without .git suffix on custom host', t => {
+	t.is(
+		parseGitUrl('ssh://git@git.example.com/team/project'),
 		'https://git.example.com/team/project',
 	);
 });
@@ -328,11 +407,11 @@ test('handles double .git suffix correctly', t => {
 });
 
 test('handles double .git suffix in SSH format', t => {
-	t.is(parseGitUrl('git@github.com:owner/repo.git.git'), 'https://github.com/owner/repo');
+	t.is(parseGitUrl('git@github.com:owner/repo.git.git'), 'https://github.com/owner/repo.git');
 });
 
 test('handles double .git suffix in git+https format', t => {
-	t.is(parseGitUrl('git+https://github.com/owner/repo.git.git'), 'https://github.com/owner/repo');
+	t.is(parseGitUrl('git+https://github.com/owner/repo.git.git'), 'https://github.com/owner/repo.git');
 });
 
 // Edge case: Repo name contains .git
@@ -527,16 +606,27 @@ test('rejects ssh with numeric username', t => {
 });
 
 // Edge case: Query parameters and fragments (should reject)
-test('rejects URL with query parameters', t => {
-	t.is(parseGitUrl('https://github.com/owner/repo.git?ref=main'), undefined);
+test('strips query parameters', t => {
+	t.is(parseGitUrl('https://github.com/owner/repo.git?ref=main'), 'https://github.com/owner/repo');
 });
 
-test('rejects URL with fragment', t => {
-	t.is(parseGitUrl('https://github.com/owner/repo.git#readme'), undefined);
+test('strips fragment', t => {
+	t.is(parseGitUrl('https://github.com/owner/repo.git#readme'), 'https://github.com/owner/repo');
 });
 
-test('rejects URL with both query and fragment', t => {
-	t.is(parseGitUrl('https://github.com/owner/repo.git?ref=main#readme'), undefined);
+test('strips query and fragment', t => {
+	t.is(
+		parseGitUrl('https://github.com/owner/repo.git?ref=main#readme'),
+		'https://github.com/owner/repo',
+	);
+});
+
+test('returns undefined when URL is only query', t => {
+	t.is(parseGitUrl('?ref=main'), undefined);
+});
+
+test('returns undefined when URL is only fragment', t => {
+	t.is(parseGitUrl('#main'), undefined);
 });
 
 // Edge case: Unusual but valid repo names
