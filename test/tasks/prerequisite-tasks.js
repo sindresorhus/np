@@ -440,6 +440,22 @@ test.serial('should not fail when dropping Node.js support in a premajor release
 	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, {packageManager: npmConfig})));
 });
 
+test.serial('should not fail when dropping Node.js support in a pre-1.0.0 minor release', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify({node: '>=16'}),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v0.2.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.notThrowsAsync(run(prerequisiteTasks('0.2.0', {name: 'test', version: '0.1.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})));
+});
+
 test.serial('should not fail when engines.node was not previously set', createFixture, [{
 	command: 'npm view --json test engines',
 	stdout: JSON.stringify({}),
