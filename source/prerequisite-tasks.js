@@ -125,11 +125,9 @@ const prerequisiteTasks = (input, package_, options, {packageManager, rootDirect
 		{
 			title: 'Check git tag existence',
 			async task() {
-				await git.fetch();
-
 				const tagPrefix = await util.getTagVersionPrefix(packageManager);
 
-				await git.verifyTagDoesNotExistOnRemote(`${tagPrefix}${newVersion}`);
+				await git.verifyTagDoesNotExistOnRemote(`${tagPrefix}${newVersion}`, options.remote);
 			},
 		},
 	];

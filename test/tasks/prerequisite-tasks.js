@@ -45,7 +45,7 @@ test.serial('private package: should disable task pinging npm registry', createF
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	command: 'git ls-remote --tags origin v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', private: true}, {}, {packageManager: npmConfig})));
@@ -63,7 +63,7 @@ test.serial('external registry: should disable task pinging npm registry', creat
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	command: 'git ls-remote --tags origin v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', publishConfig: {registry: 'http://my.io'}}, {}, {packageManager: npmConfig})));
@@ -77,7 +77,7 @@ test.serial('should fail when npm version does not match range in `package.json`
 		stdout: '6.0.0',
 	},
 	{
-		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+		command: 'git ls-remote --tags origin v2.0.0',
 		stdout: '',
 	},
 ], async ({t, testedModule: prerequisiteTasks}) => {
@@ -97,7 +97,7 @@ test.serial('should fail when yarn version does not match range in `package.json
 		stdout: '1.0.0',
 	},
 	{
-		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+		command: 'git ls-remote --tags origin v2.0.0',
 		stdout: '',
 	},
 ], async ({t, testedModule: prerequisiteTasks}) => {
@@ -186,7 +186,7 @@ test.serial('private package: should disable task `verify user is authenticated`
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	command: 'git ls-remote --tags origin v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	process.env.NODE_ENV = 'P';
@@ -289,7 +289,7 @@ test.serial('should not fail when prerelease version of public package with dist
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	command: 'git ls-remote --tags origin v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0'}, {tag: 'pre'}, {packageManager: npmConfig})));
@@ -302,7 +302,7 @@ test.serial('should not fail when prerelease version of private package without 
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	command: 'git ls-remote --tags origin v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-1', {name: 'test', version: '1.0.0', private: true}, {}, {packageManager: npmConfig})));
@@ -315,8 +315,8 @@ test.serial('should fail when git tag already exists', createFixture, [{
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
-	stdout: 'vvb',
+	command: 'git ls-remote --tags origin v2.0.0',
+	stdout: 'foobar\trefs/tags/v2.0.0',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
 		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
@@ -333,7 +333,7 @@ test.serial('checks should pass', createFixture, [{
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	command: 'git ls-remote --tags origin v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})));
@@ -346,7 +346,7 @@ test.serial('should skip authentication check when OIDC is detected', createFixt
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	command: 'git ls-remote --tags origin v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	process.env.NODE_ENV = 'P';
@@ -376,7 +376,7 @@ test.serial('should fail when dropping Node.js support in a minor release', crea
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	command: 'git ls-remote --tags origin v1.1.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
@@ -397,7 +397,7 @@ test.serial('should fail when dropping Node.js support in a patch release', crea
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.0.1',
+	command: 'git ls-remote --tags origin v1.0.1',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
@@ -418,7 +418,7 @@ test.serial('should not fail when dropping Node.js support in a major release', 
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	command: 'git ls-remote --tags origin v2.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})));
@@ -434,7 +434,7 @@ test.serial('should not fail when dropping Node.js support in a premajor release
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0-0',
+	command: 'git ls-remote --tags origin v2.0.0-0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0-0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {tag: 'next'}, {packageManager: npmConfig})));
@@ -450,7 +450,7 @@ test.serial('should not fail when dropping Node.js support in a pre-1.0.0 minor 
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v0.2.0',
+	command: 'git ls-remote --tags origin v0.2.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('0.2.0', {name: 'test', version: '0.1.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})));
@@ -466,7 +466,7 @@ test.serial('should not fail when engines.node was not previously set', createFi
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	command: 'git ls-remote --tags origin v1.1.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})));
@@ -483,7 +483,7 @@ test.serial('should not fail when first publishing a package', createFixture, [{
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.0.0',
+	command: 'git ls-remote --tags origin v1.0.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('1.0.0', {name: 'test', version: '0.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})));
@@ -499,7 +499,7 @@ test.serial('should not fail when local package has no engines.node', createFixt
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	command: 'git ls-remote --tags origin v1.1.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})));
@@ -512,7 +512,7 @@ test.serial('private package: should disable task checking for Node.js engine su
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	command: 'git ls-remote --tags origin v1.1.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	const package_ = {
@@ -537,7 +537,7 @@ test.serial('should not fail when Node.js minimum version stays the same', creat
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	command: 'git ls-remote --tags origin v1.1.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})));
@@ -553,7 +553,7 @@ test.serial('should not fail when Node.js minimum version is lowered', createFix
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	command: 'git ls-remote --tags origin v1.1.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=16'}}, {}, {packageManager: npmConfig})));
@@ -569,7 +569,7 @@ test.serial('should fail when dropping Node.js support in a preminor release', c
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0-0',
+	command: 'git ls-remote --tags origin v1.1.0-0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
@@ -590,7 +590,7 @@ test.serial('should fail when dropping Node.js support in a prepatch release', c
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.0.1-0',
+	command: 'git ls-remote --tags origin v1.0.1-0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
@@ -611,7 +611,7 @@ test.serial('should fail when dropping Node.js support in a prerelease release',
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.0.0-1',
+	command: 'git ls-remote --tags origin v1.0.0-1',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
@@ -629,7 +629,7 @@ test.serial('yolo mode: should disable task checking for Node.js engine support 
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	command: 'git ls-remote --tags origin v1.1.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	const package_ = {
@@ -656,7 +656,7 @@ test.serial('external registry: should skip engine check when registry returns e
 	command: 'git config user.email',
 	stdout: 'test@example.com',
 }, {
-	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	command: 'git ls-remote --tags origin v1.1.0',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	const package_ = {

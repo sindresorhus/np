@@ -11,7 +11,6 @@ const defaultCommands = [
 	{command: 'npm view --json test engines', stdout: ''},
 	{command: 'git version', stdout: 'git version 2.40.0'},
 	{command: 'git ls-remote origin HEAD', stdout: 'abc123\tHEAD'},
-	{command: 'git fetch', stdout: ''},
 	{command: 'git config --get tag.gpgSign', stdout: ''},
 ];
 

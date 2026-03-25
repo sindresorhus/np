@@ -224,28 +224,14 @@ export const defaultBranch = async () => {
 	throw new Error('Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.');
 };
 
-const tagExistsOnRemote = async tagName => {
-	try {
-		const {stdout: revInfo} = await execa('git', ['rev-parse', '--quiet', '--verify', `refs/tags/${tagName}`]);
-
-		if (revInfo) {
-			return true;
-		}
-
-		return false;
-	} catch (error) {
-		// Command fails with code 1 and no output if the tag does not exist, even though `--quiet` is provided
-		// https://github.com/sindresorhus/np/pull/73#discussion_r72385685
-		if (error.stdout === '' && error.stderr === '') {
-			return false;
-		}
-
-		throw error;
-	}
+const tagExistsOnRemote = async (tagName, remote) => {
+	// Note: we query the remote directly (previously this did a full git fetch)
+	const {stdout} = await execa('git', ['ls-remote', '--tags', remote ?? 'origin', tagName], {stdin: 'inherit', timeout: gitNetworkTimeout});
+	return stdout.trim().length > 0;
 };
 
-export const verifyTagDoesNotExistOnRemote = async tagName => {
-	if (await tagExistsOnRemote(tagName)) {
+export const verifyTagDoesNotExistOnRemote = async (tagName, remote) => {
+	if (await tagExistsOnRemote(tagName, remote)) {
 		throw new Error(`Git tag \`${tagName}\` already exists.`);
 	}
 };
