@@ -224,6 +224,8 @@ export const defaultBranch = async () => {
 	throw new Error('Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.');
 };
 
+// Checks local refs after a prior `git fetch`. This is intentional over `git ls-remote` — the fetch
+// syncs all refs and also catches local-only tags that haven't been pushed yet.
 const tagExistsOnRemote = async tagName => {
 	try {
 		const {stdout: revInfo} = await execa('git', ['rev-parse', '--quiet', '--verify', `refs/tags/${tagName}`]);

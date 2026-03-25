@@ -125,6 +125,7 @@ const prerequisiteTasks = (input, package_, options, {packageManager, rootDirect
 		{
 			title: 'Check git tag existence',
 			async task() {
+				// Fetch is needed so `tagExistsOnRemote` can check local refs. Don't replace with `ls-remote`.
 				await git.fetch();
 
 				const tagPrefix = await util.getTagVersionPrefix(packageManager);
