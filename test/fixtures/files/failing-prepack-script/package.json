@@ -3,6 +3,6 @@
 	"version": "0.0.0",
 	"files": ["index.js"],
 	"scripts": {
-		"prepare": "echo '[build] compiling'"
+		"prepack": "exit 1"
 	}
 }

@@ -191,3 +191,14 @@ test('verifyPackageEntryPoints - valid entry points', async t => {
 
 	await t.notThrowsAsync(npm.verifyPackageEntryPoints({main: 'index.js'}, fixtureDirectory));
 });
+
+test('verifyPackageEntryPoints - skipped when prepack script may generate files', async t => {
+	const fixtureDirectory = getFixture('prepack-generated-entry-point');
+
+	await t.notThrowsAsync(npm.verifyPackageEntryPoints({
+		main: 'dist/index.js',
+		scripts: {
+			prepack: 'build',
+		},
+	}, fixtureDirectory));
+});

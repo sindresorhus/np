@@ -210,6 +210,7 @@ export const getFilesToBePacked = async rootDirectory => {
 		'--dry-run',
 		'--json',
 		'--silent',
+		'--ignore-scripts',
 		// TODO: Remove this once [npm/cli#7354](https://github.com/npm/cli/issues/7354) is resolved.
 		'--foreground-scripts=false',
 	], {cwd: rootDirectory});
@@ -224,6 +225,21 @@ export const getFilesToBePacked = async rootDirectory => {
 	} catch (error) {
 		throw new Error('Failed to parse output of npm pack', {cause: error});
 	}
+};
+
+const hasPackLifecycleScript = package_ => {
+	const {scripts} = package_;
+
+	if (typeof scripts !== 'object' || scripts === null) {
+		return false;
+	}
+
+	return [
+		'prepare',
+		'prepack',
+		'prepublish',
+		'prepublishOnly',
+	].some(scriptName => typeof scripts[scriptName] === 'string');
 };
 
 const isValidEntryPoint = value => typeof value === 'string' && !value.includes('*');
@@ -295,6 +311,10 @@ export const verifyPackageEntryPoints = async (package_, rootDirectory) => {
 	}
 
 	if (missingEntryPoints.length > 0) {
+		if (hasPackLifecycleScript(package_)) {
+			return;
+		}
+
 		const missing = missingEntryPoints.map(({field, path: entryPath}) => `  "${field}": ${entryPath}`).join('\n');
 		throw new Error(`Missing entry points in published files:\n${missing}\n\nEnsure these files exist and are included in the "files" field.`);
 	}
