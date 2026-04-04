@@ -221,6 +221,15 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 		}
 	}
 
+	if (options.releaseDraftOnly) {
+		return {
+			...options,
+			confirm: true,
+			repoUrl,
+			generateReleaseNotes,
+		};
+	}
+
 	// Non-interactive mode - return before prompting
 	// But if it's a prerelease without a tag, we need to prompt for the tag
 	if (options.version) {

@@ -199,3 +199,37 @@ test('handles numeric prerelease identifiers', testUi, {
 	// Should transition from numeric to string identifier
 	t.is(version.toString(), '1.0.0-beta.0');
 });
+
+test('releaseDraftOnly does not throw on current version', async t => {
+	const {ui} = await mockInquirer({
+		t, answers: {}, mocks: {
+			'./util.js': {
+				getPreReleasePrefix: sinon.stub().resolves(''),
+			},
+			'./git-util.js': {
+				previousTagOrFirstCommit: sinon.stub().resolves('v1.0.0'),
+				commitLogFromRevision: sinon.stub().resolves(''),
+			},
+			execa: {
+				execa: sinon.stub().resolves({stdout: 'https://registry.npmjs.org/'}),
+			},
+		},
+	});
+
+	const results = await ui({
+		packageManager,
+		runPublish: false,
+		availability: {},
+		releaseDraftOnly: true,
+		version: '1.0.0',
+	}, {
+		package_: {
+			name: 'foo',
+			version: '1.0.0',
+			repository: {url: 'https://github.com/foo/bar'},
+		},
+	});
+
+	t.true(results.confirm);
+	t.is(results.version, '1.0.0');
+});
