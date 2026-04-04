@@ -1,0 +1,9 @@
+{
+	"name": "prepack-generated-entry-point",
+	"version": "0.0.0",
+	"main": "dist/index.js",
+	"files": ["dist"],
+	"scripts": {
+		"prepack": "node --input-type=module -e \"import fs from 'node:fs'; fs.mkdirSync('dist', {recursive: true}); fs.writeFileSync('dist/index.js', 'export default 1;\\n');\""
+	}
+}
