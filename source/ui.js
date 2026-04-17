@@ -414,8 +414,7 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 		prereleasePrefix: {
 			type: 'input',
 			message: 'Prerelease identifier',
-			// Use || not ?? to treat empty string as falsy (show 'rc' instead of empty default)
-			default: defaultPrereleasePrefix || 'rc',
+			default: defaultPrereleasePrefix,
 			when(answers) {
 				// Only ask when a prerelease increment was selected from the menu
 				if (!answers.version) {

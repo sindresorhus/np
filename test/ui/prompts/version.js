@@ -233,3 +233,54 @@ test('releaseDraftOnly does not throw on current version', async t => {
 	t.true(results.confirm);
 	t.is(results.version, '1.0.0');
 });
+
+test('uses empty prerelease identifier by default when no prerelease identifier is configured', async t => {
+	let capturedPrereleasePrefixPrompt;
+
+	const {ui} = await mockInquirer({
+		t,
+		answers: {
+			version: 'premajor',
+			prereleasePrefix: '',
+		},
+		onPrompt(prompts) {
+			capturedPrereleasePrefixPrompt = prompts.prereleasePrefix;
+		},
+		mocks: {
+			'./npm/util.js': {
+				checkIgnoreStrategy: sinon.stub().resolves(),
+			},
+			'./util.js': {
+				getNewFiles: sinon.stub().resolves({unpublished: [], firstTime: []}),
+				getNewDependencies: sinon.stub().resolves([]),
+				getPreReleasePrefix: sinon.stub().resolves(''),
+			},
+			'./git-util.js': {
+				latestTagOrFirstCommit: sinon.stub().resolves('v1.0.0'),
+				commitLogFromRevision: sinon.stub().resolves('abc 123'),
+			},
+			execa: {
+				execa: sinon.stub().resolves({stdout: 'https://registry.npmjs.org/'}),
+			},
+		},
+	});
+
+	const {version} = await ui({
+		packageManager,
+		runPublish: false,
+		availability: {},
+	}, {
+		package_: {
+			name: 'foo',
+			version: '1.0.0',
+			files: ['*'],
+			repository: {
+				url: 'https://github.com/foo/bar',
+			},
+		},
+	});
+
+	t.truthy(capturedPrereleasePrefixPrompt);
+	t.is(capturedPrereleasePrefixPrompt.default, '', 'the prerelease identifier default should remain empty');
+	t.is(version.toString(), '2.0.0-0');
+});

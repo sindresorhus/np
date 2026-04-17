@@ -24,10 +24,7 @@ Logs for debugging are outputted on test failure.
 @param {Answers} o.inputAnswers Test input
 @param {Record<string, Prompt> | Prompt[]} o.prompts Actual prompts
 */
-const mockPrompt = async ({t, inputAnswers, prompts}) => {
-	const answers = {};
-
-	// Ensure `prompts` is an object
+const getPromptsObject = prompts => {
 	if (Array.isArray(prompts)) {
 		const promptsObject = {};
 
@@ -35,8 +32,15 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 			promptsObject[prompt.name] = prompt;
 		}
 
-		prompts = promptsObject;
+		return promptsObject;
 	}
+
+	return prompts;
+};
+
+const mockPrompt = async ({t, inputAnswers, prompts}) => {
+	const answers = {};
+	prompts = getPromptsObject(prompts);
 
 	t.log('prompts:', Object.keys(prompts));
 
@@ -193,8 +197,9 @@ Mocks `inquirer` for testing `source/ui.js`.
 @param {ExecutionContext} o.t
 @param {Answers} o.answers Test input
 @param {import('esmock').MockMap} [o.mocks] Optional global mocks
+@param {(prompts: Record<string, Prompt>) => void} [o.onPrompt] Optional hook to inspect prompts
 */
-export const mockInquirer = async ({t, answers, mocks = {}}) => {
+export const mockInquirer = async ({t, answers, mocks = {}, onPrompt = () => {}}) => {
 	/** @type {string[]} */
 	const logs = [];
 
@@ -202,10 +207,13 @@ export const mockInquirer = async ({t, answers, mocks = {}}) => {
 	const ui = await esmock('../../source/ui.js', import.meta.url, {
 		inquirer: {
 			async prompt(prompts) {
+				const promptDescriptors = getPromptsObject(prompts);
+				onPrompt(promptDescriptors);
+
 				let uiAnswers = {};
 
 				const assertions = await t.try(async tt => {
-					uiAnswers = await mockPrompt({t: tt, inputAnswers: answers, prompts});
+					uiAnswers = await mockPrompt({t: tt, inputAnswers: answers, prompts: promptDescriptors});
 				});
 
 				assertions.commit({retainLogs: !assertions.passed});
