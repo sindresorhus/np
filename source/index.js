@@ -54,8 +54,12 @@ const exec = (command, arguments_, options) => {
 @param {import('./cli-implementation.js').Options} options
 @param {{package_: import('read-pkg').NormalizedPackageJson; projectDirectory?: string; rootDirectory: string}} context
 */
-const np = async (input = 'patch', {packageManager, ...options}, {package_, projectDirectory, rootDirectory}) => {
+const np = async (input = 'patch', {packageManager, ...rawOptions}, {package_, projectDirectory, rootDirectory}) => {
 	projectDirectory ??= rootDirectory;
+
+	const {preview, ...options} = rawOptions;
+	options.dryRun ??= preview;
+
 	// TODO: Remove sometime far in the future
 	if (options.skipCleanup) {
 		options.cleanup = false;
@@ -103,7 +107,7 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, proj
 	});
 
 	asyncExitHook(async () => {
-		if (options.preview || publishStatus === 'SUCCESS') {
+		if (options.dryRun || publishStatus === 'SUCCESS') {
 			return;
 		}
 
@@ -152,8 +156,8 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, proj
 			title: 'Cleanup',
 			enabled: () => runCleanup && !lockfile,
 			skip() {
-				if (options.preview) {
-					return '[Preview] Command not executed: delete node_modules.';
+				if (options.dryRun) {
+					return '[Dry run] Command not executed: delete node_modules.';
 				}
 			},
 			task: () => deleteAsync(path.join(projectDirectory, 'node_modules')),
@@ -162,8 +166,8 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, proj
 			title: `Installing dependencies using ${packageManager.id}`,
 			enabled: () => runInstall,
 			skip() {
-				if (options.preview) {
-					return `[Preview] Command not executed: ${printCommand(getInstallCommand())}.`;
+				if (options.dryRun) {
+					return `[Dry run] Command not executed: ${printCommand(getInstallCommand())}.`;
 				}
 			},
 			task: () => new Listr([
@@ -183,8 +187,8 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, proj
 			title: 'Running tests',
 			enabled: () => runTests,
 			skip() {
-				if (options.preview) {
-					return `[Preview] Command not executed: ${packageManager.cli} run ${testScript}.`;
+				if (options.dryRun) {
+					return `[Dry run] Command not executed: ${packageManager.cli} run ${testScript}.`;
 				}
 			},
 			task: () => exec(packageManager.cli, ['run', testScript], {...ciEnvOptions, cwd: projectDirectory}),
@@ -192,14 +196,14 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, proj
 		{
 			title: 'Bumping version',
 			skip() {
-				if (options.preview) {
+				if (options.dryRun) {
 					const [cli, arguments_] = packageManager.versionCommand(input);
 
 					if (options.message) {
 						arguments_.push('--message', options.message.replaceAll('%s', input));
 					}
 
-					return `[Preview] Command not executed: ${printCommand([cli, arguments_])}`;
+					return `[Dry run] Command not executed: ${printCommand([cli, arguments_])}`;
 				}
 			},
 			task() {
@@ -218,9 +222,9 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, proj
 				{
 					title: 'Publishing package',
 					skip() {
-						if (options.preview) {
+						if (options.dryRun) {
 							const command = getPublishCommand(options);
-							return `[Preview] Command not executed: ${printCommand(command)}.`;
+							return `[Dry run] Command not executed: ${printCommand(command)}.`;
 						}
 					},
 					/** @type {(context, task) => Listr.ListrTaskResult<any>} */
@@ -252,9 +256,9 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, proj
 					? [{
 						title: 'Enabling two-factor authentication',
 						async skip() {
-							if (options.preview) {
+							if (options.dryRun) {
 								const arguments_ = await getEnable2faArguments(package_.name, options);
-								return `[Preview] Command not executed: npm ${arguments_.join(' ')}.`;
+								return `[Dry run] Command not executed: npm ${arguments_.join(' ')}.`;
 							}
 						},
 						task: (context, task) => enable2fa(task, package_.name, {otp: context.otp}),
@@ -269,9 +273,9 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, proj
 					return 'Upstream branch not found; not pushing.';
 				}
 
-				if (options.preview) {
+				if (options.dryRun) {
 					const remote = options.remote ? `${options.remote} ` : '';
-					return `[Preview] Command not executed: git push ${remote}--follow-tags.`;
+					return `[Dry run] Command not executed: git push ${remote}--follow-tags.`;
 				}
 
 				if (publishStatus === 'FAILED' && options.runPublish) {
@@ -287,8 +291,8 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, proj
 				title: 'Creating release draft on GitHub',
 				enabled: () => isOnGitHub === true,
 				skip() {
-					if (options.preview) {
-						return '[Preview] GitHub Releases draft will not be opened in preview mode.';
+					if (options.dryRun) {
+						return '[Dry run] GitHub Releases draft will not be opened in dry-run mode.';
 					}
 				},
 				task: () => releaseTaskHelper(options, package_, packageManager),
@@ -297,7 +301,7 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, proj
 	], {
 		showSubtasks: false,
 		renderer: options.renderer ?? 'default',
-		clearOutput: !options.preview && !options.releaseDraftOnly,
+		clearOutput: !options.dryRun && !options.releaseDraftOnly,
 	});
 
 	if (!options.runPublish) {

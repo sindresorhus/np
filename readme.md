@@ -23,7 +23,7 @@
   <sub>(does not apply to external registries)</sub>
 - Opens a prefilled GitHub Releases draft after publish
 - Warns about the possibility of extraneous files being published
-- See exactly what will be executed with [preview mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
+- See exactly what will be executed with [dry-run mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
 - Supports [GitHub Packages](https://github.com/features/packages)
 - Supports npm 9+, Yarn (Classic and Berry), pnpm 8+, and Bun
 
@@ -62,7 +62,7 @@ $ np --help
     --no-tests              Skips tests
     --yolo                  Skips cleanup and testing
     --no-publish            Skips publishing
-    --preview               Show tasks without actually executing them
+    --dry-run               Show tasks without actually executing them
     --tag                   Publish under a given dist-tag
     --contents              Subdirectory to publish
     --no-release-draft      Skips opening a GitHub release draft
@@ -101,7 +101,7 @@ Currently, these are the flags you can configure:
 - `tests` - Run `npm test` (`true` by default).
 - `yolo` - Skip cleanup and testing (`false` by default).
 - `publish` - Publish (`true` by default).
-- `preview` - Show tasks without actually executing them (`false` by default).
+- `dryRun` - Show tasks without actually executing them (`false` by default). The CLI also accepts `--preview` as an alias.
 - `tag` - Publish under a given dist-tag (`latest` by default).
 - `contents` - Subdirectory to publish (`.` by default).
 - `releaseDraft` - Open a GitHub release draft after releasing (`true` by default).

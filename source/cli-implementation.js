@@ -32,7 +32,7 @@ const cli = meow(`
 	  --no-tests             Skips tests
 	  --yolo                 Skips cleanup and testing
 	  --no-publish           Skips publishing
-	  --preview              Show tasks without actually executing them
+	  --dry-run              Show tasks without actually executing them
 	  --tag                  Publish under a given dist-tag
 	  --contents             Subdirectory to publish
 	  --no-release-draft     Skips opening a GitHub release draft
@@ -54,6 +54,7 @@ const cli = meow(`
 `, {
 	importMeta: import.meta,
 	booleanDefault: undefined,
+	allowUnknownFlags: false,
 	// Don't use `default` for flags - we apply defaults later so config can override them
 	flags: {
 		anyBranch: {
@@ -92,8 +93,9 @@ const cli = meow(`
 		contents: {
 			type: 'string',
 		},
-		preview: {
+		dryRun: {
 			type: 'boolean',
+			aliases: ['preview'],
 		},
 		testScript: {
 			type: 'string',
@@ -133,7 +135,7 @@ async function getOptions() {
 	const explicitCliFlags = Object.fromEntries(Object.entries(cli.flags).filter(([, value]) => value !== undefined));
 
 	// Merge: local config → explicit CLI flags → defaults
-	const flags = {
+	const mergedFlags = {
 		cleanup: true,
 		tests: true,
 		publish: true,
@@ -143,6 +145,9 @@ async function getOptions() {
 		...localConfig,
 		...explicitCliFlags,
 	};
+
+	const {preview, ...flags} = mergedFlags;
+	flags.dryRun ??= preview;
 
 	// Workaround for unintended auto-casing behavior from `meow`.
 	if ('2Fa' in flags) {
@@ -223,7 +228,7 @@ try {
 	console.log(); // Prints a newline for readability
 	const newPackage = await np(options.version.toString(), options, {package_, projectDirectory, rootDirectory});
 
-	if (options.preview || options.releaseDraftOnly) {
+	if (options.dryRun || options.releaseDraftOnly) {
 		gracefulExit();
 	}
 

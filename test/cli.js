@@ -1,5 +1,6 @@
 import path from 'node:path';
 import test from 'ava';
+import {execa} from 'execa';
 import {npPackage, npRootDirectory as rootDirectory} from '../source/util.js';
 import {cliPasses} from './_helpers/verify-cli.js';
 
@@ -22,7 +23,7 @@ test('flags: --help', cliPasses, cli, '--help', [
 	'--no-tests             Skips tests',
 	'--yolo                 Skips cleanup and testing',
 	'--no-publish           Skips publishing',
-	'--preview              Show tasks without actually executing them',
+	'--dry-run              Show tasks without actually executing them',
 	'--tag                  Publish under a given dist-tag',
 	'--contents             Subdirectory to publish',
 	'--no-release-draft     Skips opening a GitHub release draft',
@@ -45,3 +46,26 @@ test('flags: --help', cliPasses, cli, '--help', [
 ]);
 
 test('flags: --version', cliPasses, cli, '--version', [npPackage.version]);
+
+test('flags: --dry-run is shown in help', async t => {
+	const {stdout} = await execa(cli, ['--help']);
+
+	t.true(stdout.includes('--dry-run              Show tasks without actually executing them'));
+});
+
+test('flags: unknown flags fail', async t => {
+	const {exitCode, stderr} = await execa(cli, ['--wat'], {reject: false});
+
+	t.is(exitCode, 2);
+	t.true(stderr.includes('Unknown flag'));
+	t.true(stderr.includes('--wat'));
+});
+
+test('flags: --preview remains an alias for --dry-run', async t => {
+	const {exitCode, stderr} = await execa(cli, ['--preview', '--wat'], {reject: false});
+
+	t.is(exitCode, 2);
+	t.true(stderr.includes('Unknown flag'));
+	t.true(stderr.includes('--wat'));
+	t.false(stderr.includes('--preview'));
+});

@@ -299,7 +299,7 @@ test('install uses projectDirectory from context as cwd', async t => {
 		tests: false,
 		publish: false,
 		runPublish: false,
-		preview: false,
+		dryRun: false,
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory: contentsDirectory});
 
 	t.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--no-production', '--engine-strict'], {cwd: projectDirectory}]);
@@ -332,7 +332,7 @@ test('cleanup uses projectDirectory from context', async t => {
 		tests: false,
 		publish: false,
 		runPublish: false,
-		preview: false,
+		dryRun: false,
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory: contentsDirectory});
 
 	t.true(deleteAsyncStub.calledOnceWithExactly(path.join(projectDirectory, 'node_modules')));
@@ -361,7 +361,7 @@ test('tests use projectDirectory from context as cwd', async t => {
 		cleanup: false,
 		publish: false,
 		runPublish: false,
-		preview: false,
+		dryRun: false,
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory: contentsDirectory});
 
 	t.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: projectDirectory}]);
@@ -393,7 +393,7 @@ test('no-cleanup still uses lockfile-aware install command', async t => {
 		tests: false,
 		publish: false,
 		runPublish: false,
-		preview: false,
+		dryRun: false,
 	}, npPackageResult);
 
 	t.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--engine-strict'], {cwd: npPackageResult.rootDirectory}]);
@@ -427,7 +427,7 @@ test('contents mode looks up lockfile in projectDirectory and installs there', a
 		tests: false,
 		publish: false,
 		runPublish: false,
-		preview: false,
+		dryRun: false,
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory});
 
 	t.true(findLockfileStub.calledOnceWithExactly(projectDirectory, packageManager));
@@ -474,7 +474,7 @@ test('contents mode keeps cleanup, install, and tests in projectDirectory while 
 	t.is(publishCwd, rootDirectory);
 });
 
-test('preview with no-cleanup does not execute install command', async t => {
+test('dryRun with no-cleanup does not execute install command', async t => {
 	const execaStub = sinon.stub().returns(fakeExecaReturn());
 	const verifyWorkingTreeIsCleanStub = sinon.stub();
 
@@ -501,14 +501,46 @@ test('preview with no-cleanup does not execute install command', async t => {
 		tests: false,
 		publish: false,
 		runPublish: false,
-		preview: true,
+		dryRun: true,
 	}, npPackageResult);
 
 	t.true(execaStub.notCalled);
 	t.true(verifyWorkingTreeIsCleanStub.notCalled);
 });
 
-test('preview without lockfile does not clean up or run tests', async t => {
+test('dryRun without lockfile does not clean up or run tests', async t => {
+	const deleteAsyncStub = sinon.stub();
+	const execaStub = sinon.stub().returns(fakeExecaReturn());
+
+	/** @type {typeof np} */
+	const npMock = await esmock('../source/index.js', {
+		del: {deleteAsync: deleteAsyncStub},
+		execa: {execa: execaStub},
+		'../source/prerequisite-tasks.js': sinon.stub(),
+		'../source/git-tasks.js': sinon.stub(),
+		'../source/git-util.js': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
+		},
+		'../source/package-manager/index.js': {
+			...await import('../source/package-manager/index.js'),
+			findLockfile: sinon.stub().returns(undefined),
+		},
+	});
+
+	await npMock('1.0.0', {
+		...defaultOptions,
+		dryRun: true,
+		publish: false,
+		runPublish: false,
+	}, npPackageResult);
+
+	t.true(deleteAsyncStub.notCalled);
+	t.true(execaStub.notCalled);
+});
+
+test('preview option remains a supported alias for dryRun', async t => {
 	const deleteAsyncStub = sinon.stub();
 	const execaStub = sinon.stub().returns(fakeExecaReturn());
 
