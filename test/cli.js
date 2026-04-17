@@ -18,7 +18,7 @@ test('flags: --help', cliPasses, cli, '--help', [
 	'Options',
 	'--any-branch           Allow publishing from any branch',
 	'--branch               Name of the release branch (default: main | master)',
-	'--no-cleanup           Skips cleanup of node_modules',
+	'--no-cleanup           Skips np\'s node_modules cleanup step before install',
 	'--no-tests             Skips tests',
 	'--yolo                 Skips cleanup and testing',
 	'--no-publish           Skips publishing',

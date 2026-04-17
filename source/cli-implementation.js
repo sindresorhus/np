@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import path from 'node:path';
 import process from 'node:process';
 import logSymbols from 'log-symbols';
 import meow from 'meow';
@@ -27,7 +28,7 @@ const cli = meow(`
 	Options
 	  --any-branch           Allow publishing from any branch
 	  --branch               Name of the release branch (default: main | master)
-	  --no-cleanup           Skips cleanup of node_modules
+	  --no-cleanup           Skips np's node_modules cleanup step before install
 	  --no-tests             Skips tests
 	  --yolo                 Skips cleanup and testing
 	  --no-publish           Skips publishing
@@ -117,13 +118,16 @@ updateNotifier({pkg: cli.pkg}).notify();
 /** @typedef {Awaited<ReturnType<typeof getOptions>>['options']} Options */
 
 async function getOptions() {
-	// Load config from cwd first to get `contents` option before reading package
 	const initialConfig = await config(process.cwd());
 	const contents = cli.flags.contents ?? initialConfig?.contents;
+	const packagePath = contents ? path.resolve(process.cwd(), contents) : process.cwd();
 
-	const {package_, rootDirectory} = await util.readPackage(contents);
+	const {package_, rootDirectory} = await util.readPackage(packagePath);
+	const projectDirectory = contents ? process.cwd() : rootDirectory;
 
-	const localConfig = await config(rootDirectory);
+	const localConfig = projectDirectory === process.cwd()
+		? initialConfig
+		: await config(projectDirectory);
 
 	// Filter out undefined CLI flags (not provided by user)
 	const explicitCliFlags = Object.fromEntries(Object.entries(cli.flags).filter(([, value]) => value !== undefined));
@@ -149,7 +153,7 @@ async function getOptions() {
 		package_.packageManager = flags.packageManager;
 	}
 
-	const packageManager = getPackageManagerConfig(rootDirectory, package_);
+	const packageManager = getPackageManagerConfig(projectDirectory, package_);
 
 	if (packageManager.throwOnExternalRegistry && npm.isExternalRegistry(package_)) {
 		throw new Error(`External registry is not yet supported with ${packageManager.id}.`);
@@ -180,13 +184,14 @@ async function getOptions() {
 
 	return {
 		options: {...options, packageManager},
+		projectDirectory,
 		rootDirectory,
 		package_,
 	};
 }
 
 try {
-	const {options, rootDirectory, package_} = await getOptions();
+	const {options, projectDirectory, rootDirectory, package_} = await getOptions();
 
 	if (!options.confirm) {
 		gracefulExit();
@@ -216,7 +221,7 @@ try {
 	}
 
 	console.log(); // Prints a newline for readability
-	const newPackage = await np(options.version.toString(), options, {package_, rootDirectory});
+	const newPackage = await np(options.version.toString(), options, {package_, projectDirectory, rootDirectory});
 
 	if (options.preview || options.releaseDraftOnly) {
 		gracefulExit();

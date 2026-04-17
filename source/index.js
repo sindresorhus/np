@@ -1,3 +1,4 @@
+import path from 'node:path';
 import {execa} from 'execa';
 import {deleteAsync} from 'del';
 // NOTE: We intentionally use the original `listr` package instead of `listr2`.
@@ -51,9 +52,10 @@ const exec = (command, arguments_, options) => {
 /**
 @param {string} input
 @param {import('./cli-implementation.js').Options} options
-@param {{package_: import('read-pkg').NormalizedPackageJson; rootDirectory: string}} context
+@param {{package_: import('read-pkg').NormalizedPackageJson; projectDirectory?: string; rootDirectory: string}} context
 */
-const np = async (input = 'patch', {packageManager, ...options}, {package_, rootDirectory}) => {
+const np = async (input = 'patch', {packageManager, ...options}, {package_, projectDirectory, rootDirectory}) => {
+	projectDirectory ??= rootDirectory;
 	// TODO: Remove sometime far in the future
 	if (options.skipCleanup) {
 		options.cleanup = false;
@@ -61,7 +63,8 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const lockfile = findLockfile(rootDirectory, packageManager);
+	const runInstall = !options.yolo;
+	const lockfile = findLockfile(projectDirectory, packageManager);
 	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl)?.type === 'github';
 	const testScript = options.testScript || 'test';
 
@@ -124,6 +127,17 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 		return publishCommand(arguments_);
 	}
 
+	function getInstallCommand() {
+		// `--no-cleanup` only skips np's explicit cleanup task.
+		// We still use the package manager's normal lockfile-aware install mode,
+		// even when that install mode replaces `node_modules` itself.
+		if (lockfile) {
+			return packageManager.installCommand;
+		}
+
+		return packageManager.installCommandNoLockfile;
+	}
+
 	const tasks = new Listr([
 		{
 			title: 'Prerequisite check',
@@ -137,17 +151,26 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 		{
 			title: 'Cleanup',
 			enabled: () => runCleanup && !lockfile,
-			task: () => deleteAsync('node_modules'),
+			skip() {
+				if (options.preview) {
+					return '[Preview] Command not executed: delete node_modules.';
+				}
+			},
+			task: () => deleteAsync(path.join(projectDirectory, 'node_modules')),
 		},
 		{
 			title: `Installing dependencies using ${packageManager.id}`,
-			enabled: () => runCleanup,
+			enabled: () => runInstall,
+			skip() {
+				if (options.preview) {
+					return `[Preview] Command not executed: ${printCommand(getInstallCommand())}.`;
+				}
+			},
 			task: () => new Listr([
 				{
 					title: 'Running install command',
 					task() {
-						const installCommand = lockfile ? packageManager.installCommand : packageManager.installCommandNoLockfile;
-						return exec(...installCommand);
+						return exec(...getInstallCommand(), {cwd: projectDirectory});
 					},
 				},
 				{
@@ -159,7 +182,12 @@ const np = async (input = 'patch', {packageManager, ...options}, {package_, root
 		{
 			title: 'Running tests',
 			enabled: () => runTests,
-			task: () => exec(packageManager.cli, ['run', testScript], ciEnvOptions),
+			skip() {
+				if (options.preview) {
+					return `[Preview] Command not executed: ${packageManager.cli} run ${testScript}.`;
+				}
+			},
+			task: () => exec(packageManager.cli, ['run', testScript], {...ciEnvOptions, cwd: projectDirectory}),
 		},
 		{
 			title: 'Bumping version',

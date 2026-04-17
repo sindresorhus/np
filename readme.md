@@ -58,7 +58,7 @@ $ np --help
   Options
     --any-branch            Allow publishing from any branch
     --branch                Name of the release branch (default: main | master)
-    --no-cleanup            Skips cleanup of node_modules
+    --no-cleanup            Skips np's node_modules cleanup step before install
     --no-tests              Skips tests
     --yolo                  Skips cleanup and testing
     --no-publish            Skips publishing
@@ -97,7 +97,7 @@ Currently, these are the flags you can configure:
 
 - `anyBranch` - Allow publishing from any branch (`false` by default).
 - `branch` - Name of the release branch (`main` or `master` by default).
-- `cleanup` - Cleanup `node_modules` (`true` by default).
+- `cleanup` - Delete `node_modules` before installing dependencies (`true` by default). Setting it to `false` only skips np's explicit cleanup step; the package manager install command still runs and may replace `node_modules` itself. Use `yolo` to skip install entirely.
 - `tests` - Run `npm test` (`true` by default).
 - `yolo` - Skip cleanup and testing (`false` by default).
 - `publish` - Publish (`true` by default).
