@@ -1,7 +1,7 @@
 import Listr from 'listr';
 import * as git from './git-util.js';
 
-const gitTasks = options => {
+const createGitTasks = options => {
 	const tasks = [
 		{
 			title: 'Check current branch',
@@ -21,7 +21,30 @@ const gitTasks = options => {
 		tasks.shift();
 	}
 
-	return new Listr(tasks);
+	return tasks;
 };
+
+export const verifyGitTasks = async options => {
+	if (!options.anyBranch) {
+		await git.verifyCurrentBranchIsReleaseBranch(options.branch);
+	}
+
+	await git.verifyWorkingTreeIsClean();
+	if (options.remote) {
+		await git.verifyRemoteIsValid(options.remote);
+	} else if (
+		!(
+			options.anyBranch
+			&& await git.isHeadDetached()
+		)
+		&& await git.hasUpstream()
+	) {
+		await git.verifyRemoteIsValid(await git.getUpstreamRemote());
+	}
+
+	await git.verifyRemoteHistoryIsClean();
+};
+
+const gitTasks = options => new Listr(createGitTasks(options));
 
 export default gitTasks;

@@ -11,6 +11,7 @@ import config from './config.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
+import {verifyGitTasks} from './git-tasks.js';
 import {getOidcProvider} from './npm/oidc.js';
 import {SEMVER_INCREMENTS} from './version.js';
 import ui from './ui.js';
@@ -177,6 +178,11 @@ async function getOptions() {
 	const version = flags.releaseDraftOnly ? package_.version : cli.input.at(0);
 
 	const branch = flags.branch ?? await git.defaultBranch();
+	if (!flags.releaseDraftOnly) {
+		// Keep obvious Git failures ahead of the wizard, but do not replace the later Git task.
+		// The publish flow still needs a final check in case the repo changes while the user is prompting or logging in.
+		await verifyGitTasks({anyBranch: flags.anyBranch, branch, remote: flags.remote});
+	}
 
 	const options = await ui({
 		...flags,
