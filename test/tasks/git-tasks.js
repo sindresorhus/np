@@ -176,3 +176,103 @@ test.serial('checks should pass when publishing from master, working tree is cle
 ], async ({t, testedModule: gitTasks}) => {
 	await t.notThrowsAsync(run(gitTasks({branch: 'master'})));
 });
+
+test.serial('preflight should validate remote before checking remote history', createFixture, [
+	{
+		command: 'git symbolic-ref --short HEAD',
+		stdout: 'master',
+	},
+	{
+		command: 'git status --porcelain',
+		stdout: '',
+	},
+	{
+		command: 'git status --short --branch --porcelain',
+		stdout: '## master...origin/master',
+	},
+	{
+		command: 'git config branch.master.remote',
+		stdout: 'origin',
+	},
+	{
+		command: 'git ls-remote origin HEAD',
+		exitCode: 1,
+		stderr: 'fatal: could not read from remote repository',
+	},
+], async ({t, testedModule}) => {
+	await t.throwsAsync(
+		testedModule.verifyGitTasks({branch: 'master'}),
+		{message: 'Git fatal error: could not read from remote repository'},
+	);
+});
+
+test.serial('preflight should skip upstream probe on detached head with anyBranch', createFixture, [
+	{
+		command: 'git status --porcelain',
+		stdout: '',
+	},
+	{
+		command: 'git symbolic-ref --quiet HEAD',
+		exitCode: 1,
+	},
+	{
+		command: 'git rev-parse @{u}',
+		stderr: 'fatal: no upstream configured for HEAD',
+	},
+], async ({t, testedModule}) => {
+	await t.notThrowsAsync(testedModule.verifyGitTasks({anyBranch: true}));
+});
+
+test.serial('preflight should validate explicit remote without upstream', createFixture, [
+	{
+		command: 'git status --porcelain',
+		stdout: '',
+	},
+	{
+		command: 'git ls-remote upstream HEAD',
+		exitCode: 1,
+		stderr: 'fatal: remote upstream not found',
+	},
+], async ({t, testedModule}) => {
+	await t.throwsAsync(
+		testedModule.verifyGitTasks({anyBranch: true, remote: 'upstream'}),
+		{message: 'Git fatal error: remote upstream not found'},
+	);
+});
+
+test.serial('preflight should validate the tracked remote instead of origin', createFixture, [
+	{
+		command: 'git symbolic-ref --short HEAD',
+		stdout: 'main',
+	},
+	{
+		command: 'git status --porcelain',
+		stdout: '',
+	},
+	{
+		command: 'git status --short --branch --porcelain',
+		stdout: '## main...upstream/main',
+	},
+	{
+		command: 'git config branch.main.remote',
+		stdout: 'upstream',
+	},
+	{
+		command: 'git ls-remote upstream HEAD',
+		exitCode: 0,
+	},
+	{
+		command: 'git rev-parse @{u}',
+		exitCode: 0,
+	},
+	{
+		command: 'git fetch --dry-run',
+		exitCode: 0,
+	},
+	{
+		command: 'git rev-list --count --left-only @{u}...HEAD',
+		stdout: '0',
+	},
+], async ({t, testedModule}) => {
+	await t.notThrowsAsync(testedModule.verifyGitTasks({branch: 'main'}));
+});

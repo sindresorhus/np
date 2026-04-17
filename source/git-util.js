@@ -115,6 +115,12 @@ export const getCurrentBranch = async () => {
 	return stdout;
 };
 
+export const getUpstreamRemote = async () => {
+	const currentBranch = await getCurrentBranch();
+	const {stdout} = await execa('git', ['config', `branch.${currentBranch}.remote`]);
+	return stdout;
+};
+
 export const verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
 	const currentBranch = await getCurrentBranch();
 	if (currentBranch !== releaseBranch) {
