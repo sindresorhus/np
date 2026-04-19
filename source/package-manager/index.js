@@ -36,16 +36,24 @@ function configFromPackageManagerField(package_) {
 /** @param {import('read-pkg').NormalizedPackageJson} package_ */
 function configFromDevEnginesPackageManager(package_) {
 	const {packageManager} = package_.devEngines ?? {};
+	if (packageManager === undefined) {
+		return undefined;
+	}
+
 	const packageManagers = Array.isArray(packageManager) ? packageManager : [packageManager];
+	if (packageManagers.length === 0) {
+		throw new Error('Missing "name" property for "packageManager".');
+	}
 
 	for (const packageManager of packageManagers) {
 		if (!packageManager || typeof packageManager !== 'object' || !('name' in packageManager) || typeof packageManager.name !== 'string') {
-			continue;
+			throw new Error('Missing "name" property for "packageManager".');
 		}
-
-		const version = typeof packageManager.version === 'string' ? packageManager.version : undefined;
-		return configFromPackageManager(packageManager.name, version, packageManager.name);
 	}
+
+	const [packageManager_] = packageManagers;
+	const version = typeof packageManager_.version === 'string' ? packageManager_.version : undefined;
+	return configFromPackageManager(packageManager_.name, version, packageManager_.name);
 }
 
 function configFromPackageManager(packageManager, version, rawPackageManager) {

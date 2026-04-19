@@ -192,11 +192,11 @@ test('packageManager field takes precedence over devEngines.packageManager field
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('falls back to lockfiles when devEngines.packageManager has no name', t => {
+test('throws when devEngines.packageManager has no name', t => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 	fs.writeFileSync(path.join(temporaryDirectory, 'pnpm-lock.yaml'), '');
 
-	const config = getPackageManagerConfig(temporaryDirectory, {
+	t.throws(() => getPackageManagerConfig(temporaryDirectory, {
 		name: 'test',
 		version: '1.0.0',
 		devEngines: {
@@ -204,9 +204,33 @@ test('falls back to lockfiles when devEngines.packageManager has no name', t => 
 				version: '>=9',
 			},
 		},
+	}), {
+		message: 'Missing "name" property for "packageManager".',
 	});
 
-	t.is(config, pnpmConfig);
+	fs.rmSync(temporaryDirectory, {recursive: true});
+});
+
+test('throws when devEngines.packageManager array entry has no name', t => {
+	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
+
+	t.throws(() => getPackageManagerConfig(temporaryDirectory, {
+		name: 'test',
+		version: '1.0.0',
+		devEngines: {
+			packageManager: [
+				{
+					version: '>=9',
+				},
+				{
+					name: 'pnpm',
+				},
+			],
+		},
+	}), {
+		message: 'Missing "name" property for "packageManager".',
+	});
+
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
