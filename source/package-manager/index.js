@@ -18,7 +18,7 @@ export function findLockfile(rootDirectory, config) {
 @param {import('read-pkg').NormalizedPackageJson} package_
 */
 export function getPackageManagerConfig(rootDirectory, package_) {
-	const config = configFromPackageManagerField(package_);
+	const config = configFromPackageManagerField(package_) ?? configFromDevEnginesPackageManager(package_);
 	return config || configFromLockfile(rootDirectory) || configs.npmConfig;
 }
 
@@ -30,7 +30,28 @@ function configFromPackageManagerField(package_) {
 
 	const [packageManager, version] = package_.packageManager.split('@');
 
-	if (packageManager === 'yarn' && version && semver.gte(version, '2.0.0')) {
+	return configFromPackageManager(packageManager, version, package_.packageManager);
+}
+
+/** @param {import('read-pkg').NormalizedPackageJson} package_ */
+function configFromDevEnginesPackageManager(package_) {
+	const {packageManager} = package_.devEngines ?? {};
+	const packageManagers = Array.isArray(packageManager) ? packageManager : [packageManager];
+
+	for (const packageManager of packageManagers) {
+		if (!packageManager || typeof packageManager !== 'object' || !('name' in packageManager) || typeof packageManager.name !== 'string') {
+			continue;
+		}
+
+		const version = typeof packageManager.version === 'string' ? packageManager.version : undefined;
+		return configFromPackageManager(packageManager.name, version, packageManager.name);
+	}
+}
+
+function configFromPackageManager(packageManager, version, rawPackageManager) {
+	const minimumVersion = version && semver.minVersion(version);
+
+	if (packageManager === 'yarn' && minimumVersion && semver.gte(minimumVersion, '2.0.0')) {
 		return configs.yarnBerryConfig;
 	}
 
@@ -50,7 +71,7 @@ function configFromPackageManagerField(package_) {
 		return configs.bunConfig;
 	}
 
-	throw new Error(`Invalid package manager: ${package_.packageManager}`);
+	throw new Error(`Invalid package manager: ${rawPackageManager}`);
 }
 
 /** @param {string} rootDirectory */
