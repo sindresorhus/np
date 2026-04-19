@@ -71,7 +71,7 @@ $ np --help
     --test-script           Name of npm run script to run tests before publishing (default: test)
     --no-2fa                Don't enable 2FA on new packages (not recommended)
     --message               Version bump commit message, '%s' will be replaced with version (default: '%s' with npm and 'v%s' with yarn)
-    --package-manager       Use a specific package manager (default: 'packageManager' field in package.json)
+    --package-manager       Use a specific package manager (default: package.json packageManager/devEngines)
     --provenance            Publish with npm provenance statements (CI-only)
     --remote                Git remote to push to (default: origin)
 
@@ -109,7 +109,7 @@ Currently, these are the flags you can configure:
 - `testScript` - Name of npm run script to run tests before publishing (`test` by default).
 - `2fa` - Enable 2FA on new packages (`true` by default) (setting this to `false` is not recommended).
 - `message` - The commit message used for the version bump. Any `%s` in the string will be replaced with the new version. By default, npm uses `%s` and Yarn uses `v%s`.
-- `packageManager` - Set the package manager to be used. Defaults to the [packageManager field in package.json](https://nodejs.org/dist/latest-v16.x/docs/api/all.html#all_packages_packagemanager), so only use if you can't update package.json for some reason.
+- `packageManager` - Set the package manager to be used. Defaults to the [`packageManager`](https://nodejs.org/api/packages.html#packagemanager) or [`devEngines.packageManager`](https://docs.npmjs.com/cli/v11/configuring-npm/package-json#devengines) field in package.json, so only use if you can't update package.json for some reason.
 - `provenance` - Publish with [npm provenance statements](https://docs.npmjs.com/generating-provenance-statements) (`false` by default). Requires npm 9.5.0+ and a supported CI environment (GitHub Actions or GitLab CI/CD).
 - `remote` - Git remote to push tags and commits to. Useful when publishing from a fork where `origin` is your fork and `upstream` is the main repository.
 
@@ -263,7 +263,7 @@ Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in pack
 
 ### Package managers
 
-If a package manager is not set in package.json, via configuration (`packageManager`), or via the CLI (`--package-manager`), `np` will attempt to infer the best package manager to use by looking for lockfiles. But it's recommended to set the [`packageManager` field](https://nodejs.org/api/packages.html#packagemanager) in your package.json to be consistent with other tools. See also the [corepack docs](https://nodejs.org/api/corepack.html).
+If a package manager is not set in package.json (`packageManager` or `devEngines.packageManager`), via configuration (`packageManager`), or via the CLI (`--package-manager`), `np` will attempt to infer the best package manager to use by looking for lockfiles. But it's recommended to set the [`packageManager` field](https://nodejs.org/api/packages.html#packagemanager) in your package.json to be consistent with other tools. See also the [corepack docs](https://nodejs.org/api/corepack.html).
 
 ### Publish with a CI
 
