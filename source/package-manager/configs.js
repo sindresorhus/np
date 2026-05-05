@@ -43,8 +43,12 @@ export const yarnBerryConfig = {
 	id: 'yarn-berry',
 	installCommand: ['yarn', ['install', '--immutable']],
 	installCommandNoLockfile: ['yarn', ['install']],
-	// Yarn berry doesn't support git committing/tagging, so we use npm instead
-	versionCommand: version => ['npm', ['version', version]],
+	// Yarn berry doesn't support git committing/tagging, so we use npm instead.
+	// `--no-workspaces` is needed because npm 11 auto-detects the workspace
+	// context when run inside a monorepo member, causing `npm version` to
+	// fail with EUNSUPPORTEDPROTOCOL on `workspace:*` deps. The flag is a
+	// no-op for single-package yarn-berry repos.
+	versionCommand: version => ['npm', ['version', '--no-workspaces', version]],
 	tagVersionPrefixCommand: ['yarn', ['config', 'get', 'version-tag-prefix']],
 	// Yarn berry offloads publishing to npm, e.g. `yarn npm publish x.y.z`
 	publishCommand: arguments_ => ['yarn', ['npm', ...arguments_]],
