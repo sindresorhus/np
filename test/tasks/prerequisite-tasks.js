@@ -601,7 +601,7 @@ test.serial('should fail when dropping Node.js support in a prepatch release', c
 	assertTaskFailed(t, 'Check for Node.js engine support drop');
 });
 
-test.serial('should fail when dropping Node.js support in a prerelease release', createFixture, [{
+test.serial('should not fail when dropping Node.js support in a prerelease release', createFixture, [{
 	command: 'npm view --json test engines',
 	stdout: JSON.stringify({node: '>=16'}),
 }, {
@@ -614,12 +614,7 @@ test.serial('should fail when dropping Node.js support in a prerelease release',
 	command: 'git rev-parse --quiet --verify refs/tags/v1.0.0-1',
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
-	await t.throwsAsync(
-		run(prerequisiteTasks('1.0.0-1', {name: 'test', version: '1.0.0-0', engines: {node: '>=18'}}, {tag: 'next'}, {packageManager: npmConfig})),
-		{message: 'Raising minimum Node.js version from 16.0.0 to 18.0.0 requires a major version bump. The current release is a prerelease bump.'},
-	);
-
-	assertTaskFailed(t, 'Check for Node.js engine support drop');
+	await t.notThrowsAsync(run(prerequisiteTasks('1.0.0-1', {name: 'test', version: '1.0.0-0', engines: {node: '>=18'}}, {tag: 'next'}, {packageManager: npmConfig})));
 });
 
 test.serial('yolo mode: should disable task checking for Node.js engine support drop', createFixture, [{
