@@ -79,6 +79,29 @@ test.serial('should fail when local working tree modified', createFixture, [
 	assertTaskFailed(t, 'Check local working tree');
 });
 
+test.serial('should not fail when local working tree modified and allow-dirty is enabled', createFixture, [
+	{
+		command: 'git symbolic-ref --short HEAD',
+		stdout: 'master',
+	},
+	{
+		command: 'git rev-parse @{u}',
+		exitCode: 0,
+	},
+	{
+		command: 'git fetch --dry-run',
+		exitCode: 0,
+	},
+	{
+		command: 'git rev-list --count --left-only @{u}...HEAD',
+		stdout: '0',
+	},
+], async ({t, testedModule: gitTasks}) => {
+	await t.notThrowsAsync(run(gitTasks({branch: 'master', allowDirty: true})));
+
+	assertTaskDoesntExist(t, 'Check local working tree');
+});
+
 test.serial('should not fail when no remote set up', createFixture, [
 	{
 		command: 'git symbolic-ref --short HEAD',
@@ -204,6 +227,39 @@ test.serial('preflight should validate remote before checking remote history', c
 		testedModule.verifyGitTasks({branch: 'master'}),
 		{message: 'Git fatal error: could not read from remote repository'},
 	);
+});
+
+test.serial('preflight should skip working tree check with allowDirty', createFixture, [
+	{
+		command: 'git symbolic-ref --short HEAD',
+		stdout: 'master',
+	},
+	{
+		command: 'git status --short --branch --porcelain',
+		stdout: '## master...origin/master',
+	},
+	{
+		command: 'git config branch.master.remote',
+		stdout: 'origin',
+	},
+	{
+		command: 'git ls-remote origin HEAD',
+		exitCode: 0,
+	},
+	{
+		command: 'git rev-parse @{u}',
+		exitCode: 0,
+	},
+	{
+		command: 'git fetch --dry-run',
+		exitCode: 0,
+	},
+	{
+		command: 'git rev-list --count --left-only @{u}...HEAD',
+		stdout: '0',
+	},
+], async ({t, testedModule}) => {
+	await t.notThrowsAsync(testedModule.verifyGitTasks({branch: 'master', allowDirty: true}));
 });
 
 test.serial('preflight should skip upstream probe on detached head with anyBranch', createFixture, [

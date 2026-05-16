@@ -177,10 +177,12 @@ const np = async (input = 'patch', {packageManager, ...rawOptions}, {package_, p
 						return exec(...getInstallCommand(), {cwd: projectDirectory});
 					},
 				},
-				{
-					title: 'Checking working tree is still clean', // If lockfile was out of date and tracked by git, this will fail
-					task: () => git.verifyWorkingTreeIsClean(),
-				},
+				...options.allowDirty
+					? []
+					: [{
+						title: 'Checking working tree is still clean', // If lockfile was out of date and tracked by git, this will fail
+						task: () => git.verifyWorkingTreeIsClean(),
+					}],
 			]),
 		},
 		{

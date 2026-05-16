@@ -22,6 +22,7 @@ test('flags: --help', cliPasses, cli, '--help', [
 	'Options',
 	'--any-branch           Allow publishing from any branch',
 	'--branch               Name of the release branch (default: main | master)',
+	'--allow-dirty          Allow publishing when the working tree is dirty',
 	'--no-cleanup           Skips np\'s node_modules cleanup step before install',
 	'--no-tests             Skips tests',
 	'--yolo                 Skips cleanup and testing',
@@ -139,7 +140,12 @@ test.serial('cli runs git preflight before prompting', async t => {
 		},
 	});
 
-	t.true(verifyGitTasksStub.calledOnceWithExactly({anyBranch: undefined, branch: 'main', remote: undefined}));
+	t.true(verifyGitTasksStub.calledOnceWithExactly({
+		anyBranch: undefined,
+		allowDirty: undefined,
+		branch: 'main',
+		remote: undefined,
+	}));
 	t.true(uiStub.notCalled);
 	t.true(gracefulExitStub.calledOnceWithExactly(1));
 
@@ -163,7 +169,12 @@ test.serial('cli continues to the publish flow after successful git preflight', 
 		},
 	});
 
-	t.true(verifyGitTasksStub.calledOnceWithExactly({anyBranch: undefined, branch: 'main', remote: undefined}));
+	t.true(verifyGitTasksStub.calledOnceWithExactly({
+		anyBranch: undefined,
+		allowDirty: undefined,
+		branch: 'main',
+		remote: undefined,
+	}));
 	t.true(uiStub.calledOnce);
 	t.true(npStub.calledOnce);
 	t.false('skipGitTasks' in npStub.firstCall.args[1]);

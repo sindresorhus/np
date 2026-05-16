@@ -58,6 +58,7 @@ $ np --help
   Options
     --any-branch            Allow publishing from any branch
     --branch                Name of the release branch (default: main | master)
+    --allow-dirty           Allow publishing when the working tree is dirty
     --no-cleanup            Skips np's node_modules cleanup step before install
     --no-tests              Skips tests
     --yolo                  Skips cleanup and testing

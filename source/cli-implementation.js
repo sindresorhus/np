@@ -29,6 +29,7 @@ const cli = meow(`
 	Options
 	  --any-branch           Allow publishing from any branch
 	  --branch               Name of the release branch (default: main | master)
+	  --allow-dirty          Allow publishing when the working tree is dirty
 	  --no-cleanup           Skips np's node_modules cleanup step before install
 	  --no-tests             Skips tests
 	  --yolo                 Skips cleanup and testing
@@ -63,6 +64,9 @@ const cli = meow(`
 		},
 		branch: {
 			type: 'string',
+		},
+		allowDirty: {
+			type: 'boolean',
 		},
 		cleanup: {
 			type: 'boolean',
@@ -178,10 +182,16 @@ async function getOptions() {
 	const version = flags.releaseDraftOnly ? package_.version : cli.input.at(0);
 
 	const branch = flags.branch ?? await git.defaultBranch();
+
 	if (!flags.releaseDraftOnly) {
 		// Keep obvious Git failures ahead of the wizard, but do not replace the later Git task.
 		// The publish flow still needs a final check in case the repo changes while the user is prompting or logging in.
-		await verifyGitTasks({anyBranch: flags.anyBranch, branch, remote: flags.remote});
+		await verifyGitTasks({
+			anyBranch: flags.anyBranch,
+			allowDirty: flags.allowDirty,
+			branch,
+			remote: flags.remote,
+		});
 	}
 
 	const options = await ui({
@@ -201,6 +211,23 @@ async function getOptions() {
 	};
 }
 
+async function verifyPublishAuth(package_) {
+	const externalRegistry = npm.isExternalRegistry(package_)
+		? package_.publishConfig.registry
+		: false;
+
+	try {
+		await npm.username({externalRegistry});
+	} catch (error) {
+		if (error.isNotLoggedIn && isInteractive()) {
+			console.log('\nYou must be logged in to publish. Running `npm login`...\n');
+			await npm.login({externalRegistry});
+		} else {
+			throw error;
+		}
+	}
+}
+
 try {
 	const {options, projectDirectory, rootDirectory, package_} = await getOptions();
 
@@ -210,24 +237,10 @@ try {
 
 	// Check authentication early, before Listr starts (so login can be interactive)
 	if (options.runPublish) {
-		// Skip auth check if OIDC is available (will be handled by npm publish itself)
 		if (getOidcProvider()) {
 			console.log('OIDC authentication detected - skipping auth check');
 		} else {
-			const externalRegistry = npm.isExternalRegistry(package_)
-				? package_.publishConfig.registry
-				: false;
-
-			try {
-				await npm.username({externalRegistry});
-			} catch (error) {
-				if (error.isNotLoggedIn && isInteractive()) {
-					console.log('\nYou must be logged in to publish. Running `npm login`...\n');
-					await npm.login({externalRegistry});
-				} else {
-					throw error;
-				}
-			}
+			await verifyPublishAuth(package_);
 		}
 	}
 

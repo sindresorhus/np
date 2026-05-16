@@ -21,6 +21,13 @@ const createGitTasks = options => {
 		tasks.shift();
 	}
 
+	if (options.allowDirty) {
+		const index = tasks.findIndex(task => task.title === 'Check local working tree');
+		if (index !== -1) {
+			tasks.splice(index, 1);
+		}
+	}
+
 	return tasks;
 };
 
@@ -29,7 +36,10 @@ export const verifyGitTasks = async options => {
 		await git.verifyCurrentBranchIsReleaseBranch(options.branch);
 	}
 
-	await git.verifyWorkingTreeIsClean();
+	if (!options.allowDirty) {
+		await git.verifyWorkingTreeIsClean();
+	}
+
 	if (options.remote) {
 		await git.verifyRemoteIsValid(options.remote);
 	} else if (
