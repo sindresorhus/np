@@ -1,4 +1,5 @@
 import path from 'node:path';
+import process from 'node:process';
 import {execa} from 'execa';
 import {deleteAsync} from 'del';
 // NOTE: We intentionally use the original `listr` package instead of `listr2`.
@@ -30,6 +31,12 @@ import {findLockfile, printCommand} from './package-manager/index.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
+
+const restoreCursor = () => {
+	if (process.stderr.isTTY) {
+		process.stderr.write('\u001B[?25h');
+	}
+};
 
 /** @type {(cmd: string, args: string[], options?: import('execa').Options) => any} */
 const exec = (command, arguments_, options) => {
@@ -309,6 +316,10 @@ const np = async (input = 'patch', {packageManager, ...rawOptions}, {package_, p
 	}
 
 	await tasks.run();
+
+	// Listr-update-renderer calls logUpdate.clear() on successful clearOutput,
+	// which skips logUpdate.done() and can leave the terminal cursor hidden.
+	restoreCursor();
 
 	if (pushedObjects) {
 		console.error(`\n${logSymbols.error} ${pushedObjects.reason}`);
