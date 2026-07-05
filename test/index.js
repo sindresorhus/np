@@ -206,6 +206,43 @@ test('rollback is called when publish fails', async t => {
 	t.true(removeLastCommitStub.calledOnce, 'removeLastCommit should be called once');
 });
 
+test('restores cursor after successful publish', async t => {
+	const stderrWriteStub = sinon.stub().returns(true);
+
+	/** @type {typeof np} */
+	const npMock = await esmock('../source/index.js', {
+		'node:process': {
+			stderr: {
+				isTTY: true,
+				write: stderrWriteStub,
+			},
+		},
+		del: {deleteAsync: sinon.stub()},
+		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
+		'../source/prerequisite-tasks.js': sinon.stub(),
+		'../source/git-tasks.js': sinon.stub(),
+		'../source/git-util.js': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
+		},
+		'../source/npm/enable-2fa.js': sinon.stub(),
+		'../source/npm/publish.js': {
+			getPackagePublishArguments: sinon.stub().returns([]),
+			runPublish: sinon.stub().returns(fakeObservableReturn()),
+		},
+	});
+
+	await npMock('1.0.0', {
+		...defaultOptions,
+		cleanup: false,
+		tests: false,
+		'2fa': false,
+	}, npPackageResult);
+
+	t.true(stderrWriteStub.calledWithExactly('\u001B[?25h'));
+});
+
 test('publish uses rootDirectory from context as cwd', async t => {
 	const contentsDirectory = path.resolve('dist');
 	const projectDirectory = path.resolve('.');
