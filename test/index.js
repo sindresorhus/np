@@ -308,7 +308,7 @@ test('rootDirectory remains the default working directory when projectDirectory 
 	await npMock('1.0.0', defaultOptions, {package_: npPackageResult.package_, rootDirectory});
 
 	t.true(deleteAsyncStub.calledOnceWithExactly(path.join(rootDirectory, 'node_modules')));
-	t.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--no-production', '--engine-strict'], {cwd: rootDirectory}]);
+	t.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: rootDirectory}]);
 	t.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: rootDirectory}]);
 	t.is(publishCwd, rootDirectory);
 });
@@ -339,7 +339,7 @@ test('install uses projectDirectory from context as cwd', async t => {
 		dryRun: false,
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory: contentsDirectory});
 
-	t.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--no-production', '--engine-strict'], {cwd: projectDirectory}]);
+	t.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: projectDirectory}]);
 });
 
 test('cleanup uses projectDirectory from context', async t => {
@@ -506,7 +506,7 @@ test('contents mode keeps cleanup, install, and tests in projectDirectory while 
 	await npMock('1.0.0', defaultOptions, {package_: npPackageResult.package_, projectDirectory, rootDirectory});
 
 	t.true(deleteAsyncStub.calledOnceWithExactly(path.join(projectDirectory, 'node_modules')));
-	t.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--no-production', '--engine-strict'], {cwd: projectDirectory}]);
+	t.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: projectDirectory}]);
 	t.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: projectDirectory}]);
 	t.is(publishCwd, rootDirectory);
 });

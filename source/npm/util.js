@@ -19,6 +19,12 @@ const throwIfNpmTimeout = error => {
 	}
 };
 
+// Unwrap the array that npm 12 wraps `npm view --json` output in; older npm returns the object directly.
+const parseNpmViewOutput = stdout => {
+	const parsed = JSON.parse(stdout);
+	return Array.isArray(parsed) ? parsed[0] : parsed;
+};
+
 export const checkConnection = async () => {
 	try {
 		await execa('npm', ['ping'], {timeout: npmNetworkTimeout});
@@ -133,20 +139,22 @@ export const prereleaseTags = async packageName => {
 	let tags = [];
 	try {
 		const {stdout} = await execa('npm', ['view', '--json', packageName, 'dist-tags'], {timeout: npmNetworkTimeout});
-		tags = Object.keys(JSON.parse(stdout))
+		const distTags = parseNpmViewOutput(stdout);
+		tags = Object.keys(distTags ?? {})
 			.filter(tag => tag !== 'latest');
 	} catch (error) {
 		throwIfNpmTimeout(error);
-		// HACK: NPM is mixing JSON with plain text errors. Luckily, the error
-		// always starts with 'npm ERR!' (npm <10) or 'npm error' (npm >=10)
-		// so as a solution, until npm/cli#2740 is fixed, we can remove anything
-		// starting with 'npm ERR!' or 'npm error'
+		// HACK: NPM is mixing JSON with plain text errors. npm 12 writes the JSON
+		// error body to stdout, while older npm mixes it into stderr where every
+		// text line starts with 'npm ERR!' (npm <10) or 'npm error' (npm >=10),
+		// so we prefer stdout and fall back to stripping those prefixed lines.
 		/** @type {string} */
-		const errorMessage = error.stderr;
-		const errorJSON = errorMessage
-			.split('\n')
-			.filter(line => !line.startsWith('npm ERR!') && !line.startsWith('npm error'))
-			.join('\n');
+		const errorJSON = error.stdout?.trim()
+			? error.stdout
+			: (error.stderr ?? '')
+				.split('\n')
+				.filter(line => !line.startsWith('npm ERR!') && !line.startsWith('npm error'))
+				.join('\n');
 
 		try {
 			const parsed = JSON.parse(errorJSON);
@@ -218,9 +226,12 @@ export const getFilesToBePacked = async rootDirectory => {
 	try {
 		// HACK: NPM lifecycle scripts can output text even with --silent and --foreground-scripts=false.
 		// For example, Husky's prepare script outputs "> package@version prepare" and "> husky install".
-		// We extract only the JSON portion by finding the first '[' character.
+		// We extract only the JSON portion by finding the first '{' or '[' character.
 		// Related: https://github.com/sindresorhus/np/issues/742
-		const {files} = JSON.parse(stdout.slice(Math.max(0, stdout.indexOf('[')))).at(0);
+		const jsonStart = stdout.search(/[{[]/);
+		const parsed = JSON.parse(stdout.slice(jsonStart));
+		// Unwrap: npm 12 keys the output by package name (`{"pkg": {files}}`); older npm returns an array (`[{files}]`).
+		const {files} = Array.isArray(parsed) ? parsed[0] : Object.values(parsed)[0];
 		return files.map(file => file.path);
 	} catch (error) {
 		throw new Error('Failed to parse output of npm pack', {cause: error});
@@ -335,7 +346,7 @@ export const getPublishedPackageEngines = async package_ => {
 			return undefined;
 		}
 
-		return JSON.parse(stdout);
+		return parseNpmViewOutput(stdout);
 	} catch (error) {
 		throwIfNpmTimeout(error);
 

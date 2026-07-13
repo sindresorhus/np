@@ -3,11 +3,12 @@ export const npmConfig = {
 	cli: 'npm',
 	id: 'npm',
 	installCommand: ['npm', ['ci', '--engine-strict']],
-	installCommandNoLockfile: ['npm', ['install', '--no-package-lock', '--no-production', '--engine-strict']],
+	installCommandNoLockfile: ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict']],
 	versionCommand: version => ['npm', ['version', version]],
 	getRegistryCommand: ['npm', ['config', 'get', 'registry', '--workspaces=false']],
 	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix', '--workspaces=false']],
-	lockfiles: ['package-lock.json', 'npm-shrinkwrap.json'],
+	// The npm-shrinkwrap.json file is intentionally unsupported because npm 12 no longer supports it.
+	lockfiles: ['package-lock.json'],
 };
 
 /** @type {import('./types.d.ts').PackageManagerConfig} */

@@ -38,6 +38,42 @@ test('tags: latest, beta', createFixture, [{
 	);
 });
 
+test('tags: array-wrapped output (npm 12)', createFixture, [{
+	command: 'npm view --json foo dist-tags',
+	stdout: JSON.stringify([{
+		latest: '1.0.0',
+		beta: '2.0.0-beta',
+	}]),
+}], async ({t, testedModule: {prereleaseTags}}) => {
+	t.deepEqual(
+		await prereleaseTags('foo'),
+		['beta'],
+	);
+});
+
+test('non-existent with npm 12 format (JSON error on stdout) - should not throw', createFixture, [{
+	command: 'npm view --json non-existent dist-tags',
+	stdout: stripIndent`
+		{
+			"error": {
+				"code": "E404",
+				"summary": "Not Found - GET https://registry.npmjs.org/non-existent - Not found",
+				"detail": "The requested resource 'non-existent@*' could not be found."
+			}
+		}
+	`,
+	stderr: stripIndent`
+		npm error code E404
+		npm error 404 Not Found - GET https://registry.npmjs.org/non-existent - Not found
+		npm error A complete log of this run can be found in: ~/.npm/_logs/...-debug.log
+	`,
+}], async ({t, testedModule: {prereleaseTags}}) => {
+	t.deepEqual(
+		await prereleaseTags('non-existent'),
+		['next'],
+	);
+});
+
 test('non-existent (code 404) - should not throw', createFixture, [{
 	command: 'npm view --json non-existent dist-tags',
 	stderr: stripIndent`
