@@ -169,3 +169,68 @@ test.serial('cli continues to the publish flow after successful git preflight', 
 	t.false('skipGitTasks' in npStub.firstCall.args[1]);
 	t.true(gracefulExitStub.notCalled);
 });
+
+const notLoggedInError = () => Object.assign(new Error('You must be logged in. Use `npm login` and try again.'), {isNotLoggedIn: true});
+
+test.serial('cli auto-runs `npm login` and re-verifies after a successful login', async t => {
+	const usernameStub = sinon.stub();
+	usernameStub.onFirstCall().rejects(notLoggedInError());
+	usernameStub.onSecondCall().resolves('sindresorhus');
+	const loginStub = sinon.stub().resolves();
+	const npStub = sinon.stub().resolves({name: 'test-package', version: '1.0.1'});
+	const gracefulExitStub = sinon.stub();
+	const consoleLogStub = sinon.stub(console, 'log');
+
+	await loadCliImplementation({
+		meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: true}, pkg: npPackage})},
+		'is-interactive': {default: sinon.stub().returns(true)},
+		'../source/npm/util.js': {
+			isExternalRegistry: sinon.stub().returns(false),
+			isPackageNameAvailable: sinon.stub().resolves({isAvailable: false, isUnknown: false}),
+			username: usernameStub,
+			login: loginStub,
+		},
+		'../source/ui.js': {default: sinon.stub().callsFake(async options => ({...options, confirm: true, version: '1.0.1'}))},
+		'../source/index.js': {default: npStub},
+		'exit-hook': {gracefulExit: gracefulExitStub},
+	});
+
+	t.true(loginStub.calledOnce);
+	t.true(usernameStub.calledTwice);
+	t.true(npStub.calledOnce);
+
+	consoleLogStub.restore();
+});
+
+test.serial('cli fails with an actionable error when still not authenticated after `npm login`', async t => {
+	const usernameStub = sinon.stub().rejects(notLoggedInError());
+	const loginStub = sinon.stub().resolves();
+	const npStub = sinon.stub().resolves({name: 'test-package', version: '1.0.1'});
+	const gracefulExitStub = sinon.stub();
+	const consoleLogStub = sinon.stub(console, 'log');
+	const consoleErrorStub = sinon.stub(console, 'error');
+
+	await loadCliImplementation({
+		meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: true}, pkg: npPackage})},
+		'is-interactive': {default: sinon.stub().returns(true)},
+		'../source/npm/util.js': {
+			isExternalRegistry: sinon.stub().returns(false),
+			isPackageNameAvailable: sinon.stub().resolves({isAvailable: false, isUnknown: false}),
+			username: usernameStub,
+			login: loginStub,
+		},
+		'../source/ui.js': {default: sinon.stub().callsFake(async options => ({...options, confirm: true, version: '1.0.1'}))},
+		'../source/index.js': {default: npStub},
+		'exit-hook': {gracefulExit: gracefulExitStub},
+	});
+
+	t.true(loginStub.calledOnce);
+	t.true(usernameStub.calledTwice);
+	t.true(npStub.notCalled);
+	t.true(gracefulExitStub.calledOnceWithExactly(1));
+	t.true(consoleErrorStub.calledOnce);
+	t.true(consoleErrorStub.firstCall.firstArg.includes('Still not authenticated after `npm login`'));
+
+	consoleLogStub.restore();
+	consoleErrorStub.restore();
+});
