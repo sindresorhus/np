@@ -34,6 +34,7 @@ const prerequisiteTasks = (input, package_, options, {packageManager, rootDirect
 				}
 			},
 			async task() {
+				// Use the exact publish registry (if any) so this check can't disagree with the early auth check. See #764.
 				const externalRegistry = package_.publishConfig?.registry;
 				const username = await npm.username({externalRegistry});
 

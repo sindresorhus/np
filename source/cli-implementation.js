@@ -201,6 +201,41 @@ async function getOptions() {
 	};
 }
 
+const ensureAuthenticated = async package_ => {
+	// Skip auth check if OIDC is available (will be handled by npm publish itself)
+	if (getOidcProvider()) {
+		console.log('OIDC authentication detected - skipping auth check');
+		return;
+	}
+
+	// Use the exact publish registry (if any) so this check can't disagree with the prerequisite auth check. See #764.
+	const externalRegistry = package_.publishConfig?.registry;
+
+	try {
+		await npm.username({externalRegistry});
+		return;
+	} catch (error) {
+		if (!error.isNotLoggedIn || !isInteractive()) {
+			throw error;
+		}
+	}
+
+	console.log('\nYou must be logged in to publish. Running `npm login`...\n');
+	await npm.login({externalRegistry});
+
+	// `npm login` writes a fresh session token to the user `.npmrc`, but a project-level `.npmrc` with a stale or revoked token takes precedence and keeps `npm whoami` failing. Re-verify so we fail with a clear reason instead of looping on the generic prerequisite-task error.
+	try {
+		await npm.username({externalRegistry});
+	} catch (error) {
+		// Only the still-not-logged-in case points to the stale-token cause; surface other errors (e.g. a network timeout) as-is.
+		if (!error.isNotLoggedIn) {
+			throw error;
+		}
+
+		throw new Error('Still not authenticated after `npm login`. A project-level `.npmrc` may hold a stale or revoked token that overrides your login. Check it for outdated `_authToken` entries.');
+	}
+};
+
 try {
 	const {options, projectDirectory, rootDirectory, package_} = await getOptions();
 
@@ -210,25 +245,7 @@ try {
 
 	// Check authentication early, before Listr starts (so login can be interactive)
 	if (options.runPublish) {
-		// Skip auth check if OIDC is available (will be handled by npm publish itself)
-		if (getOidcProvider()) {
-			console.log('OIDC authentication detected - skipping auth check');
-		} else {
-			const externalRegistry = npm.isExternalRegistry(package_)
-				? package_.publishConfig.registry
-				: false;
-
-			try {
-				await npm.username({externalRegistry});
-			} catch (error) {
-				if (error.isNotLoggedIn && isInteractive()) {
-					console.log('\nYou must be logged in to publish. Running `npm login`...\n');
-					await npm.login({externalRegistry});
-				} else {
-					throw error;
-				}
-			}
-		}
+		await ensureAuthenticated(package_);
 	}
 
 	console.log(); // Prints a newline for readability
