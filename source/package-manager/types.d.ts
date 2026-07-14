@@ -27,6 +27,16 @@ export type PackageManagerConfig = {
 	installCommandNoLockfile: Command;
 
 	/**
+	CLI used to read the `ignore-scripts` setting for the publish command.
+	*/
+	ignoreScriptsCli?: string;
+
+	/**
+	Project configuration file where the `ignore-scripts` setting can be overridden.
+	*/
+	ignoreScriptsConfigFile?: string;
+
+	/**
  	Given a version string, return a version command e.g. `version => ["npm", ["version", version]]`.
   	*/
 	versionCommand: (version: string) => [cli: string, args: string[]];

@@ -2,6 +2,8 @@
 export const npmConfig = {
 	cli: 'npm',
 	id: 'npm',
+	ignoreScriptsCli: 'npm',
+	ignoreScriptsConfigFile: '.npmrc',
 	installCommand: ['npm', ['ci', '--engine-strict']],
 	installCommandNoLockfile: ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict']],
 	versionCommand: version => ['npm', ['version', version]],
@@ -15,6 +17,8 @@ export const npmConfig = {
 export const pnpmConfig = {
 	cli: 'pnpm',
 	id: 'pnpm',
+	ignoreScriptsCli: 'pnpm',
+	ignoreScriptsConfigFile: '.npmrc',
 	installCommand: ['pnpm', ['install']],
 	installCommandNoLockfile: ['pnpm', ['install']],
 	versionCommand: version => ['pnpm', ['version', version]],
@@ -30,6 +34,8 @@ export const pnpmConfig = {
 export const yarnConfig = {
 	cli: 'yarn',
 	id: 'yarn',
+	ignoreScriptsCli: 'yarn',
+	ignoreScriptsConfigFile: '.yarnrc',
 	installCommand: ['yarn', ['install', '--frozen-lockfile', '--production=false']],
 	installCommandNoLockfile: ['yarn', ['install', '--production=false']],
 	getRegistryCommand: ['yarn', ['config', 'get', 'registry']],
@@ -58,6 +64,8 @@ export const yarnBerryConfig = {
 export const bunConfig = {
 	cli: 'bun',
 	id: 'bun',
+	ignoreScriptsCli: 'npm',
+	ignoreScriptsConfigFile: '.npmrc',
 	installCommand: ['bun', ['install', '--frozen-lockfile']],
 	installCommandNoLockfile: ['bun', ['install', '--no-save']],
 	versionCommand: version => ['npm', ['version', version]],

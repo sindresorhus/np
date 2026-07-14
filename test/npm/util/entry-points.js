@@ -202,3 +202,26 @@ test('verifyPackageEntryPoints - skipped when prepack script may generate files'
 		},
 	}, fixtureDirectory));
 });
+
+test('verifyPackageEntryPoints - throws when ignore-scripts prevents the build script from running', async t => {
+	const fixtureDirectory = getFixture('prepack-generated-entry-point');
+
+	await t.throwsAsync(
+		npm.verifyPackageEntryPoints({
+			main: 'dist/index.js',
+			scripts: {
+				prepack: 'build',
+			},
+		}, fixtureDirectory, {ignoreScripts: true}),
+		{message: /ignore-scripts.*false.*\.npmrc/s},
+	);
+});
+
+test('verifyPackageEntryPoints - throws generic error when ignore-scripts is enabled but there is no lifecycle script', async t => {
+	const fixtureDirectory = getFixture('missing-main');
+
+	await t.throwsAsync(
+		npm.verifyPackageEntryPoints({main: 'dist/index.js'}, fixtureDirectory, {ignoreScripts: true}),
+		{message: /Ensure these files exist/},
+	);
+});
