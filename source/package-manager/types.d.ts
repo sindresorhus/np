@@ -52,7 +52,7 @@ export type PackageManagerConfig = {
 	throwOnExternalRegistry?: boolean;
 
 	/**
- 	List of lockfile names expected for this package manager, relative to CWD. e.g. `['package-lock.json', 'npm-shrinkwrap.json']`.
+ 	List of lockfile names expected for this package manager, relative to CWD. e.g. `['package-lock.json']`.
   	*/
 	lockfiles: string[];
 };

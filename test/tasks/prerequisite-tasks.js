@@ -387,6 +387,27 @@ test.serial('should fail when dropping Node.js support in a minor release', crea
 	assertTaskFailed(t, 'Check for Node.js engine support drop');
 });
 
+test.serial('should fail when dropping Node.js support with array-wrapped engines (npm 12)', createFixture, [{
+	command: 'npm view --json test engines',
+	stdout: JSON.stringify([{node: '>=16'}]),
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.1.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.throwsAsync(
+		run(prerequisiteTasks('1.1.0', {name: 'test', version: '1.0.0', engines: {node: '>=18'}}, {}, {packageManager: npmConfig})),
+		{message: 'Raising minimum Node.js version from 16.0.0 to 18.0.0 requires a major version bump. The current release is a minor bump.'},
+	);
+
+	assertTaskFailed(t, 'Check for Node.js engine support drop');
+});
+
 test.serial('should fail when dropping Node.js support in a patch release', createFixture, [{
 	command: 'npm view --json test engines',
 	stdout: JSON.stringify({node: '>=16'}),
