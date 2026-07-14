@@ -1,6 +1,7 @@
+import path from 'node:path';
 import process from 'node:process';
 import test from 'ava';
-import {npmConfig, yarnConfig} from '../../source/package-manager/configs.js';
+import {npmConfig, pnpmConfig, yarnConfig} from '../../source/package-manager/configs.js';
 import {npPackage} from '../../source/util.js';
 import {SilentRenderer} from '../_helpers/listr-renderer.js';
 import {_createFixture} from '../_helpers/stub-execa.js';
@@ -13,6 +14,7 @@ import {
 
 /** @type {ReturnType<typeof _createFixture<import('../../source/prerequisite-tasks.js')>>} */
 const createFixture = _createFixture('../../source/prerequisite-tasks.js', import.meta.url);
+const generatedEntryPointFixture = path.resolve('test', 'fixtures', 'files', 'prepack-generated-entry-point');
 
 test.beforeEach(() => {
 	process.env.NODE_ENV = 'test';
@@ -337,6 +339,82 @@ test.serial('checks should pass', createFixture, [{
 	stdout: '',
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.notThrowsAsync(run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})));
+});
+
+test.serial('should fail when pnpm ignore-scripts prevents the build script from running', createFixture, [{
+	command: 'pnpm --version',
+	stdout: '10.0.0',
+}, {
+	command: 'pnpm config get ignore-scripts',
+	stdout: 'true',
+}, {
+	command: 'npm pack --dry-run --json --silent --ignore-scripts --foreground-scripts=false',
+	stdout: '[{"files":[]}]',
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'npm config get tag-version-prefix --workspaces=false',
+	stdout: 'v',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.0.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.throwsAsync(
+		run(prerequisiteTasks('1.0.0', {
+			name: 'test',
+			version: '0.0.0',
+			private: true,
+			main: 'dist/index.js',
+			scripts: {
+				prepack: 'build',
+			},
+		}, {}, {packageManager: pnpmConfig, rootDirectory: generatedEntryPointFixture})),
+		{message: /ignore-scripts.*package manager config.*\.npmrc/s},
+	);
+
+	assertTaskFailed(t, 'Verify package entry points');
+});
+
+test.serial('should fail when Yarn ignore-scripts prevents the build script from running', createFixture, [{
+	command: 'yarn --version',
+	stdout: '1.22.22',
+}, {
+	command: 'yarn config get ignore-scripts',
+	stdout: 'true',
+}, {
+	command: 'npm pack --dry-run --json --silent --ignore-scripts --foreground-scripts=false',
+	stdout: '[{"files":[]}]',
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'yarn config get version-tag-prefix',
+	stdout: 'v',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v1.0.0',
+	stdout: '',
+}], async ({t, testedModule: prerequisiteTasks}) => {
+	await t.throwsAsync(
+		run(prerequisiteTasks('1.0.0', {
+			name: 'test',
+			version: '0.0.0',
+			private: true,
+			main: 'dist/index.js',
+			scripts: {
+				prepack: 'build',
+			},
+		}, {}, {packageManager: yarnConfig, rootDirectory: generatedEntryPointFixture})),
+		{message: /ignore-scripts.*package manager config.*\.yarnrc/s},
+	);
+
+	assertTaskFailed(t, 'Verify package entry points');
 });
 
 test.serial('should skip authentication check when OIDC is detected', createFixture, [{

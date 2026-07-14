@@ -120,7 +120,14 @@ const prerequisiteTasks = (input, package_, options, {packageManager, rootDirect
 			title: 'Verify package entry points',
 			enabled: () => !options.yolo,
 			async task() {
-				await npm.verifyPackageEntryPoints(package_, rootDirectory);
+				// Read the setting from the package manager that performs the publish. Yarn Berry doesn't expose the `ignore-scripts` setting, so its publish continues to trust lifecycle scripts.
+				const ignoreScripts = packageManager.ignoreScriptsCli
+					? await npm.isIgnoreScriptsEnabled(rootDirectory, packageManager.ignoreScriptsCli)
+					: false;
+				await npm.verifyPackageEntryPoints(package_, rootDirectory, {
+					ignoreScripts,
+					ignoreScriptsConfigFile: packageManager.ignoreScriptsConfigFile,
+				});
 			},
 		},
 		{
