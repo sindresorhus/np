@@ -3,8 +3,10 @@ import path from 'node:path';
 import process from 'node:process';
 import logSymbols from 'log-symbols';
 import meow from 'meow';
+import semver from 'semver';
 import updateNotifier from 'update-notifier';
 import isInteractive from 'is-interactive';
+import {execa} from 'execa';
 import {gracefulExit} from 'exit-hook';
 import {getPackageManagerConfig} from './package-manager/index.js';
 import config from './config.js';
@@ -13,6 +15,7 @@ import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 import {verifyGitTasks} from './git-tasks.js';
 import {getOidcProvider} from './npm/oidc.js';
+import {getStageId} from './npm/publish.js';
 import {SEMVER_INCREMENTS} from './version.js';
 import ui from './ui.js';
 import np from './index.js';
@@ -45,6 +48,7 @@ const cli = meow(`
 	  --package-manager      Use a specific package manager (default: package.json packageManager/devEngines)
 	  --provenance           Publish with npm provenance statements (CI-only)
 	  --remote               Git remote to push to (default: origin)
+	  --stage                Stage the publish for later approval (npm and pnpm only)
 
 	Examples
 	  $ np
@@ -113,6 +117,9 @@ const cli = meow(`
 		remote: {
 			type: 'string',
 		},
+		stage: {
+			type: 'boolean',
+		},
 	},
 });
 
@@ -173,6 +180,25 @@ async function getOptions() {
 			isAvailable: false,
 			isUnknown: false,
 		};
+
+	if (flags.stage) {
+		if (!['npm', 'pnpm'].includes(packageManager.id)) {
+			throw new Error(`Staged publishing is only supported with npm and pnpm, not ${packageManager.id}.`);
+		}
+
+		const minimumVersion = {
+			npm: '11.15.0',
+			pnpm: '11.3.0',
+		}[packageManager.id];
+		const {stdout: packageManagerVersion} = await execa(packageManager.cli, ['--version']);
+		if (!semver.valid(packageManagerVersion) || semver.lt(packageManagerVersion, minimumVersion)) {
+			throw new Error(`Staged publishing requires ${packageManager.id} >=${minimumVersion}. Please upgrade ${packageManager.cli} and try again.`);
+		}
+
+		if (availability.isAvailable) {
+			throw new Error('Staged publishing requires the package to already exist on the registry. Publish the first version normally, then use `--stage`.');
+		}
+	}
 
 	// Use current (latest) version when 'releaseDraftOnly', otherwise try to use the first argument.
 	const version = flags.releaseDraftOnly ? package_.version : cli.input.at(0);
@@ -255,7 +281,16 @@ try {
 		gracefulExit();
 	}
 
-	console.log(`\n ${newPackage.name} ${newPackage.version} published 🎉`);
+	if (options.stage && options.runPublish) {
+		const {cli: packageManagerCli} = options.packageManager;
+		const stageId = await getStageId(options.packageManager, {name: newPackage.name, version: newPackage.version, cwd: rootDirectory});
+		const approveInstructions = stageId
+			? `  ${packageManagerCli} stage approve ${stageId}`
+			: `  ${packageManagerCli} stage list             # find the stage-id\n  ${packageManagerCli} stage approve <stage-id>`;
+		console.log(`\n ${newPackage.name} ${newPackage.version} staged 📦\n\nApprove it to go live (requires 2FA):\n${approveInstructions}\n\nYou can also approve at https://www.npmjs.com`);
+	} else {
+		console.log(`\n ${newPackage.name} ${newPackage.version} published 🎉`);
+	}
 } catch (error) {
 	if (error.name === 'ExitPromptError') {
 		process.exit(0);

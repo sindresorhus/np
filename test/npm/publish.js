@@ -37,6 +37,20 @@ test('options.provenance', t => {
 	);
 });
 
+test('options.stage', t => {
+	t.deepEqual(
+		getPackagePublishArguments({stage: true}),
+		['stage', 'publish'],
+	);
+});
+
+test('options.stage with other flags', t => {
+	t.deepEqual(
+		getPackagePublishArguments({stage: true, tag: 'beta', provenance: true}),
+		['stage', 'publish', '--tag', 'beta', '--provenance'],
+	);
+});
+
 test('runPublish uses cwd option when provided', async t => {
 	const observable = runPublish(['echo', ['test']], {cwd: '/tmp'});
 	// Should complete successfully
