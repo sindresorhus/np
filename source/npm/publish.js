@@ -1,9 +1,10 @@
 import {execa} from 'execa';
 import {merge, filter, catchError} from 'rxjs';
 import open from 'open';
+import {npmNetworkTimeout} from './util.js';
 
 export const getPackagePublishArguments = options => {
-	const arguments_ = ['publish'];
+	const arguments_ = options.stage ? ['stage', 'publish'] : ['publish'];
 
 	if (options.tag) {
 		arguments_.push('--tag', options.tag);
@@ -22,6 +23,23 @@ export const getPackagePublishArguments = options => {
 	}
 
 	return arguments_;
+};
+
+/**
+Look up the stage-id of a just-staged version so we can print the exact `stage approve` command. Returns `undefined` if it can't be determined; the caller then prints generic instructions.
+
+@param {import('../package-manager/types.js').PackageManagerConfig} packageManager - The package manager used to run `stage list`.
+@param {{name: string; version: string; cwd: string}} options - The package name, version, and working directory to match against the staged items.
+*/
+export const getStageId = async (packageManager, {name, version, cwd}) => {
+	try {
+		const {stdout} = await execa(packageManager.cli, ['stage', 'list', '--json'], {cwd, timeout: npmNetworkTimeout});
+		// `stage list --json` returns an array of staged items, each with an `id` (the stage-id), `packageName`, and `version`.
+		const items = JSON.parse(stdout);
+		return items.find(item => item.packageName === name && item.version === version)?.id;
+	} catch {
+		return undefined;
+	}
 };
 
 // 3 minutes timeout for publish operations (like git network operations)

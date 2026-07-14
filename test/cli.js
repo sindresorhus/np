@@ -38,6 +38,7 @@ test('flags: --help', cliPasses, cli, '--help', [
 	'--package-manager      Use a specific package manager (default: package.json packageManager/devEngines)',
 	'--provenance           Publish with npm provenance statements (CI-only)',
 	'--remote               Git remote to push to (default: origin)',
+	'--stage                Stage the publish for later approval (npm and pnpm only)',
 	'',
 	'Examples',
 	'$ np',
@@ -169,6 +170,78 @@ test.serial('cli continues to the publish flow after successful git preflight', 
 	t.false('skipGitTasks' in npStub.firstCall.args[1]);
 	t.true(gracefulExitStub.notCalled);
 });
+
+const rejectsStagedPublishing = test.macro(async (t, {id, version, minimumVersion}) => {
+	const gracefulExitStub = sinon.stub();
+	const consoleErrorStub = sinon.stub(console, 'error');
+	const uiStub = sinon.stub();
+	const npStub = sinon.stub();
+	const execaStub = sinon.stub().resolves({stdout: version});
+
+	try {
+		await loadCliImplementation({
+			meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: true, stage: true}, pkg: npPackage})},
+			'../source/package-manager/index.js': {
+				getPackageManagerConfig: sinon.stub().returns({id, cli: id}),
+			},
+			'../source/npm/util.js': {
+				isExternalRegistry: sinon.stub().returns(false),
+				isPackageNameAvailable: sinon.stub().resolves({isAvailable: false, isUnknown: false}),
+				username: sinon.stub(),
+				login: sinon.stub(),
+			},
+			'../source/ui.js': {default: uiStub},
+			'../source/index.js': {default: npStub},
+			execa: {execa: execaStub},
+			'exit-hook': {gracefulExit: gracefulExitStub},
+		});
+	} finally {
+		consoleErrorStub.restore();
+	}
+
+	t.true(gracefulExitStub.calledOnceWithExactly(1));
+	t.true(consoleErrorStub.firstCall.firstArg.includes(`Staged publishing requires ${id} >=${minimumVersion}`));
+	t.true(execaStub.calledOnceWithExactly(id, ['--version']));
+	t.false(uiStub.called);
+	t.false(npStub.called);
+});
+
+test.serial('cli rejects npm staged publishing before the publish flow', rejectsStagedPublishing, {id: 'npm', version: '10.0.0', minimumVersion: '11.15.0'});
+test.serial('cli rejects pnpm staged publishing before the publish flow', rejectsStagedPublishing, {id: 'pnpm', version: '11.2.0', minimumVersion: '11.3.0'});
+
+const acceptsStagedPublishing = test.macro(async (t, {id, version}) => {
+	const gracefulExitStub = sinon.stub();
+	const consoleErrorStub = sinon.stub(console, 'error');
+	const consoleLogStub = sinon.stub(console, 'log');
+	const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: false, version: '1.0.1'}));
+	const npStub = sinon.stub().resolves({name: 'test-package', version: '1.0.1'});
+	const execaStub = sinon.stub().resolves({stdout: version});
+
+	try {
+		await loadCliImplementation({
+			meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: false, stage: true}, pkg: npPackage})},
+			'../source/package-manager/index.js': {
+				getPackageManagerConfig: sinon.stub().returns({id, cli: id}),
+			},
+			'../source/ui.js': {default: uiStub},
+			'../source/index.js': {default: npStub},
+			execa: {execa: execaStub},
+			'exit-hook': {gracefulExit: gracefulExitStub},
+		});
+	} finally {
+		consoleErrorStub.restore();
+		consoleLogStub.restore();
+	}
+
+	t.false(consoleErrorStub.called);
+	t.true(gracefulExitStub.calledOnceWithExactly());
+	t.true(uiStub.calledOnce);
+	t.true(npStub.calledOnce);
+	t.true(execaStub.calledOnceWithExactly(id, ['--version']));
+});
+
+test.serial('cli accepts npm staged publishing at the minimum version', acceptsStagedPublishing, {id: 'npm', version: '11.15.0'});
+test.serial('cli accepts pnpm staged publishing at the minimum version', acceptsStagedPublishing, {id: 'pnpm', version: '11.3.0'});
 
 const notLoggedInError = () => Object.assign(new Error('You must be logged in. Use `npm login` and try again.'), {isNotLoggedIn: true});
 

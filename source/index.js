@@ -237,7 +237,7 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 		...options.runPublish
 			? [
 				{
-					title: 'Publishing package',
+					title: options.stage ? 'Staging package' : 'Publishing package',
 					skip() {
 						if (!options.dryRun) {
 							return;
