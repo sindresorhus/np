@@ -25,7 +25,7 @@ test('fails if file not in previous release', createFixture, async ({t, $$}) => 
 }, async ({t, testedModule: {readFileFromLastRelease}}) => {
 	await t.throwsAsync(
 		readFileFromLastRelease('unicorn.txt'),
-		{message: /fatal: path '[^']*' exists on disk, but not in 'v0\.0\.0'/},
+		{message: /fatal: path '[^']*' exists on disk, but not in 'v0\.0\.0'/v},
 	);
 });
 
@@ -36,7 +36,7 @@ test('no previous release', createFixture, async ({t, $$}) => {
 }, async ({t, testedModule: {readFileFromLastRelease}}) => {
 	await t.throwsAsync(
 		readFileFromLastRelease('unicorn.txt'),
-		{message: /fatal: No names found, cannot describe anything./},
+		{message: /fatal: No names found, cannot describe anything\./v},
 	);
 });
 

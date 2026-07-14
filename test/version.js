@@ -7,9 +7,13 @@ import Version from '../source/version.js';
 const INCREMENT_LIST = 'patch, minor, major, prepatch, preminor, premajor, prerelease';
 const INCREMENT_LIST_OR = 'patch, minor, major, prepatch, preminor, premajor, or prerelease';
 
-/** @param {string} input - Place `{ }` around the version parts to be highlighted. */
+/**
+Creates a chalk-formatted version string with highlighted parts.
+@param {string} input - Place `{ }` around the version parts to be highlighted.
+*/
 const makeNewFormattedVersion = input => {
-	input = input.replaceAll(/{([^}]*)}/g, '{cyan $1}'); // https://regex101.com/r/rZUIp4/1
+	// eslint-disable-next-line regexp/no-super-linear-move -- [^\}]* is maximally exclusive and cannot backtrack; input is test-generated, not user data
+	input = input.replaceAll(/\{(?<content>[^\}]*)\}/gv, '{cyan $<content>}'); // https://regex101.com/r/rZUIp4/1
 	return chalk(`{dim ${input}}`);
 };
 

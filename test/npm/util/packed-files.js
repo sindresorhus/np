@@ -12,7 +12,7 @@ const verifyPackedFiles = test.macro(async (t, fixture, expectedFiles, {before, 
 	t.teardown(async () => runIfExists(after, fixtureDirectory));
 
 	const files = await getFilesToBePacked(fixtureDirectory);
-	t.deepEqual(files.sort(), [...expectedFiles, 'package.json'].sort(), 'Files different from expectations!');
+	t.deepEqual(files.toSorted((a, b) => a.localeCompare(b)), [...expectedFiles, 'package.json'].toSorted((a, b) => a.localeCompare(b)), 'Files different from expectations!');
 });
 
 test('package.json files field - one file', verifyPackedFiles, 'one-file', [

@@ -12,7 +12,7 @@ test('returns latest tag', createFixture, async ({$$}) => {
 
 test('returns latest tag - multiple set', createFixture, async ({t, $$}) => {
 	await $$`git tag v0.0.0`;
-	/* eslint-disable no-await-in-loop */
+	/* eslint-disable no-await-in-loop -- sequential git tag creation requires ordered async execution */
 	for (const major of [1, 2, 3, 4]) {
 		await t.context.commitNewFile();
 		await $$`git tag v${major}.0.0`;

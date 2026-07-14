@@ -8,9 +8,17 @@ import {npmConfig as packageManager} from '../../source/package-manager/configs.
 import {createIntegrationTest} from '../_helpers/integration-test.js';
 import {mockInquirer} from '../_helpers/mock-inquirer.js';
 
-/** @param {string} message */
+/**
+Creates a function that checks lines in logs after a given header message.
+@param {string} message - The header message that marks where to start checking.
+*/
 const checkLines = message => (
-	/** @param {import('ava').ExecutionContext} t @param {string[]} logs @param {string[]} expectedLines */
+	/**
+	Asserts that the expected lines follow the header message in the logs.
+	@param {import('ava').ExecutionContext} t - AVA execution context.
+	@param {string[]} logs - Array of log strings to search.
+	@param {string[]} expectedLines - Lines expected to follow the message.
+	*/
 	(t, logs, expectedLines) => {
 		const lineAfterMessage = logs.indexOf(message) + 1;
 		const endOfList = logs.findIndex((log, ind) => ind > lineAfterMessage && !log.startsWith('-'));

@@ -173,7 +173,7 @@ test('verifyPackageEntryPoints - missing main', async t => {
 
 	await t.throwsAsync(
 		npm.verifyPackageEntryPoints({main: 'dist/index.js'}, fixtureDirectory),
-		{message: /Missing entry points.*"main": dist\/index\.js/s},
+		{message: /Missing entry points.*"main": dist\/index\.js/sv},
 	);
 });
 
@@ -182,7 +182,7 @@ test('verifyPackageEntryPoints - missing bin', async t => {
 
 	await t.throwsAsync(
 		npm.verifyPackageEntryPoints({bin: './cli.js'}, fixtureDirectory),
-		{message: /Missing entry points.*"bin": \.\/cli\.js/s},
+		{message: /Missing entry points.*"bin": \.\/cli\.js/sv},
 	);
 });
 
@@ -213,7 +213,7 @@ test('verifyPackageEntryPoints - throws when ignore-scripts prevents the build s
 				prepack: 'build',
 			},
 		}, fixtureDirectory, {ignoreScripts: true}),
-		{message: /ignore-scripts.*false.*\.npmrc/s},
+		{message: /ignore-scripts.*false.*\.npmrc/sv},
 	);
 });
 
@@ -222,6 +222,6 @@ test('verifyPackageEntryPoints - throws generic error when ignore-scripts is ena
 
 	await t.throwsAsync(
 		npm.verifyPackageEntryPoints({main: 'dist/index.js'}, fixtureDirectory, {ignoreScripts: true}),
-		{message: /Ensure these files exist/},
+		{message: /Ensure these files exist/v},
 	);
 });

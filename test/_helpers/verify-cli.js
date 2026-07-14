@@ -1,4 +1,4 @@
-/* eslint-disable ava/no-ignored-test-files */
+/* eslint-disable ava/no-ignored-test-files -- shared helper used by CLI test fixtures, not a standalone test file */
 import test from 'ava';
 import {execa} from 'execa';
 

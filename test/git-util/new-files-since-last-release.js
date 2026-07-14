@@ -13,8 +13,8 @@ test('returns files added since latest tag', createFixture, async ({t, $$}) => {
 }, async ({t, testedModule: {newFilesSinceLastRelease}, temporaryDirectory}) => {
 	const newFiles = await newFilesSinceLastRelease(temporaryDirectory);
 	t.deepEqual(
-		newFiles.sort(),
-		['new', 'index.js'].sort(),
+		newFiles.toSorted((a, b) => a.localeCompare(b)),
+		['new', 'index.js'].toSorted((a, b) => a.localeCompare(b)),
 	);
 });
 
@@ -33,7 +33,7 @@ test('uses ignoreWalker', createFixture, async ({t}) => {
 }, async ({t, testedModule: {newFilesSinceLastRelease}, temporaryDirectory}) => {
 	const newFiles = await newFilesSinceLastRelease(temporaryDirectory);
 	t.deepEqual(
-		newFiles.sort(),
-		['index.js', 'package.json', '.gitignore'].sort(),
+		newFiles.toSorted((a, b) => a.localeCompare(b)),
+		['index.js', 'package.json', '.gitignore'].toSorted((a, b) => a.localeCompare(b)),
 	);
 });

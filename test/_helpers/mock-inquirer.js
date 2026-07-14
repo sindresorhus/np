@@ -11,18 +11,9 @@ import mapObject from 'map-obj';
 /** @typedef {import('inquirer').DistinctQuestion & {name?: never}} Prompt */
 
 /**
-Mocks `inquirer.prompt` and answers each prompt in the program with the provided `inputAnswers`.
-
-This only handles prompts of type `input`, `list`, and `confirm`. If other prompt types are added, they must be implemented here.
-
-Logs for debugging are outputted on test failure.
-
-@see https://gist.github.com/yyx990803/f61f347b6892078c40a9e8e77b9bd984
-
-@param {object} o Test input and actual prompts
-@param {ExecutionContext} o.t
-@param {Answers} o.inputAnswers Test input
-@param {Record<string, Prompt> | Prompt[]} o.prompts Actual prompts
+Converts a prompts array to a named prompts object, or returns the object as-is.
+@param {Record<string, Prompt> | Prompt[]} prompts - Prompts to normalize into an object keyed by name.
+@returns {Record<string, Prompt>} The normalized prompts object keyed by name.
 */
 const getPromptsObject = prompts => {
 	if (Array.isArray(prompts)) {
@@ -38,13 +29,27 @@ const getPromptsObject = prompts => {
 	return prompts;
 };
 
+/**
+Mocks `inquirer.prompt` and answers each prompt in the program with the provided `inputAnswers`.
+
+This only handles prompts of type `input`, `list`, and `confirm`. If other prompt types are added, they must be implemented here.
+
+Logs for debugging are outputted on test failure.
+
+@see https://gist.github.com/yyx990803/f61f347b6892078c40a9e8e77b9bd984
+
+@param {object} o - Test input and actual prompts.
+@param {ExecutionContext} o.t - AVA execution context.
+@param {Answers} o.inputAnswers - Test input.
+@param {Record<string, Prompt> | Prompt[]} o.prompts - Actual prompts.
+*/
 const mockPrompt = async ({t, inputAnswers, prompts}) => {
 	const answers = {};
 	prompts = getPromptsObject(prompts);
 
 	t.log('prompts:', Object.keys(prompts));
 
-	/* eslint-disable no-await-in-loop */
+	/* eslint-disable no-await-in-loop -- prompts must be answered sequentially, as each can depend on the previous answers */
 	for (const [name, prompt] of Object.entries(prompts)) {
 		if (prompt.when !== undefined) {
 			if (is.boolean(prompt.when) && !prompt.when) {
@@ -88,7 +93,10 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 			t.log(`got value '${answers[name]}' for prompt '${name}'`);
 		};
 
-		/** @param {Answer} input */
+		/**
+		Resolves the list choice matching the given input.
+		@param {Answer} input - Input answer used to select a list choice.
+		*/
 		const chooseValue = async input => {
 			t.is(prompt.type, 'select');
 			let choices;
@@ -132,13 +140,16 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 			t.log(`found input for prompt '${name}':`, input);
 		}
 
-		/** @param {Answer} input */
-		const handleInput = async input => {
-			if (is.string(input)) {
+		/**
+		Routes the answer to the correct prompt handler based on its type.
+		@param {Answer} answer - Input answer to handle.
+		*/
+		const handleInput = async answer => {
+			if (is.string(answer)) {
 				if (['input'].includes(prompt.type)) {
-					setValue(input);
+					setValue(answer);
 				} else if (['select'].includes(prompt.type)) {
-					return chooseValue(input);
+					return chooseValue(answer);
 				} else {
 					t.fail('Incorrect input type');
 				}
@@ -146,20 +157,20 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 				return;
 			}
 
-			if (input.input !== undefined) {
+			if (answer.input !== undefined) {
 				t.is(prompt.type, 'input');
-				setValue(input.input);
+				setValue(answer.input);
 				return;
 			}
 
-			if (input.choice !== undefined) {
-				await chooseValue(input);
+			if (answer.choice !== undefined) {
+				await chooseValue(answer);
 				return;
 			}
 
-			if (is.boolean(input.confirm) || is.boolean(input)) {
+			if (is.boolean(answer.confirm) || is.boolean(answer)) {
 				t.is(prompt.type, 'confirm');
-				setValue(input.confirm ?? input);
+				setValue(answer.confirm ?? answer);
 			}
 		};
 
@@ -185,17 +196,17 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 };
 
 /**
-Fixes relative module paths for use with `esmock`. Allows specifiying the same relative location in test files as in source files.
-@param {import('esmock').MockMap} mocks
+Fixes relative module paths for use with `esmock`. Allows specifying the same relative location in test files as in source files.
+@param {import('esmock').MockMap} mocks - Mock map with relative paths to resolve against the source directory.
 */
 const fixRelativeMocks = mocks => mapObject(mocks, (key, value) => [key.replace('./', '../../source/'), value]);
 
 /**
 Mocks `inquirer` for testing `source/ui.js`.
 
-@param {object} o Test input and optional global mocks
-@param {ExecutionContext} o.t
-@param {Answers} o.answers Test input
+@param {object} o - Test input and optional global mocks.
+@param {ExecutionContext} o.t - AVA execution context.
+@param {Answers} o.answers - Test input.
 @param {import('esmock').MockMap} [o.mocks] Optional global mocks
 @param {(prompts: Record<string, Prompt>) => void} [o.onPrompt] Optional hook to inspect prompts
 */
@@ -223,7 +234,11 @@ export const mockInquirer = async ({t, answers, mocks = {}, onPrompt = () => {}}
 	}, {
 		...fixRelativeMocks(mocks),
 		import: {
-			console: {log: (...arguments_) => logs.push(...arguments_)},
+			console: {
+				log(...arguments_) {
+					logs.push(...arguments_);
+				},
+			},
 		},
 	});
 

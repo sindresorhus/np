@@ -131,8 +131,8 @@ for (const {version, expected} of fixtures) {
 			prereleasePrefix: '',
 			tag: 'next',
 		},
-	}, ({t, results: {version, tag}}) => {
-		t.is(version.toString(), expected);
+	}, ({t, results: {version: newVersion, tag}}) => {
+		t.is(newVersion.toString(), expected);
 		t.is(tag, 'next');
 	});
 }

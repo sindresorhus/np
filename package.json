@@ -8,11 +8,11 @@
 	"type": "module",
 	"bin": "./source/cli.js",
 	"engines": {
-		"node": ">=20",
-		"npm": ">=9",
+		"node": ">=22",
+		"npm": ">=10",
 		"git": ">=2.11.0",
 		"yarn": ">=1.7.0",
-		"pnpm": ">=8",
+		"pnpm": ">=11",
 		"bun": ">=1"
 	},
 	"scripts": {
@@ -46,7 +46,7 @@
 		"hosted-git-info": "^9.0.2",
 		"ignore-walk": "^8.0.0",
 		"import-local": "^3.2.0",
-		"inquirer": "^13.4.1",
+		"inquirer": "^14.0.2",
 		"is-installed-globally": "^1.0.0",
 		"is-interactive": "^2.0.0",
 		"is-scoped": "^3.0.0",
@@ -57,7 +57,7 @@
 		"meow": "^14.1.0",
 		"new-github-release-url": "^2.0.0",
 		"npm-name": "^8.1.0",
-		"onetime": "^7.0.0",
+		"onetime": "^8.0.0",
 		"open": "^11.0.0",
 		"p-memoize": "^8.0.0",
 		"package-directory": "^8.2.0",
@@ -71,18 +71,18 @@
 		"update-notifier": "^7.3.1"
 	},
 	"devDependencies": {
-		"@sindresorhus/is": "^7.2.0",
+		"@sindresorhus/is": "^8.1.0",
 		"@types/semver": "^7.7.1",
 		"ava": "^6.4.1",
 		"common-tags": "^1.8.2",
 		"esmock": "^2.7.3",
 		"fs-extra": "^11.3.4",
 		"map-obj": "^6.0.0",
-		"sinon": "^21.1.2",
+		"sinon": "^22.0.0",
 		"strip-ansi": "^7.2.0",
 		"tempy": "^3.2.0",
 		"write-package": "^7.2.0",
-		"xo": "^1.2.3"
+		"xo": "^4.0.0"
 	},
 	"ava": {
 		"files": [
@@ -103,9 +103,19 @@
 			"--no-warnings=ExperimentalWarning"
 		]
 	},
-	"xo": {
-		"ignores": [
-			"test/fixtures"
-		]
-	}
+	"xo": [
+		{
+			"ignores": [
+				"test/fixtures"
+			]
+		},
+		{
+			"files": [
+				"test/**"
+			],
+			"rules": {
+				"unicorn/prefer-https": "off"
+			}
+		}
+	]
 }

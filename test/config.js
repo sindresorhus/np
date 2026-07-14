@@ -163,7 +163,7 @@ test('config values override defaults', async t => {
 	const config = await getConfig(fixtureDirectory);
 
 	// Config should override default values
-	t.is(config.tests, false);
-	t.is(config.cleanup, false);
-	t.is(config.publish, false);
+	t.false(config.tests);
+	t.false(config.cleanup);
+	t.false(config.publish);
 });

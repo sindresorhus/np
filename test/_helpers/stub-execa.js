@@ -1,4 +1,4 @@
-/* eslint-disable ava/no-ignored-test-files */
+/* eslint-disable ava/no-ignored-test-files -- shared helper used by test fixtures via esmock, not a standalone test file */
 import test from 'ava';
 import esmock from 'esmock';
 import sinon from 'sinon';
@@ -22,7 +22,7 @@ A command passes if its exit code is 0, or if there's no exit code and no stderr
 
 Resolves or throws the given result.
 
-@param {import('execa').ExecaReturnValue[]} commands
+@param {import('execa').ExecaReturnValue[]} commands - Command stubs with expected args and result values.
 */
 const makeExecaStub = commands => {
 	const normalizedCommands = [...defaultCommands, ...commands].map(result => {
@@ -50,9 +50,9 @@ const makeExecaStub = commands => {
 				continue;
 			}
 
-			const passes = result.exitCode === 0 || (!result.exitCode && !result.stderr);
+			const isPasses = result.exitCode === 0 || (!result.exitCode && !result.stderr);
 
-			if (passes) {
+			if (isPasses) {
 				return Promise.resolve(result);
 			}
 

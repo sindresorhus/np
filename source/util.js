@@ -1,5 +1,4 @@
 import process from 'node:process';
-import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {readPackageUp} from 'read-package-up';
 import {parsePackage} from 'read-pkg';
@@ -29,7 +28,7 @@ export const readPackage = async (packagePath = process.cwd()) => {
 	return {package_: packageResult.packageJson, rootDirectory: path.dirname(packageResult.path)};
 };
 
-const _npRootDirectory = fileURLToPath(new URL('..', import.meta.url));
+const _npRootDirectory = path.resolve(import.meta.dirname, '..');
 
 // Re-define `npRootDirectory` for trailing slash consistency.
 export const {package_: npPackage, rootDirectory: npRootDirectory} = await readPackage(_npRootDirectory);
@@ -77,31 +76,19 @@ Using [^\s/?#] to exclude whitespace, query params (?), and fragments (#)
 Query params and fragments are stripped before matching.
 */
 const GIT_URL_PATTERNS = [
-	/// https://host/owner/repo.git or https://host/owner/repo
-	// Case-insensitive protocol matching via /i flag
-	{
-		regex: /^https?:\/\/([^\s/?#]+)\/([^\s/?#]+)\/([^\s/?#]+)(\.git)?$/i,
-		transform: (host, owner, repo) => `https://${host}/${owner}/${repo}`,
-	},
-	/// git@host:owner/repo.git (common SSH format)
+	// https://host/owner/repo.git or https://host/owner/repo
+	// Case-insensitive protocol matching via `i` flag
+	/^https?:\/\/(?<host>[^\s#\/?]+)\/(?<owner>[^\s#\/?]+)\/(?<repo>[^\s#\/?]+)$/iv,
+	// Common SSH format: git@host:owner/repo.git
 	// Using [^\s:?#] and [^\s/?#] creates clear boundaries
-	{
-		regex: /^git@([^\s:?#]+):([^\s/?#]+)\/([^\s/?#]+)(\.git)?$/,
-		transform: (host, owner, repo) => `https://${host}/${owner}/${repo}`,
-	},
-	/// git+https://host/owner/repo.git
-	{
-		regex: /^git\+https:\/\/([^\s/?#]+)\/([^\s/?#]+)\/([^\s/?#]+)(\.git)?$/i,
-		transform: (host, owner, repo) => `https://${host}/${owner}/${repo}`,
-	},
-	/// ssh://git@host/owner/repo.git
-	{
-		regex: /^ssh:\/\/git@([^\s/?#]+)\/([^\s/?#]+)\/([^\s/?#]+)(\.git)?$/i,
-		transform: (host, owner, repo) => `https://${host}/${owner}/${repo}`,
-	},
+	/^git@(?<host>[^\s#:?]+):(?<owner>[^\s#\/?]+)\/(?<repo>[^\s#\/?]+)$/v,
+	// git+https://host/owner/repo.git
+	/^git\+https:\/\/(?<host>[^\s#\/?]+)\/(?<owner>[^\s#\/?]+)\/(?<repo>[^\s#\/?]+)$/iv,
+	// ssh://git@host/owner/repo.git
+	/^ssh:\/\/git@(?<host>[^\s#\/?]+)\/(?<owner>[^\s#\/?]+)\/(?<repo>[^\s#\/?]+)$/iv,
 ];
 
-const ALPHANUMERIC_REGEX = /[a-z\d]/i;
+const ALPHANUMERIC_REGEX = /[\da-z]/iv;
 const isValidGitPathComponent = value => Boolean(value) && ALPHANUMERIC_REGEX.test(value);
 
 /**
@@ -135,32 +122,29 @@ export const parseGitUrl = url => {
 		return;
 	}
 
-	const cleanUrl = url.split(/[?#]/, 1)[0];
+	const cleanUrl = url.split(/[#?]/v, 1)[0];
 	if (cleanUrl.length === 0) {
 		return;
 	}
 
-	for (const {regex, transform} of GIT_URL_PATTERNS) {
+	for (const regex of GIT_URL_PATTERNS) {
 		const match = cleanUrl.match(regex);
-		if (match) {
-			const [, host, owner, repo] = match;
-
-			// Remove .git suffix if present in the captured repo name
-			const cleanRepo = repo.endsWith('.git') ? repo.slice(0, -4) : repo;
-
-			// Validate that none of the components are empty
-			if (!host) {
-				continue;
-			}
-
-			// Validate that owner and repo contain at least one alphanumeric character
-			// This prevents pathological inputs like all dots or special chars
-			if (!isValidGitPathComponent(owner) || !isValidGitPathComponent(cleanRepo)) {
-				continue;
-			}
-
-			return transform(host, owner, cleanRepo);
+		if (!match) {
+			continue;
 		}
+
+		const {host, owner, repo} = match.groups;
+
+		// Remove .git suffix if present in the captured repo name
+		const cleanRepo = repo.endsWith('.git') ? repo.slice(0, -4) : repo;
+
+		// Validate that owner and repo contain at least one alphanumeric character
+		// This prevents pathological inputs like all dots or special chars
+		if (!isValidGitPathComponent(owner) || !isValidGitPathComponent(cleanRepo)) {
+			continue;
+		}
+
+		return `https://${host}/${owner}/${cleanRepo}`;
 	}
 };
 
@@ -180,11 +164,7 @@ export const getTagVersionPrefix = pMemoize(async config => {
 export const joinList = list => chalk.reset(list.map(item => `- ${item}`).join('\n'));
 
 export const groupFilesInFolders = (files, groupingMinimumDepth = 1, groupingThresholdCount = 5) => {
-	const groups = {};
-	for (const file of files) {
-		const groupKey = path.join(...file.split(path.sep).slice(0, groupingMinimumDepth));
-		groups[groupKey] = [...groups[groupKey] ?? [], file];
-	}
+	const groups = Object.groupBy(files, file => path.join(...file.split(path.sep).slice(0, groupingMinimumDepth)));
 
 	const lines = [];
 	for (const [folder, filesInFolder] of Object.entries(groups)) {
@@ -223,15 +203,10 @@ export const getNewDependencies = async (newPackage, rootDirectory) => {
 
 	const oldPackage = parsePackage(oldPackageFile);
 
-	const newDependencies = [];
+	const newDependencies = new Set(Object.keys(newPackage.dependencies ?? {}))
+		.difference(new Set(Object.keys(oldPackage.dependencies ?? {})));
 
-	for (const dependency of Object.keys(newPackage.dependencies ?? {})) {
-		if (!oldPackage.dependencies?.[dependency]) {
-			newDependencies.push(dependency);
-		}
-	}
-
-	return newDependencies;
+	return [...newDependencies];
 };
 
 /** @type {(config: import('./package-manager/types.js').PackageManagerConfig) => Promise<string>} */

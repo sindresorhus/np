@@ -56,10 +56,7 @@ test('non-existent', createFixture, [{
 	command: accessCommand('non-existent'),
 	stderr: 'npm ERR! code E404\nnpm ERR! 404 Not Found',
 }], async ({t, testedModule: {collaborators}}) => {
-	t.is(
-		await collaborators({name: 'non-existent'}),
-		false,
-	);
+	t.false(await collaborators({name: 'non-existent'}));
 });
 
 test('error on default registry', createFixture, [{
@@ -71,16 +68,16 @@ test('error on default registry', createFixture, [{
 });
 
 test('error on external registry - returns false', createFixture, [{
-	command: `${accessCommand('@private/pkg')} --registry http://my-internal-registry.local`,
+	command: `${accessCommand('@private/pkg')} --registry https://my-internal-registry.local`,
 	stderr: 'npm ERR! code E403\nnpm ERR! 403 403 Forbidden',
 }], async ({t, testedModule: {collaborators}}) => {
 	// Errors should return false instead of throwing, since external registries
 	// often don't support the collaborators endpoint.
 	// See: https://github.com/sindresorhus/np/issues/420
-	t.is(await collaborators({
+	t.false(await collaborators({
 		name: '@private/pkg',
 		publishConfig: {
-			registry: 'http://my-internal-registry.local',
+			registry: 'https://my-internal-registry.local',
 		},
-	}), false);
+	}));
 });

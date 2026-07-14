@@ -20,7 +20,7 @@ test('no remote', createIntegrationFixture, async () => {
 }, async ({t, testedModule: {verifyRemoteIsValid}}) => {
 	await t.throwsAsync(
 		verifyRemoteIsValid(),
-		{message: /^Git fatal error:/m},
+		{message: /^Git fatal error:/mv},
 	);
 });
 

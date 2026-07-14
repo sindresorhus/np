@@ -2,7 +2,7 @@ import listrInput from 'listr-input';
 import chalk from 'chalk';
 import {throwError, catchError} from 'rxjs';
 
-const handleNpmError = (error, task, message, executor) => {
+export default function handleNpmError(error, task, message, executor) {
 	if (typeof message === 'function') {
 		executor = message;
 		message = undefined;
@@ -23,7 +23,7 @@ const handleNpmError = (error, task, message, executor) => {
 				return executor(otp);
 			},
 			autoSubmit: value => value.length === 6,
-		}).pipe(catchError(error => handleNpmError(error, task, 'OTP was incorrect, try again:', executor)));
+		}).pipe(catchError(otpError => handleNpmError(otpError, task, 'OTP was incorrect, try again:', executor)));
 	}
 
 	// Attempting to privately publish a scoped package without the correct npm plan
@@ -37,6 +37,4 @@ const handleNpmError = (error, task, message, executor) => {
 	}
 
 	return throwError(() => error);
-};
-
-export default handleNpmError;
+}

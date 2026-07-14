@@ -20,7 +20,7 @@ const createNewFilesFixture = test.macro(async (t, input, commands) => {
 		await writePackage(temporaryDirectory, {
 			name: 'foo',
 			version: '0.0.0',
-			...packageFiles.length > 0 ? {files: packageFiles} : {},
+			...(packageFiles.length > 0) && {files: packageFiles},
 		});
 
 		const assertions = await t.try(async tt => {
@@ -63,7 +63,7 @@ test('file `new` to package without tags added', createNewFilesFixture, {
 	await t.context.createFile('index.js');
 });
 
-(() => { // Wrapper to have constants with macro
+{ // Wrapper to have constants with macro
 	const longPath = path.join('veryLonggggggDirectoryName', 'veryLonggggggDirectoryName');
 	const filePath1 = path.join(longPath, 'file1');
 	const filePath2 = path.join(longPath, 'file2');
@@ -81,7 +81,7 @@ test('file `new` to package without tags added', createNewFilesFixture, {
 		await $$`git add -A`;
 		await $$`git commit -m "added"`;
 	});
-})();
+}
 
 test('no new files added', createNewFilesFixture, {
 	packageFiles: [],

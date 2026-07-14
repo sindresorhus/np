@@ -17,6 +17,6 @@ test('not satisfied', createFixture, [{
 }], async ({t, testedModule: npm}) => {
 	await t.throwsAsync(
 		npm.verifyRecentNpmVersion(),
-		{message: /`np` requires npm >=/},
+		{message: /`np` requires npm >=/v},
 	);
 });

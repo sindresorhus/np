@@ -8,7 +8,7 @@ import Version from './version.js';
 const URL_LENGTH_LIMIT = 7900;
 const CLIPBOARD_PLACEHOLDER = '<!-- Paste release notes from clipboard -->';
 
-const releaseTaskHelper = async (options, package_, packageManager) => {
+export default async function releaseTaskHelper(options, package_, packageManager) {
 	if (!options.repoUrl) {
 		throw new Error('Missing `repository` field in package.json. This is required for creating GitHub releases.');
 	}
@@ -42,6 +42,4 @@ const releaseTaskHelper = async (options, package_, packageManager) => {
 	}
 
 	await open(url);
-};
-
-export default releaseTaskHelper;
+}

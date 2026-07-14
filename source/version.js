@@ -10,16 +10,27 @@ const SEMVER_INCREMENTS_LIST_LAST_OR = `${SEMVER_INCREMENTS.slice(0, -1).join(',
 /** @typedef {semver.ReleaseType} SemVerIncrement */
 /** @typedef {import('chalk').ColorName | import('chalk').ModifierName} ColorName */
 
-/** @param {string} input @returns {input is SemVerIncrement} */
+/**
+Checks if `input` is a valid `SemVer` increment type.
+
+@param {string} input - The string to check.
+@returns {input is SemVerIncrement} Whether `input` is a valid `SemVer` increment.
+*/
 const isSemVersionIncrement = input => SEMVER_INCREMENTS.includes(input);
 
-/** @param {string} input */
-const isInvalidSemVersion = input => Boolean(!semver.valid(input));
+/**
+Checks if `input` is not a valid `SemVer` version string.
+
+@param {string} input - The version string to validate.
+*/
+const isInvalidSemVersion = input => !semver.valid(input);
 
 /**
 Formats the first difference between two versions to the given `diffColor`. Useful for `prerelease` diffs.
 
-@param {string[]} current @param {string[]} previous @param {ColorName} diffColor
+@param {string[]} current - The current version parts.
+@param {string[]} previous - The previous version parts.
+@param {ColorName} diffColor - The chalk color name to apply to the differing part.
 */
 const formatFirstDifference = (current, previous, diffColor) => {
 	const firstDifferenceIndex = current.findIndex((part, i) => previous.at(i) !== part);
@@ -35,28 +46,12 @@ export default class Version {
 	/** @type {string | undefined} */
 	#prereleasePrefix = undefined;
 
-	toString() {
-		return this.#version.version;
-	}
-
 	/**
-	Sets `this.#version` to the given version.
+	Creates a new `Version` instance.
 
-	@param {string} version
-	@throws If `version` is an invalid `SemVer` version.
-	*/
-	#trySetVersion(version) {
-		this.#version = semver.parse(version);
-
-		if (this.#version === null) {
-			throw new Error(`Version ${version} should be a valid SemVer version.`);
-		}
-	}
-
-	/**
 	@param {string} version - A valid `SemVer` version.
 	@param {SemVerIncrement} [increment] - Optionally increment `version`.
-	@param {object} [options]
+	@param {object} [options] - Prerelease identifier configuration.
 	@param {string} [options.prereleasePrefix] - A prefix to use for `prerelease` versions.
 	*/
 	constructor(version, increment, {prereleasePrefix} = {}) {
@@ -73,12 +68,39 @@ export default class Version {
 	}
 
 	/**
+	Sets `this.#version` to the given version.
+
+	@param {string} version - A valid `SemVer` version string to parse and set.
+	@throws {Error} If `version` is an invalid `SemVer` version.
+	*/
+	#trySetVersion(version) {
+		this.#version = semver.parse(version);
+
+		if (this.#version === null) {
+			throw new Error(`Version ${version} should be a valid SemVer version.`);
+		}
+	}
+
+	/**
+	If the current version is the same as or higher than the given version.
+
+	@param {string} otherVersion - The version to compare against.
+	*/
+	#isGreaterThanOrEqualTo(otherVersion) {
+		return semver.gte(this.#version, otherVersion);
+	}
+
+	toString() {
+		return this.#version.version;
+	}
+
+	/**
 	Sets a new version based on `input`. If `input` is a valid `SemVer` increment, the current version will be incremented by that amount. If `input` is a valid `SemVer` version, the current version will be set to `input` if it is greater than the current version.
 
 	@param {string | SemVerIncrement} input - A new valid `SemVer` version or a `SemVer` increment to increase the current version by.
-	@param {object} [options]
+	@param {object} [options] - Prerelease identifier configuration.
 	@param {string} [options.prereleasePrefix] - A prefix to use for `prerelease` versions.
-	@throws If `input` is not a valid `SemVer` version or increment, or if `input` is a valid `SemVer` version but is not greater than the current version.
+	@throws {Error} If `input` is not a valid `SemVer` version or increment, or if `input` is a valid `SemVer` version but is not greater than the current version.
 	*/
 	setFrom(input, {prereleasePrefix = ''} = {}) {
 		this.#prereleasePrefix ??= prereleasePrefix;
@@ -108,10 +130,10 @@ export default class Version {
 
 	If the current version has never been changed, providing `options.previousVersion` will allow pretty-printing the diff. It must be provided to format diffs between `prerelease` versions.
 
-	@param {object} options
-	@param {ColorName} [options.color = 'dim']
-	@param {ColorName} [options.diffColor = 'cyan']
-	@param {string} [options.prereleasePrefix]
+	@param {object} options - Color and diff formatting configuration.
+	@param {ColorName} [options.color = 'dim'] - The chalk color name for the full version string.
+	@param {ColorName} [options.diffColor = 'cyan'] - The chalk color name for the differing part of the version.
+	@param {string | SemVerInstance} [options.previousVersion] - A previous version to compute the diff against.
 	@returns {string} A color-formatted version string.
 	*/
 	format({color = 'dim', diffColor = 'cyan', previousVersion} = {}) {
@@ -141,7 +163,7 @@ export default class Version {
 			return chalk(`{${color} ${major}.${minor}.${patch}-${prereleaseDiff}}`);
 		}
 
-		/* eslint-disable unicorn/no-nested-ternary */
+		/* eslint-disable unicorn/no-nested-ternary -- Nested ternary is the most readable way to express the multi-branch chalk formatting for each semver diff type */
 		return (
 			this.#diff === 'major'
 				? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}}`)
@@ -161,10 +183,10 @@ export default class Version {
 	}
 
 	/**
-	If the current version satisifes the given `SemVer` range.
+	If the current version satisfies the given `SemVer` range.
 
-	@param {string} range
-	@throws If `range` is invalid.
+	@param {string} range - A valid `SemVer` range string to check against.
+	@throws {Error} If `range` is invalid.
 	*/
 	satisfies(range) {
 		if (!semver.validRange(range)) {
@@ -181,14 +203,5 @@ export default class Version {
 	*/
 	isPrerelease() {
 		return Boolean(semver.prerelease(this.#version));
-	}
-
-	/**
-	If the current version is the same as or higher than the given version.
-
-	@param {string} otherVersion
-	*/
-	#isGreaterThanOrEqualTo(otherVersion) {
-		return semver.gte(this.#version, otherVersion);
 	}
 }

@@ -21,6 +21,21 @@ test('reports new dependencies since last release', createFixture, async ({$$, t
 	);
 });
 
+test('reports no new dependencies when the package removes all dependencies', createFixture, async ({$$, temporaryDirectory}) => {
+	await updatePackage(temporaryDirectory, {dependencies: {'dog-names': '^2.1.0'}});
+	await $$`git add .`;
+	await $$`git commit -m "added"`;
+	await $$`git tag v0.0.0`;
+	await updatePackage(temporaryDirectory, {dependencies: {}});
+}, async ({t, testedModule: {getNewDependencies}, temporaryDirectory}) => {
+	const package_ = await readPackage({cwd: temporaryDirectory});
+
+	t.deepEqual(
+		await getNewDependencies(package_, temporaryDirectory),
+		[],
+	);
+});
+
 test('handles first time publish (no package.json in last release)', createFixture, async ({temporaryDirectory}) => {
 	await updatePackage(temporaryDirectory, {dependencies: {'cat-names': '^3.1.0'}});
 }, async ({t, testedModule: {getNewDependencies}, temporaryDirectory}) => {

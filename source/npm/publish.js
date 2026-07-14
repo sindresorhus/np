@@ -52,7 +52,7 @@ export function runPublish(arguments_, options = {}) {
 		// Detect npm's browser authentication prompt
 		// Example: "Authenticate your account at:\nhttps://www.npmjs.com/auth/cli/xyz"
 		if (outputBuffer.includes('Authenticate your account at:')) {
-			const urlMatch = outputBuffer.match(/https:\/\/www\.npmjs\.com\/auth\/cli\/\S+/);
+			const urlMatch = outputBuffer.match(/https:\/\/www\.npmjs\.com\/auth\/cli\/\S+/v);
 			if (urlMatch) {
 				const authUrl = urlMatch[0];
 				// Auto-open browser for authentication (ignore errors if browser fails to open)

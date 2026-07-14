@@ -45,6 +45,6 @@ export const verifyGitTasks = async options => {
 	await git.verifyRemoteHistoryIsClean();
 };
 
-const gitTasks = options => new Listr(createGitTasks(options));
-
-export default gitTasks;
+export default function gitTasks(options) {
+	return new Listr(createGitTasks(options));
+}

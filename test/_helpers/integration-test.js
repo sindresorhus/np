@@ -1,4 +1,4 @@
-/* eslint-disable ava/no-ignored-test-files */
+/* eslint-disable ava/no-ignored-test-files -- shared helper used by integration test fixtures, not a standalone test file */
 import crypto from 'node:crypto';
 import path from 'node:path';
 import fs from 'fs-extra';

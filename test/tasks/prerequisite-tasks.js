@@ -221,7 +221,7 @@ test.serial('should fail when git user.name is not set', createFixture, [{
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
 		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
-		{message: /Git user configuration is not set/},
+		{message: /Git user configuration is not set/v},
 	);
 
 	assertTaskFailed(t, 'Check git user configuration');
@@ -237,7 +237,7 @@ test.serial('should fail when git user.email is not set', createFixture, [{
 }], async ({t, testedModule: prerequisiteTasks}) => {
 	await t.throwsAsync(
 		run(prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig})),
-		{message: /Git user configuration is not set/},
+		{message: /Git user configuration is not set/v},
 	);
 
 	assertTaskFailed(t, 'Check git user configuration');
@@ -343,7 +343,7 @@ test.serial('checks should pass', createFixture, [{
 
 test.serial('should fail when pnpm ignore-scripts prevents the build script from running', createFixture, [{
 	command: 'pnpm --version',
-	stdout: '10.0.0',
+	stdout: '11.0.0',
 }, {
 	command: 'pnpm config get ignore-scripts',
 	stdout: 'true',
@@ -373,7 +373,7 @@ test.serial('should fail when pnpm ignore-scripts prevents the build script from
 				prepack: 'build',
 			},
 		}, {}, {packageManager: pnpmConfig, rootDirectory: generatedEntryPointFixture})),
-		{message: /ignore-scripts.*package manager config.*\.npmrc/s},
+		{message: /ignore-scripts.*package manager config.*\.npmrc/sv},
 	);
 
 	assertTaskFailed(t, 'Verify package entry points');
@@ -411,7 +411,7 @@ test.serial('should fail when Yarn ignore-scripts prevents the build script from
 				prepack: 'build',
 			},
 		}, {}, {packageManager: yarnConfig, rootDirectory: generatedEntryPointFixture})),
-		{message: /ignore-scripts.*package manager config.*\.yarnrc/s},
+		{message: /ignore-scripts.*package manager config.*\.yarnrc/sv},
 	);
 
 	assertTaskFailed(t, 'Verify package entry points');

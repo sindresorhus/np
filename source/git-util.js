@@ -53,14 +53,14 @@ const tagListSortedBySemver = async () => {
 	const tags = await tagList();
 	return tags
 		.filter(tag => semver.valid(tag))
-		.sort((a, b) => semver.compare(a, b));
+		.toSorted((a, b) => semver.compare(a, b));
 };
 
 const firstCommit = async () => {
 	const {stdout} = await execa('git', ['rev-list', '--max-parents=0', 'HEAD']);
 	// Repository may have multiple initial commits (e.g., from merging unrelated histories).
 	// Return just the first one.
-	return stdout.split('\n')[0];
+	return stdout.split('\n', 1)[0];
 };
 
 export const previousTagOrFirstCommit = async () => {
@@ -107,7 +107,7 @@ export const hasUpstream = async () => {
 	const escapedCurrentBranch = escapeStringRegexp(await getCurrentBranch());
 	const {stdout} = await execa('git', ['status', '--short', '--branch', '--porcelain']);
 
-	return new RegExp(String.raw`^## ${escapedCurrentBranch}\.\.\..+\/${escapedCurrentBranch}`).test(stdout);
+	return new RegExp(String.raw`^## ${escapedCurrentBranch}\.\.\..+\/${escapedCurrentBranch}`, 'v').test(stdout);
 };
 
 export const getCurrentBranch = async () => {
@@ -141,11 +141,7 @@ export const isHeadDetached = async () => {
 const isWorkingTreeClean = async () => {
 	try {
 		const {stdout: status} = await execa('git', ['status', '--porcelain']);
-		if (status !== '') {
-			return false;
-		}
-
-		return true;
+		return status === '';
 	} catch {
 		return false;
 	}
@@ -201,7 +197,7 @@ export const verifyRemoteIsValid = async remote => {
 		// Inherit stdin to allow SSH password prompts for password-protected keys
 		await execa('git', ['ls-remote', remote ?? 'origin', 'HEAD'], {stdin: 'inherit', timeout: gitNetworkTimeout});
 	} catch (error) {
-		throw new Error(error.stderr.replace('fatal:', 'Git fatal error:'));
+		throw new Error(error.stderr.replace('fatal:', 'Git fatal error:'), {cause: error});
 	}
 };
 
@@ -236,11 +232,7 @@ const tagExistsOnRemote = async tagName => {
 	try {
 		const {stdout: revInfo} = await execa('git', ['rev-parse', '--quiet', '--verify', `refs/tags/${tagName}`]);
 
-		if (revInfo) {
-			return true;
-		}
-
-		return false;
+		return Boolean(revInfo);
 	} catch (error) {
 		// Command fails with code 1 and no output if the tag does not exist, even though `--quiet` is provided
 		// https://github.com/sindresorhus/np/pull/73#discussion_r72385685
@@ -292,7 +284,8 @@ export const removeLastCommit = async () => {
 
 const gitVersion = async () => {
 	const {stdout} = await execa('git', ['version']);
-	const match = /git version (?<version>\d+\.\d+\.\d+).*/.exec(stdout);
+	// eslint-disable-next-line regexp/optimal-quantifier-concatenation -- `\d+` is required to capture full multi-digit patch versions; simplifying to `\d` would truncate (e.g., "2.39.10" to "2.39.1")
+	const match = /git version (?<version>\d+\.\d+\.\d+).*/v.exec(stdout);
 	return match && match.groups.version;
 };
 

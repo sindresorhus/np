@@ -35,6 +35,6 @@ test('throws if tag not found', createFixture, async () => {
 }, async ({t, testedModule: {deleteTag}}) => {
 	await t.throwsAsync(
 		deleteTag('v1.0.0'),
-		{message: /error: tag 'v1\.0\.0' not found\./},
+		{message: /error: tag 'v1\.0\.0' not found\./v},
 	);
 });

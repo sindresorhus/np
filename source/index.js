@@ -34,16 +34,19 @@ import * as npm from './npm/util.js';
 
 const restoreCursor = () => {
 	if (process.stderr.isTTY) {
-		process.stderr.write('\u001B[?25h');
+		process.stderr.write('\u{1B}[?25h');
 	}
 };
 
-/** @type {(cmd: string, args: string[], options?: import('execa').Options) => any} */
+/**
+Executes a command and returns an observable stream of its output.
+@type {(cmd: string, args: string[], options?: import('execa').Options) => import('rxjs').Observable<unknown>}
+*/
 const exec = (command, arguments_, options) => {
 	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
-	const subProcess = execa(command, arguments_, options);
+	const subprocess = execa(command, arguments_, options);
 
-	return merge(subProcess.stdout, subProcess.stderr, subProcess).pipe(
+	return merge(subprocess.stdout, subprocess.stderr, subprocess).pipe(
 		filter(Boolean),
 		catchError(error => {
 			// Include stderr in error message for better diagnostics
@@ -57,11 +60,12 @@ const exec = (command, arguments_, options) => {
 };
 
 /**
-@param {string} input
-@param {import('./cli-implementation.js').Options} options
-@param {{package_: import('read-pkg').NormalizedPackageJson; projectDirectory?: string; rootDirectory: string}} context
+Runs the np publish workflow.
+@param {string} input - The version bump type or explicit version.
+@param {import('./cli-implementation.js').Options} options - Configuration options for the publish workflow.
+@param {{package_: import('read-pkg').NormalizedPackageJson; projectDirectory?: string; rootDirectory: string}} context - Project context including package data and directories.
 */
-const np = async (input = 'patch', {packageManager, ...rawOptions}, {package_, projectDirectory, rootDirectory}) => {
+export default async function np(input = 'patch', {packageManager, ...rawOptions}, {package_, projectDirectory, rootDirectory}) {
 	projectDirectory ??= rootDirectory;
 
 	const {preview, ...options} = rawOptions;
@@ -74,15 +78,16 @@ const np = async (input = 'patch', {packageManager, ...rawOptions}, {package_, p
 
 	const runTests = options.tests && !options.yolo;
 	const runCleanup = options.cleanup && !options.yolo;
-	const runInstall = !options.yolo;
+	const isRunInstall = !options.yolo;
 	const lockfile = findLockfile(projectDirectory, packageManager);
 	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl)?.type === 'github';
-	const testScript = options.testScript || 'test';
 
 	if (options.releaseDraftOnly) {
 		await releaseTaskHelper(options, package_, packageManager);
 		return package_;
 	}
+
+	const testScript = options.testScript || 'test';
 
 	let publishStatus = 'UNKNOWN';
 	let pushedObjects;
@@ -96,8 +101,8 @@ const np = async (input = 'patch', {packageManager, ...rawOptions}, {package_, p
 		const versionInLatestTag = latestTag.slice(tagVersionPrefix.length);
 
 		async function getPackageVersion() {
-			const package_ = await util.readPackage(rootDirectory);
-			return package_.version;
+			const currentPackage = await util.readPackage(rootDirectory);
+			return currentPackage.version;
 		}
 
 		try {
@@ -131,7 +136,10 @@ const np = async (input = 'patch', {packageManager, ...rawOptions}, {package_, p
 	// To prevent the process from hanging due to watch mode (e.g. when running `vitest`)
 	const ciEnvOptions = {env: {CI: 'true'}};
 
-	/** @param {typeof options} _options */
+	/**
+	Returns the command array used to publish the package.
+	@param {typeof options} _options - Options used to determine publish arguments.
+	*/
 	function getPublishCommand(_options) {
 		const publishCommand = packageManager.publishCommand || (arguments_ => [packageManager.cli, arguments_]);
 		const arguments_ = getPackagePublishArguments(_options);
@@ -171,7 +179,7 @@ const np = async (input = 'patch', {packageManager, ...rawOptions}, {package_, p
 		},
 		{
 			title: `Installing dependencies using ${packageManager.id}`,
-			enabled: () => runInstall,
+			enabled: () => isRunInstall,
 			skip() {
 				if (options.dryRun) {
 					return `[Dry run] Command not executed: ${printCommand(getInstallCommand())}.`;
@@ -203,15 +211,17 @@ const np = async (input = 'patch', {packageManager, ...rawOptions}, {package_, p
 		{
 			title: 'Bumping version',
 			skip() {
-				if (options.dryRun) {
-					const [cli, arguments_] = packageManager.versionCommand(input);
-
-					if (options.message) {
-						arguments_.push('--message', options.message.replaceAll('%s', input));
-					}
-
-					return `[Dry run] Command not executed: ${printCommand([cli, arguments_])}`;
+				if (!options.dryRun) {
+					return;
 				}
+
+				const [cli, arguments_] = packageManager.versionCommand(input);
+
+				if (options.message) {
+					arguments_.push('--message', options.message.replaceAll('%s', () => input));
+				}
+
+				return `[Dry run] Command not executed: ${printCommand([cli, arguments_])}`;
 			},
 			task() {
 				const [cli, arguments_] = packageManager.versionCommand(input);
@@ -229,12 +239,17 @@ const np = async (input = 'patch', {packageManager, ...rawOptions}, {package_, p
 				{
 					title: 'Publishing package',
 					skip() {
-						if (options.dryRun) {
-							const command = getPublishCommand(options);
-							return `[Dry run] Command not executed: ${printCommand(command)}.`;
+						if (!options.dryRun) {
+							return;
 						}
+
+						const command = getPublishCommand(options);
+						return `[Dry run] Command not executed: ${printCommand(command)}.`;
 					},
-					/** @type {(context, task) => Listr.ListrTaskResult<any>} */
+					/**
+					Runs the npm publish step and handles OTP prompts and errors.
+					@type {(context: object, task: object) => import('rxjs').Observable<unknown>}
+					*/
 					task(context, task) {
 						let hasError = false;
 
@@ -263,10 +278,12 @@ const np = async (input = 'patch', {packageManager, ...rawOptions}, {package_, p
 					? [{
 						title: 'Enabling two-factor authentication',
 						async skip() {
-							if (options.dryRun) {
-								const arguments_ = await getEnable2faArguments(package_.name, options);
-								return `[Dry run] Command not executed: npm ${arguments_.join(' ')}.`;
+							if (!options.dryRun) {
+								return;
 							}
+
+							const arguments_ = await getEnable2faArguments(package_.name, options);
+							return `[Dry run] Command not executed: npm ${arguments_.join(' ')}.`;
 						},
 						task: (context, task) => enable2fa(task, package_.name, {otp: context.otp}),
 					}]
@@ -327,6 +344,4 @@ const np = async (input = 'patch', {packageManager, ...rawOptions}, {package_, p
 
 	const {package_: newPackage} = await util.readPackage();
 	return newPackage;
-};
-
-export default np;
+}

@@ -25,7 +25,7 @@
 - Warns about the possibility of extraneous files being published
 - See exactly what will be executed with [dry-run mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
 - Supports [GitHub Packages](https://github.com/features/packages)
-- Supports npm 9+, Yarn (Classic and Berry), pnpm 8+, and Bun
+- Supports npm 10+, pnpm 11+, Bun, and Yarn (Classic and Berry)
 
 ### Why not
 
@@ -34,8 +34,8 @@
 
 ## Prerequisite
 
-- Node.js 20 or later
-- npm 9 or later
+- Node.js 22 or later
+- npm 10 or later
 - Git 2.11 or later
 
 ## Install
@@ -46,7 +46,7 @@ npm install --global np
 
 ## Usage
 
-```
+```console
 $ np --help
 
   Usage
@@ -208,13 +208,13 @@ For example, `np --test-script=publish-test` would run the `publish-test` script
 
 Set the [`sign-git-tag`](https://docs.npmjs.com/misc/config#sign-git-tag) npm config to have the Git tag signed:
 
-```
+```sh
 $ npm config set sign-git-tag true
 ```
 
 Or set the [`version-sign-git-tag`](https://yarnpkg.com/lang/en/docs/cli/version/#toc-git-tags) Yarn config:
 
-```
+```sh
 $ yarn config set version-sign-git-tag true
 ```
 
@@ -303,7 +303,7 @@ $ np patch --any-branch --tag=v1
 
 If you're using macOS Sierra 10.12.2 or later, your SSH key passphrase is no longer stored into the keychain by default. This may cause the `prerequisite` step to run forever because it prompts for your passphrase in the background. To fix this, add the following lines to your `~/.ssh/config` and run a simple Git command like `git fetch`.
 
-```
+```text
 Host *
  AddKeysToAgent yes
  UseKeychain yes
@@ -392,8 +392,3 @@ A missing trailing slash in `.npmrc` registry configuration can cause hangs.
 ```npmrc
 @ORG:registry=https://npm.pkg.github.com/
 ```
-
-## Maintainers
-
-- [Sindre Sorhus](https://github.com/sindresorhus)
-- [Tommy Mitchell](https://github.com/tommy-mitchell)

@@ -232,7 +232,7 @@ const ensureAuthenticated = async package_ => {
 			throw error;
 		}
 
-		throw new Error('Still not authenticated after `npm login`. A project-level `.npmrc` may hold a stale or revoked token that overrides your login. Check it for outdated `_authToken` entries.');
+		throw new Error('Still not authenticated after `npm login`. A project-level `.npmrc` may hold a stale or revoked token that overrides your login. Check it for outdated `_authToken` entries.', {cause: error});
 	}
 };
 

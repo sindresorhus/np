@@ -14,6 +14,15 @@ test('one item', testJoinList, {
 	expected: '- scripts/a.sh',
 });
 
+test('top-level files', testJoinList, {
+	list: [
+		'index.js',
+		'readme.md',
+	],
+	expected: `- index.js
+- readme.md`,
+});
+
 test('mix of collapsed and expanded folders', testJoinList, {
 	list: [
 		'scripts/a.sh',

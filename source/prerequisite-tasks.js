@@ -8,7 +8,7 @@ import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 import {getOidcProvider} from './npm/oidc.js';
 
-const prerequisiteTasks = (input, package_, options, {packageManager, rootDirectory}) => {
+export default function prerequisiteTasks(input, package_, options, {packageManager, rootDirectory}) {
 	const isExternalRegistry = npm.isExternalRegistry(package_);
 	let newVersion;
 
@@ -144,6 +144,4 @@ const prerequisiteTasks = (input, package_, options, {packageManager, rootDirect
 	];
 
 	return new Listr(tasks);
-};
-
-export default prerequisiteTasks;
+}

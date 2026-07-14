@@ -4,8 +4,10 @@ import semver from 'semver';
 import * as configs from './configs.js';
 
 /**
-@param {string} rootDirectory
-@param {import('./types.d.ts').PackageManagerConfig} config
+Finds the lockfile for the given package manager config in `rootDirectory`.
+
+@param {string} rootDirectory - The root directory to search for the lockfile.
+@param {import('./types.d.ts').PackageManagerConfig} config - The package manager configuration.
 */
 export function findLockfile(rootDirectory, config) {
 	return config.lockfiles
@@ -14,15 +16,21 @@ export function findLockfile(rootDirectory, config) {
 }
 
 /**
-@param {string} rootDirectory
-@param {import('read-pkg').NormalizedPackageJson} package_
+Returns the package manager config based on the package's fields or lockfiles.
+
+@param {string} rootDirectory - Where to look for lockfiles when detecting the package manager.
+@param {import('read-pkg').NormalizedPackageJson} package_ - The parsed package.json.
 */
 export function getPackageManagerConfig(rootDirectory, package_) {
 	const config = configFromPackageManagerField(package_) ?? configFromDevEnginesPackageManager(package_);
 	return config || configFromLockfile(rootDirectory) || configs.npmConfig;
 }
 
-/** @param {import('read-pkg').NormalizedPackageJson} package_ */
+/**
+Returns the package manager config from the `packageManager` field in `package_`.
+
+@param {import('read-pkg').NormalizedPackageJson} package_ - The parsed package.json.
+*/
 function configFromPackageManagerField(package_) {
 	if (typeof package_.packageManager !== 'string') {
 		return undefined;
@@ -33,7 +41,11 @@ function configFromPackageManagerField(package_) {
 	return configFromPackageManager(packageManager, version, package_.packageManager);
 }
 
-/** @param {import('read-pkg').NormalizedPackageJson} package_ */
+/**
+Returns the package manager config from the `devEngines.packageManager` field in `package_`.
+
+@param {import('read-pkg').NormalizedPackageJson} package_ - The parsed package.json.
+*/
 function configFromDevEnginesPackageManager(package_) {
 	const {packageManager} = package_.devEngines ?? {};
 	if (packageManager === undefined) {
@@ -45,8 +57,8 @@ function configFromDevEnginesPackageManager(package_) {
 		throw new Error('Missing "name" property for "packageManager".');
 	}
 
-	for (const packageManager of packageManagers) {
-		if (!packageManager || typeof packageManager !== 'object' || !('name' in packageManager) || typeof packageManager.name !== 'string') {
+	for (const candidate of packageManagers) {
+		if (!candidate || typeof candidate !== 'object' || !('name' in candidate) || typeof candidate.name !== 'string') {
 			throw new Error('Missing "name" property for "packageManager".');
 		}
 	}
@@ -82,7 +94,12 @@ function configFromPackageManager(packageManager, version, rawPackageManager) {
 	throw new Error(`Invalid package manager: ${rawPackageManager}`);
 }
 
-/** @param {string} rootDirectory */
+/**
+Returns the package manager config by detecting the lockfile in `rootDirectory`.
+
+@param {string} rootDirectory - The root directory to search for a lockfile.
+@param {import('./types.d.ts').PackageManagerConfig[]} [options] - The list of configs to check, in priority order.
+*/
 function configFromLockfile(rootDirectory, options = [configs.npmConfig, configs.pnpmConfig, configs.yarnConfig]) {
 	const foundConfig = options.find(config => findLockfile(rootDirectory, config));
 
@@ -97,7 +114,11 @@ function configFromLockfile(rootDirectory, options = [configs.npmConfig, configs
 	return foundConfig;
 }
 
-/** @param {import('./types.d.ts').Command} command */
+/**
+Formats a CLI command tuple into a printable string.
+
+@param {import('./types.d.ts').Command} command - The command tuple to format.
+*/
 export function printCommand([cli, arguments_]) {
 	return `${cli} ${arguments_.join(' ')}`;
 }

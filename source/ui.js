@@ -51,7 +51,7 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 		const latestTag = await git.latestTag();
 
 		// Version bump commit created by np, following the semver specification.
-		const versionBumpCommitName = latestTag.match(/v\d+\.\d+\.\d+/) && latestTag.slice(1); // Name v1.0.1 becomes 1.0.1
+		const versionBumpCommitName = latestTag.match(/v\d+\.\d+\.\d+/v) && latestTag.slice(1); // Name v1.0.1 becomes 1.0.1
 		const versionBumpCommitIndex = commits.findIndex(commit => commit.message === versionBumpCommitName);
 
 		if (versionBumpCommitIndex > 0) {
@@ -90,11 +90,11 @@ const checkNewFilesAndDependencies = async (package_, rootDirectory) => {
 	const newFiles = await util.getNewFiles(rootDirectory);
 	const newDependencies = await util.getNewDependencies(package_, rootDirectory);
 
-	const noNewFirstTimeFiles = !newFiles.firstTime || newFiles.firstTime.length === 0;
-	const noNewDependencies = !newDependencies || newDependencies.length === 0;
+	const isNoNewFirstTimeFiles = !newFiles.firstTime || newFiles.firstTime.length === 0;
+	const isNoNewDependencies = !newDependencies || newDependencies.length === 0;
 
 	// Only prompt for first-time files and new dependencies (things that WILL be published)
-	if (noNewFirstTimeFiles && noNewDependencies) {
+	if (isNoNewFirstTimeFiles && isNoNewDependencies) {
 		return {
 			confirmed: true,
 			unpublishedFiles: newFiles.unpublished || [],
@@ -148,10 +148,12 @@ const displayUnpublishedFilesWarning = unpublishedFiles => {
 };
 
 /**
-@param {import('./cli-implementation.js').CLI['flags']} options
-@param {{package_: import('read-pkg').NormalizedPackageJson; rootDirectory: string}} context
+Runs the interactive UI to collect release options from the user.
+
+@param {import('./cli-implementation.js').CLI['flags']} options - The CLI flags controlling publish behavior.
+@param {{package_: import('read-pkg').NormalizedPackageJson; rootDirectory: string}} context - The package context.
 */
-const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { // eslint-disable-line complexity
+export default async function ui({packageManager, ...options}, {package_, rootDirectory}) { // eslint-disable-line complexity
 	const oldVersion = package_.version;
 	const extraBaseUrls = ['gitlab.com'];
 	const repoUrl = package_.repository && (() => {
@@ -198,8 +200,8 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 		console.log(`\nPublish a new version of ${chalk.bold.magenta(package_.name)} ${versionText}\n`);
 	}
 
-	const useLatestTag = !options.releaseDraftOnly;
-	const {hasCommits, hasUnreleasedCommits, generateReleaseNotes} = await printCommitLog(repoUrl, registryUrl, useLatestTag, releaseBranch);
+	const isUseLatestTag = !options.releaseDraftOnly;
+	const {hasCommits, hasUnreleasedCommits, generateReleaseNotes} = await printCommitLog(repoUrl, registryUrl, isUseLatestTag, releaseBranch);
 
 	// Display unpublished files warning after commit log
 	displayUnpublishedFilesWarning(unpublishedFiles);
@@ -400,7 +402,7 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 					version.setFrom(input);
 				} catch (error) {
 					if (error.message.includes('valid SemVer version')) {
-						throw new Error(`Custom version ${input} should be a valid SemVer version.`);
+						throw new Error(`Custom version ${input} should be a valid SemVer version.`, {cause: error});
 					}
 
 					error.message = error.message.replace('New', 'Custom');
@@ -486,6 +488,4 @@ const ui = async ({packageManager, ...options}, {package_, rootDirectory}) => { 
 		repoUrl,
 		generateReleaseNotes,
 	};
-};
-
-export default ui;
+}

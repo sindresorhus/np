@@ -49,11 +49,11 @@ const npFails = test.macro(async (t, inputs, message) => {
 	);
 });
 
-test('version is invalid', npFails, ['foo', '4.x.3'], /New version (?:foo|4\.x\.3) should either be one of patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid SemVer version\./);
+test('version is invalid', npFails, ['foo', '4.x.3'], /New version (?:foo|4\.x\.3) should either be one of patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid SemVer version\./v);
 
 test('version is pre-release', npFails, ['premajor', 'preminor', 'prepatch', 'prerelease', '100.0.0-0', '100.0.0-beta'], 'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 
-test('errors on too low version', npFails, ['1.0.0', '1.0.0-beta'], /New version 1\.0\.0(?:-beta)? should be higher than current version \d+\.\d+\.\d+/);
+test('errors on too low version', npFails, ['1.0.0', '1.0.0-beta'], /New version 1\.0\.0(?:-beta)? should be higher than current version \d+\.\d+\.\d+/v);
 
 const fakeExecaReturn = () => Object.assign(
 	Promise.resolve({pipe: sinon.stub()}),
@@ -199,7 +199,7 @@ test('rollback is called when publish fails', async t => {
 		npMock('1.0.0', {
 			...defaultOptions,
 		}, {package_: {version: '0.9.0'}, rootDirectory: process.cwd()}),
-		{message: /Error publishing package/},
+		{message: /Error publishing package/v},
 	);
 
 	t.true(deleteTagStub.calledOnce, 'deleteTag should be called once');
@@ -240,7 +240,7 @@ test('restores cursor after successful publish', async t => {
 		'2fa': false,
 	}, npPackageResult);
 
-	t.true(stderrWriteStub.calledWithExactly('\u001B[?25h'));
+	t.true(stderrWriteStub.calledWithExactly('\u{1B}[?25h'));
 });
 
 test('publish uses rootDirectory from context as cwd', async t => {

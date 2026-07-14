@@ -1,10 +1,6 @@
 let tasks;
 
 export class SilentRenderer {
-	constructor(_tasks) {
-		tasks = _tasks;
-	}
-
 	static get tasks() {
 		return tasks;
 	}
@@ -15,6 +11,10 @@ export class SilentRenderer {
 
 	static clearTasks() {
 		tasks = [];
+	}
+
+	constructor(_tasks) {
+		tasks = _tasks;
 	}
 
 	render() {}

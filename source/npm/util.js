@@ -13,10 +13,12 @@ export const version = async () => {
 export const npmNetworkTimeout = 15_000; // 15 seconds for npm registry calls
 
 const throwIfNpmTimeout = error => {
-	if (error.timedOut) {
-		error.message = 'Connection to npm registry timed out';
-		throw error;
+	if (!error.timedOut) {
+		return;
 	}
+
+	error.message = 'Connection to npm registry timed out';
+	throw error;
 };
 
 // Unwrap the array that npm 12 wraps `npm view --json` output in; older npm returns the object directly.
@@ -31,7 +33,7 @@ export const checkConnection = async () => {
 		return true;
 	} catch (error) {
 		throwIfNpmTimeout(error);
-		throw new Error('Connection to npm registry failed');
+		throw new Error('Connection to npm registry failed', {cause: error});
 	}
 };
 
@@ -47,7 +49,7 @@ export const username = async ({externalRegistry}) => {
 		return stdout;
 	} catch (error) {
 		throwIfNpmTimeout(error);
-		const isNotLoggedIn = /ENEEDAUTH|E401/.test(error.stderr);
+		const isNotLoggedIn = /ENEEDAUTH|E401/v.test(error.stderr);
 		const message = isNotLoggedIn
 			? 'You must be logged in. Use `npm login` and try again.'
 			: 'Authentication error. Use `npm whoami` to troubleshoot.';
@@ -56,6 +58,10 @@ export const username = async ({externalRegistry}) => {
 		throw authError;
 	}
 };
+
+class ExitPromptError extends Error {
+	name = 'ExitPromptError';
+}
 
 export const login = async ({externalRegistry}) => {
 	const arguments_ = ['login'];
@@ -73,9 +79,7 @@ export const login = async ({externalRegistry}) => {
 	} catch (error) {
 		// User canceled the login prompt
 		if (error.stderr?.includes('canceled')) {
-			const cancelError = new Error('Login canceled');
-			cancelError.name = 'ExitPromptError';
-			throw cancelError;
+			throw new ExitPromptError('Login canceled', {cause: error});
 		}
 
 		throw error;
@@ -95,7 +99,7 @@ export const isExternalRegistry = package_ => {
 	}
 
 	const normalizedRegistry = registry.trim();
-	const httpsVariant = normalizedRegistry.replace(/^http:\/\//, 'https://');
+	const httpsVariant = normalizedRegistry.replace(/^http:\/\//v, 'https://');
 
 	return !NPM_DEFAULT_REGISTRIES.has(normalizedRegistry)
 		&& !NPM_DEFAULT_REGISTRIES.has(httpsVariant);
@@ -238,10 +242,10 @@ export const getFilesToBePacked = async rootDirectory => {
 		// For example, Husky's prepare script outputs "> package@version prepare" and "> husky install".
 		// We extract only the JSON portion by finding the first '{' or '[' character.
 		// Related: https://github.com/sindresorhus/np/issues/742
-		const jsonStart = stdout.search(/[{[]/);
+		const jsonStart = stdout.search(/[\[\{]/v);
 		const parsed = JSON.parse(stdout.slice(jsonStart));
 		// Unwrap: npm 12 keys the output by package name (`{"pkg": {files}}`); older npm returns an array (`[{files}]`).
-		const {files} = Array.isArray(parsed) ? parsed[0] : Object.values(parsed)[0];
+		const {files} = (Array.isArray(parsed) ? parsed : Object.values(parsed))[0];
 		return files.map(file => file.path);
 	} catch (error) {
 		throw new Error('Failed to parse output of npm pack', {cause: error});
@@ -318,7 +322,7 @@ export const verifyPackageEntryPoints = async (package_, rootDirectory, {ignoreS
 	const missingEntryPoints = [];
 
 	for (const entryPoint of entryPoints) {
-		const normalizedPath = entryPoint.path.replace(/^\.\//, '');
+		const normalizedPath = entryPoint.path.replace(/^\.\//v, '');
 
 		if (seenPaths.has(normalizedPath)) {
 			continue;
