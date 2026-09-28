@@ -1,32 +1,42 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture as _createStubFixture} from '../_helpers/stub-execa.js';
 import {_createFixture as _createIntegrationFixture} from '../_helpers/integration-test.js';
 
-/** @type {ReturnType<typeof _createStubFixture<import('../../source/git-util.js')>>} */
+/**
+@type {ReturnType<typeof createStubFixture<typeof import('../../source/git-util.js')>>}
+*/
 const createStubFixture = _createStubFixture('../../source/git-util.js', import.meta.url);
 
-/** @type {ReturnType<typeof _createIntegrationFixture<import('../../source/git-util.js')>>} */
+/**
+@type {ReturnType<typeof createIntegrationFixture<typeof import('../../source/git-util.js')>>}
+*/
 const createIntegrationFixture = _createIntegrationFixture('../../source/git-util.js');
 
-test('has remote', createStubFixture, [{
+createStubFixture('has remote', [{
 	command: 'git ls-remote origin HEAD',
 	exitCode: 0,
-}], async ({t, testedModule: {verifyRemoteIsValid}}) => {
-	await t.notThrowsAsync(verifyRemoteIsValid());
+}], async ({
+	testedModule: {verifyRemoteIsValid},
+}) => {
+	await assert.doesNotReject(verifyRemoteIsValid());
 });
 
-test('no remote', createIntegrationFixture, async () => {
+createIntegrationFixture('no remote', async () => {
 	//
-}, async ({t, testedModule: {verifyRemoteIsValid}}) => {
-	await t.throwsAsync(
+}, async ({
+	testedModule: {verifyRemoteIsValid},
+}) => {
+	await assert.rejects(
 		verifyRemoteIsValid(),
 		{message: /^Git fatal error:/mv},
 	);
 });
 
-test('has custom remote', createStubFixture, [{
+createStubFixture('has custom remote', [{
 	command: 'git ls-remote upstream HEAD',
 	exitCode: 0,
-}], async ({t, testedModule: {verifyRemoteIsValid}}) => {
-	await t.notThrowsAsync(verifyRemoteIsValid('upstream'));
+}], async ({
+	testedModule: {verifyRemoteIsValid},
+}) => {
+	await assert.doesNotReject(verifyRemoteIsValid('upstream'));
 });

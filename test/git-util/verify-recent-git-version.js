@@ -1,21 +1,27 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/stub-execa.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/git-util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../source/git-util.js')>>}
+*/
 const createFixture = _createFixture('../../source/git-util.js', import.meta.url);
 
-test('satisfied', createFixture, [{
+createFixture('satisfied', [{
 	command: 'git version',
 	stdout: 'git version 2.12.0', // One higher than minimum
-}], async ({t, testedModule: {verifyRecentGitVersion}}) => {
-	await t.notThrowsAsync(verifyRecentGitVersion());
+}], async ({
+	testedModule: {verifyRecentGitVersion},
+}) => {
+	await assert.doesNotReject(verifyRecentGitVersion());
 });
 
-test('not satisfied', createFixture, [{
+createFixture('not satisfied', [{
 	command: 'git version',
 	stdout: 'git version 2.10.0', // One lower than minimum
-}], async ({t, testedModule: {verifyRecentGitVersion}}) => {
-	await t.throwsAsync(
+}], async ({
+	testedModule: {verifyRecentGitVersion},
+}) => {
+	await assert.rejects(
 		verifyRecentGitVersion(),
 		{message: '`np` requires git >=2.11.0'},
 	);

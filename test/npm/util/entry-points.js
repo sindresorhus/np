@@ -1,30 +1,31 @@
 import path from 'node:path';
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import * as npm from '../../../source/npm/util.js';
 
 const getFixture = name => path.resolve('test', 'fixtures', 'files', name);
 
-test('getPackageEntryPoints - main', t => {
-	t.deepEqual(
+test('getPackageEntryPoints - main', () => {
+	assert.deepEqual(
 		npm.getPackageEntryPoints({main: 'index.js'}),
 		[{field: 'main', path: 'index.js'}],
 	);
 
-	t.deepEqual(
+	assert.deepEqual(
 		npm.getPackageEntryPoints({main: './dist/index.js'}),
 		[{field: 'main', path: './dist/index.js'}],
 	);
 });
 
-test('getPackageEntryPoints - bin as string', t => {
-	t.deepEqual(
+test('getPackageEntryPoints - bin as string', () => {
+	assert.deepEqual(
 		npm.getPackageEntryPoints({name: 'my-cli', bin: './cli.js'}),
 		[{field: 'bin', path: './cli.js'}],
 	);
 });
 
-test('getPackageEntryPoints - bin as object', t => {
-	t.deepEqual(
+test('getPackageEntryPoints - bin as object', () => {
+	assert.deepEqual(
 		npm.getPackageEntryPoints({bin: {foo: './bin/foo.js', bar: './bin/bar.js'}}),
 		[
 			{field: 'bin.foo', path: './bin/foo.js'},
@@ -33,14 +34,14 @@ test('getPackageEntryPoints - bin as object', t => {
 	);
 });
 
-test('getPackageEntryPoints - exports as string', t => {
-	t.deepEqual(
+test('getPackageEntryPoints - exports as string', () => {
+	assert.deepEqual(
 		npm.getPackageEntryPoints({exports: './index.js'}),
 		[{field: 'exports', path: './index.js'}],
 	);
 });
 
-test('getPackageEntryPoints - exports with subpaths', t => {
+test('getPackageEntryPoints - exports with subpaths', () => {
 	const entryPoints = npm.getPackageEntryPoints({
 		exports: {
 			'.': './index.js',
@@ -48,13 +49,13 @@ test('getPackageEntryPoints - exports with subpaths', t => {
 		},
 	});
 
-	t.deepEqual(entryPoints, [
+	assert.deepEqual(entryPoints, [
 		{field: 'exports', path: './index.js'},
 		{field: 'exports', path: './foo.js'},
 	]);
 });
 
-test('getPackageEntryPoints - exports with conditions', t => {
+test('getPackageEntryPoints - exports with conditions', () => {
 	const entryPoints = npm.getPackageEntryPoints({
 		exports: {
 			'.': {
@@ -64,13 +65,13 @@ test('getPackageEntryPoints - exports with conditions', t => {
 		},
 	});
 
-	t.deepEqual(entryPoints, [
+	assert.deepEqual(entryPoints, [
 		{field: 'exports', path: './index.mjs'},
 		{field: 'exports', path: './index.cjs'},
 	]);
 });
 
-test('getPackageEntryPoints - exports with nested conditions', t => {
+test('getPackageEntryPoints - exports with nested conditions', () => {
 	const entryPoints = npm.getPackageEntryPoints({
 		exports: {
 			'.': {
@@ -83,14 +84,14 @@ test('getPackageEntryPoints - exports with nested conditions', t => {
 		},
 	});
 
-	t.deepEqual(entryPoints, [
+	assert.deepEqual(entryPoints, [
 		{field: 'exports', path: './index.node.mjs'},
 		{field: 'exports', path: './index.node.cjs'},
 		{field: 'exports', path: './index.js'},
 	]);
 });
 
-test('getPackageEntryPoints - combined main, bin, and exports', t => {
+test('getPackageEntryPoints - combined main, bin, and exports', () => {
 	const entryPoints = npm.getPackageEntryPoints({
 		main: './index.js',
 		bin: './cli.js',
@@ -100,7 +101,7 @@ test('getPackageEntryPoints - combined main, bin, and exports', t => {
 		},
 	});
 
-	t.deepEqual(entryPoints, [
+	assert.deepEqual(entryPoints, [
 		{field: 'main', path: './index.js'},
 		{field: 'bin', path: './cli.js'},
 		{field: 'exports', path: './index.js'},
@@ -108,12 +109,12 @@ test('getPackageEntryPoints - combined main, bin, and exports', t => {
 	]);
 });
 
-test('getPackageEntryPoints - empty package', t => {
-	t.deepEqual(npm.getPackageEntryPoints({}), []);
-	t.deepEqual(npm.getPackageEntryPoints({name: 'foo', version: '1.0.0'}), []);
+test('getPackageEntryPoints - empty package', () => {
+	assert.deepEqual(npm.getPackageEntryPoints({}), []);
+	assert.deepEqual(npm.getPackageEntryPoints({name: 'foo', version: '1.0.0'}), []);
 });
 
-test('getPackageEntryPoints - exports with wildcard patterns are skipped', t => {
+test('getPackageEntryPoints - exports with wildcard patterns are skipped', () => {
 	const entryPoints = npm.getPackageEntryPoints({
 		exports: {
 			'.': './index.js',
@@ -123,12 +124,12 @@ test('getPackageEntryPoints - exports with wildcard patterns are skipped', t => 
 	});
 
 	// Only non-wildcard exports should be included
-	t.deepEqual(entryPoints, [
+	assert.deepEqual(entryPoints, [
 		{field: 'exports', path: './index.js'},
 	]);
 });
 
-test('getPackageEntryPoints - exports with null values are skipped', t => {
+test('getPackageEntryPoints - exports with null values are skipped', () => {
 	const entryPoints = npm.getPackageEntryPoints({
 		exports: {
 			'.': './index.js',
@@ -136,66 +137,66 @@ test('getPackageEntryPoints - exports with null values are skipped', t => {
 		},
 	});
 
-	t.deepEqual(entryPoints, [
+	assert.deepEqual(entryPoints, [
 		{field: 'exports', path: './index.js'},
 	]);
 });
 
-test('getPackageEntryPoints - invalid main values are skipped', t => {
-	t.deepEqual(npm.getPackageEntryPoints({main: null}), []);
-	t.deepEqual(npm.getPackageEntryPoints({main: 123}), []);
-	t.deepEqual(npm.getPackageEntryPoints({main: {}}), []);
+test('getPackageEntryPoints - invalid main values are skipped', () => {
+	assert.deepEqual(npm.getPackageEntryPoints({main: null}), []);
+	assert.deepEqual(npm.getPackageEntryPoints({main: 123}), []);
+	assert.deepEqual(npm.getPackageEntryPoints({main: {}}), []);
 });
 
-test('getPackageEntryPoints - invalid bin values are skipped', t => {
-	t.deepEqual(npm.getPackageEntryPoints({bin: null}), []);
-	t.deepEqual(npm.getPackageEntryPoints({bin: 123}), []);
-	t.deepEqual(npm.getPackageEntryPoints({bin: {foo: null, bar: './bar.js'}}), [
+test('getPackageEntryPoints - invalid bin values are skipped', () => {
+	assert.deepEqual(npm.getPackageEntryPoints({bin: null}), []);
+	assert.deepEqual(npm.getPackageEntryPoints({bin: 123}), []);
+	assert.deepEqual(npm.getPackageEntryPoints({bin: {foo: null, bar: './bar.js'}}), [
 		{field: 'bin.bar', path: './bar.js'},
 	]);
 });
 
-test('getPackageEntryPoints - duplicate paths from main and exports', t => {
+test('getPackageEntryPoints - duplicate paths from main and exports', () => {
 	const entryPoints = npm.getPackageEntryPoints({
 		main: './index.js',
 		exports: './index.js',
 	});
 
 	// Both are returned (deduplication happens in verifyPackageEntryPoints)
-	t.deepEqual(entryPoints, [
+	assert.deepEqual(entryPoints, [
 		{field: 'main', path: './index.js'},
 		{field: 'exports', path: './index.js'},
 	]);
 });
 
-test('verifyPackageEntryPoints - missing main', async t => {
+test('verifyPackageEntryPoints - missing main', async () => {
 	const fixtureDirectory = getFixture('missing-main');
 
-	await t.throwsAsync(
+	await assert.rejects(
 		npm.verifyPackageEntryPoints({main: 'dist/index.js'}, fixtureDirectory),
 		{message: /Missing entry points.*"main": dist\/index\.js/sv},
 	);
 });
 
-test('verifyPackageEntryPoints - missing bin', async t => {
+test('verifyPackageEntryPoints - missing bin', async () => {
 	const fixtureDirectory = getFixture('missing-bin');
 
-	await t.throwsAsync(
+	await assert.rejects(
 		npm.verifyPackageEntryPoints({bin: './cli.js'}, fixtureDirectory),
 		{message: /Missing entry points.*"bin": \.\/cli\.js/sv},
 	);
 });
 
-test('verifyPackageEntryPoints - valid entry points', async t => {
+test('verifyPackageEntryPoints - valid entry points', async () => {
 	const fixtureDirectory = getFixture('one-file');
 
-	await t.notThrowsAsync(npm.verifyPackageEntryPoints({main: 'index.js'}, fixtureDirectory));
+	await assert.doesNotReject(npm.verifyPackageEntryPoints({main: 'index.js'}, fixtureDirectory));
 });
 
-test('verifyPackageEntryPoints - skipped when prepack script may generate files', async t => {
+test('verifyPackageEntryPoints - skipped when prepack script may generate files', async () => {
 	const fixtureDirectory = getFixture('prepack-generated-entry-point');
 
-	await t.notThrowsAsync(npm.verifyPackageEntryPoints({
+	await assert.doesNotReject(npm.verifyPackageEntryPoints({
 		main: 'dist/index.js',
 		scripts: {
 			prepack: 'build',
@@ -203,10 +204,10 @@ test('verifyPackageEntryPoints - skipped when prepack script may generate files'
 	}, fixtureDirectory));
 });
 
-test('verifyPackageEntryPoints - throws when ignore-scripts prevents the build script from running', async t => {
+test('verifyPackageEntryPoints - throws when ignore-scripts prevents the build script from running', async () => {
 	const fixtureDirectory = getFixture('prepack-generated-entry-point');
 
-	await t.throwsAsync(
+	await assert.rejects(
 		npm.verifyPackageEntryPoints({
 			main: 'dist/index.js',
 			scripts: {
@@ -217,10 +218,10 @@ test('verifyPackageEntryPoints - throws when ignore-scripts prevents the build s
 	);
 });
 
-test('verifyPackageEntryPoints - throws generic error when ignore-scripts is enabled but there is no lifecycle script', async t => {
+test('verifyPackageEntryPoints - throws generic error when ignore-scripts is enabled but there is no lifecycle script', async () => {
 	const fixtureDirectory = getFixture('missing-main');
 
-	await t.throwsAsync(
+	await assert.rejects(
 		npm.verifyPackageEntryPoints({main: 'dist/index.js'}, fixtureDirectory, {ignoreScripts: true}),
 		{message: /Ensure these files exist/v},
 	);

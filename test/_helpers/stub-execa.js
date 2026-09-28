@@ -1,5 +1,4 @@
-/* eslint-disable ava/no-ignored-test-files -- shared helper used by test fixtures via esmock, not a standalone test file */
-import test from 'ava';
+import {test} from 'node:test';
 import esmock from 'esmock';
 import sinon from 'sinon';
 import {execa} from 'execa';
@@ -38,15 +37,7 @@ const makeExecaStub = commands => {
 		for (let index = normalizedCommands.length - 1; index >= 0; index--) {
 			const result = normalizedCommands[index];
 
-			if (result.command !== command) {
-				continue;
-			}
-
-			if (!areArgumentsEqual(result.commandArguments, commandArguments)) {
-				continue;
-			}
-
-			if (!matchesOptions(result.options, options)) {
+			if ((result.command !== command) || !areArgumentsEqual(result.commandArguments, commandArguments) || !matchesOptions(result.options, options)) {
 				continue;
 			}
 
@@ -68,11 +59,7 @@ const matchesOptions = (expectedOptions, actualOptions) => {
 		return true;
 	}
 
-	if (!actualOptions) {
-		return false;
-	}
-
-	return Object.entries(expectedOptions).every(([key, value]) => Object.is(actualOptions[key], value));
+	return actualOptions ? Object.entries(expectedOptions).every(([key, value]) => Object.is(actualOptions[key], value)) : false;
 };
 
 const stubExeca = commands => {
@@ -83,17 +70,13 @@ const stubExeca = commands => {
 			async execa(...arguments_) {
 				// Only call real execa if stub doesn't have a match
 				const result = execaStub(...arguments_);
-				if (result === undefined) {
-					return execa(...arguments_);
-				}
-
-				return result;
+				return result === undefined ? execa(...arguments_) : result;
 			},
 		},
 	};
 };
 
-export const _createFixture = (source, importMeta) => test.macro(async (t, commands, assertions) => {
+export const _createFixture = (source, importMeta) => (title, commands, assertions) => test(title, async t => {
 	const testedModule = await esmock(source, importMeta, {}, stubExeca(commands));
 	await assertions({t, testedModule});
 });

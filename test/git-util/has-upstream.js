@@ -1,34 +1,44 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/integration-test.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/git-util.js')>>} */
+/**
+@type {ReturnType<typeof _createFixture<typeof import("../../source/git-util.js")>>}
+*/
 const createFixture = _createFixture('../../source/git-util.js');
 
-test('no upstream', createFixture, async () => {
+createFixture('no upstream', async () => {
 	//
-}, async ({t, testedModule: {hasUpstream}}) => {
-	t.false(await hasUpstream());
+}, async ({
+	testedModule: {hasUpstream},
+}) => {
+	assert.ok(!(await hasUpstream()));
 });
 
-test('has upstream', createFixture, async ({$$}) => {
+createFixture('has upstream', async ({$$}) => {
 	await $$`git init --bare remote.git`;
 	await $$`git remote add origin ./remote.git`;
 	await $$`git push --set-upstream origin HEAD`;
-}, async ({t, testedModule: {hasUpstream}}) => {
-	t.true(await hasUpstream());
+}, async ({
+	testedModule: {hasUpstream},
+}) => {
+	assert.ok(await hasUpstream());
 });
 
-test('upstream branch has a different name', createFixture, async ({$$}) => {
+createFixture('upstream branch has a different name', async ({$$}) => {
 	await $$`git init --bare remote.git`;
 	await $$`git remote add origin ./remote.git`;
 	await $$`git push origin HEAD:refs/heads/trunk`;
 	await $$`git branch --set-upstream-to=origin/trunk`;
-}, async ({t, testedModule: {hasUpstream}}) => {
-	t.true(await hasUpstream());
+}, async ({
+	testedModule: {hasUpstream},
+}) => {
+	assert.ok(await hasUpstream());
 });
 
-test('detached head', createFixture, async ({$$}) => {
+createFixture('detached head', async ({$$}) => {
 	await $$`git checkout --detach`;
-}, async ({t, testedModule: {hasUpstream}}) => {
-	t.false(await hasUpstream());
+}, async ({
+	testedModule: {hasUpstream},
+}) => {
+	assert.ok(!(await hasUpstream()));
 });

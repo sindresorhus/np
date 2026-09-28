@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import {writePackage} from 'write-package';
 import {getFilesToBePacked} from '../../../source/npm/util.js';
 import {createIntegrationTest} from '../../_helpers/integration-test.js';
@@ -8,111 +9,123 @@ import {runIfExists} from '../../_helpers/util.js';
 
 const getFixture = name => path.resolve('test', 'fixtures', 'files', name);
 
-const verifyPackedFiles = test.macro(async (t, fixture, expectedFiles, {before, after} = {}) => {
-	const fixtureDirectory = getFixture(fixture);
+const verifyPackedFiles = (title, fixture, expectedFiles, {before, after} = {}) => {
+	test(title, async t => {
+		const fixtureDirectory = getFixture(fixture);
 
-	await runIfExists(before, fixtureDirectory);
-	t.teardown(async () => runIfExists(after, fixtureDirectory));
+		await runIfExists(before, fixtureDirectory);
+		t.after(async () => runIfExists(after, fixtureDirectory));
 
-	const files = await getFilesToBePacked(fixtureDirectory);
-	t.deepEqual(files.toSorted((a, b) => a.localeCompare(b)), [...expectedFiles, 'package.json'].toSorted((a, b) => a.localeCompare(b)), 'Files different from expectations!');
-});
+		const files = await getFilesToBePacked(fixtureDirectory);
+		assert.deepEqual(files.toSorted((a, b) => a.localeCompare(b)), [...expectedFiles, 'package.json'].toSorted((a, b) => a.localeCompare(b)), 'Files different from expectations!');
+	});
+};
 
-test('package.json files field - one file', verifyPackedFiles, 'one-file', [
+verifyPackedFiles('package.json files field - one file', 'one-file', [
 	'index.js',
 ]);
 
-test('package.json files field - source dir', verifyPackedFiles, 'source-dir', [
+verifyPackedFiles('package.json files field - source dir', 'source-dir', [
 	'source/foo.js',
 	'source/bar.js',
 ]);
 
-test('package.json files field - source and dist dirs', verifyPackedFiles, 'source-and-dist-dir', [
-	'source/foo.js',
-	'source/bar.js',
-]);
+verifyPackedFiles(
+	'package.json files field - source and dist dirs',
+	'source-and-dist-dir',
+	[
+		'source/foo.js',
+		'source/bar.js',
+	],
+);
 
-test('package.json files field - leading slash', verifyPackedFiles, 'files-slash', [
+verifyPackedFiles('package.json files field - leading slash', 'files-slash', [
 	'index.js',
 ]);
 
-test('package.json files field - has readme and license', verifyPackedFiles, 'has-readme-and-license', [
-	'readme.md',
-	'license.md',
-	'index.js',
-]);
+verifyPackedFiles(
+	'package.json files field - has readme and license',
+	'has-readme-and-license',
+	[
+		'readme.md',
+		'license.md',
+		'index.js',
+	],
+);
 
-test('npmignore', verifyPackedFiles, 'npmignore', [
+verifyPackedFiles('npmignore', 'npmignore', [
 	'readme.md',
 	'index.js',
 	'index.d.ts',
 ]);
 
-test('package.json files field and npmignore', verifyPackedFiles, 'files-and-npmignore', [
+verifyPackedFiles('package.json files field and npmignore', 'files-and-npmignore', [
 	'readme.md',
 	'source/foo.js',
 	'source/bar.js',
 	'source/index.d.ts',
 ]);
 
-test('package.json files field and gitignore', verifyPackedFiles, 'gitignore', [
+verifyPackedFiles('package.json files field and gitignore', 'gitignore', [
 	'readme.md',
 	'dist/index.js',
 ]);
 
-test('npmignore and gitignore', verifyPackedFiles, 'npmignore-and-gitignore', [
+verifyPackedFiles('npmignore and gitignore', 'npmignore-and-gitignore', [
 	'readme.md',
 	'dist/index.js',
 ]);
 
-test('package.json main field not in files field', verifyPackedFiles, 'main', [
+verifyPackedFiles('package.json main field not in files field', 'main', [
 	'foo.js',
 	'bar.js',
 ]);
 
-test('doesn\'t show files in .github', verifyPackedFiles, 'dot-github', [
+verifyPackedFiles('doesn\'t show files in .github', 'dot-github', [
 	'index.js',
 ]);
 
-test('handles prepare script output (e.g., Husky)', verifyPackedFiles, 'prepare-script', [
+verifyPackedFiles('handles prepare script output (e.g., Husky)', 'prepare-script', [
 	'index.js',
 ]);
 
-test('ignores failing prepack script', verifyPackedFiles, 'failing-prepack-script', [
+verifyPackedFiles('ignores failing prepack script', 'failing-prepack-script', [
 	'index.js',
 ]);
 
-const verifyDevEnginesPackageManager = test.macro(async (t, packageManager) => {
-	await createIntegrationTest(t, async ({temporaryDirectory}) => {
-		await writePackage(temporaryDirectory, {
-			name: 'fixture',
-			version: '1.0.0',
-			files: ['index.js'],
-			devEngines: {
-				packageManager,
-			},
+const verifyDevEnginesPackageManager = (title, packageManager) => {
+	test(title, async t => {
+		await createIntegrationTest(t, async ({temporaryDirectory}) => {
+			await writePackage(temporaryDirectory, {
+				name: 'fixture',
+				version: '1.0.0',
+				files: ['index.js'],
+				devEngines: {
+					packageManager,
+				},
+			});
+			await fs.writeFile(path.join(temporaryDirectory, 'index.js'), '');
+
+			// `npm pack` must not block inspection based on the package's development manager.
+			const files = await getFilesToBePacked(temporaryDirectory);
+			assert.deepEqual(files.toSorted((left, right) => left.localeCompare(right)), ['index.js', 'package.json']);
 		});
-		await fs.writeFile(path.join(temporaryDirectory, 'index.js'), '');
-
-		// `npm pack` must not block inspection based on the package's development manager.
-		const files = await getFilesToBePacked(temporaryDirectory);
-		t.deepEqual(files.toSorted((left, right) => left.localeCompare(right)), ['index.js', 'package.json']);
 	});
-});
+};
 
-test('works when the package requires a different package manager', verifyDevEnginesPackageManager, {
+verifyDevEnginesPackageManager('works when the package requires a different package manager', {
 	name: 'pnpm',
 	version: '11.15.1',
 	onFail: 'download',
 });
 
-test('works when the package requires a different npm version', verifyDevEnginesPackageManager, {
+verifyDevEnginesPackageManager('works when the package requires a different npm version', {
 	name: 'npm',
 	version: '<0.0.0',
 	onFail: 'error',
 });
 
-test('works when the package lists multiple other package managers', verifyDevEnginesPackageManager, [
+verifyDevEnginesPackageManager('works when the package lists multiple other package managers', [
 	{
 		name: 'pnpm',
 		version: '11.15.1',

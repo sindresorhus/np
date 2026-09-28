@@ -1,39 +1,49 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/integration-test.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/git-util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../source/git-util.js')>>}
+*/
 const createFixture = _createFixture('../../source/git-util.js');
 
-test('deletes given tag', createFixture, async ({$$}) => {
+createFixture('deletes given tag', async ({$$}) => {
 	await $$`git tag v0.0.0`;
 	await $$`git tag v1.0.0`;
-}, async ({t, testedModule: {deleteTag}, $$}) => {
+}, async ({
+	testedModule: {deleteTag},
+	$$,
+}) => {
 	await deleteTag('v1.0.0');
 	const {stdout: tags} = await $$`git tag`;
 
-	t.is(tags, 'v0.0.0');
+	assert.equal(tags, 'v0.0.0');
 });
 
-test('deletes given tag from a large list', createFixture, async ({$$}) => {
+createFixture('deletes given tag from a large list', async ({$$}) => {
 	await $$`git tag v0.0.0`;
 	await $$`git tag v1.0.0`;
 	await $$`git tag v2.0.0`;
 	await $$`git tag v3.0.0`;
 	await $$`git tag v4.0.0`;
-}, async ({t, testedModule: {deleteTag}, $$}) => {
+}, async ({
+	testedModule: {deleteTag},
+	$$,
+}) => {
 	await deleteTag('v2.0.0');
 	const {stdout: tags} = await $$`git tag`;
 
-	t.deepEqual(
+	assert.deepEqual(
 		tags.split('\n'),
 		['v0.0.0', 'v1.0.0', 'v3.0.0', 'v4.0.0'],
 	);
 });
 
-test('throws if tag not found', createFixture, async () => {
+createFixture('throws if tag not found', async () => {
 	//
-}, async ({t, testedModule: {deleteTag}}) => {
-	await t.throwsAsync(
+}, async ({
+	testedModule: {deleteTag},
+}) => {
+	await assert.rejects(
 		deleteTag('v1.0.0'),
 		{message: /error: tag 'v1\.0\.0' not found\./v},
 	);

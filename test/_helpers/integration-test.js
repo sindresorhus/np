@@ -1,11 +1,10 @@
-/* eslint-disable ava/no-ignored-test-files -- shared helper used by integration test fixtures, not a standalone test file */
 import crypto from 'node:crypto';
+import os from 'node:os';
 import path from 'node:path';
+import {test} from 'node:test';
 import fs from 'fs-extra';
-import test from 'ava';
 import esmock from 'esmock';
 import {$, execa} from 'execa';
-import {temporaryDirectoryTask} from 'tempy';
 
 const createEmptyGitRepo = async ($$, temporaryDirectory) => {
 	const firstCommitMessage = '"init1"';
@@ -22,47 +21,65 @@ const createEmptyGitRepo = async ($$, temporaryDirectory) => {
 	return firstCommitMessage;
 };
 
-export const createIntegrationTest = async (t, assertions) => {
-	await temporaryDirectoryTask(async temporaryDirectory => {
-		const $$ = $({cwd: temporaryDirectory});
-
-		t.context.firstCommitMessage = await createEmptyGitRepo($$, temporaryDirectory);
-
-		// From https://stackoverflow.com/a/3357357/10292952
-		t.context.getCommitMessage = async sha => {
-			const {stdout: commitMessage} = await $$`git log --format=%B -n 1 ${sha}`;
-			return commitMessage.trim();
-		};
-
-		t.context.createFile = async (file, content = '') => fs.outputFile(path.resolve(temporaryDirectory, file), content);
-
-		t.context.commitNewFile = async () => {
-			await t.context.createFile(`new-${crypto.randomUUID()}`);
-			await $$`git add .`;
-			await $$`git commit -m "added"`;
-
-			const {stdout: lastCommitSha} = await $$`git rev-parse --short HEAD`;
-
-			return {
-				sha: lastCommitSha,
-				commitMessage: await t.context.getCommitMessage(lastCommitSha),
-			};
-		};
-
-		await assertions({$$, temporaryDirectory});
+const createTemporaryDirectory = async t => {
+	// `os.tmpdir()` can be a symlink (`/var` -> `/private/var` on macOS). `git` reports the
+	// resolved path, so resolve up front to keep every comparison in these tests consistent.
+	const created = await fs.mkdtemp(path.join(os.tmpdir(), 'np-test-'));
+	const temporaryDirectory = await fs.realpath(created);
+	t.after(async () => {
+		await fs.remove(temporaryDirectory);
 	});
+
+	return temporaryDirectory;
 };
 
-export const _createFixture = source => test.macro(async (t, commands, assertions) => {
-	await createIntegrationTest(t, async ({$$, temporaryDirectory}) => {
+export const createIntegrationTest = async (t, assertions) => {
+	const temporaryDirectory = await createTemporaryDirectory(t);
+	const $$ = $({cwd: temporaryDirectory});
+
+	const firstCommitMessage = await createEmptyGitRepo($$, temporaryDirectory);
+
+	// From https://stackoverflow.com/a/3357357/10292952
+	const getCommitMessage = async sha => {
+		const {stdout: commitMessage} = await $$`git log --format=%B -n 1 ${sha}`;
+		return commitMessage.trim();
+	};
+
+	const createFile = async (file, content = '') => fs.outputFile(path.resolve(temporaryDirectory, file), content);
+
+	const commitNewFile = async () => {
+		await createFile(`new-${crypto.randomUUID()}`);
+		await $$`git add .`;
+		await $$`git commit -m "added"`;
+
+		const {stdout: lastCommitSha} = await $$`git rev-parse --short HEAD`;
+
+		return {
+			sha: lastCommitSha,
+			commitMessage: await getCommitMessage(lastCommitSha),
+		};
+	};
+
+	const context = {
+		firstCommitMessage,
+		getCommitMessage,
+		createFile,
+		commitNewFile,
+	};
+
+	await assertions({context, $$, temporaryDirectory});
+};
+
+export const _createFixture = source => (title, commands, assertions) => test(title, async t => {
+	await createIntegrationTest(t, async ({context, $$, temporaryDirectory}) => {
 		const testedModule = await esmock(source, {}, {
 			'node:process': {cwd: () => temporaryDirectory},
 			execa: {execa: async (command, commandArguments, options = {}) => execa(command, commandArguments, {...options, cwd: temporaryDirectory})},
 		});
 
-		await commands({t, $$, temporaryDirectory});
+		await commands({context, $$, temporaryDirectory});
 		await assertions({
-			t, testedModule, $$, temporaryDirectory,
+			context, testedModule, $$, temporaryDirectory,
 		});
 	});
 });

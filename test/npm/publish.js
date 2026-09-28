@@ -1,65 +1,66 @@
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import {firstValueFrom} from 'rxjs';
 import {getPackagePublishArguments, runPublish} from '../../source/npm/publish.js';
 
-test('no options set', t => {
-	t.deepEqual(
+test('no options set', () => {
+	assert.deepEqual(
 		getPackagePublishArguments({}),
 		['publish'],
 	);
 });
 
-test('options.tag', t => {
-	t.deepEqual(
+test('options.tag', () => {
+	assert.deepEqual(
 		getPackagePublishArguments({tag: 'beta'}),
 		['publish', '--tag', 'beta'],
 	);
 });
 
-test('options.otp', t => {
-	t.deepEqual(
+test('options.otp', () => {
+	assert.deepEqual(
 		getPackagePublishArguments({otp: '123456'}),
 		['publish', '--otp', '123456'],
 	);
 });
 
-test('options.publishScoped', t => {
-	t.deepEqual(
+test('options.publishScoped', () => {
+	assert.deepEqual(
 		getPackagePublishArguments({publishScoped: true}),
 		['publish', '--access', 'public'],
 	);
 });
 
-test('options.provenance', t => {
-	t.deepEqual(
+test('options.provenance', () => {
+	assert.deepEqual(
 		getPackagePublishArguments({provenance: true}),
 		['publish', '--provenance'],
 	);
 });
 
-test('options.stage', t => {
-	t.deepEqual(
+test('options.stage', () => {
+	assert.deepEqual(
 		getPackagePublishArguments({stage: true}),
 		['stage', 'publish'],
 	);
 });
 
-test('options.stage with other flags', t => {
-	t.deepEqual(
+test('options.stage with other flags', () => {
+	assert.deepEqual(
 		getPackagePublishArguments({stage: true, tag: 'beta', provenance: true}),
 		['stage', 'publish', '--tag', 'beta', '--provenance'],
 	);
 });
 
-test('runPublish uses cwd option when provided', async t => {
+test('runPublish uses cwd option when provided', async () => {
 	const observable = runPublish(['echo', ['test']], {cwd: '/tmp'});
 	// Should complete successfully
-	await t.notThrowsAsync(firstValueFrom(observable));
+	await assert.doesNotReject(firstValueFrom(observable));
 });
 
-test('runPublish returns an Observable that completes successfully', async t => {
+test('runPublish returns an Observable that completes successfully', async () => {
 	const observable = runPublish(['echo', ['test']]);
-	t.not(observable, undefined);
+	assert.notEqual(observable, undefined);
 	// Process should complete successfully with our default options
-	await t.notThrowsAsync(firstValueFrom(observable));
+	await assert.doesNotReject(firstValueFrom(observable));
 });

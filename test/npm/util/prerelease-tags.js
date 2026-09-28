@@ -1,151 +1,172 @@
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import {stripIndent} from 'common-tags';
 import {_createFixture} from '../../_helpers/stub-execa.js';
 import * as npm from '../../../source/npm/util.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../../source/npm/util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../../source/npm/util.js')>>}
+*/
 const createFixture = _createFixture('../../../source/npm/util.js', import.meta.url);
 
-test('packageName not a string', async t => {
-	await t.throwsAsync(
+test('packageName not a string', async () => {
+	await assert.rejects(
 		npm.prereleaseTags(1),
 		{message: 'Package name is required'},
 	);
 });
 
-test('tags: latest', createFixture, [{
+createFixture('tags: latest', [{
 	command: 'npm view --json foo dist-tags',
 	stdout: JSON.stringify({
 		latest: '1.0.0',
 	}),
-}], async ({t, testedModule: {prereleaseTags}}) => {
-	t.deepEqual(
+}], async ({
+	testedModule: {prereleaseTags},
+}) => {
+	assert.deepEqual(
 		await prereleaseTags('foo'),
 		['next'],
 	);
 });
 
-test('tags: latest, beta', createFixture, [{
+createFixture('tags: latest, beta', [{
 	command: 'npm view --json foo dist-tags',
 	stdout: JSON.stringify({
 		latest: '1.0.0',
 		beta: '2.0.0-beta',
 	}),
-}], async ({t, testedModule: {prereleaseTags}}) => {
-	t.deepEqual(
+}], async ({
+	testedModule: {prereleaseTags},
+}) => {
+	assert.deepEqual(
 		await prereleaseTags('foo'),
 		['beta'],
 	);
 });
 
-test('tags: array-wrapped output (npm 12)', createFixture, [{
+createFixture('tags: array-wrapped output (npm 12)', [{
 	command: 'npm view --json foo dist-tags',
 	stdout: JSON.stringify([{
 		latest: '1.0.0',
 		beta: '2.0.0-beta',
 	}]),
-}], async ({t, testedModule: {prereleaseTags}}) => {
-	t.deepEqual(
+}], async ({
+	testedModule: {prereleaseTags},
+}) => {
+	assert.deepEqual(
 		await prereleaseTags('foo'),
 		['beta'],
 	);
 });
 
-test('non-existent with npm 12 format (JSON error on stdout) - should not throw', createFixture, [{
+createFixture(
+	'non-existent with npm 12 format (JSON error on stdout) - should not throw',
+	[{
+		command: 'npm view --json non-existent dist-tags',
+		stdout: stripIndent`
+         {
+             "error": {
+                 "code": "E404",
+                 "summary": "Not Found - GET https://registry.npmjs.org/non-existent - Not found",
+                 "detail": "The requested resource 'non-existent@*' could not be found."
+             }
+         }
+     `,
+		stderr: stripIndent`
+         npm error code E404
+         npm error 404 Not Found - GET https://registry.npmjs.org/non-existent - Not found
+         npm error A complete log of this run can be found in: ~/.npm/_logs/...-debug.log
+     `,
+	}],
+	async ({
+		testedModule: {prereleaseTags},
+	}) => {
+		assert.deepEqual(
+			await prereleaseTags('non-existent'),
+			['next'],
+		);
+	},
+);
+
+createFixture('non-existent (code 404) - should not throw', [{
 	command: 'npm view --json non-existent dist-tags',
-	stdout: stripIndent`
-		{
-			"error": {
-				"code": "E404",
-				"summary": "Not Found - GET https://registry.npmjs.org/non-existent - Not found",
-				"detail": "The requested resource 'non-existent@*' could not be found."
-			}
-		}
-	`,
 	stderr: stripIndent`
-		npm error code E404
-		npm error 404 Not Found - GET https://registry.npmjs.org/non-existent - Not found
-		npm error A complete log of this run can be found in: ~/.npm/_logs/...-debug.log
-	`,
-}], async ({t, testedModule: {prereleaseTags}}) => {
-	t.deepEqual(
+        npm ERR! code E404
+        npm ERR! 404 Not Found - GET https://registry.npmjs.org/non-existent - Not found
+        npm ERR! 404
+        npm ERR! 404  'non-existent@*' is not in this registry.
+        npm ERR! 404
+        npm ERR! 404 Note that you can also install from a
+        npm ERR! 404 tarball, folder, http url, or git url.
+        {
+            "error": {
+                "code": "E404",
+                "summary": "Not Found - GET https://registry.npmjs.org/non-existent - Not found",
+                "detail": "'non-existent@*' is not in this registry. Note that you can also install from a tarball, folder, http url, or git url."
+            }
+        }
+        npm ERR! A complete log of this run can be found in:
+        npm ERR!     ~/.npm/_logs/...-debug.log
+    `,
+}], async ({
+	testedModule: {prereleaseTags},
+}) => {
+	assert.deepEqual(
 		await prereleaseTags('non-existent'),
 		['next'],
 	);
 });
 
-test('non-existent (code 404) - should not throw', createFixture, [{
+createFixture('non-existent with modern npm format (npm >=10) - should not throw', [{
 	command: 'npm view --json non-existent dist-tags',
 	stderr: stripIndent`
-		npm ERR! code E404
-		npm ERR! 404 Not Found - GET https://registry.npmjs.org/non-existent - Not found
-		npm ERR! 404
-		npm ERR! 404  'non-existent@*' is not in this registry.
-		npm ERR! 404
-		npm ERR! 404 Note that you can also install from a
-		npm ERR! 404 tarball, folder, http url, or git url.
-		{
-			"error": {
-				"code": "E404",
-				"summary": "Not Found - GET https://registry.npmjs.org/non-existent - Not found",
-				"detail": "'non-existent@*' is not in this registry. Note that you can also install from a tarball, folder, http url, or git url."
-			}
-		}
-		npm ERR! A complete log of this run can be found in:
-		npm ERR!     ~/.npm/_logs/...-debug.log
-	`,
-}], async ({t, testedModule: {prereleaseTags}}) => {
-	t.deepEqual(
+        npm error code E404
+        npm error 404 Not Found - GET https://registry.npmjs.org/non-existent - Not found
+        npm error 404
+        npm error 404  The requested resource 'non-existent@*' could not be found or you do not have permission to access it.
+        npm error 404
+        npm error 404 Note that you can also install from a
+        npm error 404 tarball, folder, http url, or git url.
+        {
+            "error": {
+                "code": "E404",
+                "summary": "Not Found - GET https://registry.npmjs.org/non-existent - Not found",
+                "detail": "The requested resource 'non-existent@*' could not be found."
+            }
+        }
+        npm error A complete log of this run can be found in: ~/.npm/_logs/...-debug.log
+    `,
+}], async ({
+	testedModule: {prereleaseTags},
+}) => {
+	assert.deepEqual(
 		await prereleaseTags('non-existent'),
 		['next'],
 	);
 });
 
-test('non-existent with modern npm format (npm >=10) - should not throw', createFixture, [{
-	command: 'npm view --json non-existent dist-tags',
-	stderr: stripIndent`
-		npm error code E404
-		npm error 404 Not Found - GET https://registry.npmjs.org/non-existent - Not found
-		npm error 404
-		npm error 404  The requested resource 'non-existent@*' could not be found or you do not have permission to access it.
-		npm error 404
-		npm error 404 Note that you can also install from a
-		npm error 404 tarball, folder, http url, or git url.
-		{
-			"error": {
-				"code": "E404",
-				"summary": "Not Found - GET https://registry.npmjs.org/non-existent - Not found",
-				"detail": "The requested resource 'non-existent@*' could not be found."
-			}
-		}
-		npm error A complete log of this run can be found in: ~/.npm/_logs/...-debug.log
-	`,
-}], async ({t, testedModule: {prereleaseTags}}) => {
-	t.deepEqual(
-		await prereleaseTags('non-existent'),
-		['next'],
-	);
-});
-
-test('bad permission (code 403) - should throw', createFixture, [{
+createFixture('bad permission (code 403) - should throw', [{
 	command: 'npm view --json @private/pkg dist-tags',
 	stderr: stripIndent`
-		npm ERR! code E403
-		npm ERR! 403 403 Forbidden - GET https://registry.npmjs.org/@private%2fpkg - Forbidden
-		npm ERR! 403 In most cases, you or one of your dependencies are requesting
-		npm ERR! 403 a package version that is forbidden by your security policy, or
-		npm ERR! 403 on a server you do not have access to.
-		{
-			"error": {
-				"code": "E403",
-				"summary": "403 Forbidden - GET https://registry.npmjs.org/@private%2fpkg - Forbidden",
-				"detail": "In most cases, you or one of your dependencies are requesting a package version that is forbidden by your security policy, or on a server you do not have access to."
-			}
-		}
-		npm ERR! A complete log of this run can be found in:
-		npm ERR!     ~/.npm/_logs/...-debug.log
-	`,
-}], async ({t, testedModule: {prereleaseTags}}) => {
-	const error = await t.throwsAsync(prereleaseTags('@private/pkg'));
-	t.true(error.stderr?.includes('E403'));
+        npm ERR! code E403
+        npm ERR! 403 403 Forbidden - GET https://registry.npmjs.org/@private%2fpkg - Forbidden
+        npm ERR! 403 In most cases, you or one of your dependencies are requesting
+        npm ERR! 403 a package version that is forbidden by your security policy, or
+        npm ERR! 403 on a server you do not have access to.
+        {
+            "error": {
+                "code": "E403",
+                "summary": "403 Forbidden - GET https://registry.npmjs.org/@private%2fpkg - Forbidden",
+                "detail": "In most cases, you or one of your dependencies are requesting a package version that is forbidden by your security policy, or on a server you do not have access to."
+            }
+        }
+        npm ERR! A complete log of this run can be found in:
+        npm ERR!     ~/.npm/_logs/...-debug.log
+    `,
+}], async ({
+	testedModule: {prereleaseTags},
+}) => {
+	const error = await prereleaseTags('@private/pkg').catch(error => error);
+	assert.ok(error.stderr?.includes('E403'));
 });

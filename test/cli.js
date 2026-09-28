@@ -1,6 +1,7 @@
 import path from 'node:path';
 import process from 'node:process';
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import sinon from 'sinon';
 import esmock from 'esmock';
 import {execa} from 'execa';
@@ -9,7 +10,7 @@ import {cliPasses} from './_helpers/verify-cli.js';
 
 const cli = path.resolve(rootDirectory, 'source', 'cli-implementation.js');
 
-test('flags: --help', cliPasses, cli, '--help', [
+cliPasses('flags: --help', cli, '--help', [
 	'',
 	'A better `npm publish`',
 	'',
@@ -49,29 +50,29 @@ test('flags: --help', cliPasses, cli, '--help', [
 	'',
 ]);
 
-test('flags: --version', cliPasses, cli, '--version', [npPackage.version]);
+cliPasses('flags: --version', cli, '--version', [npPackage.version]);
 
-test('flags: --dry-run is shown in help', async t => {
+test('flags: --dry-run is shown in help', async () => {
 	const {stdout} = await execa(cli, ['--help']);
 
-	t.true(stdout.includes('--dry-run              Show tasks without actually executing them'));
+	assert.ok(stdout.includes('--dry-run              Show tasks without actually executing them'));
 });
 
-test('flags: unknown flags fail', async t => {
+test('flags: unknown flags fail', async () => {
 	const {exitCode, stderr} = await execa(cli, ['--wat'], {reject: false});
 
-	t.is(exitCode, 2);
-	t.true(stderr.includes('Unknown flag'));
-	t.true(stderr.includes('--wat'));
+	assert.equal(exitCode, 2);
+	assert.ok(stderr.includes('Unknown flag'));
+	assert.ok(stderr.includes('--wat'));
 });
 
-test('flags: --preview remains an alias for --dry-run', async t => {
+test('flags: --preview remains an alias for --dry-run', async () => {
 	const {exitCode, stderr} = await execa(cli, ['--preview', '--wat'], {reject: false});
 
-	t.is(exitCode, 2);
-	t.true(stderr.includes('Unknown flag'));
-	t.true(stderr.includes('--wat'));
-	t.false(stderr.includes('--preview'));
+	assert.equal(exitCode, 2);
+	assert.ok(stderr.includes('Unknown flag'));
+	assert.ok(stderr.includes('--wat'));
+	assert.ok(!(stderr.includes('--preview')));
 });
 
 const loadCliImplementation = async overrides => esmock('../source/cli-implementation.js', {}, {
@@ -126,7 +127,7 @@ const loadCliImplementation = async overrides => esmock('../source/cli-implement
 	...overrides,
 });
 
-test.serial('cli runs git preflight before prompting', async t => {
+test('cli runs git preflight before prompting', async () => {
 	const verifyGitTasksStub = sinon.stub().rejects(new Error('Not on `main` branch.'));
 	const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: true, version: '1.0.1'}));
 	const gracefulExitStub = sinon.stub();
@@ -142,14 +143,14 @@ test.serial('cli runs git preflight before prompting', async t => {
 		},
 	});
 
-	t.true(verifyGitTasksStub.calledOnceWithExactly({anyBranch: undefined, branch: 'main', remote: undefined}));
-	t.true(uiStub.notCalled);
-	t.true(gracefulExitStub.calledOnceWithExactly(1));
+	assert.ok(verifyGitTasksStub.calledOnceWithExactly({anyBranch: undefined, branch: 'main', remote: undefined}));
+	assert.ok(uiStub.notCalled);
+	assert.ok(gracefulExitStub.calledOnceWithExactly(1));
 
 	consoleErrorStub.restore();
 });
 
-test.serial('cli continues to the publish flow after successful git preflight', async t => {
+test('cli continues to the publish flow after successful git preflight', async () => {
 	const verifyGitTasksStub = sinon.stub().resolves();
 	const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: true, version: '1.0.1'}));
 	const npStub = sinon.stub().resolves({name: 'test-package', version: '1.0.1'});
@@ -166,89 +167,105 @@ test.serial('cli continues to the publish flow after successful git preflight', 
 		},
 	});
 
-	t.true(verifyGitTasksStub.calledOnceWithExactly({anyBranch: undefined, branch: 'main', remote: undefined}));
-	t.true(uiStub.calledOnce);
-	t.true(npStub.calledOnce);
-	t.false('skipGitTasks' in npStub.firstCall.args[1]);
-	t.true(gracefulExitStub.notCalled);
+	assert.ok(verifyGitTasksStub.calledOnceWithExactly({anyBranch: undefined, branch: 'main', remote: undefined}));
+	assert.ok(uiStub.calledOnce);
+	assert.ok(npStub.calledOnce);
+	assert.ok(!('skipGitTasks' in npStub.firstCall.args[1]));
+	assert.ok(gracefulExitStub.notCalled);
 });
 
-const rejectsStagedPublishing = test.macro(async (t, {id, version, minimumVersion}) => {
-	const gracefulExitStub = sinon.stub();
-	const consoleErrorStub = sinon.stub(console, 'error');
-	const uiStub = sinon.stub();
-	const npStub = sinon.stub();
-	const execaStub = sinon.stub().resolves({stdout: version});
+const rejectsStagedPublishing = (title, {id, version, minimumVersion}) => {
+	test(title, async () => {
+		const gracefulExitStub = sinon.stub();
+		const consoleErrorStub = sinon.stub(console, 'error');
+		const uiStub = sinon.stub();
+		const npStub = sinon.stub();
+		const execaStub = sinon.stub().resolves({stdout: version});
 
-	try {
-		await loadCliImplementation({
-			meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: true, stage: true}, pkg: npPackage})},
-			'../source/package-manager/index.js': {
-				getPackageManagerConfig: sinon.stub().returns({id, cli: id}),
-			},
-			'../source/npm/util.js': {
-				isExternalRegistry: sinon.stub().returns(false),
-				isPackageNameAvailable: sinon.stub().resolves({isAvailable: false, isUnknown: false}),
-				getFilesToBePacked: sinon.stub().resolves([]),
-				username: sinon.stub(),
-				login: sinon.stub(),
-			},
-			'../source/ui.js': {default: uiStub},
-			'../source/index.js': {default: npStub},
-			execa: {execa: execaStub},
-			'exit-hook': {gracefulExit: gracefulExitStub},
-		});
-	} finally {
-		consoleErrorStub.restore();
-	}
+		try {
+			await loadCliImplementation({
+				meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: true, stage: true}, pkg: npPackage})},
+				'../source/package-manager/index.js': {
+					getPackageManagerConfig: sinon.stub().returns({id, cli: id}),
+				},
+				'../source/npm/util.js': {
+					isExternalRegistry: sinon.stub().returns(false),
+					isPackageNameAvailable: sinon.stub().resolves({isAvailable: false, isUnknown: false}),
+					getFilesToBePacked: sinon.stub().resolves([]),
+					username: sinon.stub(),
+					login: sinon.stub(),
+				},
+				'../source/ui.js': {default: uiStub},
+				'../source/index.js': {default: npStub},
+				execa: {execa: execaStub},
+				'exit-hook': {gracefulExit: gracefulExitStub},
+			});
+		} finally {
+			consoleErrorStub.restore();
+		}
 
-	t.true(gracefulExitStub.calledOnceWithExactly(1));
-	t.true(consoleErrorStub.firstCall.firstArg.includes(`Staged publishing requires ${id} >=${minimumVersion}`));
-	t.true(execaStub.calledOnceWithExactly(id, ['--version']));
-	t.false(uiStub.called);
-	t.false(npStub.called);
-});
+		assert.ok(gracefulExitStub.calledOnceWithExactly(1));
+		assert.ok(consoleErrorStub.firstCall.firstArg.includes(`Staged publishing requires ${id} >=${minimumVersion}`));
+		assert.ok(execaStub.calledOnceWithExactly(id, ['--version']));
+		assert.ok(!(uiStub.called));
+		assert.ok(!(npStub.called));
+	});
+};
 
-test.serial('cli rejects npm staged publishing before the publish flow', rejectsStagedPublishing, {id: 'npm', version: '10.0.0', minimumVersion: '11.15.0'});
-test.serial('cli rejects pnpm staged publishing before the publish flow', rejectsStagedPublishing, {id: 'pnpm', version: '11.2.0', minimumVersion: '11.3.0'});
+rejectsStagedPublishing(
+	'cli rejects npm staged publishing before the publish flow',
+	{id: 'npm', version: '10.0.0', minimumVersion: '11.15.0'},
+);
+rejectsStagedPublishing(
+	'cli rejects pnpm staged publishing before the publish flow',
+	{id: 'pnpm', version: '11.2.0', minimumVersion: '11.3.0'},
+);
 
-const acceptsStagedPublishing = test.macro(async (t, {id, version}) => {
-	const gracefulExitStub = sinon.stub();
-	const consoleErrorStub = sinon.stub(console, 'error');
-	const consoleLogStub = sinon.stub(console, 'log');
-	const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: false, version: '1.0.1'}));
-	const npStub = sinon.stub().resolves({name: 'test-package', version: '1.0.1'});
-	const execaStub = sinon.stub().resolves({stdout: version});
+const acceptsStagedPublishing = (title, {id, version}) => {
+	test(title, async () => {
+		const gracefulExitStub = sinon.stub();
+		const consoleErrorStub = sinon.stub(console, 'error');
+		const consoleLogStub = sinon.stub(console, 'log');
+		const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: false, version: '1.0.1'}));
+		const npStub = sinon.stub().resolves({name: 'test-package', version: '1.0.1'});
+		const execaStub = sinon.stub().resolves({stdout: version});
 
-	try {
-		await loadCliImplementation({
-			meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: false, stage: true}, pkg: npPackage})},
-			'../source/package-manager/index.js': {
-				getPackageManagerConfig: sinon.stub().returns({id, cli: id}),
-			},
-			'../source/ui.js': {default: uiStub},
-			'../source/index.js': {default: npStub},
-			execa: {execa: execaStub},
-			'exit-hook': {gracefulExit: gracefulExitStub},
-		});
-	} finally {
-		consoleErrorStub.restore();
-		consoleLogStub.restore();
-	}
+		try {
+			await loadCliImplementation({
+				meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: false, stage: true}, pkg: npPackage})},
+				'../source/package-manager/index.js': {
+					getPackageManagerConfig: sinon.stub().returns({id, cli: id}),
+				},
+				'../source/ui.js': {default: uiStub},
+				'../source/index.js': {default: npStub},
+				execa: {execa: execaStub},
+				'exit-hook': {gracefulExit: gracefulExitStub},
+			});
+		} finally {
+			consoleErrorStub.restore();
+			consoleLogStub.restore();
+		}
 
-	t.false(consoleErrorStub.called);
-	t.true(gracefulExitStub.calledOnceWithExactly());
-	t.true(uiStub.calledOnce);
-	t.true(npStub.calledOnce);
-	t.true(execaStub.calledOnceWithExactly(id, ['--version']));
-});
+		assert.ok(!(consoleErrorStub.called));
+		assert.ok(gracefulExitStub.calledOnceWithExactly());
+		assert.ok(uiStub.calledOnce);
+		assert.ok(npStub.calledOnce);
+		assert.ok(execaStub.calledOnceWithExactly(id, ['--version']));
+	});
+};
 
-test.serial('cli accepts npm staged publishing at the minimum version', acceptsStagedPublishing, {id: 'npm', version: '11.15.0'});
-test.serial('cli accepts pnpm staged publishing at the minimum version', acceptsStagedPublishing, {id: 'pnpm', version: '11.3.0'});
+acceptsStagedPublishing(
+	'cli accepts npm staged publishing at the minimum version',
+	{id: 'npm', version: '11.15.0'},
+);
+acceptsStagedPublishing(
+	'cli accepts pnpm staged publishing at the minimum version',
+	{id: 'pnpm', version: '11.3.0'},
+);
 
 const notLoggedInError = () => Object.assign(new Error('You must be logged in. Use `npm login` and try again.'), {isNotLoggedIn: true});
 
-test.serial('cli auto-runs `npm login` and re-verifies after a successful login', async t => {
+test('cli auto-runs `npm login` and re-verifies after a successful login', async () => {
 	// The first two calls are the early warm-up and the auth check. Neither result is cached because `username` is stubbed, and the real memoized version does not cache failures either.
 	const usernameStub = sinon.stub();
 	usernameStub.onFirstCall().rejects(notLoggedInError());
@@ -274,14 +291,14 @@ test.serial('cli auto-runs `npm login` and re-verifies after a successful login'
 		'exit-hook': {gracefulExit: gracefulExitStub},
 	});
 
-	t.true(loginStub.calledOnce);
-	t.true(usernameStub.calledThrice);
-	t.true(npStub.calledOnce);
+	assert.ok(loginStub.calledOnce);
+	assert.ok(usernameStub.calledThrice);
+	assert.ok(npStub.calledOnce);
 
 	consoleLogStub.restore();
 });
 
-test.serial('cli fails with an actionable error when still not authenticated after `npm login`', async t => {
+test('cli fails with an actionable error when still not authenticated after `npm login`', async () => {
 	const usernameStub = sinon.stub().rejects(notLoggedInError());
 	const loginStub = sinon.stub().resolves();
 	const npStub = sinon.stub().resolves({name: 'test-package', version: '1.0.1'});
@@ -304,12 +321,12 @@ test.serial('cli fails with an actionable error when still not authenticated aft
 		'exit-hook': {gracefulExit: gracefulExitStub},
 	});
 
-	t.true(loginStub.calledOnce);
-	t.true(usernameStub.calledThrice);
-	t.true(npStub.notCalled);
-	t.true(gracefulExitStub.calledOnceWithExactly(1));
-	t.true(consoleErrorStub.calledOnce);
-	t.true(consoleErrorStub.firstCall.firstArg.includes('Still not authenticated after `npm login`'));
+	assert.ok(loginStub.calledOnce);
+	assert.ok(usernameStub.calledThrice);
+	assert.ok(npStub.notCalled);
+	assert.ok(gracefulExitStub.calledOnceWithExactly(1));
+	assert.ok(consoleErrorStub.calledOnce);
+	assert.ok(consoleErrorStub.firstCall.firstArg.includes('Still not authenticated after `npm login`'));
 
 	consoleLogStub.restore();
 	consoleErrorStub.restore();

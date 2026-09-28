@@ -1,63 +1,78 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
+import test from 'node:test';
 import {_createFixture} from '../_helpers/integration-test.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/git-util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../source/git-util.js')>>}
+*/
 const createFixture = _createFixture('../../source/git-util.js');
 
-test('no tags', createFixture, () => {
+createFixture('no tags', () => {
 	//
-}, async ({t, testedModule: {previousTagOrFirstCommit}}) => {
+}, async ({
+	testedModule: {previousTagOrFirstCommit},
+}) => {
 	const result = await previousTagOrFirstCommit();
-	t.is(result, undefined);
+	assert.equal(result, undefined);
 });
 
-test('one tag - fallback to first commit', createFixture, async ({$$}) => {
+createFixture('one tag - fallback to first commit', async ({$$}) => {
 	await $$`git tag v0.0.0`;
-}, async ({t, testedModule: {previousTagOrFirstCommit}}) => {
+}, async ({context, testedModule: {previousTagOrFirstCommit}}) => {
 	const result = await previousTagOrFirstCommit();
-	const commitMessage = await t.context.getCommitMessage(result);
+	const commitMessage = await context.getCommitMessage(result);
 
-	t.is(commitMessage, t.context.firstCommitMessage);
+	assert.equal(commitMessage, context.firstCommitMessage);
 });
 
-test('two tags', createFixture, async ({t, $$}) => {
+createFixture('two tags', async ({context, $$}) => {
 	await $$`git tag v0.0.0`;
-	await t.context.commitNewFile();
+	await context.commitNewFile();
 	await $$`git tag v1.0.0`;
-}, async ({t, testedModule: {previousTagOrFirstCommit}}) => {
+}, async ({
+	testedModule: {previousTagOrFirstCommit},
+}) => {
 	const result = await previousTagOrFirstCommit();
-	t.is(result, 'v0.0.0');
+	assert.equal(result, 'v0.0.0');
 });
 
-test('multiple tags', createFixture, async ({t, $$}) => {
+createFixture('multiple tags', async ({context, $$}) => {
 	await $$`git tag v0.0.0`;
 	/* eslint-disable no-await-in-loop -- sequential git tag creation requires ordered async execution */
 	for (const major of [1, 2, 3, 4]) {
-		await t.context.commitNewFile();
+		await context.commitNewFile();
 		await $$`git tag v${major}.0.0`;
 	}
 	/* eslint-enable no-await-in-loop */
-}, async ({t, testedModule: {previousTagOrFirstCommit}}) => {
+}, async ({
+	testedModule: {previousTagOrFirstCommit},
+}) => {
 	const result = await previousTagOrFirstCommit();
-	t.is(result, 'v3.0.0');
+	assert.equal(result, 'v3.0.0');
 });
 
-test('tags created out of order - should sort by semver not creation date', createFixture, async ({t, $$}) => {
-	// Create tags out of semver order (simulating a hotfix scenario)
-	await $$`git tag v1.0.0`;
-	await t.context.commitNewFile();
-	await $$`git tag v1.2.0`;
-	await t.context.commitNewFile();
-	await $$`git tag v1.2.1`;
-	await t.context.commitNewFile();
-	// Create a hotfix tag for an older version (created after v1.2.1 but semver is lower)
-	await $$`git tag v1.0.1`;
-	await t.context.commitNewFile();
-	await $$`git tag v1.2.2`;
-}, async ({t, testedModule: {previousTagOrFirstCommit}}) => {
-	// Should return v1.2.1 (semver previous), not v1.0.1 (creation date previous)
-	const result = await previousTagOrFirstCommit();
-	t.is(result, 'v1.2.1');
-});
+createFixture(
+	'tags created out of order - should sort by semver not creation date',
+	async ({context, $$}) => {
+		// Create tags out of semver order (simulating a hotfix scenario)
+		await $$`git tag v1.0.0`;
+		await context.commitNewFile();
+		await $$`git tag v1.2.0`;
+		await context.commitNewFile();
+		await $$`git tag v1.2.1`;
+		await context.commitNewFile();
+		// Create a hotfix tag for an older version (created after v1.2.1 but semver is lower)
+		await $$`git tag v1.0.1`;
+		await context.commitNewFile();
+		await $$`git tag v1.2.2`;
+	},
+	async ({
+		testedModule: {previousTagOrFirstCommit},
+	}) => {
+		// Should return v1.2.1 (semver previous), not v1.0.1 (creation date previous)
+		const result = await previousTagOrFirstCommit();
+		assert.equal(result, 'v1.2.1');
+	},
+);
 
 test.todo('test fallback case');

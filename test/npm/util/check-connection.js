@@ -1,33 +1,41 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../../_helpers/stub-execa.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../../source/npm/util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../../source/npm/util.js')>>}
+*/
 const createFixture = _createFixture('../../../source/npm/util.js', import.meta.url);
 
-test('success', createFixture, [{
+createFixture('success', [{
 	command: 'npm ping',
 	exitCode: 0,
 	options: {timeout: 15_000},
-}], async ({t, testedModule: npm}) => {
-	t.true(await npm.checkConnection());
+}], async ({
+	testedModule: npm,
+}) => {
+	assert.ok(await npm.checkConnection());
 });
 
-test('fail', createFixture, [{
+createFixture('fail', [{
 	command: 'npm ping',
 	exitCode: 1,
-}], async ({t, testedModule: npm}) => {
-	await t.throwsAsync(
+}], async ({
+	testedModule: npm,
+}) => {
+	await assert.rejects(
 		npm.checkConnection(),
 		{message: 'Connection to npm registry failed'},
 	);
 });
 
-test('timeout', createFixture, [{
+createFixture('timeout', [{
 	command: 'npm ping',
 	exitCode: 1,
 	timedOut: true,
-}], async ({t, testedModule: npm}) => {
-	await t.throwsAsync(
+}], async ({
+	testedModule: npm,
+}) => {
+	await assert.rejects(
 		npm.checkConnection(),
 		{message: 'Connection to npm registry timed out'},
 	);

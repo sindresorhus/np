@@ -1,27 +1,35 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../../_helpers/stub-execa.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../../source/npm/util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../../source/npm/util.js')>>}
+*/
 const createFixture = _createFixture('../../../source/npm/util.js', import.meta.url);
 
-test('main', createFixture, [{
+createFixture('main', [{
 	command: 'npm login',
 	stdout: '',
-}], async ({t, testedModule: npm}) => {
-	await t.notThrowsAsync(npm.login({}));
+}], async ({
+	testedModule: npm,
+}) => {
+	await assert.doesNotReject(npm.login({}));
 });
 
-test('--registry flag', createFixture, [{
+createFixture('--registry flag', [{
 	command: 'npm login --registry http://my.io',
 	stdout: '',
-}], async ({t, testedModule: npm}) => {
-	await t.notThrowsAsync(npm.login({externalRegistry: 'http://my.io'}));
+}], async ({
+	testedModule: npm,
+}) => {
+	await assert.doesNotReject(npm.login({externalRegistry: 'http://my.io'}));
 });
 
-test('fails if login fails', createFixture, [{
+createFixture('fails if login fails', [{
 	command: 'npm login',
 	exitCode: 1,
 	stderr: 'npm ERR! Login failed',
-}], async ({t, testedModule: npm}) => {
-	await t.throwsAsync(npm.login({}));
+}], async ({
+	testedModule: npm,
+}) => {
+	await assert.rejects(npm.login({}));
 });

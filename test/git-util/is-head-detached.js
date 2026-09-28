@@ -1,18 +1,24 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/integration-test.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/git-util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../source/git-util.js')>>}
+*/
 const createFixture = _createFixture('../../source/git-util.js');
 
-test('not detached', createFixture, async () => {
+createFixture('not detached', async () => {
 	//
-}, async ({t, testedModule: {isHeadDetached}}) => {
-	t.false(await isHeadDetached());
+}, async ({
+	testedModule: {isHeadDetached},
+}) => {
+	assert.ok(!(await isHeadDetached()));
 });
 
-test('detached', createFixture, async ({$$}) => {
+createFixture('detached', async ({$$}) => {
 	const {stdout: firstCommitSha} = await $$`git rev-list --max-parents=0 HEAD`;
 	await $$`git checkout ${firstCommitSha}`;
-}, async ({t, testedModule: {isHeadDetached}}) => {
-	t.true(await isHeadDetached());
+}, async ({
+	testedModule: {isHeadDetached},
+}) => {
+	assert.ok(await isHeadDetached());
 });

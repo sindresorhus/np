@@ -1,14 +1,15 @@
-import type {Macro, ExecutionContext} from 'ava';
+import type {TestContext} from 'node:test';
 import type {ExecaReturnValue} from 'execa';
 
 type AssertionsFunctionParameters<MockType> = [{
-	t: ExecutionContext;
+	t: TestContext;
 	testedModule: MockType;
 }];
 
-export type CreateFixtureMacro<MockType> = Macro<[
+export type CreateFixture<MockType> = (
+	title: string,
 	commands: ExecaReturnValue[],
 	assertions: (...arguments_: AssertionsFunctionParameters<MockType>) => Promise<void>,
-]>;
+) => void;
 
-export function _createFixture<MockType>(source: string, importMeta: string): CreateFixtureMacro<MockType>;
+export function _createFixture<MockType>(source: string, importMeta: string): CreateFixture<MockType>;

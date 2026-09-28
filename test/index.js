@@ -1,8 +1,12 @@
 import path from 'node:path';
 import process from 'node:process';
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import sinon from 'sinon';
 import esmock from 'esmock';
+// Must come before `rxjs` so both agree on the observable symbol, as `source/index.js` does.
+// eslint-disable-next-line import-x/no-unassigned-import
+import 'symbol-observable';
 import {of, throwError} from 'rxjs';
 import {npmConfig as packageManager} from '../source/package-manager/configs.js';
 import * as util from '../source/util.js';
@@ -36,27 +40,43 @@ const getNpMock = async () => esmock('../source/index.js', {}, {
 		verifyTagDoesNotExistOnRemote: sinon.stub(),
 	},
 	'../source/npm/util.js': {
-		...await import('../source/npm/util.js'),
+		...(await import('../source/npm/util.js')),
 		checkConnection: sinon.stub().resolves(),
 	},
 });
 
-const npFails = test.macro(async (t, inputs, message) => {
-	const npMock = await getNpMock();
-	await t.throwsAsync(
-		Promise.all(inputs.map(input => npMock(input, defaultOptions, npPackageResult))),
-		{message},
-	);
-});
+const npFails = (title, inputs, message) => {
+	test(title, async () => {
+		const npMock = await getNpMock();
+		await assert.rejects(
+			Promise.all(inputs.map(input => npMock(input, defaultOptions, npPackageResult))),
+			{message},
+		);
+	});
+};
 
-test('version is invalid', npFails, ['foo', '4.x.3'], /New version (?:foo|4\.x\.3) should either be one of patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid SemVer version\./v);
+npFails(
+	'version is invalid',
+	['foo', '4.x.3'],
+	/New version (?:foo|4\.x\.3) should either be one of patch, minor, major, prepatch, preminor, premajor, prerelease, or a valid SemVer version\./v,
+);
 
-test('version is pre-release', npFails, ['premajor', 'preminor', 'prepatch', 'prerelease', '100.0.0-0', '100.0.0-beta'], 'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
+npFails(
+	'version is pre-release',
+	['premajor', 'preminor', 'prepatch', 'prerelease', '100.0.0-0', '100.0.0-beta'],
+	'You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag',
+);
 
-test('errors on too low version', npFails, ['1.0.0', '1.0.0-beta'], /New version 1\.0\.0(?:-beta)? should be higher than current version \d+\.\d+\.\d+/v);
+npFails(
+	'errors on too low version',
+	['1.0.0', '1.0.0-beta'],
+	/New version 1\.0\.0(?:-beta)? should be higher than current version \d+\.\d+\.\d+/v,
+);
 
+// A `pipe` method here would make `listr` treat the result as a stream and call
+// `stream.once()` on it, which a plain object does not have.
 const fakeExecaReturn = () => Object.assign(
-	Promise.resolve({pipe: sinon.stub()}),
+	Promise.resolve({}),
 	{stdout: '', stderr: ''},
 );
 
@@ -64,10 +84,12 @@ const fakeObservableReturn = () => of('');
 
 const fakeObservableReject = error => throwError(() => Object.assign(new Error(error), {stdout: '', stderr: error}));
 
-test('skip enabling 2FA if the package exists', async t => {
+test('skip enabling 2FA if the package exists', async () => {
 	const enable2faStub = sinon.stub();
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
@@ -85,7 +107,7 @@ test('skip enabling 2FA if the package exists', async t => {
 		},
 	});
 
-	await t.notThrowsAsync(npMock('1.0.0', {
+	await assert.doesNotReject(npMock('1.0.0', {
 		...defaultOptions,
 		availability: {
 			isAvailable: false,
@@ -93,13 +115,15 @@ test('skip enabling 2FA if the package exists', async t => {
 		},
 	}, npPackageResult));
 
-	t.true(enable2faStub.notCalled);
+	assert.ok(enable2faStub.notCalled);
 });
 
-test('skip enabling 2FA if the `2fa` option is false', async t => {
+test('skip enabling 2FA if the `2fa` option is false', async () => {
 	const enable2faStub = sinon.stub();
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
@@ -117,7 +141,7 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 		},
 	});
 
-	await t.notThrowsAsync(npMock('1.0.0', {
+	await assert.doesNotReject(npMock('1.0.0', {
 		...defaultOptions,
 		availability: {
 			isAvailable: true,
@@ -126,13 +150,15 @@ test('skip enabling 2FA if the `2fa` option is false', async t => {
 		'2fa': false,
 	}, npPackageResult));
 
-	t.true(enable2faStub.notCalled);
+	assert.ok(enable2faStub.notCalled);
 });
 
-test('skip enabling 2FA in trusted publishing (OIDC) contexts', async t => {
+test('skip enabling 2FA in trusted publishing (OIDC) contexts', async () => {
 	const enable2faStub = sinon.stub();
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
@@ -153,7 +179,7 @@ test('skip enabling 2FA in trusted publishing (OIDC) contexts', async t => {
 		},
 	});
 
-	await t.notThrowsAsync(npMock('1.0.0', {
+	await assert.doesNotReject(npMock('1.0.0', {
 		...defaultOptions,
 		availability: {
 			isAvailable: true,
@@ -162,14 +188,16 @@ test('skip enabling 2FA in trusted publishing (OIDC) contexts', async t => {
 		'2fa': true,
 	}, npPackageResult));
 
-	t.true(enable2faStub.notCalled);
+	assert.ok(enable2faStub.notCalled);
 });
 
-test('rollback is called when publish fails', async t => {
+test('rollback is called when publish fails', async () => {
 	const deleteTagStub = sinon.stub().resolves();
 	const removeLastCommitStub = sinon.stub().resolves();
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
@@ -195,21 +223,23 @@ test('rollback is called when publish fails', async t => {
 		},
 	});
 
-	await t.throwsAsync(
+	await assert.rejects(
 		npMock('1.0.0', {
 			...defaultOptions,
 		}, {package_: {version: '0.9.0'}, rootDirectory: process.cwd()}),
 		{message: /Error publishing package/v},
 	);
 
-	t.true(deleteTagStub.calledOnce, 'deleteTag should be called once');
-	t.true(removeLastCommitStub.calledOnce, 'removeLastCommit should be called once');
+	assert.ok(deleteTagStub.calledOnce, 'deleteTag should be called once');
+	assert.ok(removeLastCommitStub.calledOnce, 'removeLastCommit should be called once');
 });
 
-test('restores cursor after successful publish', async t => {
+test('restores cursor after successful publish', async () => {
 	const stderrWriteStub = sinon.stub().returns(true);
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		'node:process': {
 			stderr: {
@@ -240,15 +270,17 @@ test('restores cursor after successful publish', async t => {
 		'2fa': false,
 	}, npPackageResult);
 
-	t.true(stderrWriteStub.calledWithExactly('\u{1B}[?25h'));
+	assert.ok(stderrWriteStub.calledWithExactly('\u{1B}[?25h'));
 });
 
-test('publish uses rootDirectory from context as cwd', async t => {
+test('publish uses rootDirectory from context as cwd', async () => {
 	const contentsDirectory = path.resolve('dist');
 	const projectDirectory = path.resolve('.');
 	let publishCwd;
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
@@ -271,16 +303,18 @@ test('publish uses rootDirectory from context as cwd', async t => {
 
 	await npMock('1.0.0', defaultOptions, {package_: npPackageResult.package_, projectDirectory, rootDirectory: contentsDirectory});
 
-	t.is(publishCwd, contentsDirectory, 'publish should use rootDirectory from context as cwd');
+	assert.equal(publishCwd, contentsDirectory, 'publish should use rootDirectory from context as cwd');
 });
 
-test('rootDirectory remains the default working directory when projectDirectory is omitted', async t => {
+test('rootDirectory remains the default working directory when projectDirectory is omitted', async () => {
 	const rootDirectory = path.resolve('dist');
 	const deleteAsyncStub = sinon.stub();
 	const execaStub = sinon.stub().returns(fakeExecaReturn());
 	let publishCwd;
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: deleteAsyncStub},
 		execa: {execa: execaStub},
@@ -300,25 +334,27 @@ test('rootDirectory remains the default working directory when projectDirectory 
 			}),
 		},
 		'../source/package-manager/index.js': {
-			...await import('../source/package-manager/index.js'),
+			...(await import('../source/package-manager/index.js')),
 			findLockfile: sinon.stub().returns(undefined),
 		},
 	});
 
 	await npMock('1.0.0', defaultOptions, {package_: npPackageResult.package_, rootDirectory});
 
-	t.true(deleteAsyncStub.calledOnceWithExactly(path.join(rootDirectory, 'node_modules')));
-	t.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: rootDirectory}]);
-	t.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: rootDirectory}]);
-	t.is(publishCwd, rootDirectory);
+	assert.ok(deleteAsyncStub.calledOnceWithExactly(path.join(rootDirectory, 'node_modules')));
+	assert.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: rootDirectory}]);
+	assert.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: rootDirectory}]);
+	assert.equal(publishCwd, rootDirectory);
 });
 
-test('install uses projectDirectory from context as cwd', async t => {
+test('install uses projectDirectory from context as cwd', async () => {
 	const contentsDirectory = path.resolve('dist');
 	const projectDirectory = path.resolve('.');
 	const execaStub = sinon.stub().returns(fakeExecaReturn());
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: execaStub},
@@ -339,15 +375,17 @@ test('install uses projectDirectory from context as cwd', async t => {
 		dryRun: false,
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory: contentsDirectory});
 
-	t.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: projectDirectory}]);
+	assert.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: projectDirectory}]);
 });
 
-test('cleanup uses projectDirectory from context', async t => {
+test('cleanup uses projectDirectory from context', async () => {
 	const contentsDirectory = path.resolve('dist');
 	const projectDirectory = path.resolve('.');
 	const deleteAsyncStub = sinon.stub();
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: deleteAsyncStub},
 		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
@@ -359,7 +397,7 @@ test('cleanup uses projectDirectory from context', async t => {
 			verifyWorkingTreeIsClean: sinon.stub(),
 		},
 		'../source/package-manager/index.js': {
-			...await import('../source/package-manager/index.js'),
+			...(await import('../source/package-manager/index.js')),
 			findLockfile: sinon.stub().returns(undefined),
 		},
 	});
@@ -372,15 +410,17 @@ test('cleanup uses projectDirectory from context', async t => {
 		dryRun: false,
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory: contentsDirectory});
 
-	t.true(deleteAsyncStub.calledOnceWithExactly(path.join(projectDirectory, 'node_modules')));
+	assert.ok(deleteAsyncStub.calledOnceWithExactly(path.join(projectDirectory, 'node_modules')));
 });
 
-test('tests use projectDirectory from context as cwd', async t => {
+test('tests use projectDirectory from context as cwd', async () => {
 	const contentsDirectory = path.resolve('dist');
 	const projectDirectory = path.resolve('.');
 	const execaStub = sinon.stub().returns(fakeExecaReturn());
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: execaStub},
@@ -401,13 +441,15 @@ test('tests use projectDirectory from context as cwd', async t => {
 		dryRun: false,
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory: contentsDirectory});
 
-	t.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: projectDirectory}]);
+	assert.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: projectDirectory}]);
 });
 
-test('no-cleanup still uses lockfile-aware install command', async t => {
+test('no-cleanup still uses lockfile-aware install command', async () => {
 	const execaStub = sinon.stub().returns(fakeExecaReturn());
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: execaStub},
@@ -419,7 +461,7 @@ test('no-cleanup still uses lockfile-aware install command', async t => {
 			verifyWorkingTreeIsClean: sinon.stub(),
 		},
 		'../source/package-manager/index.js': {
-			...await import('../source/package-manager/index.js'),
+			...(await import('../source/package-manager/index.js')),
 			findLockfile: sinon.stub().returns('package-lock.json'),
 		},
 	});
@@ -433,16 +475,18 @@ test('no-cleanup still uses lockfile-aware install command', async t => {
 		dryRun: false,
 	}, npPackageResult);
 
-	t.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--engine-strict'], {cwd: npPackageResult.rootDirectory}]);
+	assert.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--engine-strict'], {cwd: npPackageResult.rootDirectory}]);
 });
 
-test('contents mode looks up lockfile in projectDirectory and installs there', async t => {
+test('contents mode looks up lockfile in projectDirectory and installs there', async () => {
 	const projectDirectory = path.resolve('.');
 	const rootDirectory = path.resolve('dist');
 	const execaStub = sinon.stub().returns(fakeExecaReturn());
 	const findLockfileStub = sinon.stub().returns('package-lock.json');
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: execaStub},
@@ -454,7 +498,7 @@ test('contents mode looks up lockfile in projectDirectory and installs there', a
 			verifyWorkingTreeIsClean: sinon.stub(),
 		},
 		'../source/package-manager/index.js': {
-			...await import('../source/package-manager/index.js'),
+			...(await import('../source/package-manager/index.js')),
 			findLockfile: findLockfileStub,
 		},
 	});
@@ -467,18 +511,20 @@ test('contents mode looks up lockfile in projectDirectory and installs there', a
 		dryRun: false,
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory});
 
-	t.true(findLockfileStub.calledOnceWithExactly(projectDirectory, packageManager));
-	t.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--engine-strict'], {cwd: projectDirectory}]);
+	assert.ok(findLockfileStub.calledOnceWithExactly(projectDirectory, packageManager));
+	assert.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--engine-strict'], {cwd: projectDirectory}]);
 });
 
-test('contents mode keeps cleanup, install, and tests in projectDirectory while publishing from rootDirectory', async t => {
+test('contents mode keeps cleanup, install, and tests in projectDirectory while publishing from rootDirectory', async () => {
 	const projectDirectory = path.resolve('.');
 	const rootDirectory = path.resolve('dist');
 	const deleteAsyncStub = sinon.stub();
 	const execaStub = sinon.stub().returns(fakeExecaReturn());
 	let publishCwd;
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: deleteAsyncStub},
 		execa: {execa: execaStub},
@@ -498,24 +544,26 @@ test('contents mode keeps cleanup, install, and tests in projectDirectory while 
 			}),
 		},
 		'../source/package-manager/index.js': {
-			...await import('../source/package-manager/index.js'),
+			...(await import('../source/package-manager/index.js')),
 			findLockfile: sinon.stub().returns(undefined),
 		},
 	});
 
 	await npMock('1.0.0', defaultOptions, {package_: npPackageResult.package_, projectDirectory, rootDirectory});
 
-	t.true(deleteAsyncStub.calledOnceWithExactly(path.join(projectDirectory, 'node_modules')));
-	t.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: projectDirectory}]);
-	t.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: projectDirectory}]);
-	t.is(publishCwd, rootDirectory);
+	assert.ok(deleteAsyncStub.calledOnceWithExactly(path.join(projectDirectory, 'node_modules')));
+	assert.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: projectDirectory}]);
+	assert.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: projectDirectory}]);
+	assert.equal(publishCwd, rootDirectory);
 });
 
-test('dryRun with no-cleanup does not execute install command', async t => {
+test('dryRun with no-cleanup does not execute install command', async () => {
 	const execaStub = sinon.stub().returns(fakeExecaReturn());
 	const verifyWorkingTreeIsCleanStub = sinon.stub();
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: execaStub},
@@ -527,7 +575,7 @@ test('dryRun with no-cleanup does not execute install command', async t => {
 			verifyWorkingTreeIsClean: verifyWorkingTreeIsCleanStub,
 		},
 		'../source/package-manager/index.js': {
-			...await import('../source/package-manager/index.js'),
+			...(await import('../source/package-manager/index.js')),
 			findLockfile: sinon.stub().returns('package-lock.json'),
 		},
 	});
@@ -541,15 +589,17 @@ test('dryRun with no-cleanup does not execute install command', async t => {
 		dryRun: true,
 	}, npPackageResult);
 
-	t.true(execaStub.notCalled);
-	t.true(verifyWorkingTreeIsCleanStub.notCalled);
+	assert.ok(execaStub.notCalled);
+	assert.ok(verifyWorkingTreeIsCleanStub.notCalled);
 });
 
-test('dryRun without lockfile does not clean up or run tests', async t => {
+test('dryRun without lockfile does not clean up or run tests', async () => {
 	const deleteAsyncStub = sinon.stub();
 	const execaStub = sinon.stub().returns(fakeExecaReturn());
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: deleteAsyncStub},
 		execa: {execa: execaStub},
@@ -561,7 +611,7 @@ test('dryRun without lockfile does not clean up or run tests', async t => {
 			verifyWorkingTreeIsClean: sinon.stub(),
 		},
 		'../source/package-manager/index.js': {
-			...await import('../source/package-manager/index.js'),
+			...(await import('../source/package-manager/index.js')),
 			findLockfile: sinon.stub().returns(undefined),
 		},
 	});
@@ -573,15 +623,17 @@ test('dryRun without lockfile does not clean up or run tests', async t => {
 		runPublish: false,
 	}, npPackageResult);
 
-	t.true(deleteAsyncStub.notCalled);
-	t.true(execaStub.notCalled);
+	assert.ok(deleteAsyncStub.notCalled);
+	assert.ok(execaStub.notCalled);
 });
 
-test('preview option remains a supported alias for dryRun', async t => {
+test('preview option remains a supported alias for dryRun', async () => {
 	const deleteAsyncStub = sinon.stub();
 	const execaStub = sinon.stub().returns(fakeExecaReturn());
 
-	/** @type {typeof np} */
+	/**
+	@type {typeof np}
+	*/
 	const npMock = await esmock('../source/index.js', {
 		del: {deleteAsync: deleteAsyncStub},
 		execa: {execa: execaStub},
@@ -593,7 +645,7 @@ test('preview option remains a supported alias for dryRun', async t => {
 			verifyWorkingTreeIsClean: sinon.stub(),
 		},
 		'../source/package-manager/index.js': {
-			...await import('../source/package-manager/index.js'),
+			...(await import('../source/package-manager/index.js')),
 			findLockfile: sinon.stub().returns(undefined),
 		},
 	});
@@ -605,6 +657,6 @@ test('preview option remains a supported alias for dryRun', async t => {
 		runPublish: false,
 	}, npPackageResult);
 
-	t.true(deleteAsyncStub.notCalled);
-	t.true(execaStub.notCalled);
+	assert.ok(deleteAsyncStub.notCalled);
+	assert.ok(execaStub.notCalled);
 });

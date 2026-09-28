@@ -197,8 +197,8 @@ For example, `np --test-script=publish-test` would run the `publish-test` script
 {
 	"name": "my-awesome-package",
 	"scripts": {
-		"test": "ava --watch",
-		"publish-test": "ava"
+		"test": "node --test --watch",
+		"publish-test": "node --test"
 	},
 	"devDependencies": {
 		"np": "*"

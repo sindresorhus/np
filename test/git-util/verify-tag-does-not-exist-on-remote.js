@@ -1,24 +1,30 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/stub-execa.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/git-util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../source/git-util.js')>>}
+*/
 const createFixture = _createFixture('../../source/git-util.js', import.meta.url);
 
-test('exists', createFixture, [{
+createFixture('exists', [{
 	command: 'git rev-parse --quiet --verify refs/tags/v0.0.0',
 	stdout: '123456789', // Some hash
-}], async ({t, testedModule: {verifyTagDoesNotExistOnRemote}}) => {
-	await t.throwsAsync(
+}], async ({
+	testedModule: {verifyTagDoesNotExistOnRemote},
+}) => {
+	await assert.rejects(
 		verifyTagDoesNotExistOnRemote('v0.0.0'),
 		{message: 'Git tag `v0.0.0` already exists.'},
 	);
 });
 
-test('does not exist', createFixture, [{
+createFixture('does not exist', [{
 	command: 'git rev-parse --quiet --verify refs/tags/v0.0.0',
 	exitCode: 1,
 	stderr: '',
 	stdout: '',
-}], async ({t, testedModule: {verifyTagDoesNotExistOnRemote}}) => {
-	await t.notThrowsAsync(verifyTagDoesNotExistOnRemote('v0.0.0'));
+}], async ({
+	testedModule: {verifyTagDoesNotExistOnRemote},
+}) => {
+	await assert.doesNotReject(verifyTagDoesNotExistOnRemote('v0.0.0'));
 });

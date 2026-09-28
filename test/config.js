@@ -1,5 +1,6 @@
 import path from 'node:path';
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import esmock from 'esmock';
 import {readPackage} from '../source/util.js';
 
@@ -21,59 +22,57 @@ const getConfigWhenLocalBinaryIsUsed = async pathPackageDirectory => {
 	return getConfig(pathPackageDirectory);
 };
 
-const useGlobalBinary = test.macro(async (t, packageDirectory, source) => {
-	const config = await getConfigWhenGlobalBinaryIsUsed(getFixture(packageDirectory));
-	t.deepEqual(config, {source});
-});
+const useGlobalBinary = (title, packageDirectory, source) => {
+	test(title, async () => {
+		const config = await getConfigWhenGlobalBinaryIsUsed(getFixture(packageDirectory));
+		assert.deepEqual(config, {source});
+	});
+};
 
-const useLocalBinary = test.macro(async (t, packageDirectory, source) => {
-	const config = await getConfigWhenLocalBinaryIsUsed(getFixture(packageDirectory));
-	t.deepEqual(config, {source});
-});
+const useLocalBinary = (title, packageDirectory, source) => {
+	test(title, async () => {
+		const config = await getConfigWhenLocalBinaryIsUsed(getFixture(packageDirectory));
+		assert.deepEqual(config, {source});
+	});
+};
 
-test(
+useGlobalBinary(
 	'returns config from package directory when global binary is used and `package.json` exists in package directory',
-	useGlobalBinary,
 	'pkg-dir',
 	'package.json',
 );
 
-test(
+useGlobalBinary(
 	'returns config from package directory when global binary is used and `.np-config.json` exists in package directory',
-	useGlobalBinary,
 	'local1',
 	'packagedir/.np-config.json',
 );
 
-test(
+useGlobalBinary(
 	'returns config from package directory when global binary is used and `.np-config.js` as CJS exists in package directory',
-	useGlobalBinary,
 	'local2',
 	'packagedir/.np-config.js',
 );
 
-test(
+useGlobalBinary(
 	'returns config from package directory when global binary is used and `.np-config.cjs` exists in package directory',
-	useGlobalBinary,
 	'local3',
 	'packagedir/.np-config.cjs',
 );
 
-test(
+useGlobalBinary(
 	'returns config from package directory when global binary is used and `.np-config.js` as ESM exists in package directory',
-	useGlobalBinary,
 	'local4',
 	'packagedir/.np-config.js',
 );
 
-test(
+useGlobalBinary(
 	'returns config from package directory when global binary is used and `.np-config.mjs` exists in package directory',
-	useGlobalBinary,
 	'local5',
 	'packagedir/.np-config.mjs',
 );
 
-test('global binary merges global and project config with project taking precedence', async t => {
+test('global binary merges global and project config with project taking precedence', async () => {
 	const fixtureDirectory = getFixture('pkg-dir');
 
 	// Create a temporary home directory with global config
@@ -87,52 +86,46 @@ test('global binary merges global and project config with project taking precede
 	const config = await getConfig(fixtureDirectory);
 
 	// Should have project config
-	t.is(config.source, 'package.json');
+	assert.equal(config.source, 'package.json');
 });
 
-test(
+useLocalBinary(
 	'returns config from package directory when local binary is used and `package.json` exists in package directory',
-	useLocalBinary,
 	'pkg-dir',
 	'package.json',
 );
 
-test(
+useLocalBinary(
 	'returns config from package directory when local binary is used and `.np-config.json` exists in package directory',
-	useLocalBinary,
 	'local1',
 	'packagedir/.np-config.json',
 );
 
-test(
+useLocalBinary(
 	'returns config from package directory when local binary is used and `.np-config.js` as CJS exists in package directory',
-	useLocalBinary,
 	'local2',
 	'packagedir/.np-config.js',
 );
 
-test(
+useLocalBinary(
 	'returns config from package directory when local binary is used and `.np-config.cjs` exists in package directory',
-	useLocalBinary,
 	'local3',
 	'packagedir/.np-config.cjs',
 );
 
-test(
+useLocalBinary(
 	'returns config from package directory when local binary is used and `.np-config.js` as ESM exists in package directory',
-	useLocalBinary,
 	'local4',
 	'packagedir/.np-config.js',
 );
 
-test(
+useLocalBinary(
 	'returns config from package directory when local binary is used and `.np-config.mjs` exists in package directory',
-	useLocalBinary,
 	'local5',
 	'packagedir/.np-config.mjs',
 );
 
-test('`contents` option in config allows reading package from subdirectory', async t => {
+test('`contents` option in config allows reading package from subdirectory', async () => {
 	const fixtureDirectory = getFixture('contents-option');
 
 	// Load config from fixture directory (simulates loading from process.cwd())
@@ -143,17 +136,17 @@ test('`contents` option in config allows reading package from subdirectory', asy
 	const config = await getConfig(fixtureDirectory);
 
 	// Config should have contents option
-	t.is(config.contents, 'dist');
+	assert.equal(config.contents, 'dist');
 
 	// Using contents from config should read package from subdirectory
 	const contentsPath = path.join(fixtureDirectory, config.contents);
 	const {package_, rootDirectory} = await readPackage(contentsPath);
 
-	t.is(package_.name, 'from-dist');
-	t.is(rootDirectory, contentsPath);
+	assert.equal(package_.name, 'from-dist');
+	assert.equal(rootDirectory, contentsPath);
 });
 
-test('config values override defaults', async t => {
+test('config values override defaults', async () => {
 	const fixtureDirectory = getFixture('flag-precedence');
 
 	const getConfig = await esmock(testedModulePath, {
@@ -163,7 +156,7 @@ test('config values override defaults', async t => {
 	const config = await getConfig(fixtureDirectory);
 
 	// Config should override default values
-	t.false(config.tests);
-	t.false(config.cleanup);
-	t.false(config.publish);
+	assert.ok(!(config.tests));
+	assert.ok(!(config.cleanup));
+	assert.ok(!(config.publish));
 });

@@ -1,115 +1,118 @@
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import sinon from 'sinon';
 import {npmConfig as packageManager} from '../../../source/package-manager/configs.js';
 import {mockInquirer} from '../../_helpers/mock-inquirer.js';
 
-const testUi = test.macro(async (t, {version, answers}, assertions) => {
-	const {ui, logs} = await mockInquirer({
-		t, answers: {confirm: true, ...answers}, mocks: {
-			'./npm/util.js': {
-				checkIgnoreStrategy: sinon.stub().resolves(),
+const testUi = (title, {version, answers}, assertions) => {
+	test(title, async t => {
+		const {ui, logs} = await mockInquirer({
+			t, answers: {confirm: true, ...answers}, mocks: {
+				'./npm/util.js': {
+					checkIgnoreStrategy: sinon.stub().resolves(),
+				},
+				'./util.js': {
+					getNewFiles: sinon.stub().resolves({unpublished: [], firstTime: []}),
+					getNewDependencies: sinon.stub().resolves([]),
+					getPreReleasePrefix: sinon.stub().resolves(''),
+				},
+				'./git-util.js': {
+					latestTagOrFirstCommit: sinon.stub().resolves('v1.0.0'),
+					commitLogFromRevision: sinon.stub().resolves(''),
+				},
+				execa: {
+					execa: sinon.stub().resolves({stdout: 'https://registry.npmjs.org/'}),
+				},
 			},
-			'./util.js': {
-				getNewFiles: sinon.stub().resolves({unpublished: [], firstTime: []}),
-				getNewDependencies: sinon.stub().resolves([]),
-				getPreReleasePrefix: sinon.stub().resolves(''),
+		});
+
+		const results = await ui({
+			packageManager,
+			runPublish: false,
+			availability: {},
+		}, {
+			package_: {
+				name: 'foo',
+				version,
+				files: ['*'],
 			},
-			'./git-util.js': {
-				latestTagOrFirstCommit: sinon.stub().resolves('v1.0.0'),
-				commitLogFromRevision: sinon.stub().resolves(''),
-			},
-			execa: {
-				execa: sinon.stub().resolves({stdout: 'https://registry.npmjs.org/'}),
-			},
-		},
+		});
+
+		await assertions({results, logs});
 	});
+};
 
-	const results = await ui({
-		packageManager,
-		runPublish: false,
-		availability: {},
-	}, {
-		package_: {
-			name: 'foo',
-			version,
-			files: ['*'],
-		},
-	});
-
-	await assertions({t, results, logs});
-});
-
-test('choose major', testUi, {
+testUi('choose major', {
 	version: '0.0.0',
 	answers: {
 		version: 'major',
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '1.0.0');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '1.0.0');
 });
 
-test('choose minor', testUi, {
+testUi('choose minor', {
 	version: '0.0.0', answers: {
 		version: 'minor',
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '0.1.0');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '0.1.0');
 });
 
-test('choose patch', testUi, {
+testUi('choose patch', {
 	version: '0.0.0', answers: {
 		version: 'patch',
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '0.0.1');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '0.0.1');
 });
 
-test('choose premajor', testUi, {
+testUi('choose premajor', {
 	version: '0.0.0', answers: {
 		version: 'premajor',
 		prereleasePrefix: '',
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '1.0.0-0');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '1.0.0-0');
 });
 
-test('choose preminor', testUi, {
+testUi('choose preminor', {
 	version: '0.0.0', answers: {
 		version: 'preminor',
 		prereleasePrefix: '',
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '0.1.0-0');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '0.1.0-0');
 });
 
-test('choose prepatch', testUi, {
+testUi('choose prepatch', {
 	version: '0.0.0', answers: {
 		version: 'prepatch',
 		prereleasePrefix: '',
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '0.0.1-0');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '0.0.1-0');
 });
 
-test('choose prerelease', testUi, {
+testUi('choose prerelease', {
 	version: '0.0.1-0', answers: {
 		version: 'prerelease',
 		prereleasePrefix: '',
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '0.0.1-1');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '0.0.1-1');
 });
 
-test('choose custom', testUi, {
+testUi('choose custom', {
 	version: '0.0.0', answers: {
 		version: 'Other (specify)',
 		customVersion: '1.0.0',
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '1.0.0');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '1.0.0');
 });
 
-test('choose custom - validation', testUi, {
+testUi('choose custom - validation', {
 	version: '1.0.0', answers: {
 		version: 'Other (specify)',
 		customVersion: [
@@ -134,70 +137,70 @@ test('choose custom - validation', testUi, {
 			},
 		],
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '2.0.0');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '2.0.0');
 });
 
-test('choose prepatch with custom prerelease identifier', testUi, {
+testUi('choose prepatch with custom prerelease identifier', {
 	version: '1.0.0',
 	answers: {
 		version: 'prepatch',
 		prereleasePrefix: 'beta',
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '1.0.1-beta.0');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '1.0.1-beta.0');
 });
 
-test('choose preminor with custom prerelease identifier', testUi, {
+testUi('choose preminor with custom prerelease identifier', {
 	version: '1.0.0',
 	answers: {
 		version: 'preminor',
 		prereleasePrefix: 'alpha',
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '1.1.0-alpha.0');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '1.1.0-alpha.0');
 });
 
-test('choose premajor with custom prerelease identifier', testUi, {
+testUi('choose premajor with custom prerelease identifier', {
 	version: '1.0.0',
 	answers: {
 		version: 'premajor',
 		prereleasePrefix: 'rc',
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '2.0.0-rc.0');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '2.0.0-rc.0');
 });
 
-test('choose prerelease with custom prerelease identifier', testUi, {
+testUi('choose prerelease with custom prerelease identifier', {
 	version: '1.0.0-rc.0',
 	answers: {
 		version: 'prerelease',
 		prereleasePrefix: 'rc',
 	},
-}, ({t, results: {version}}) => {
-	t.is(version.toString(), '1.0.0-rc.1');
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '1.0.0-rc.1');
 });
 
-test('uses current prerelease identifier when available', testUi, {
+testUi('uses current prerelease identifier when available', {
 	version: '1.0.2-beta.3', // Current version has 'beta' identifier
 	answers: {
 		version: 'prerelease',
 		prereleasePrefix: 'beta', // Accept the default which should be 'beta'
 	},
-}, ({t, results: {version}}) => {
+}, ({results: {version}}) => {
 	// Should use 'beta' from current version
-	t.is(version.toString(), '1.0.2-beta.4');
+	assert.equal(version.toString(), '1.0.2-beta.4');
 });
 
-test('handles numeric prerelease identifiers', testUi, {
+testUi('handles numeric prerelease identifiers', {
 	version: '1.0.0-0', // Numeric prerelease identifier
 	answers: {
 		version: 'prerelease',
 		prereleasePrefix: 'beta', // Should not suggest '0', user enters 'beta'
 	},
-}, ({t, results: {version}}) => {
+}, ({results: {version}}) => {
 	// Should transition from numeric to string identifier
-	t.is(version.toString(), '1.0.0-beta.0');
+	assert.equal(version.toString(), '1.0.0-beta.0');
 });
 
 test('releaseDraftOnly does not throw on current version', async t => {
@@ -230,8 +233,8 @@ test('releaseDraftOnly does not throw on current version', async t => {
 		},
 	});
 
-	t.true(results.confirm);
-	t.is(results.version, '1.0.0');
+	assert.ok(results.confirm);
+	assert.equal(results.version, '1.0.0');
 });
 
 test('uses empty prerelease identifier by default when no prerelease identifier is configured', async t => {
@@ -280,7 +283,7 @@ test('uses empty prerelease identifier by default when no prerelease identifier 
 		},
 	});
 
-	t.truthy(capturedPrereleasePrefixPrompt);
-	t.is(capturedPrereleasePrefixPrompt.default, '', 'the prerelease identifier default should remain empty');
-	t.is(version.toString(), '2.0.0-0');
+	assert.ok(capturedPrereleasePrefixPrompt);
+	assert.equal(capturedPrereleasePrefixPrompt.default, '', 'the prerelease identifier default should remain empty');
+	assert.equal(version.toString(), '2.0.0-0');
 });

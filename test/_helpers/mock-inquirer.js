@@ -1,14 +1,27 @@
+import assert from 'node:assert/strict';
 import esmock from 'esmock';
 import is from '@sindresorhus/is';
 import stripAnsi from 'strip-ansi';
 import mapObject from 'map-obj';
 
-/** @typedef {import('ava').ExecutionContext<Record<string, never>>} ExecutionContext */
-/** @typedef {string | boolean} ShortAnswer */
-/** @typedef {Record<'input' | 'error', string> | Record<'choice', string> | Record<'confirm', boolean>} LongAnswer */
-/** @typedef {ShortAnswer | LongAnswer} Answer */
-/** @typedef {Record<string, Answer>} Answers  */
-/** @typedef {import('inquirer').DistinctQuestion & {name?: never}} Prompt */
+/**
+@typedef {import('node:test').TestContext} TestContext
+*/
+/**
+@typedef {string | boolean} ShortAnswer
+*/
+/**
+@typedef {Record<'input' | 'error', string> | Record<'choice', string> | Record<'confirm', boolean>} LongAnswer
+*/
+/**
+@typedef {ShortAnswer | LongAnswer} Answer
+*/
+/**
+@typedef {Record<string, Answer>} Answers
+*/
+/**
+@typedef {import('inquirer').DistinctQuestion & {name?: never}} Prompt
+*/
 
 /**
 Converts a prompts array to a named prompts object, or returns the object as-is.
@@ -39,7 +52,7 @@ Logs for debugging are outputted on test failure.
 @see https://gist.github.com/yyx990803/f61f347b6892078c40a9e8e77b9bd984
 
 @param {object} o - Test input and actual prompts.
-@param {ExecutionContext} o.t - AVA execution context.
+@param {TestContext} o.t - Test context.
 @param {Answers} o.inputAnswers - Test input.
 @param {Record<string, Prompt> | Prompt[]} o.prompts - Actual prompts.
 */
@@ -47,23 +60,23 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 	const answers = {};
 	prompts = getPromptsObject(prompts);
 
-	t.log('prompts:', Object.keys(prompts));
+	t.diagnostic('prompts:', Object.keys(prompts));
 
 	/* eslint-disable no-await-in-loop -- prompts must be answered sequentially, as each can depend on the previous answers */
 	for (const [name, prompt] of Object.entries(prompts)) {
 		if (prompt.when !== undefined) {
 			if (is.boolean(prompt.when) && !prompt.when) {
-				t.log(`skipping prompt '${name}'`);
+				t.diagnostic(`skipping prompt '${name}'`);
 				continue;
 			}
 
 			if (is.function(prompt.when) && !prompt.when(answers)) {
-				t.log(`skipping prompt '${name}'`);
+				t.diagnostic(`skipping prompt '${name}'`);
 				continue;
 			}
 		}
 
-		t.log(`getting input for prompt '${name}'`);
+		t.diagnostic(`getting input for prompt '${name}'`);
 
 		const setValue = value => {
 			if (prompt.validate) {
@@ -81,24 +94,24 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 			}
 
 			if (is.string(value)) {
-				t.log(`filtering value '${value}' for prompt '${name}'`);
+				t.diagnostic(`filtering value '${value}' for prompt '${name}'`);
 			} else {
-				t.log(`filtering value for prompt '${name}':`, value);
+				t.diagnostic(`filtering value for prompt '${name}':`, value);
 			}
 
 			answers[name] = prompt.filter
 				? prompt.filter(value) // eslint-disable-line unicorn/no-array-callback-reference
 				: value;
 
-			t.log(`got value '${answers[name]}' for prompt '${name}'`);
+			t.diagnostic(`got value '${answers[name]}' for prompt '${name}'`);
 		};
 
 		/**
-		Resolves the list choice matching the given input.
-		@param {Answer} input - Input answer used to select a list choice.
-		*/
+        Resolves the list choice matching the given input.
+        @param {Answer} input - Input answer used to select a list choice.
+        */
 		const chooseValue = async input => {
-			t.is(prompt.type, 'select');
+			assert.equal(prompt.type, 'select');
 			let choices;
 
 			if (is.asyncFunction(prompt.choices)) {
@@ -109,18 +122,14 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 				choices = prompt.choices;
 			}
 
-			t.log(`choices for prompt '${name}':`, choices);
+			t.diagnostic(`choices for prompt '${name}':`, choices);
 
 			const value = choices.find(choice => {
 				if (is.object(choice)) {
 					return choice.name && stripAnsi(choice.name).startsWith(input.choice ?? input);
 				}
 
-				if (is.string(choice)) {
-					return stripAnsi(choice).startsWith(input.choice ?? input);
-				}
-
-				return false;
+				return is.string(choice) ? stripAnsi(choice).startsWith(input.choice ?? input) : false;
 			});
 
 			// `value.value` could exist but literally be `undefined`
@@ -130,20 +139,19 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 		const input = inputAnswers[name];
 
 		if (is.undefined(input)) {
-			t.fail(`Expected input for prompt '${name}'.`);
-			continue;
+			throw new Error(`Expected input for prompt '${name}'.`);
 		}
 
 		if (is.string(input)) {
-			t.log(`found input for prompt '${name}': '${input}'`);
+			t.diagnostic(`found input for prompt '${name}': '${input}'`);
 		} else {
-			t.log(`found input for prompt '${name}':`, input);
+			t.diagnostic(`found input for prompt '${name}':`, input);
 		}
 
 		/**
-		Routes the answer to the correct prompt handler based on its type.
-		@param {Answer} answer - Input answer to handle.
-		*/
+        Routes the answer to the correct prompt handler based on its type.
+        @param {Answer} answer - Input answer to handle.
+        */
 		const handleInput = async answer => {
 			if (is.string(answer)) {
 				if (['input'].includes(prompt.type)) {
@@ -151,14 +159,14 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 				} else if (['select'].includes(prompt.type)) {
 					return chooseValue(answer);
 				} else {
-					t.fail('Incorrect input type');
+					throw new Error('Incorrect input type');
 				}
 
 				return;
 			}
 
 			if (answer.input !== undefined) {
-				t.is(prompt.type, 'input');
+				assert.equal(prompt.type, 'input');
 				setValue(answer.input);
 				return;
 			}
@@ -168,17 +176,19 @@ const mockPrompt = async ({t, inputAnswers, prompts}) => {
 				return;
 			}
 
-			if (is.boolean(answer.confirm) || is.boolean(answer)) {
-				t.is(prompt.type, 'confirm');
-				setValue(answer.confirm ?? answer);
+			if (!(is.boolean(answer.confirm) || is.boolean(answer))) {
+				return;
 			}
+
+			assert.equal(prompt.type, 'confirm');
+			setValue(answer.confirm ?? answer);
 		};
 
 		// Multiple inputs for the given prompt
 		if (is.array(input)) {
 			for (const attempt of input) {
 				if (attempt.error) {
-					await t.throwsAsync(
+					await assert.rejects(
 						handleInput(attempt),
 						{message: attempt.error},
 					);
@@ -205,30 +215,39 @@ const fixRelativeMocks = mocks => mapObject(mocks, (key, value) => [key.replace(
 Mocks `inquirer` for testing `source/ui.js`.
 
 @param {object} o - Test input and optional global mocks.
-@param {ExecutionContext} o.t - AVA execution context.
+@param {TestContext} o.t - Test context.
 @param {Answers} o.answers - Test input.
 @param {import('esmock').MockMap} [o.mocks] Optional global mocks
 @param {(prompts: Record<string, Prompt>) => void} [o.onPrompt] Optional hook to inspect prompts
 */
 export const mockInquirer = async ({t, answers, mocks = {}, onPrompt = () => {}}) => {
-	/** @type {string[]} */
+	/**
+	@type {string[]}
+	*/
 	const logs = [];
 
-	/** @type {import('../../source/ui.js')} */
+	/**
+	@type {import('../../source/ui.js')}
+	*/
 	const ui = await esmock('../../source/ui.js', import.meta.url, {
 		inquirer: {
 			async prompt(prompts) {
 				const promptDescriptors = getPromptsObject(prompts);
 				onPrompt(promptDescriptors);
 
-				let uiAnswers = {};
+				// Answering a prompt can fail, for example when the user is expected to
+				// provide a valid value. Record the failure and rethrow it once the
+				// whole prompt list has been walked, so every prompt is still visited.
+				let promptError;
 
-				const assertions = await t.try(async tt => {
-					uiAnswers = await mockPrompt({t: tt, inputAnswers: answers, prompts: promptDescriptors});
-				});
+				try {
+					return await mockPrompt({t, inputAnswers: answers, prompts: promptDescriptors});
+				} catch (error) {
+					t.diagnostic('prompts:', Object.keys(promptDescriptors));
+					promptError = error;
+				}
 
-				assertions.commit({retainLogs: !assertions.passed});
-				return uiAnswers;
+				throw promptError;
 			},
 		},
 	}, {

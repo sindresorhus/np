@@ -1,55 +1,73 @@
 import path from 'node:path';
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/integration-test.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/git-util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../source/git-util.js')>>}
+*/
 const createFixture = _createFixture('../../source/git-util.js');
 
-test('returns files added since latest tag', createFixture, async ({t, $$}) => {
+createFixture('returns files added since latest tag', async ({context, $$}) => {
 	await $$`git tag v0.0.0`;
-	await t.context.createFile('new');
-	await t.context.createFile('index.js');
+	await context.createFile('new');
+	await context.createFile('index.js');
 	await $$`git add .`;
 	await $$`git commit -m "added"`;
-}, async ({t, testedModule: {newFilesSinceLastRelease}, temporaryDirectory}) => {
+}, async ({
+	testedModule: {newFilesSinceLastRelease},
+	temporaryDirectory,
+}) => {
 	const newFiles = await newFilesSinceLastRelease(temporaryDirectory);
-	t.deepEqual(
+	assert.deepEqual(
 		newFiles.toSorted((a, b) => a.localeCompare(b)),
 		['new', 'index.js'].toSorted((a, b) => a.localeCompare(b)),
 	);
 });
 
-test('no files', createFixture, async ({$$}) => {
+createFixture('no files', async ({$$}) => {
 	await $$`git tag v0.0.0`;
-}, async ({t, testedModule: {newFilesSinceLastRelease}, temporaryDirectory}) => {
+}, async ({
+	testedModule: {newFilesSinceLastRelease},
+	temporaryDirectory,
+}) => {
 	const newFiles = await newFilesSinceLastRelease(temporaryDirectory);
-	t.deepEqual(newFiles, []);
+	assert.deepEqual(newFiles, []);
 });
 
-test('uses ignoreWalker', createFixture, async ({t}) => {
-	await t.context.createFile('index.js');
-	await t.context.createFile('package.json');
-	await t.context.createFile('package-lock.json');
-	await t.context.createFile('.gitignore', 'package-lock.json\n.git'); // ignoreWalker doesn't ignore `.git`: npm/ignore-walk#2
-}, async ({t, testedModule: {newFilesSinceLastRelease}, temporaryDirectory}) => {
+createFixture('uses ignoreWalker', async ({context}) => {
+	await context.createFile('index.js');
+	await context.createFile('package.json');
+	await context.createFile('package-lock.json');
+	await context.createFile('.gitignore', 'package-lock.json\n.git'); // ignoreWalker doesn't ignore `.git`: npm/ignore-walk#2
+}, async ({
+	testedModule: {newFilesSinceLastRelease},
+	temporaryDirectory,
+}) => {
 	const newFiles = await newFilesSinceLastRelease(temporaryDirectory);
-	t.deepEqual(
+	assert.deepEqual(
 		newFiles.toSorted((a, b) => a.localeCompare(b)),
 		['index.js', 'package.json', '.gitignore'].toSorted((a, b) => a.localeCompare(b)),
 	);
 });
 
-test('returns files relative to a package in a subdirectory', createFixture, async ({t, $$}) => {
-	await $$`git tag v0.0.0`;
-	await t.context.createFile('outside.js');
-	await t.context.createFile('dist/index.js');
-	await t.context.createFile('dist/package.json');
-	await $$`git add .`;
-	await $$`git commit -m "added"`;
-}, async ({t, testedModule: {newFilesSinceLastRelease}, temporaryDirectory}) => {
-	const newFiles = await newFilesSinceLastRelease(path.join(temporaryDirectory, 'dist'));
-	t.deepEqual(
-		newFiles.toSorted((a, b) => a.localeCompare(b)),
-		['index.js', 'package.json'],
-	);
-});
+createFixture(
+	'returns files relative to a package in a subdirectory',
+	async ({context, $$}) => {
+		await $$`git tag v0.0.0`;
+		await context.createFile('outside.js');
+		await context.createFile('dist/index.js');
+		await context.createFile('dist/package.json');
+		await $$`git add .`;
+		await $$`git commit -m "added"`;
+	},
+	async ({
+		testedModule: {newFilesSinceLastRelease},
+		temporaryDirectory,
+	}) => {
+		const newFiles = await newFilesSinceLastRelease(path.join(temporaryDirectory, 'dist'));
+		assert.deepEqual(
+			newFiles.toSorted((a, b) => a.localeCompare(b)),
+			['index.js', 'package.json'],
+		);
+	},
+);

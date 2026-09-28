@@ -1,33 +1,42 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/integration-test.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/git-util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../source/git-util.js')>>}
+*/
 const createFixture = _createFixture('../../source/git-util.js');
 
 // From https://stackoverflow.com/a/3357357/10292952
 const getCommitMessage = async ($$, sha) => $$`git log --format=%B -n 1 ${sha}`;
 
-test('one tag', createFixture, async ({$$}) => {
+createFixture('one tag', async ({$$}) => {
 	await $$`git tag v0.0.0`;
-}, async ({t, testedModule: {latestTagOrFirstCommit}}) => {
+}, async ({
+	testedModule: {latestTagOrFirstCommit},
+}) => {
 	const result = await latestTagOrFirstCommit();
-	t.is(result, 'v0.0.0');
+	assert.equal(result, 'v0.0.0');
 });
 
-test('two tags', createFixture, async ({t, $$}) => {
+createFixture('two tags', async ({context, $$}) => {
 	await $$`git tag v0.0.0`;
-	await t.context.commitNewFile();
+	await context.commitNewFile();
 	await $$`git tag v1.0.0`;
-}, async ({t, testedModule: {latestTagOrFirstCommit}}) => {
+}, async ({
+	testedModule: {latestTagOrFirstCommit},
+}) => {
 	const result = await latestTagOrFirstCommit();
-	t.is(result, 'v1.0.0');
+	assert.equal(result, 'v1.0.0');
 });
 
-test('no tags (fallback)', createFixture, async () => {
+createFixture('no tags (fallback)', async () => {
 	//
-}, async ({t, testedModule: {latestTagOrFirstCommit}, $$}) => {
+}, async ({
+	testedModule: {latestTagOrFirstCommit},
+	$$,
+}) => {
 	const result = await latestTagOrFirstCommit();
 	const {stdout: firstCommitMessage} = await getCommitMessage($$, result);
 
-	t.is(firstCommitMessage.trim(), '"init1"');
+	assert.equal(firstCommitMessage.trim(), '"init1"');
 });

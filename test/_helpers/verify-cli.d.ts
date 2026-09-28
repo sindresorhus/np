@@ -1,10 +1,9 @@
-import type {Macro, ExecutionContext} from 'ava';
-
-type VerifyCliMacro = Macro<[
+export type VerifyCli = (
+	title: string,
 	binPath: string,
 	args: string | string[],
 	expectedLines: string[],
-], Record<string, never>>;
+) => void;
 
-export const cliPasses: VerifyCliMacro;
-export const cliFails: VerifyCliMacro;
+export const cliPasses: VerifyCli;
+export const cliFails: VerifyCli;

@@ -1,19 +1,25 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/integration-test.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/git-util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../source/git-util.js')>>}
+*/
 const createFixture = _createFixture('../../source/git-util.js');
 
-test('on release branch', createFixture, async ({$$}) => {
+createFixture('on release branch', async ({$$}) => {
 	await $$`git switch -c unicorn`;
-}, async ({t, testedModule: {verifyCurrentBranchIsReleaseBranch}}) => {
-	await t.notThrowsAsync(verifyCurrentBranchIsReleaseBranch('unicorn'));
+}, async ({
+	testedModule: {verifyCurrentBranchIsReleaseBranch},
+}) => {
+	await assert.doesNotReject(verifyCurrentBranchIsReleaseBranch('unicorn'));
 });
 
-test('not on release branch', createFixture, async ({$$}) => {
+createFixture('not on release branch', async ({$$}) => {
 	await $$`git switch -c unicorn`;
-}, async ({t, testedModule: {verifyCurrentBranchIsReleaseBranch}}) => {
-	await t.throwsAsync(
+}, async ({
+	testedModule: {verifyCurrentBranchIsReleaseBranch},
+}) => {
+	await assert.rejects(
 		verifyCurrentBranchIsReleaseBranch('main'),
 		{message: 'Not on `main` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'},
 	);

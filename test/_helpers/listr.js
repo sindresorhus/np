@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import {SilentRenderer} from './listr-renderer.js';
 
 export const run = async listr => {
@@ -5,21 +6,21 @@ export const run = async listr => {
 	await listr.run();
 };
 
-export const assertTaskFailed = (t, taskTitle) => {
+export const assertTaskFailed = taskTitle => {
 	const task = SilentRenderer.tasks.find(task => task.title === taskTitle);
-	t.true(task.hasFailed(), `Task '${taskTitle}' did not fail!`);
+	assert.ok(task.hasFailed(), `Task '${taskTitle}' did not fail!`);
 };
 
-export const assertTaskDisabled = (t, taskTitle) => {
+export const assertTaskDisabled = taskTitle => {
 	const task = SilentRenderer.tasks.find(task => task.title === taskTitle);
-	t.true(!task.isEnabled(), `Task '${taskTitle}' was enabled!`);
+	assert.ok(!task.isEnabled(), `Task '${taskTitle}' was enabled!`);
 };
 
-export const assertTaskDoesntExist = (t, taskTitle) => {
-	t.true(SilentRenderer.tasks.every(task => task.title !== taskTitle), `Task '${taskTitle}' exists!`);
+export const assertTaskDoesntExist = taskTitle => {
+	assert.ok(SilentRenderer.tasks.every(task => task.title !== taskTitle), `Task '${taskTitle}' exists!`);
 };
 
-export const assertTaskSkipped = (t, taskTitle) => {
+export const assertTaskSkipped = taskTitle => {
 	const task = SilentRenderer.tasks.find(task => task.title === taskTitle);
-	t.true(task.isSkipped(), `Task '${taskTitle}' was not skipped!`);
+	assert.ok(task.isSkipped(), `Task '${taskTitle}' was not skipped!`);
 };

@@ -1,88 +1,105 @@
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/stub-execa.js';
 import {getTagVersionPrefix as originalGetTagVersionPrefix} from '../../source/util.js';
 import {npmConfig, yarnConfig, pnpmConfig} from '../../source/package-manager/configs.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../source/util.js')>>}
+*/
 const createFixture = _createFixture('../../source/util.js', import.meta.url);
 
-test('returns tag prefix - npm', createFixture, [{
+createFixture('returns tag prefix - npm', [{
 	command: 'npm config get tag-version-prefix --workspaces=false',
 	stdout: 'ver',
-}], async ({t, testedModule: {getTagVersionPrefix}}) => {
-	t.is(
+}], async ({
+	testedModule: {getTagVersionPrefix},
+}) => {
+	assert.equal(
 		await getTagVersionPrefix(npmConfig),
 		'ver',
 	);
 });
 
-test('returns preId postfix - yarn', createFixture, [{
+createFixture('returns preId postfix - yarn', [{
 	command: 'yarn config get version-tag-prefix',
 	stdout: 'ver',
-}], async ({t, testedModule: {getTagVersionPrefix}}) => {
-	t.is(
+}], async ({
+	testedModule: {getTagVersionPrefix},
+}) => {
+	assert.equal(
 		await getTagVersionPrefix(yarnConfig),
 		'ver',
 	);
 });
 
-test('defaults to "v" when command fails', createFixture, [{
+createFixture('defaults to "v" when command fails', [{
 	command: 'npm config get tag-version-prefix --workspaces=false',
 	exitCode: 1,
-}], async ({t, testedModule: {getTagVersionPrefix}}) => {
-	t.is(
+}], async ({
+	testedModule: {getTagVersionPrefix},
+}) => {
+	assert.equal(
 		await getTagVersionPrefix(npmConfig),
 		'v',
 	);
 });
 
-test('returns tag prefix - pnpm (uses npm config)', createFixture, [{
+createFixture('returns tag prefix - pnpm (uses npm config)', [{
 	command: 'npm config get tag-version-prefix --workspaces=false',
 	stdout: 'v',
-}], async ({t, testedModule: {getTagVersionPrefix}}) => {
-	t.is(
+}], async ({
+	testedModule: {getTagVersionPrefix},
+}) => {
+	assert.equal(
 		await getTagVersionPrefix(pnpmConfig),
 		'v',
 	);
 });
 
-test('returns custom tag prefix - pnpm', createFixture, [{
+createFixture('returns custom tag prefix - pnpm', [{
 	command: 'npm config get tag-version-prefix --workspaces=false',
 	stdout: 'ver',
-}], async ({t, testedModule: {getTagVersionPrefix}}) => {
-	t.is(
+}], async ({
+	testedModule: {getTagVersionPrefix},
+}) => {
+	assert.equal(
 		await getTagVersionPrefix(pnpmConfig),
 		'ver',
 	);
 });
 
-test('returns empty string tag prefix - pnpm', createFixture, [{
+createFixture('returns empty string tag prefix - pnpm', [{
 	command: 'npm config get tag-version-prefix --workspaces=false',
 	stdout: '',
-}], async ({t, testedModule: {getTagVersionPrefix}}) => {
-	t.is(
+}], async ({
+	testedModule: {getTagVersionPrefix},
+}) => {
+	assert.equal(
 		await getTagVersionPrefix(pnpmConfig),
 		'',
 	);
 });
 
-test('pnpm defaults to "v" when npm config fails', createFixture, [{
+createFixture('pnpm defaults to "v" when npm config fails', [{
 	command: 'npm config get tag-version-prefix --workspaces=false',
 	exitCode: 1,
-}], async ({t, testedModule: {getTagVersionPrefix}}) => {
-	t.is(
+}], async ({
+	testedModule: {getTagVersionPrefix},
+}) => {
+	assert.equal(
 		await getTagVersionPrefix(pnpmConfig),
 		'v',
 	);
 });
 
-test('no options passed', async t => {
-	await t.throwsAsync(
+test('no options passed', async () => {
+	await assert.rejects(
 		originalGetTagVersionPrefix(),
 		{message: 'Config is missing key `tagVersionPrefixCommand`'},
 	);
 
-	await t.throwsAsync(
+	await assert.rejects(
 		originalGetTagVersionPrefix({}),
 		{message: 'Config is missing key `tagVersionPrefixCommand`'},
 	);

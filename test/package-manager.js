@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import {getPackageManagerConfig} from '../source/package-manager/index.js';
 import {
 	npmConfig,
@@ -11,48 +12,48 @@ import {
 	bunConfig,
 } from '../source/package-manager/configs.js';
 
-test('detects npm from package-lock.json', t => {
+test('detects npm from package-lock.json', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 	fs.writeFileSync(path.join(temporaryDirectory, 'package-lock.json'), '');
 
 	const config = getPackageManagerConfig(temporaryDirectory, {name: 'test', version: '1.0.0'});
 
-	t.is(config, npmConfig);
+	assert.equal(config, npmConfig);
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('detects pnpm from pnpm-lock.yaml', t => {
+test('detects pnpm from pnpm-lock.yaml', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 	fs.writeFileSync(path.join(temporaryDirectory, 'pnpm-lock.yaml'), '');
 
 	const config = getPackageManagerConfig(temporaryDirectory, {name: 'test', version: '1.0.0'});
 
-	t.is(config, pnpmConfig);
+	assert.equal(config, pnpmConfig);
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('detects Yarn Classic from yarn.lock without .yarnrc.yml', t => {
+test('detects Yarn Classic from yarn.lock without .yarnrc.yml', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 	fs.writeFileSync(path.join(temporaryDirectory, 'yarn.lock'), '');
 
 	const config = getPackageManagerConfig(temporaryDirectory, {name: 'test', version: '1.0.0'});
 
-	t.is(config, yarnConfig);
+	assert.equal(config, yarnConfig);
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('detects Yarn Berry from yarn.lock with .yarnrc.yml', t => {
+test('detects Yarn Berry from yarn.lock with .yarnrc.yml', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 	fs.writeFileSync(path.join(temporaryDirectory, 'yarn.lock'), '');
 	fs.writeFileSync(path.join(temporaryDirectory, '.yarnrc.yml'), 'nodeLinker: node-modules\n');
 
 	const config = getPackageManagerConfig(temporaryDirectory, {name: 'test', version: '1.0.0'});
 
-	t.is(config, yarnBerryConfig);
+	assert.equal(config, yarnBerryConfig);
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('detects Yarn Berry from packageManager field', t => {
+test('detects Yarn Berry from packageManager field', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 
 	const config = getPackageManagerConfig(temporaryDirectory, {
@@ -61,11 +62,11 @@ test('detects Yarn Berry from packageManager field', t => {
 		packageManager: 'yarn@3.0.0',
 	});
 
-	t.is(config, yarnBerryConfig);
+	assert.equal(config, yarnBerryConfig);
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('detects Yarn Classic from packageManager field', t => {
+test('detects Yarn Classic from packageManager field', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 
 	const config = getPackageManagerConfig(temporaryDirectory, {
@@ -74,11 +75,11 @@ test('detects Yarn Classic from packageManager field', t => {
 		packageManager: 'yarn@1.22.0',
 	});
 
-	t.is(config, yarnConfig);
+	assert.equal(config, yarnConfig);
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('detects pnpm from devEngines.packageManager field', t => {
+test('detects pnpm from devEngines.packageManager field', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 
 	const config = getPackageManagerConfig(temporaryDirectory, {
@@ -92,11 +93,11 @@ test('detects pnpm from devEngines.packageManager field', t => {
 		},
 	});
 
-	t.is(config, pnpmConfig);
+	assert.equal(config, pnpmConfig);
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('detects Bun from devEngines.packageManager field', t => {
+test('detects Bun from devEngines.packageManager field', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 
 	const config = getPackageManagerConfig(temporaryDirectory, {
@@ -110,11 +111,11 @@ test('detects Bun from devEngines.packageManager field', t => {
 		},
 	});
 
-	t.is(config, bunConfig);
+	assert.equal(config, bunConfig);
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('detects Yarn Berry from devEngines.packageManager field', t => {
+test('detects Yarn Berry from devEngines.packageManager field', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 
 	const config = getPackageManagerConfig(temporaryDirectory, {
@@ -128,11 +129,11 @@ test('detects Yarn Berry from devEngines.packageManager field', t => {
 		},
 	});
 
-	t.is(config, yarnBerryConfig);
+	assert.equal(config, yarnBerryConfig);
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('detects Yarn Classic from devEngines.packageManager field', t => {
+test('detects Yarn Classic from devEngines.packageManager field', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 
 	const config = getPackageManagerConfig(temporaryDirectory, {
@@ -146,11 +147,11 @@ test('detects Yarn Classic from devEngines.packageManager field', t => {
 		},
 	});
 
-	t.is(config, yarnConfig);
+	assert.equal(config, yarnConfig);
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('detects package manager from devEngines.packageManager array', t => {
+test('detects package manager from devEngines.packageManager array', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 
 	const config = getPackageManagerConfig(temporaryDirectory, {
@@ -170,11 +171,11 @@ test('detects package manager from devEngines.packageManager array', t => {
 		},
 	});
 
-	t.is(config, pnpmConfig);
+	assert.equal(config, pnpmConfig);
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('packageManager field takes precedence over devEngines.packageManager field', t => {
+test('packageManager field takes precedence over devEngines.packageManager field', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 
 	const config = getPackageManagerConfig(temporaryDirectory, {
@@ -188,15 +189,15 @@ test('packageManager field takes precedence over devEngines.packageManager field
 		},
 	});
 
-	t.is(config, npmConfig);
+	assert.equal(config, npmConfig);
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('throws when devEngines.packageManager has no name', t => {
+test('throws when devEngines.packageManager has no name', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 	fs.writeFileSync(path.join(temporaryDirectory, 'pnpm-lock.yaml'), '');
 
-	t.throws(() => getPackageManagerConfig(temporaryDirectory, {
+	assert.throws(() => getPackageManagerConfig(temporaryDirectory, {
 		name: 'test',
 		version: '1.0.0',
 		devEngines: {
@@ -211,10 +212,10 @@ test('throws when devEngines.packageManager has no name', t => {
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('throws when devEngines.packageManager array entry has no name', t => {
+test('throws when devEngines.packageManager array entry has no name', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 
-	t.throws(() => getPackageManagerConfig(temporaryDirectory, {
+	assert.throws(() => getPackageManagerConfig(temporaryDirectory, {
 		name: 'test',
 		version: '1.0.0',
 		devEngines: {
@@ -234,10 +235,10 @@ test('throws when devEngines.packageManager array entry has no name', t => {
 	fs.rmSync(temporaryDirectory, {recursive: true});
 });
 
-test('throws for invalid devEngines.packageManager name', t => {
+test('throws for invalid devEngines.packageManager name', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 
-	t.throws(() => getPackageManagerConfig(temporaryDirectory, {
+	assert.throws(() => getPackageManagerConfig(temporaryDirectory, {
 		name: 'test',
 		version: '1.0.0',
 		devEngines: {

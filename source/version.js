@@ -28,14 +28,13 @@ const isInvalidSemVersion = input => !semver.valid(input);
 /**
 Formats the first difference between two versions to the given `diffColor`. Useful for `prerelease` diffs.
 
-@param {string[]} current - The current version parts.
-@param {string[]} previous - The previous version parts.
+@param {(string | number)[]} current - The current version parts.
+@param {(string | number)[]} previous - The previous version parts.
 @param {ColorName} diffColor - The chalk color name to apply to the differing part.
 */
 const formatFirstDifference = (current, previous, diffColor) => {
-	const firstDifferenceIndex = current.findIndex((part, i) => previous.at(i) !== part);
-	current[firstDifferenceIndex] = `{${diffColor} ${current.at(firstDifferenceIndex)}}`;
-	return current.join('.');
+	const firstDifferenceIndex = current.findIndex((part, index) => previous.at(index) !== part);
+	return current.map((part, index) => index === firstDifferenceIndex ? `{${diffColor} ${part}}` : part).join('.');
 };
 
 export default class Version {
@@ -147,12 +146,11 @@ export default class Version {
 			previousVersion = previousSemver;
 		}
 
-		if (!this.#diff) {
-			if (!previousVersion) {
-				return chalk(`{${color} ${this.toString()}}`);
-			}
+		const diff = this.#diff ?? (previousVersion ? semver.diff(previousVersion, this.#version) : undefined);
 
-			this.#diff = semver.diff(previousVersion, this.#version);
+		if (!diff) {
+			// `semver.diff` is `null` when the two versions are equal, so there is no part of it to highlight and the version is formatted plainly, the same as when no previous version was given. Without this the whole version went missing.
+			return chalk(`{${color} ${this.toString()}}`);
 		}
 
 		const {major, minor, patch, prerelease} = this.#version;
@@ -165,19 +163,19 @@ export default class Version {
 
 		/* eslint-disable unicorn/no-nested-ternary -- Nested ternary is the most readable way to express the multi-branch chalk formatting for each semver diff type */
 		return (
-			this.#diff === 'major'
+			diff === 'major'
 				? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}}`)
-				: this.#diff === 'minor'
+				: diff === 'minor'
 					? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}}`)
-					: this.#diff === 'patch'
+					: diff === 'patch'
 						? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}}`)
-						: this.#diff === 'premajor'
+						: diff === 'premajor'
 							? chalk(`{${color} {${diffColor} ${major}}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`)
-							: this.#diff === 'preminor'
+							: diff === 'preminor'
 								? chalk(`{${color} ${major}.{${diffColor} ${minor}}.${patch}-{${diffColor} ${prerelease.join('.')}}}`)
-								: this.#diff === 'prepatch'
+								: diff === 'prepatch'
 									? chalk(`{${color} ${major}.${minor}.{${diffColor} ${patch}}-{${diffColor} ${prerelease.join('.')}}}`)
-									: this.#diff === 'prerelease' ? chalk(`{${color} ${major}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) : ''
+									: diff === 'prerelease' ? chalk(`{${color} ${major}.${minor}.${patch}-{${diffColor} ${prerelease.join('.')}}}`) : ''
 		);
 		/* eslint-enable unicorn/no-nested-ternary */
 	}

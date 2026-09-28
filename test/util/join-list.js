@@ -1,23 +1,26 @@
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import stripAnsi from 'strip-ansi';
 import {joinList} from '../../source/util.js';
 
-const testJoinList = test.macro((t, {list, expected}) => {
-	const output = joinList(list);
-	t.is(stripAnsi(output), expected);
-});
+const testJoinList = (title, {list, expected}) => {
+	test(title, () => {
+		const output = joinList(list);
+		assert.equal(stripAnsi(output), expected);
+	});
+};
 
-test('one item', testJoinList, {
+testJoinList('one item', {
 	list: ['foo'],
 	expected: '- foo',
 });
 
-test('two items', testJoinList, {
+testJoinList('two items', {
 	list: ['foo', 'bar'],
 	expected: '- foo\n- bar',
 });
 
-test('multiple items', testJoinList, {
+testJoinList('multiple items', {
 	list: ['foo', 'bar', 'baz'],
 	expected: '- foo\n- bar\n- baz',
 });

@@ -1,7 +1,7 @@
-import type {Macro, ExecutionContext} from 'ava';
+import type {TestContext} from 'node:test';
 import type {Execa$} from 'execa';
 
-type Context = {
+export type Context = {
 	firstCommitMessage: string;
 	getCommitMessage: (sha: string) => Promise<string>;
 	createFile: (file: string, content?: string) => Promise<void>;
@@ -12,21 +12,27 @@ type Context = {
 };
 
 type CommandsFunctionParameters = [{
-	t: ExecutionContext<Context>;
+	context: Context;
 	$$: Execa$<string>;
 	temporaryDirectory: string;
 }];
 
 type AssertionsFunctionParameters<MockType> = [{
-	t: ExecutionContext<Context>;
+	context: Context;
 	testedModule: MockType;
 	$$: Execa$<string>;
 	temporaryDirectory: string;
 }];
 
-export type CreateFixtureMacro<MockType> = Macro<[
+export type CreateFixture<MockType> = (
+	title: string,
 	commands: (...arguments_: CommandsFunctionParameters) => Promise<void>,
 	assertions: (...arguments_: AssertionsFunctionParameters<MockType>) => Promise<void>,
-], Context>;
+) => void;
 
-export function _createFixture<MockType>(source: string): CreateFixtureMacro<MockType>;
+export function createIntegrationTest(
+	t: TestContext,
+	assertions: (...arguments_: [CommandsFunctionParameters[0] & {testedModule?: unknown}]) => Promise<void>,
+): Promise<void>;
+
+export function _createFixture<MockType>(source: string): CreateFixture<MockType>;

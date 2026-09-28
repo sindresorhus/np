@@ -1,52 +1,58 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../../_helpers/stub-execa.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../../source/npm/util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../../source/npm/util.js')>>}
+*/
 const createFixture = _createFixture('../../../source/npm/util.js', import.meta.url);
 
-test('main', createFixture, [{
+createFixture('main', [{
 	command: 'npm whoami',
 	stdout: 'sindresorhus',
-}], async ({t, testedModule: npm}) => {
-	t.is(await npm.username({}), 'sindresorhus');
+}], async ({
+	testedModule: npm,
+}) => {
+	assert.equal(await npm.username({}), 'sindresorhus');
 });
 
-test('--registry flag', createFixture, [{
+createFixture('--registry flag', [{
 	command: 'npm whoami --registry http://my.io',
 	stdout: 'sindresorhus',
-}], async ({t, testedModule: npm}) => {
-	t.is(await npm.username({externalRegistry: 'http://my.io'}), 'sindresorhus');
+}], async ({
+	testedModule: npm,
+}) => {
+	assert.equal(await npm.username({externalRegistry: 'http://my.io'}), 'sindresorhus');
 });
 
-test('fails if not logged in - ENEEDAUTH', createFixture, [{
+createFixture('fails if not logged in - ENEEDAUTH', [{
 	command: 'npm whoami',
 	stderr: 'npm ERR! code ENEEDAUTH',
-}], async ({t, testedModule: npm}) => {
-	const error = await t.throwsAsync(
-		npm.username({}),
-		{message: 'You must be logged in. Use `npm login` and try again.'},
-	);
-	t.true(error.isNotLoggedIn);
+}], async ({
+	testedModule: npm,
+}) => {
+	const error = await npm.username({}).catch(error => error);
+	assert.equal(error.message, 'You must be logged in. Use `npm login` and try again.');
+	assert.ok(error.isNotLoggedIn);
 });
 
-test('fails if not logged in - E401', createFixture, [{
+createFixture('fails if not logged in - E401', [{
 	command: 'npm whoami',
 	stderr: 'npm error code E401\nnpm error 401 Unauthorized',
-}], async ({t, testedModule: npm}) => {
-	const error = await t.throwsAsync(
-		npm.username({}),
-		{message: 'You must be logged in. Use `npm login` and try again.'},
-	);
-	t.true(error.isNotLoggedIn);
+}], async ({
+	testedModule: npm,
+}) => {
+	const error = await npm.username({}).catch(error => error);
+	assert.equal(error.message, 'You must be logged in. Use `npm login` and try again.');
+	assert.ok(error.isNotLoggedIn);
 });
 
-test('fails with authentication error', createFixture, [{
+createFixture('fails with authentication error', [{
 	command: 'npm whoami',
 	stderr: 'npm ERR! OTP required for authentication',
-}], async ({t, testedModule: npm}) => {
-	const error = await t.throwsAsync(
-		npm.username({}),
-		{message: 'Authentication error. Use `npm whoami` to troubleshoot.'},
-	);
-	t.false(error.isNotLoggedIn);
+}], async ({
+	testedModule: npm,
+}) => {
+	const error = await npm.username({}).catch(error => error);
+	assert.equal(error.message, 'Authentication error. Use `npm whoami` to troubleshoot.');
+	assert.ok(!(error.isNotLoggedIn));
 });

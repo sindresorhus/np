@@ -1,7 +1,9 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/stub-execa.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/npm/enable-2fa.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../source/npm/enable-2fa.js')>>}
+*/
 const createFixture = _createFixture('../../source/npm/enable-2fa.js', import.meta.url);
 
 const npmVersionFixtures = [
@@ -15,25 +17,42 @@ for (const {version, accessArgs} of npmVersionFixtures) {
 		stdout: version,
 	}];
 
-	test(`npm v${version} - no options`, createFixture, npmVersionCommand, async ({t, testedModule: {getEnable2faArguments}}) => {
-		t.deepEqual(
-			await getEnable2faArguments('np'),
-			[...accessArgs, 'np'],
-		);
-	});
+	createFixture(
+		`npm v${version} - no options`,
+		npmVersionCommand,
+		async ({
+			testedModule: {getEnable2faArguments},
+		}) => {
+			assert.deepEqual(
+				await getEnable2faArguments('np'),
+				[...accessArgs, 'np'],
+			);
+		},
+	);
 
-	test(`npm v${version} - options, no otp`, createFixture, npmVersionCommand, async ({t, testedModule: {getEnable2faArguments}}) => {
-		t.deepEqual(
-			await getEnable2faArguments('np', {confirm: true}),
-			[...accessArgs, 'np'],
-		);
-	});
+	createFixture(
+		`npm v${version} - options, no otp`,
+		npmVersionCommand,
+		async ({
+			testedModule: {getEnable2faArguments},
+		}) => {
+			assert.deepEqual(
+				await getEnable2faArguments('np', {confirm: true}),
+				[...accessArgs, 'np'],
+			);
+		},
+	);
 
-	test(`npm v${version} - options, with otp`, createFixture, npmVersionCommand, async ({t, testedModule: {getEnable2faArguments}}) => {
-		t.deepEqual(
-			await getEnable2faArguments('np', {otp: '123456'}),
-			[...accessArgs, 'np', '--otp', '123456'],
-		);
-	});
+	createFixture(
+		`npm v${version} - options, with otp`,
+		npmVersionCommand,
+		async ({
+			testedModule: {getEnable2faArguments},
+		}) => {
+			assert.deepEqual(
+				await getEnable2faArguments('np', {otp: '123456'}),
+				[...accessArgs, 'np', '--otp', '123456'],
+			);
+		},
+	);
 }
-

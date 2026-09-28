@@ -1,4 +1,5 @@
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import sinon from 'sinon';
 import {npmConfig as packageManager} from '../../source/package-manager/configs.js';
 import {mockInquirer} from '../_helpers/mock-inquirer.js';
@@ -43,5 +44,5 @@ test('strips committish from hosted git info browse url', async t => {
 		rootDirectory: '/tmp',
 	});
 
-	t.is(results.repoUrl, 'https://github.com/org/repo');
+	assert.equal(results.repoUrl, 'https://github.com/org/repo');
 });

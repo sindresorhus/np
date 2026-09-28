@@ -1,20 +1,23 @@
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import stripAnsi from 'strip-ansi';
 import {groupFilesInFolders} from '../../source/util.js';
 
-const testJoinList = test.macro((t, {list, expected}) => {
-	const output = groupFilesInFolders(list);
-	t.is(stripAnsi(output), expected);
-});
+const testJoinList = (title, {list, expected}) => {
+	test(title, () => {
+		const output = groupFilesInFolders(list);
+		assert.equal(stripAnsi(output), expected);
+	});
+};
 
-test('one item', testJoinList, {
+testJoinList('one item', {
 	list: [
 		'scripts/a.sh',
 	],
 	expected: '- scripts/a.sh',
 });
 
-test('top-level files', testJoinList, {
+testJoinList('top-level files', {
 	list: [
 		'index.js',
 		'readme.md',
@@ -23,7 +26,7 @@ test('top-level files', testJoinList, {
 - readme.md`,
 });
 
-test('mix of collapsed and expanded folders', testJoinList, {
+testJoinList('mix of collapsed and expanded folders', {
 	list: [
 		'scripts/a.sh',
 		'scripts/b.sh',

@@ -1,7 +1,8 @@
-import test from 'ava';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import esmock from 'esmock';
 
-test('detects GitHub Actions', async t => {
+test('detects GitHub Actions', async () => {
 	const {getOidcProvider} = await esmock('../../source/npm/oidc.js', {
 		'node:process': {
 			env: {
@@ -12,10 +13,10 @@ test('detects GitHub Actions', async t => {
 		},
 	});
 
-	t.is(getOidcProvider(), 'github');
+	assert.equal(getOidcProvider(), 'github');
 });
 
-test('detects GitLab CI', async t => {
+test('detects GitLab CI', async () => {
 	const {getOidcProvider} = await esmock('../../source/npm/oidc.js', {
 		'node:process': {
 			env: {
@@ -25,15 +26,15 @@ test('detects GitLab CI', async t => {
 		},
 	});
 
-	t.is(getOidcProvider(), 'gitlab');
+	assert.equal(getOidcProvider(), 'gitlab');
 });
 
-test('detects no OIDC', async t => {
+test('detects no OIDC', async () => {
 	const {getOidcProvider} = await esmock('../../source/npm/oidc.js', {
 		'node:process': {
 			env: {},
 		},
 	});
 
-	t.is(getOidcProvider(), undefined);
+	assert.equal(getOidcProvider(), undefined);
 });

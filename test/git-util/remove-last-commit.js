@@ -1,19 +1,24 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/integration-test.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/git-util.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../source/git-util.js')>>}
+*/
 const createFixture = _createFixture('../../source/git-util.js');
 
-test('removes latest commit', createFixture, async ({t, $$}) => {
-	await t.context.createFile('index.js');
+createFixture('removes latest commit', async ({context, $$}) => {
+	await context.createFile('index.js');
 	await $$`git add -A`;
 	await $$`git commit -m "added"`;
-}, async ({t, testedModule: {removeLastCommit}, $$}) => {
+}, async ({
+	testedModule: {removeLastCommit},
+	$$,
+}) => {
 	const {stdout: commitsBefore} = await $$`git log --pretty="%s"`;
-	t.true(commitsBefore.includes('"added"'));
+	assert.ok(commitsBefore.includes('"added"'));
 
 	await removeLastCommit();
 
 	const {stdout: commitsAfter} = await $$`git log --pretty="%s"`;
-	t.false(commitsAfter.includes('"added"'));
+	assert.ok(!(commitsAfter.includes('"added"')));
 });

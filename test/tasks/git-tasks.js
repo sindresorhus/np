@@ -1,67 +1,88 @@
-import test from 'ava';
+import assert from 'node:assert/strict';
+import test from 'node:test';
 import {SilentRenderer} from '../_helpers/listr-renderer.js';
 import {_createFixture} from '../_helpers/stub-execa.js';
 import {run, assertTaskFailed, assertTaskDoesntExist} from '../_helpers/listr.js';
 
-/** @type {ReturnType<typeof _createFixture<import('../../source/git-tasks.js')>>} */
+/**
+@type {ReturnType<typeof createFixture<typeof import('../../source/git-tasks.js')>>}
+*/
 const createFixture = _createFixture('../../source/git-tasks.js', import.meta.url);
 
 test.afterEach(() => {
 	SilentRenderer.clearTasks();
 });
 
-test.serial('should fail when release branch is not specified, current branch is not the release branch, and publishing from any branch not permitted', createFixture, [{
-	command: 'git symbolic-ref --short HEAD',
-	stdout: 'feature',
-}], async ({t, testedModule: gitTasks}) => {
-	await t.throwsAsync(
-		run(gitTasks({branch: 'master'})),
-		{message: 'Not on `master` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'},
-	);
-
-	assertTaskFailed(t, 'Check current branch');
-});
-
-test.serial('should fail when current branch is not the specified release branch and publishing from any branch not permitted', createFixture, [{
-	command: 'git symbolic-ref --short HEAD',
-	stdout: 'feature',
-}], async ({t, testedModule: gitTasks}) => {
-	await t.throwsAsync(
-		run(gitTasks({branch: 'release'})),
-		{message: 'Not on `release` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'},
-	);
-
-	assertTaskFailed(t, 'Check current branch');
-});
-
-test.serial('should not fail when current branch not master and publishing from any branch permitted', createFixture, [
-	{
+createFixture(
+	'should fail when release branch is not specified, current branch is not the release branch, and publishing from any branch not permitted',
+	[{
 		command: 'git symbolic-ref --short HEAD',
 		stdout: 'feature',
-	},
-	{
-		command: 'git status --porcelain',
-		stdout: '',
-	},
-	{
-		command: 'git rev-parse @{u}',
-		exitCode: 0,
-	},
-	{
-		command: 'git fetch --dry-run',
-		exitCode: 0,
-	},
-	{
-		command: 'git rev-list --count --left-only @{u}...HEAD',
-		stdout: '0',
-	},
-], async ({t, testedModule: gitTasks}) => {
-	await t.notThrowsAsync(run(gitTasks({anyBranch: true})));
+	}],
+	async ({
+		testedModule: gitTasks,
+	}) => {
+		await assert.rejects(
+			run(gitTasks({branch: 'master'})),
+			{message: 'Not on `master` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'},
+		);
 
-	assertTaskDoesntExist(t, 'Check current branch');
-});
+		assertTaskFailed('Check current branch');
+	},
+);
 
-test.serial('should fail when local working tree modified', createFixture, [
+createFixture(
+	'should fail when current branch is not the specified release branch and publishing from any branch not permitted',
+	[{
+		command: 'git symbolic-ref --short HEAD',
+		stdout: 'feature',
+	}],
+	async ({
+		testedModule: gitTasks,
+	}) => {
+		await assert.rejects(
+			run(gitTasks({branch: 'release'})),
+			{message: 'Not on `release` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'},
+		);
+
+		assertTaskFailed('Check current branch');
+	},
+);
+
+createFixture(
+	'should not fail when current branch not master and publishing from any branch permitted',
+	[
+		{
+			command: 'git symbolic-ref --short HEAD',
+			stdout: 'feature',
+		},
+		{
+			command: 'git status --porcelain',
+			stdout: '',
+		},
+		{
+			command: 'git rev-parse @{u}',
+			exitCode: 0,
+		},
+		{
+			command: 'git fetch --dry-run',
+			exitCode: 0,
+		},
+		{
+			command: 'git rev-list --count --left-only @{u}...HEAD',
+			stdout: '0',
+		},
+	],
+	async ({
+		testedModule: gitTasks,
+	}) => {
+		await assert.doesNotReject(run(gitTasks({anyBranch: true})));
+
+		assertTaskDoesntExist('Check current branch');
+	},
+);
+
+createFixture('should fail when local working tree modified', [
 	{
 		command: 'git symbolic-ref --short HEAD',
 		stdout: 'master',
@@ -70,16 +91,18 @@ test.serial('should fail when local working tree modified', createFixture, [
 		command: 'git status --porcelain',
 		stdout: 'M source/git-tasks.js',
 	},
-], async ({t, testedModule: gitTasks}) => {
-	await t.throwsAsync(
+], async ({
+	testedModule: gitTasks,
+}) => {
+	await assert.rejects(
 		run(gitTasks({branch: 'master'})),
 		{message: 'Unclean working tree. Commit or stash changes first.'},
 	);
 
-	assertTaskFailed(t, 'Check local working tree');
+	assertTaskFailed('Check local working tree');
 });
 
-test.serial('should not fail when no remote set up', createFixture, [
+createFixture('should not fail when no remote set up', [
 	{
 		command: 'git symbolic-ref --short HEAD',
 		stdout: 'master',
@@ -92,11 +115,13 @@ test.serial('should not fail when no remote set up', createFixture, [
 		command: 'git rev-parse @{u}',
 		stderr: 'fatal: no upstream configured for branch \'master\'',
 	},
-], async ({t, testedModule: gitTasks}) => {
-	await t.notThrowsAsync(run(gitTasks({branch: 'master'})));
+], async ({
+	testedModule: gitTasks,
+}) => {
+	await assert.doesNotReject(run(gitTasks({branch: 'master'})));
 });
 
-test.serial('should fail when remote history differs and changes are fetched', createFixture, [
+createFixture('should fail when remote history differs and changes are fetched', [
 	{
 		command: 'git symbolic-ref --short HEAD',
 		stdout: 'master',
@@ -117,16 +142,18 @@ test.serial('should fail when remote history differs and changes are fetched', c
 		command: 'git rev-list --count --left-only @{u}...HEAD',
 		stdout: '1', // Has unpulled changes
 	},
-], async ({t, testedModule: gitTasks}) => {
-	await t.throwsAsync(
+], async ({
+	testedModule: gitTasks,
+}) => {
+	await assert.rejects(
 		run(gitTasks({branch: 'master'})),
 		{message: 'Remote history differs. Please pull changes.'},
 	);
 
-	assertTaskFailed(t, 'Check remote history');
+	assertTaskFailed('Check remote history');
 });
 
-test.serial('should fail when remote has unfetched changes', createFixture, [
+createFixture('should fail when remote has unfetched changes', [
 	{
 		command: 'git symbolic-ref --short HEAD',
 		stdout: 'master',
@@ -143,41 +170,49 @@ test.serial('should fail when remote has unfetched changes', createFixture, [
 		command: 'git fetch --dry-run',
 		stdout: 'From https://github.com/sindresorhus/np', // Has unfetched changes
 	},
-], async ({t, testedModule: gitTasks}) => {
-	await t.throwsAsync(
+], async ({
+	testedModule: gitTasks,
+}) => {
+	await assert.rejects(
 		run(gitTasks({branch: 'master'})),
 		{message: 'Remote history differs. Please run `git fetch` and pull changes.'},
 	);
 
-	assertTaskFailed(t, 'Check remote history');
+	assertTaskFailed('Check remote history');
 });
 
-test.serial('checks should pass when publishing from master, working tree is clean and remote history not different', createFixture, [
-	{
-		command: 'git symbolic-ref --short HEAD',
-		stdout: 'master',
+createFixture(
+	'checks should pass when publishing from master, working tree is clean and remote history not different',
+	[
+		{
+			command: 'git symbolic-ref --short HEAD',
+			stdout: 'master',
+		},
+		{
+			command: 'git status --porcelain',
+			stdout: '',
+		},
+		{
+			command: 'git rev-parse @{u}',
+			exitCode: 0,
+		},
+		{
+			command: 'git fetch --dry-run',
+			exitCode: 0,
+		},
+		{
+			command: 'git rev-list --count --left-only @{u}...HEAD',
+			stdout: '0',
+		},
+	],
+	async ({
+		testedModule: gitTasks,
+	}) => {
+		await assert.doesNotReject(run(gitTasks({branch: 'master'})));
 	},
-	{
-		command: 'git status --porcelain',
-		stdout: '',
-	},
-	{
-		command: 'git rev-parse @{u}',
-		exitCode: 0,
-	},
-	{
-		command: 'git fetch --dry-run',
-		exitCode: 0,
-	},
-	{
-		command: 'git rev-list --count --left-only @{u}...HEAD',
-		stdout: '0',
-	},
-], async ({t, testedModule: gitTasks}) => {
-	await t.notThrowsAsync(run(gitTasks({branch: 'master'})));
-});
+);
 
-test.serial('preflight should validate remote before checking remote history', createFixture, [
+createFixture('preflight should validate remote before checking remote history', [
 	{
 		command: 'git symbolic-ref --short HEAD',
 		stdout: 'master',
@@ -199,14 +234,16 @@ test.serial('preflight should validate remote before checking remote history', c
 		exitCode: 1,
 		stderr: 'fatal: could not read from remote repository',
 	},
-], async ({t, testedModule}) => {
-	await t.throwsAsync(
+], async ({
+	testedModule,
+}) => {
+	await assert.rejects(
 		testedModule.verifyGitTasks({branch: 'master'}),
 		{message: 'Git fatal error: could not read from remote repository'},
 	);
 });
 
-test.serial('preflight should skip upstream probe on detached head with anyBranch', createFixture, [
+createFixture('preflight should skip upstream probe on detached head with anyBranch', [
 	{
 		command: 'git status --porcelain',
 		stdout: '',
@@ -219,11 +256,13 @@ test.serial('preflight should skip upstream probe on detached head with anyBranc
 		command: 'git rev-parse @{u}',
 		stderr: 'fatal: no upstream configured for HEAD',
 	},
-], async ({t, testedModule}) => {
-	await t.notThrowsAsync(testedModule.verifyGitTasks({anyBranch: true}));
+], async ({
+	testedModule,
+}) => {
+	await assert.doesNotReject(testedModule.verifyGitTasks({anyBranch: true}));
 });
 
-test.serial('preflight should validate explicit remote without upstream', createFixture, [
+createFixture('preflight should validate explicit remote without upstream', [
 	{
 		command: 'git status --porcelain',
 		stdout: '',
@@ -233,14 +272,16 @@ test.serial('preflight should validate explicit remote without upstream', create
 		exitCode: 1,
 		stderr: 'fatal: remote upstream not found',
 	},
-], async ({t, testedModule}) => {
-	await t.throwsAsync(
+], async ({
+	testedModule,
+}) => {
+	await assert.rejects(
 		testedModule.verifyGitTasks({anyBranch: true, remote: 'upstream'}),
 		{message: 'Git fatal error: remote upstream not found'},
 	);
 });
 
-test.serial('preflight should validate the tracked remote instead of origin', createFixture, [
+createFixture('preflight should validate the tracked remote instead of origin', [
 	{
 		command: 'git symbolic-ref --short HEAD',
 		stdout: 'main',
@@ -269,6 +310,8 @@ test.serial('preflight should validate the tracked remote instead of origin', cr
 		command: 'git rev-list --count --left-only @{u}...HEAD',
 		stdout: '0',
 	},
-], async ({t, testedModule}) => {
-	await t.notThrowsAsync(testedModule.verifyGitTasks({branch: 'main'}));
+], async ({
+	testedModule,
+}) => {
+	await assert.doesNotReject(testedModule.verifyGitTasks({branch: 'main'}));
 });
