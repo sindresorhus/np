@@ -1,17 +1,11 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
-import {SilentRenderer} from '../_helpers/listr-renderer.js';
 import {_createFixture} from '../_helpers/stub-execa.js';
-import {run, assertTaskFailed, assertTaskDoesntExist} from '../_helpers/listr.js';
+import {run, assertTaskFailed, assertTaskDoesntExist} from '../_helpers/task-list.js';
 
 /**
 @type {ReturnType<typeof createFixture<typeof import('../../source/git-tasks.js')>>}
 */
 const createFixture = _createFixture('../../source/git-tasks.js', import.meta.url);
-
-test.afterEach(() => {
-	SilentRenderer.clearTasks();
-});
 
 createFixture(
 	'should fail when release branch is not specified, current branch is not the release branch, and publishing from any branch not permitted',
@@ -22,12 +16,13 @@ createFixture(
 	async ({
 		testedModule: gitTasks,
 	}) => {
+		const tasks = gitTasks({branch: 'master'});
 		await assert.rejects(
-			run(gitTasks({branch: 'master'})),
+			run(tasks),
 			{message: 'Not on `master` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'},
 		);
 
-		assertTaskFailed('Check current branch');
+		assertTaskFailed(tasks, 'Check current branch');
 	},
 );
 
@@ -40,12 +35,13 @@ createFixture(
 	async ({
 		testedModule: gitTasks,
 	}) => {
+		const tasks = gitTasks({branch: 'release'});
 		await assert.rejects(
-			run(gitTasks({branch: 'release'})),
+			run(tasks),
 			{message: 'Not on `release` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.'},
 		);
 
-		assertTaskFailed('Check current branch');
+		assertTaskFailed(tasks, 'Check current branch');
 	},
 );
 
@@ -76,9 +72,10 @@ createFixture(
 	async ({
 		testedModule: gitTasks,
 	}) => {
-		await assert.doesNotReject(run(gitTasks({anyBranch: true})));
+		const tasks = gitTasks({anyBranch: true});
+		await assert.doesNotReject(run(tasks));
 
-		assertTaskDoesntExist('Check current branch');
+		assertTaskDoesntExist(tasks, 'Check current branch');
 	},
 );
 
@@ -94,12 +91,13 @@ createFixture('should fail when local working tree modified', [
 ], async ({
 	testedModule: gitTasks,
 }) => {
+	const tasks = gitTasks({branch: 'master'});
 	await assert.rejects(
-		run(gitTasks({branch: 'master'})),
+		run(tasks),
 		{message: 'Unclean working tree. Commit or stash changes first.'},
 	);
 
-	assertTaskFailed('Check local working tree');
+	assertTaskFailed(tasks, 'Check local working tree');
 });
 
 createFixture('should not fail when no remote set up', [
@@ -118,7 +116,8 @@ createFixture('should not fail when no remote set up', [
 ], async ({
 	testedModule: gitTasks,
 }) => {
-	await assert.doesNotReject(run(gitTasks({branch: 'master'})));
+	const tasks = gitTasks({branch: 'master'});
+	await assert.doesNotReject(run(tasks));
 });
 
 createFixture('should fail when remote history differs and changes are fetched', [
@@ -145,12 +144,13 @@ createFixture('should fail when remote history differs and changes are fetched',
 ], async ({
 	testedModule: gitTasks,
 }) => {
+	const tasks = gitTasks({branch: 'master'});
 	await assert.rejects(
-		run(gitTasks({branch: 'master'})),
+		run(tasks),
 		{message: 'Remote history differs. Please pull changes.'},
 	);
 
-	assertTaskFailed('Check remote history');
+	assertTaskFailed(tasks, 'Check remote history');
 });
 
 createFixture('should fail when remote has unfetched changes', [
@@ -173,12 +173,13 @@ createFixture('should fail when remote has unfetched changes', [
 ], async ({
 	testedModule: gitTasks,
 }) => {
+	const tasks = gitTasks({branch: 'master'});
 	await assert.rejects(
-		run(gitTasks({branch: 'master'})),
+		run(tasks),
 		{message: 'Remote history differs. Please run `git fetch` and pull changes.'},
 	);
 
-	assertTaskFailed('Check remote history');
+	assertTaskFailed(tasks, 'Check remote history');
 });
 
 createFixture(
@@ -208,7 +209,8 @@ createFixture(
 	async ({
 		testedModule: gitTasks,
 	}) => {
-		await assert.doesNotReject(run(gitTasks({branch: 'master'})));
+		const tasks = gitTasks({branch: 'master'});
+		await assert.doesNotReject(run(tasks));
 	},
 );
 

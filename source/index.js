@@ -1,28 +1,14 @@
-// Important: This must be the first import. It defines `Symbol.observable` before any copy of rxjs loads, so np's rxjs and the rxjs 6 inside the lazily loaded `listr-input` agree on the symbol. Without it, `listr` polyfills the symbol at run time, after np's rxjs has loaded, and the OTP prompt then fails with “You provided an invalid object where a stream was expected”.
-// eslint-disable-next-line import-x/no-unassigned-import, import-x/order
-import 'symbol-observable';
 import path from 'node:path';
-import process from 'node:process';
 import {execa} from 'execa';
 import {deleteAsync} from 'del';
-// NOTE: We intentionally use the original `listr` package instead of `listr2`.
-// listr2's DefaultRenderer uses log-update which has known issues with terminal scrolling
-// that cause it to overwrite content printed before listr2 started (like our inquirer prompts).
-// See: https://github.com/cenk1cenk2/listr2/issues/296
-import Listr from 'listr';
-import {
-	merge,
-	catchError,
-	filter,
-	finalize,
-	from,
-	mergeMap,
-	throwError,
-} from 'rxjs';
 import hostedGitInfo from 'hosted-git-info';
 import onetime from 'onetime';
 import {asyncExitHook} from 'exit-hook';
 import logSymbols from 'log-symbols';
+// NOTE: We intentionally use our own task list instead of `listr` or `listr2`, so we control how the terminal is drawn, for example around prompts.
+// listr2's DefaultRenderer uses log-update which had known issues with terminal scrolling that caused it to overwrite content printed before listr2 started (like our inquirer prompts). See: https://github.com/cenk1cenk2/listr2/issues/296
+// log-update 8 cuts each frame to the terminal height, which fixes this. Our renderer then prints the final list in full, so it stays in the scrollback.
+import {TaskList} from './task-list/index.js';
 import prerequisiteTasks from './prerequisite-tasks.js';
 import gitTasks from './git-tasks.js';
 import {getPackagePublishArguments, runPublish} from './npm/publish.js';
@@ -35,32 +21,11 @@ import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 
-const restoreCursor = () => {
-	if (process.stderr.isTTY) {
-		process.stderr.write('\u{1B}[?25h');
-	}
-};
-
 /**
-Executes a command and returns an observable stream of its output.
-@type {(cmd: string, args: string[], options?: import('execa').Options) => import('rxjs').Observable<unknown>}
+Executes a command and returns its output lines from both stdout and stderr, so a task shows the latest line. The iteration throws if the command fails.
+@type {(command: string, arguments_: string[], options?: import('execa').Options) => AsyncIterable<string>}
 */
-const exec = (command, arguments_, options) => {
-	// Use `Observable` support if merged https://github.com/sindresorhus/execa/pull/26
-	const subprocess = execa(command, arguments_, options);
-
-	return merge(subprocess.stdout, subprocess.stderr, subprocess).pipe(
-		filter(Boolean),
-		catchError(error => {
-			// Include stderr in error message for better diagnostics
-			if (error.stderr) {
-				error.message = `${error.shortMessage}\n${error.stderr}`;
-			}
-
-			throw error;
-		}),
-	);
-};
+const exec = (command, arguments_, options) => execa(command, arguments_, {...options, all: true}).iterable({from: 'all'});
 
 /**
 Runs the np publish workflow.
@@ -94,14 +59,11 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 
 	let publishStatus = 'UNKNOWN';
 	let pushedObjects;
+	// The OTP entered while publishing, which is also used to enable 2FA.
+	let otp;
 
 	const rollback = onetime(async () => {
 		console.log('\nPublish failed. Rolling back to the previous state…');
-
-		const tagVersionPrefix = await util.getTagVersionPrefix(packageManager);
-
-		const latestTag = await git.latestTag();
-		const versionInLatestTag = latestTag.slice(tagVersionPrefix.length);
 
 		async function getPackageVersion() {
 			const {package_: currentPackage} = await util.readPackage(rootDirectory);
@@ -109,6 +71,11 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 		}
 
 		try {
+			const tagVersionPrefix = await util.getTagVersionPrefix(packageManager);
+
+			const latestTag = await git.latestTag();
+			const versionInLatestTag = latestTag.slice(tagVersionPrefix.length);
+
 			// Verify that the package's version has been bumped before deleting the last tag and commit.
 			if (versionInLatestTag === await getPackageVersion() && versionInLatestTag !== package_.version) {
 				await git.deleteTag(latestTag);
@@ -116,8 +83,10 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 			}
 
 			console.log('Successfully rolled back the project to its previous state.');
+			return true;
 		} catch (error) {
 			console.log(`Couldn't roll back because of the following error:\n${error}`);
+			return false;
 		}
 	});
 
@@ -160,56 +129,54 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 		return packageManager.installCommandNoLockfile;
 	}
 
-	const tasks = new Listr([
+	const tasks = new TaskList([
 		{
 			title: 'Prerequisite check',
-			enabled: () => options.runPublish,
-			task: () => prerequisiteTasks(input, package_, options, {packageManager, rootDirectory}),
+			enabled: options.runPublish,
+			run: () => prerequisiteTasks(input, package_, options, {packageManager, rootDirectory}),
 		},
 		{
 			title: 'Git',
-			task: () => gitTasks(options),
+			run: () => gitTasks(options),
 		},
 		{
 			title: 'Cleanup',
-			enabled: () => runCleanup && !lockfile,
+			enabled: runCleanup && !lockfile,
 			skip() {
 				if (options.dryRun) {
 					return '[Dry run] Command not executed: delete node_modules.';
 				}
 			},
-			task: () => deleteAsync(path.join(projectDirectory, 'node_modules')),
+			run: () => deleteAsync(path.join(projectDirectory, 'node_modules')),
 		},
 		{
 			title: `Installing dependencies using ${packageManager.id}`,
-			enabled: () => isRunInstall,
+			enabled: isRunInstall,
 			skip() {
 				if (options.dryRun) {
 					return `[Dry run] Command not executed: ${printCommand(getInstallCommand())}.`;
 				}
 			},
-			task: () => new Listr([
+			run: () => new TaskList([
 				{
 					title: 'Running install command',
-					task() {
-						return exec(...getInstallCommand(), {cwd: projectDirectory});
-					},
+					run: () => exec(...getInstallCommand(), {cwd: projectDirectory}),
 				},
 				{
 					title: 'Checking working tree is still clean', // If lockfile was out of date and tracked by git, this will fail
-					task: () => git.verifyWorkingTreeIsClean(),
+					run: () => git.verifyWorkingTreeIsClean(),
 				},
 			]),
 		},
 		{
 			title: 'Running tests',
-			enabled: () => runTests,
+			enabled: runTests,
 			skip() {
 				if (options.dryRun) {
 					return `[Dry run] Command not executed: ${packageManager.cli} run ${testScript}.`;
 				}
 			},
-			task: () => exec(packageManager.cli, ['run', testScript], {...ciEnvOptions, cwd: projectDirectory}),
+			run: () => exec(packageManager.cli, ['run', testScript], {...ciEnvOptions, cwd: projectDirectory}),
 		},
 		{
 			title: 'Bumping version',
@@ -226,7 +193,7 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 
 				return `[Dry run] Command not executed: ${printCommand([cli, arguments_])}`;
 			},
-			task() {
+			run() {
 				const [cli, arguments_] = packageManager.versionCommand(input);
 
 				if (options.message) {
@@ -234,6 +201,7 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 				}
 
 				// Inherit stdin to allow GPG password prompts for commit signing
+				// Limitation: The task list keeps drawing during the command, so it can draw over a GPG prompt in the terminal. A graphical GPG prompt is not affected.
 				return exec(cli, arguments_, {stdin: 'inherit'});
 			},
 		},
@@ -251,30 +219,33 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 					},
 					/**
 					Runs the npm publish step and handles OTP prompts and errors.
-					@type {(context: object, task: object) => import('rxjs').Observable<unknown>}
+					@type {(task: import('./task-list/index.js').Task) => Promise<void>}
 					*/
-					task(context, task) {
-						let hasError = false;
+					async run(task) {
+						const publish = publishOptions => runPublish(getPublishCommand(publishOptions), {cwd: rootDirectory, task});
 
-						return runPublish(getPublishCommand(options), {cwd: rootDirectory})
-							.pipe(catchError(error => handleNpmError(error, task, otp => {
-								context.otp = otp;
+						try {
+							await publish(options).catch(error => handleNpmError(error, task, enteredOtp => {
+								otp = enteredOtp;
 
-								return runPublish(getPublishCommand({...options, otp}), {cwd: rootDirectory});
-							})))
-							.pipe(
-								// Note: Cannot use `async` here as the `await` will not finish before the error propagates.
-								catchError(error => {
-									hasError = true;
-									return from(rollback()).pipe(
-										mergeMap(() => throwError(() => new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`))),
-										catchError(() => throwError(() => new Error(`Error publishing package:\n${error.message}\n\nThe project was rolled back to its previous state.`))),
-									);
-								}),
-								finalize(() => {
-									publishStatus = hasError ? 'FAILED' : 'SUCCESS';
-								}),
-							);
+								return publish({...options, otp});
+							}));
+						} catch (error) {
+							// Ctrl+C at the OTP prompt aborts, like Ctrl+C at any other prompt.
+							if (error.name === 'ExitPromptError') {
+								throw error;
+							}
+
+							publishStatus = 'FAILED';
+
+							// The rollback prints its progress, so it must not be drawn over.
+							const isRolledBack = await task.withTerminal(rollback);
+							const rollbackMessage = isRolledBack ? '\n\nThe project was rolled back to its previous state.' : '';
+
+							throw new Error(`Error publishing package:\n${error.message}${rollbackMessage}`, {cause: error});
+						}
+
+						publishStatus = 'SUCCESS';
 					},
 				},
 				...shouldEnable2FA
@@ -288,7 +259,7 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 							const arguments_ = await getEnable2faArguments(package_.name, options);
 							return `[Dry run] Command not executed: npm ${arguments_.join(' ')}.`;
 						},
-						task: (context, task) => enable2fa(task, package_.name, {otp: context.otp}),
+						run: task => enable2fa(task, package_.name, {otp}),
 					}]
 					: [],
 			]
@@ -309,37 +280,33 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 					return 'Couldn\'t publish package to npm; not pushing.';
 				}
 			},
-			async task() {
+			async run() {
 				pushedObjects = await git.pushGraceful(isOnGitHub, options.remote);
 			},
 		},
 		...options.releaseDraft
 			? [{
 				title: 'Creating release draft on GitHub',
-				enabled: () => isOnGitHub === true,
+				enabled: isOnGitHub === true,
 				skip() {
 					if (options.dryRun) {
 						return '[Dry run] GitHub Releases draft will not be opened in dry-run mode.';
 					}
 				},
-				task: () => releaseTaskHelper(options, package_, packageManager),
+				// It can print a message, which must not be drawn over.
+				run: task => task.withTerminal(() => releaseTaskHelper(options, package_, packageManager)),
 			}]
 			: [],
-	], {
-		showSubtasks: false,
-		renderer: options.renderer ?? 'default',
-		clearOutput: !options.dryRun && !options.releaseDraftOnly,
-	});
+	]);
 
 	if (!options.runPublish) {
 		publishStatus = 'SUCCESS';
 	}
 
-	await tasks.run();
-
-	// Listr-update-renderer calls logUpdate.clear() on successful clearOutput,
-	// which skips logUpdate.done() and can leave the terminal cursor hidden.
-	restoreCursor();
+	await tasks.run({
+		renderer: options.renderer,
+		clearOnSuccess: !options.dryRun,
+	});
 
 	if (pushedObjects) {
 		console.error(`\n${logSymbols.error} ${pushedObjects.reason}`);

@@ -1,5 +1,4 @@
 import {execa} from 'execa';
-import {from, catchError} from 'rxjs';
 import Version from '../version.js';
 import handleNpmError from './handle-npm-error.js';
 import {npmNetworkTimeout, version as npmVersionCheck} from './util.js';
@@ -19,6 +18,6 @@ export const getEnable2faArguments = async (packageName, options) => {
 
 const enable2fa = async (packageName, options) => execa('npm', await getEnable2faArguments(packageName, options), {timeout: npmNetworkTimeout});
 
-export default function tryEnable2fa(task, packageName, options) {
-	return from(enable2fa(packageName, options)).pipe(catchError(error => handleNpmError(error, task, otp => enable2fa(packageName, {otp}))));
+export default async function tryEnable2fa(task, packageName, options) {
+	await enable2fa(packageName, options).catch(error => handleNpmError(error, task, otp => enable2fa(packageName, {otp})));
 }

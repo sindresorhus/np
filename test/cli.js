@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import sinon from 'sinon';
 import esmock from 'esmock';
 import {execa} from 'execa';
+import {ExitPromptError} from '@inquirer/core';
 import {npPackage, npRootDirectory as rootDirectory} from '../source/util.js';
 import {cliPasses} from './_helpers/verify-cli.js';
 
@@ -127,6 +128,27 @@ const loadCliImplementation = async overrides => esmock('../source/cli-implement
 	...overrides,
 });
 
+test('cli exits quietly through the exit hooks when a prompt is canceled', async () => {
+	const gracefulExitStub = sinon.stub();
+	const consoleErrorStub = sinon.stub(console, 'error');
+
+	try {
+		await loadCliImplementation({
+			'../source/ui.js': {default: sinon.stub().callsFake(async options => ({...options, confirm: true, version: '1.0.1'}))},
+			'../source/index.js': {default: sinon.stub().rejects(new ExitPromptError('User force closed the prompt with SIGINT'))},
+			'exit-hook': {
+				gracefulExit: gracefulExitStub,
+			},
+		});
+	} finally {
+		consoleErrorStub.restore();
+	}
+
+	// `gracefulExit` runs np's exit hook, which prints “Aborted!”. `process.exit` would skip it.
+	assert.ok(gracefulExitStub.calledOnceWithExactly(130));
+	assert.ok(consoleErrorStub.notCalled);
+});
+
 test('cli runs git preflight before prompting', async () => {
 	const verifyGitTasksStub = sinon.stub().rejects(new Error('Not on `main` branch.'));
 	const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: true, version: '1.0.1'}));
@@ -172,6 +194,51 @@ test('cli continues to the publish flow after successful git preflight', async (
 	assert.ok(npStub.calledOnce);
 	assert.ok(!('skipGitTasks' in npStub.firstCall.args[1]));
 	assert.ok(gracefulExitStub.notCalled);
+});
+
+test('cli stops when the publish is not confirmed', async () => {
+	const usernameStub = sinon.stub().resolves('sindresorhus');
+	const npStub = sinon.stub().resolves({name: 'test-package', version: '1.0.1'});
+	const gracefulExitStub = sinon.stub();
+
+	await loadCliImplementation({
+		meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: true}, pkg: npPackage})},
+		'../source/npm/util.js': {
+			isExternalRegistry: sinon.stub().returns(false),
+			isPackageNameAvailable: sinon.stub().resolves({isAvailable: false, isUnknown: false}),
+			getFilesToBePacked: sinon.stub().resolves([]),
+			username: usernameStub,
+			login: sinon.stub(),
+		},
+		'../source/index.js': {default: npStub},
+		'exit-hook': {gracefulExit: gracefulExitStub},
+	});
+
+	assert.ok(gracefulExitStub.calledOnceWithExactly());
+	// Only the warm-up checks the login, not the auth check before publishing.
+	assert.ok(usernameStub.calledOnce);
+	assert.ok(npStub.notCalled);
+});
+
+test('cli does not print that the package was published after a dry run', async () => {
+	const gracefulExitStub = sinon.stub();
+	const consoleLogStub = sinon.stub(console, 'log');
+
+	try {
+		await loadCliImplementation({
+			'../source/ui.js': {
+				default: sinon.stub().callsFake(async options => ({
+					...options, confirm: true, dryRun: true, version: '1.0.1',
+				})),
+			},
+			'exit-hook': {gracefulExit: gracefulExitStub},
+		});
+	} finally {
+		consoleLogStub.restore();
+	}
+
+	assert.ok(gracefulExitStub.calledOnceWithExactly());
+	assert.ok(consoleLogStub.args.flat().every(argument => !String(argument).includes('published')));
 });
 
 const rejectsStagedPublishing = (title, {id, version, minimumVersion}) => {
@@ -249,7 +316,8 @@ const acceptsStagedPublishing = (title, {id, version}) => {
 		assert.ok(!(consoleErrorStub.called));
 		assert.ok(gracefulExitStub.calledOnceWithExactly());
 		assert.ok(uiStub.calledOnce);
-		assert.ok(npStub.calledOnce);
+		// The publish was not confirmed.
+		assert.ok(npStub.notCalled);
 		assert.ok(execaStub.calledOnceWithExactly(id, ['--version']));
 	});
 };

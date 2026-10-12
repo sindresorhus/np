@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {firstValueFrom} from 'rxjs';
+import fs from 'node:fs/promises';
 import {getPackagePublishArguments, runPublish} from '../../source/npm/publish.js';
 
 test('no options set', () => {
@@ -53,14 +53,19 @@ test('options.stage with other flags', () => {
 });
 
 test('runPublish uses cwd option when provided', async () => {
-	const observable = runPublish(['echo', ['test']], {cwd: '/tmp'});
-	// Should complete successfully
-	await assert.doesNotReject(firstValueFrom(observable));
+	const {stdout} = await runPublish(['pwd', []], {cwd: '/tmp', task: {}});
+	assert.equal(await fs.realpath(stdout), await fs.realpath('/tmp'));
 });
 
-test('runPublish returns an Observable that completes successfully', async () => {
-	const observable = runPublish(['echo', ['test']]);
-	assert.notEqual(observable, undefined);
-	// Process should complete successfully with our default options
-	await assert.doesNotReject(firstValueFrom(observable));
+test('runPublish shows the output in the task', async () => {
+	const task = {};
+	await runPublish(['echo', ['test']], {task});
+	assert.equal(task.output, 'test\n');
+});
+
+test('runPublish includes stderr and stdout in the error message', async () => {
+	await assert.rejects(
+		runPublish(['node', ['--eval', 'process.stdout.write("Packing"); process.stderr.write("npm error 404 Not Found"); process.exitCode = 1;']], {task: {}}),
+		{message: /npm error 404 Not Found[\s\S]*Packing/v},
+	);
 });

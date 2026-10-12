@@ -1,19 +1,19 @@
-import Listr from 'listr';
 import * as git from './git-util.js';
+import {TaskList} from './task-list/index.js';
 
 const createGitTasks = options => {
 	const tasks = [
 		{
 			title: 'Check current branch',
-			task: () => git.verifyCurrentBranchIsReleaseBranch(options.branch),
+			run: () => git.verifyCurrentBranchIsReleaseBranch(options.branch),
 		},
 		{
 			title: 'Check local working tree',
-			task: () => git.verifyWorkingTreeIsClean(),
+			run: () => git.verifyWorkingTreeIsClean(),
 		},
 		{
 			title: 'Check remote history',
-			task: () => git.verifyRemoteHistoryIsClean(),
+			run: () => git.verifyRemoteHistoryIsClean(),
 		},
 	];
 
@@ -46,5 +46,5 @@ export const verifyGitTasks = async options => {
 };
 
 export default function gitTasks(options) {
-	return new Listr(createGitTasks(options));
+	return new TaskList(createGitTasks(options));
 }

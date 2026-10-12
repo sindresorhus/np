@@ -4,10 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import sinon from 'sinon';
 import esmock from 'esmock';
-// Must come before `rxjs` so both agree on the observable symbol, as `source/index.js` does.
-// eslint-disable-next-line import-x/no-unassigned-import
-import 'symbol-observable';
-import {of, throwError} from 'rxjs';
+import {ExitPromptError} from '@inquirer/core';
 import {npmConfig as packageManager} from '../source/package-manager/configs.js';
 import * as util from '../source/util.js';
 
@@ -73,16 +70,22 @@ npFails(
 	/New version 1\.0\.0(?:-beta)? should be higher than current version \d+\.\d+\.\d+/v,
 );
 
-// A `pipe` method here would make `listr` treat the result as a stream and call
-// `stream.once()` on it, which a plain object does not have.
-const fakeExecaReturn = () => Object.assign(
-	Promise.resolve({}),
-	{stdout: '', stderr: ''},
-);
+// `exec` only iterates the output lines of the subprocess.
+const fakeExecaReturn = () => ({
+	iterable: sinon.spy(async function * () {}),
+});
 
-const fakeObservableReturn = () => of('');
+const fakePublishError = error => Object.assign(new Error(error), {stdout: '', stderr: error});
 
-const fakeObservableReject = error => throwError(() => Object.assign(new Error(error), {stdout: '', stderr: error}));
+// A renderer that logs when it gives the terminal to a task.
+const createTerminalLogRenderer = log => () => ({
+	pause() {
+		log.push('pause');
+	},
+	resume() {
+		log.push('resume');
+	},
+});
 
 test('skip enabling 2FA if the package exists', async () => {
 	const enable2faStub = sinon.stub();
@@ -103,7 +106,7 @@ test('skip enabling 2FA if the package exists', async () => {
 		'../source/npm/enable-2fa.js': enable2faStub,
 		'../source/npm/publish.js': {
 			getPackagePublishArguments: sinon.stub().returns([]),
-			runPublish: sinon.stub().returns(fakeObservableReturn()),
+			runPublish: sinon.stub().resolves({}),
 		},
 	});
 
@@ -137,7 +140,7 @@ test('skip enabling 2FA if the `2fa` option is false', async () => {
 		'../source/npm/enable-2fa.js': enable2faStub,
 		'../source/npm/publish.js': {
 			getPackagePublishArguments: sinon.stub().returns([]),
-			runPublish: sinon.stub().returns(fakeObservableReturn()),
+			runPublish: sinon.stub().resolves({}),
 		},
 	});
 
@@ -172,7 +175,7 @@ test('skip enabling 2FA in trusted publishing (OIDC) contexts', async () => {
 		'../source/npm/enable-2fa.js': enable2faStub,
 		'../source/npm/publish.js': {
 			getPackagePublishArguments: sinon.stub().returns([]),
-			runPublish: sinon.stub().returns(fakeObservableReturn()),
+			runPublish: sinon.stub().resolves({}),
 		},
 		'../source/npm/oidc.js': {
 			getOidcProvider: () => 'github',
@@ -189,6 +192,111 @@ test('skip enabling 2FA in trusted publishing (OIDC) contexts', async () => {
 	}, npPackageResult));
 
 	assert.ok(enable2faStub.notCalled);
+});
+
+test('the OTP entered while publishing is used to enable 2FA, and the OTP handler gets a task that can take the terminal', async () => {
+	const log = [];
+	const enable2faStub = sinon.stub().resolves();
+	const getPackagePublishArgumentsStub = sinon.stub().returns([]);
+	// Like the real `runPublish`, show output in the task, so a missing `task` fails the test.
+	const runPublishStub = sinon.stub().callsFake(async (_arguments, {task}) => {
+		task.output = 'Publishing';
+
+		if (runPublishStub.callCount === 1) {
+			throw fakePublishError('npm error code EOTP');
+		}
+
+		return {};
+	});
+
+	/**
+	@type {typeof np}
+	*/
+	const npMock = await esmock('../source/index.js', {
+		del: {deleteAsync: sinon.stub()},
+		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
+		'../source/prerequisite-tasks.js': sinon.stub(),
+		'../source/git-tasks.js': sinon.stub(),
+		'../source/git-util.js': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
+		},
+		'../source/npm/enable-2fa.js': enable2faStub,
+		async '../source/npm/handle-npm-error.js'(_error, task, executor) {
+			await task.withTerminal(() => {
+				log.push('otp');
+			});
+
+			return executor('123456');
+		},
+		'../source/npm/publish.js': {
+			getPackagePublishArguments: getPackagePublishArgumentsStub,
+			runPublish: runPublishStub,
+		},
+		'../source/npm/oidc.js': {
+			getOidcProvider: () => undefined,
+		},
+	});
+
+	await assert.doesNotReject(npMock('1.0.0', {
+		...defaultOptions,
+		availability: {
+			isAvailable: true,
+			isUnknown: false,
+		},
+		'2fa': true,
+		renderer: createTerminalLogRenderer(log),
+	}, npPackageResult));
+
+	assert.deepEqual(log, ['pause', 'otp', 'resume']);
+	assert.equal(runPublishStub.callCount, 2);
+	assert.equal(getPackagePublishArgumentsStub.secondCall.args[0].otp, '123456');
+	assert.deepEqual(enable2faStub.firstCall.args.slice(1), [npPackageResult.package_.name, {otp: '123456'}]);
+});
+
+test('Ctrl+C at the OTP prompt aborts without rolling back', async () => {
+	const deleteTagStub = sinon.stub().resolves();
+	const exitPromptError = new ExitPromptError('User force closed the prompt with SIGINT');
+
+	/**
+	@type {typeof np}
+	*/
+	const npMock = await esmock('../source/index.js', {
+		del: {deleteAsync: sinon.stub()},
+		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
+		'../source/prerequisite-tasks.js': sinon.stub(),
+		'../source/git-tasks.js': sinon.stub(),
+		'../source/git-util.js': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
+			latestTag: sinon.stub().resolves('v1.0.0'),
+			deleteTag: deleteTagStub,
+			removeLastCommit: sinon.stub().resolves(),
+		},
+		'../source/npm/enable-2fa.js': sinon.stub(),
+		async '../source/npm/handle-npm-error.js'() {
+			throw exitPromptError;
+		},
+		'../source/npm/publish.js': {
+			getPackagePublishArguments: sinon.stub().returns([]),
+			runPublish: sinon.stub().rejects(fakePublishError('npm error code EOTP')),
+		},
+		'../source/util.js': {
+			...util,
+			readPackage: sinon.stub().resolves({package_: {version: '1.0.0'}}),
+			getTagVersionPrefix: sinon.stub().resolves('v'),
+		},
+	});
+
+	// The CLI exits quietly on `ExitPromptError`, as it does for every other prompt.
+	await assert.rejects(
+		npMock('1.0.0', defaultOptions, {package_: {version: '0.9.0'}, rootDirectory: process.cwd()}),
+		exitPromptError,
+	);
+
+	assert.ok(deleteTagStub.notCalled);
 });
 
 test('rollback is called when publish fails', async () => {
@@ -214,7 +322,7 @@ test('rollback is called when publish fails', async () => {
 		'../source/npm/enable-2fa.js': sinon.stub(),
 		'../source/npm/publish.js': {
 			getPackagePublishArguments: sinon.stub().returns([]),
-			runPublish: sinon.stub().returns(fakeObservableReject('npm ERR! publish failed')),
+			runPublish: sinon.stub().rejects(fakePublishError('npm ERR! publish failed')),
 		},
 		'../source/util.js': {
 			...util,
@@ -234,21 +342,104 @@ test('rollback is called when publish fails', async () => {
 	assert.ok(removeLastCommitStub.calledOnce, 'removeLastCommit should be called once');
 });
 
-test('restores cursor after successful publish', async () => {
-	const stderrWriteStub = sinon.stub().returns(true);
+test('the rollback after a failed publish has the terminal, so its output is not drawn over', async () => {
+	const log = [];
 
 	/**
 	@type {typeof np}
 	*/
 	const npMock = await esmock('../source/index.js', {
-		'node:process': {
-			stderr: {
-				isTTY: true,
-				write: stderrWriteStub,
-			},
-		},
 		del: {deleteAsync: sinon.stub()},
 		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
+		'../source/prerequisite-tasks.js': sinon.stub(),
+		'../source/git-tasks.js': sinon.stub(),
+		'../source/git-util.js': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
+			latestTag: sinon.stub().resolves('v1.0.0'),
+			async deleteTag() {
+				log.push('deleteTag');
+			},
+			removeLastCommit: sinon.stub().resolves(),
+		},
+		'../source/npm/enable-2fa.js': sinon.stub(),
+		'../source/npm/publish.js': {
+			getPackagePublishArguments: sinon.stub().returns([]),
+			runPublish: sinon.stub().rejects(fakePublishError('npm ERR! publish failed')),
+		},
+		'../source/util.js': {
+			...util,
+			readPackage: sinon.stub().resolves({package_: {version: '1.0.0'}}),
+			getTagVersionPrefix: sinon.stub().resolves('v'),
+		},
+	});
+
+	const consoleLogStub = sinon.stub(console, 'log');
+
+	try {
+		await assert.rejects(npMock('1.0.0', {
+			...defaultOptions,
+			renderer: createTerminalLogRenderer(log),
+		}, {package_: {version: '0.9.0'}, rootDirectory: process.cwd()}));
+	} finally {
+		consoleLogStub.restore();
+	}
+
+	assert.deepEqual(log, ['pause', 'deleteTag', 'resume']);
+});
+
+test('the release draft task has the terminal, so its message is not drawn over', async () => {
+	const log = [];
+	const releaseTaskHelper = async () => {
+		log.push('release');
+	};
+
+	/**
+	@type {typeof np}
+	*/
+	const npMock = await esmock('../source/index.js', {
+		del: {deleteAsync: sinon.stub()},
+		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
+		'../source/prerequisite-tasks.js': sinon.stub(),
+		'../source/git-tasks.js': sinon.stub(),
+		'../source/git-util.js': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
+		},
+		'../source/release-task-helper.js': releaseTaskHelper,
+	});
+
+	await npMock('1.0.0', {
+		...defaultOptions,
+		cleanup: false,
+		tests: false,
+		runPublish: false,
+		releaseDraft: true,
+		repoUrl: 'https://github.com/sindresorhus/np',
+		renderer: createTerminalLogRenderer(log),
+	}, npPackageResult);
+
+	assert.deepEqual(log, ['pause', 'release', 'resume']);
+});
+
+test('a failing test command stops the release before publishing', async () => {
+	const runPublishStub = sinon.stub().resolves({});
+	const execaStub = sinon.stub().returns(fakeExecaReturn());
+	execaStub.withArgs('npm', ['run', 'test']).returns({
+		async * iterable() {
+			yield 'not ok 1 - adds numbers';
+			throw new Error('Command failed with exit code 1: npm run test');
+		},
+	});
+
+	/**
+	@type {typeof np}
+	*/
+	const npMock = await esmock('../source/index.js', {
+		del: {deleteAsync: sinon.stub()},
+		execa: {execa: execaStub},
 		'../source/prerequisite-tasks.js': sinon.stub(),
 		'../source/git-tasks.js': sinon.stub(),
 		'../source/git-util.js': {
@@ -259,18 +450,94 @@ test('restores cursor after successful publish', async () => {
 		'../source/npm/enable-2fa.js': sinon.stub(),
 		'../source/npm/publish.js': {
 			getPackagePublishArguments: sinon.stub().returns([]),
-			runPublish: sinon.stub().returns(fakeObservableReturn()),
+			runPublish: runPublishStub,
 		},
 	});
 
-	await npMock('1.0.0', {
-		...defaultOptions,
-		cleanup: false,
-		tests: false,
-		'2fa': false,
-	}, npPackageResult);
+	await assert.rejects(
+		npMock('1.0.0', {...defaultOptions, cleanup: false}, npPackageResult),
+		{message: 'Command failed with exit code 1: npm run test'},
+	);
 
-	assert.ok(stderrWriteStub.calledWithExactly('\u{1B}[?25h'));
+	assert.ok(runPublishStub.notCalled);
+});
+
+test('the task list is cleared after success, except in a dry run', async () => {
+	const npMock = await esmock('../source/index.js', {
+		del: {deleteAsync: sinon.stub()},
+		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
+		'../source/prerequisite-tasks.js': sinon.stub(),
+		'../source/git-tasks.js': sinon.stub(),
+		'../source/git-util.js': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
+		},
+	});
+
+	const getClearOnSuccess = async options => {
+		let clearOnSuccess;
+
+		await npMock('1.0.0', {
+			...defaultOptions,
+			runPublish: false,
+			...options,
+			renderer(rendererOptions) {
+				({clearOnSuccess} = rendererOptions);
+				return {};
+			},
+		}, npPackageResult);
+
+		return clearOnSuccess;
+	};
+
+	assert.equal(await getClearOnSuccess({}), true);
+	// The dry run lines must stay.
+	assert.equal(await getClearOnSuccess({dryRun: true}), false);
+});
+
+test('publish error does not claim the project was rolled back when rollback fails', async () => {
+	const consoleLogStub = sinon.stub(console, 'log');
+
+	/**
+	@type {typeof np}
+	*/
+	const npMock = await esmock('../source/index.js', {
+		del: {deleteAsync: sinon.stub()},
+		execa: {execa: sinon.stub().returns(fakeExecaReturn())},
+		'../source/prerequisite-tasks.js': sinon.stub(),
+		'../source/git-tasks.js': sinon.stub(),
+		'../source/git-util.js': {
+			hasUpstream: sinon.stub().returns(true),
+			pushGraceful: sinon.stub(),
+			verifyWorkingTreeIsClean: sinon.stub(),
+			latestTag: sinon.stub().rejects(new Error('No tags found')),
+		},
+		'../source/npm/enable-2fa.js': sinon.stub(),
+		'../source/npm/publish.js': {
+			getPackagePublishArguments: sinon.stub().returns([]),
+			runPublish: sinon.stub().rejects(fakePublishError('npm ERR! publish failed')),
+		},
+		'../source/util.js': {
+			...util,
+			getTagVersionPrefix: sinon.stub().resolves('v'),
+		},
+	});
+
+	try {
+		await assert.rejects(
+			npMock('1.0.0', defaultOptions, {package_: {version: '0.9.0'}, rootDirectory: process.cwd()}),
+			error => {
+				assert.match(error.message, /Error publishing package/v);
+				assert.doesNotMatch(error.message, /rolled back/v);
+				return true;
+			},
+		);
+
+		assert.ok(consoleLogStub.calledWithMatch(/Couldn't roll back because of the following error:\nError: No tags found/v));
+	} finally {
+		consoleLogStub.restore();
+	}
 });
 
 test('publish uses rootDirectory from context as cwd', async () => {
@@ -296,7 +563,7 @@ test('publish uses rootDirectory from context as cwd', async () => {
 			getPackagePublishArguments: sinon.stub().returns([]),
 			runPublish: sinon.stub().callsFake((_arguments, options) => {
 				publishCwd = options?.cwd;
-				return fakeObservableReturn();
+				return Promise.resolve({});
 			}),
 		},
 	});
@@ -330,7 +597,7 @@ test('rootDirectory remains the default working directory when projectDirectory 
 			getPackagePublishArguments: sinon.stub().returns([]),
 			runPublish: sinon.stub().callsFake((_arguments, options) => {
 				publishCwd = options?.cwd;
-				return fakeObservableReturn();
+				return Promise.resolve({});
 			}),
 		},
 		'../source/package-manager/index.js': {
@@ -342,8 +609,8 @@ test('rootDirectory remains the default working directory when projectDirectory 
 	await npMock('1.0.0', defaultOptions, {package_: npPackageResult.package_, rootDirectory});
 
 	assert.ok(deleteAsyncStub.calledOnceWithExactly(path.join(rootDirectory, 'node_modules')));
-	assert.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: rootDirectory}]);
-	assert.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: rootDirectory}]);
+	assert.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: rootDirectory, all: true}]);
+	assert.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: rootDirectory, all: true}]);
 	assert.equal(publishCwd, rootDirectory);
 });
 
@@ -375,7 +642,9 @@ test('install uses projectDirectory from context as cwd', async () => {
 		dryRun: false,
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory: contentsDirectory});
 
-	assert.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: projectDirectory}]);
+	assert.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: projectDirectory, all: true}]);
+	// The task shows the output lines of both stdout and stderr.
+	assert.deepEqual(execaStub.firstCall.returnValue.iterable.firstCall.args, [{from: 'all'}]);
 });
 
 test('cleanup uses projectDirectory from context', async () => {
@@ -441,7 +710,7 @@ test('tests use projectDirectory from context as cwd', async () => {
 		dryRun: false,
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory: contentsDirectory});
 
-	assert.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: projectDirectory}]);
+	assert.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: projectDirectory, all: true}]);
 });
 
 test('no-cleanup still uses lockfile-aware install command', async () => {
@@ -475,7 +744,7 @@ test('no-cleanup still uses lockfile-aware install command', async () => {
 		dryRun: false,
 	}, npPackageResult);
 
-	assert.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--engine-strict'], {cwd: npPackageResult.rootDirectory}]);
+	assert.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--engine-strict'], {cwd: npPackageResult.rootDirectory, all: true}]);
 });
 
 test('contents mode looks up lockfile in projectDirectory and installs there', async () => {
@@ -512,7 +781,7 @@ test('contents mode looks up lockfile in projectDirectory and installs there', a
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory});
 
 	assert.ok(findLockfileStub.calledOnceWithExactly(projectDirectory, packageManager));
-	assert.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--engine-strict'], {cwd: projectDirectory}]);
+	assert.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--engine-strict'], {cwd: projectDirectory, all: true}]);
 });
 
 test('contents mode keeps cleanup, install, and tests in projectDirectory while publishing from rootDirectory', async () => {
@@ -540,7 +809,7 @@ test('contents mode keeps cleanup, install, and tests in projectDirectory while 
 			getPackagePublishArguments: sinon.stub().returns([]),
 			runPublish: sinon.stub().callsFake((_arguments, options) => {
 				publishCwd = options?.cwd;
-				return fakeObservableReturn();
+				return Promise.resolve({});
 			}),
 		},
 		'../source/package-manager/index.js': {
@@ -552,8 +821,8 @@ test('contents mode keeps cleanup, install, and tests in projectDirectory while 
 	await npMock('1.0.0', defaultOptions, {package_: npPackageResult.package_, projectDirectory, rootDirectory});
 
 	assert.ok(deleteAsyncStub.calledOnceWithExactly(path.join(projectDirectory, 'node_modules')));
-	assert.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: projectDirectory}]);
-	assert.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: projectDirectory}]);
+	assert.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: projectDirectory, all: true}]);
+	assert.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: projectDirectory, all: true}]);
 	assert.equal(publishCwd, rootDirectory);
 });
 

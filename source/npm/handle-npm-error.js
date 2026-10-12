@@ -1,47 +1,43 @@
-import chalk from 'chalk';
-import {
-	throwError,
-	catchError,
-	from,
-	mergeMap,
-} from 'rxjs';
+import process from 'node:process';
+import otpPrompt from './otp-prompt.js';
 
-export default function handleNpmError(error, task, message, executor) {
-	if (typeof message === 'function') {
-		executor = message;
-		message = undefined;
-	}
+export default async function handleNpmError(error, task, executor) {
+	let message = 'Enter OTP:';
 
 	// `one-time pass` is for npm and `Two factor authentication` is for Yarn.
-	if (
-		error.stderr.includes('one-time pass') // Npm
-		|| error.stdout.includes('Two factor authentication') // Yarn v1
-		|| error.stdout.includes('One-time password:') // Yarn berry
+	while (
+		error.stderr?.includes('one-time pass') // Npm
+		|| error.stdout?.includes('Two factor authentication') // Yarn v1
+		|| error.stdout?.includes('One-time password:') // Yarn berry
 	) {
-		const {title} = task;
-		task.title = `${title} ${chalk.yellow('(waiting for input…)')}`;
+		// Nobody can enter an OTP without a terminal, so fail instead of waiting forever. Check stdin, as the output can go to a pipe, like with `np | tee log`, while the user can still type.
+		// Not `is-interactive`, as it is `false` when the `CI` environment variable is set, even in a terminal.
+		if (!process.stdin.isTTY) {
+			break;
+		}
 
-		const promptForOtp = listrInput => listrInput('Enter OTP:', {
-			done(otp) {
-				task.title = title;
-				return executor(otp);
-			},
-			autoSubmit: value => value.length === 6,
-		}).pipe(catchError(otpError => handleNpmError(otpError, task, 'OTP was incorrect, try again:', executor)));
+		// Get the OTP and then run the executor, so the prompt is closed before the command runs again, and a failed retry goes back through the OTP loop.
+		// eslint-disable-next-line no-await-in-loop
+		const otp = await task.withTerminal(() => otpPrompt({message}, {clearPromptOnDone: true}));
 
-		// `listr-input` is slow to load, so only load it when an OTP is actually needed.
-		return from(import('listr-input')).pipe(mergeMap(({default: listrInput}) => promptForOtp(listrInput)));
+		try {
+			// eslint-disable-next-line no-await-in-loop
+			return await executor(otp);
+		} catch (otpError) {
+			error = otpError;
+			message = 'OTP was incorrect, try again:';
+		}
 	}
 
 	// Attempting to privately publish a scoped package without the correct npm plan
 	// https://stackoverflow.com/a/44862841/10292952
 	if (
 		error.code === 402
-		|| error.stderr.includes('402 Payment Required') // Npm/pnpm (prefixed with `npm ERR!` before npm 10 and `npm error` since)
-		|| error.stdout.includes('Response Code: 402 (Payment Required)') // Yarn Berry
+		|| error.stderr?.includes('402 Payment Required') // Npm/pnpm (prefixed with `npm ERR!` before npm 10 and `npm error` since)
+		|| error.stdout?.includes('Response Code: 402 (Payment Required)') // Yarn Berry
 	) {
 		throw new Error('You cannot publish a scoped package privately without a paid plan. Did you mean to publish publicly?');
 	}
 
-	return throwError(() => error);
+	throw error;
 }

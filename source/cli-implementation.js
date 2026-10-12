@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-// Important: This must be the first import. It defines `Symbol.observable` before any copy of rxjs loads, so np's rxjs and the rxjs 6 inside the lazily loaded `listr-input` agree on the symbol. Without it, `listr` polyfills the symbol at run time, after np's rxjs has loaded, and the OTP prompt then fails with “You provided an invalid object where a stream was expected”.
-// eslint-disable-next-line import-x/no-unassigned-import, import-x/order
-import 'symbol-observable';
 import path from 'node:path';
 import process from 'node:process';
 import logSymbols from 'log-symbols';
@@ -284,14 +281,15 @@ const ensureAuthenticated = async package_ => {
 	}
 };
 
-try {
+const run = async () => {
 	const {options, projectDirectory, rootDirectory, package_} = await getOptions();
 
 	if (!options.confirm) {
 		gracefulExit();
+		return;
 	}
 
-	// Check authentication early, before Listr starts (so login can be interactive)
+	// Check authentication early, before the task list starts (so login can be interactive)
 	if (options.runPublish) {
 		await ensureAuthenticated(package_);
 	}
@@ -301,6 +299,7 @@ try {
 
 	if (options.dryRun || options.releaseDraftOnly) {
 		gracefulExit();
+		return;
 	}
 
 	if (options.stage && options.runPublish) {
@@ -313,11 +312,16 @@ try {
 	} else {
 		console.log(`\n ${newPackage.name} ${newPackage.version} published 🎉`);
 	}
-} catch (error) {
-	if (error.name === 'ExitPromptError') {
-		process.exit(0);
-	}
+};
 
-	console.error(`\n${logSymbols.error} ${error?.stack ?? error}`);
-	gracefulExit(1);
+try {
+	await run();
+} catch (error) {
+	if (error?.name === 'ExitPromptError') {
+		// Run the exit hooks, so np can print that it was aborted. Exit with 130 like for SIGINT, as the prompt was canceled with Ctrl+C.
+		gracefulExit(130);
+	} else {
+		console.error(`\n${logSymbols.error} ${error?.stack ?? error}`);
+		gracefulExit(1);
+	}
 }

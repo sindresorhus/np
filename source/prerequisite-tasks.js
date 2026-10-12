@@ -1,5 +1,4 @@
 import process from 'node:process';
-import Listr from 'listr';
 import {execa} from 'execa';
 import semver from 'semver';
 import Version from './version.js';
@@ -7,6 +6,7 @@ import * as util from './util.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
 import {getOidcProvider} from './npm/oidc.js';
+import {TaskList} from './task-list/index.js';
 
 export default function prerequisiteTasks(input, package_, options, {packageManager, rootDirectory}) {
 	const isExternalRegistry = npm.isExternalRegistry(package_);
@@ -19,25 +19,25 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 	const tasks = [
 		{
 			title: 'Ping npm registry',
-			enabled: () => !package_.private && !isExternalRegistry,
-			task: async () => npm.checkConnection(),
+			enabled: !package_.private && !isExternalRegistry,
+			run: async () => npm.checkConnection(),
 		},
 		{
 			title: `Check ${packageManager.cli} version`,
-			async task() {
+			async run() {
 				const {stdout: version} = await execa(packageManager.cli, ['--version']);
 				util.validateEngineVersionSatisfies(packageManager.cli, version);
 			},
 		},
 		{
 			title: 'Verify user is authenticated',
-			enabled: () => process.env.NODE_ENV !== 'test' && !package_.private,
+			enabled: process.env.NODE_ENV !== 'test' && !package_.private,
 			skip() {
 				if (getOidcProvider()) {
 					return 'Environment support for OIDC authentication detected - Skipping whoami check';
 				}
 			},
-			async task() {
+			async run() {
 				// Use the exact publish registry (if any) so this check can't disagree with the early auth check. See #764.
 				const externalRegistry = package_.publishConfig?.registry;
 				const username = await npm.username({externalRegistry});
@@ -56,21 +56,21 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 		},
 		{
 			title: 'Check git version',
-			task: async () => git.verifyRecentGitVersion(),
+			run: async () => git.verifyRecentGitVersion(),
 		},
 		{
 			title: 'Check git user configuration',
-			task: async () => git.verifyUserConfigIsSet(),
+			run: async () => git.verifyUserConfigIsSet(),
 		},
 		{
 			title: 'Validate version',
-			task() {
+			run() {
 				getNewVersion();
 			},
 		},
 		{
 			title: 'Check for pre-release version',
-			task() {
+			run() {
 				if (!package_.private && getNewVersion().isPrerelease() && !options.tag) {
 					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 				}
@@ -78,8 +78,8 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 		},
 		{
 			title: 'Check for Node.js engine support drop',
-			enabled: () => !options.yolo && !package_.private,
-			async task() {
+			enabled: !options.yolo && !package_.private,
+			async run() {
 				const newVersion = getNewVersion();
 				const publishedEngines = await npm.getPublishedPackageEngines(package_);
 
@@ -117,8 +117,8 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 		},
 		{
 			title: 'Verify package entry points',
-			enabled: () => !options.yolo,
-			async task() {
+			enabled: !options.yolo,
+			async run() {
 				// Read the setting from the package manager that performs the publish. Yarn Berry doesn't expose the `ignore-scripts` setting, so its publish continues to trust lifecycle scripts.
 				const ignoreScripts = packageManager.ignoreScriptsCli
 					? await npm.isIgnoreScriptsEnabled(rootDirectory, packageManager.ignoreScriptsCli)
@@ -131,8 +131,9 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 		},
 		{
 			title: 'Check git remote and tag existence',
-			async task() {
+			async run() {
 				// Both commands inherit stdin for SSH passphrase prompts, so they must not run at the same time as each other. Keeping them in one task keeps them sequential while the other tasks run concurrently.
+				// Limitation: The task list keeps drawing during the commands, so it can draw over an SSH passphrase prompt.
 				await git.verifyRemoteIsValid(options.remote);
 
 				// Fetch is needed so `tagExistsOnRemote` can check local refs. Don't replace with `ls-remote`.
@@ -146,5 +147,5 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 	];
 
 	// Most of these checks are network round trips, so running them concurrently cuts the total time to the slowest one.
-	return new Listr(tasks, {concurrent: true});
+	return new TaskList(tasks, {concurrent: true});
 }
