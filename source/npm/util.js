@@ -5,6 +5,7 @@ import {execa} from 'execa';
 import npmName from 'npm-name';
 import pMemoize from 'p-memoize';
 import chalk from 'chalk-template';
+import semver from 'semver';
 import * as util from '../util.js';
 
 export const version = async () => {
@@ -376,7 +377,9 @@ export const verifyPackageEntryPoints = async (package_, rootDirectory, {ignoreS
 };
 
 export const getPublishedPackageEngines = async package_ => {
-	const arguments_ = ['view', '--json', package_.name, 'engines'];
+	// Maintenance releases must compare against their own version; prerelease promotions still compare against the latest stable release.
+	const packageSpec = semver.prerelease(package_.version) ? package_.name : `${package_.name}@${package_.version}`;
+	const arguments_ = ['view', '--json', packageSpec, 'engines'];
 
 	if (package_.publishConfig?.registry) {
 		arguments_.push('--registry', package_.publishConfig.registry);
@@ -394,7 +397,7 @@ export const getPublishedPackageEngines = async package_ => {
 	} catch (error) {
 		throwIfNpmTimeout(error);
 
-		// Package doesn't exist yet (first publish)
+		// Package or version doesn't exist yet (first publish)
 		if (error.stderr?.includes('E404')) {
 			return undefined;
 		}

@@ -73,7 +73,7 @@ createFixture('private package: should disable task pinging npm registry', [{
 });
 
 createFixture('external registry: should disable task pinging npm registry', [{
-	command: 'npm view --json test engines --registry http://my.io',
+	command: 'npm view --json test@1.0.0 engines --registry http://my.io',
 	stdout: '',
 }, {
 	command: 'git config user.name',
@@ -625,7 +625,7 @@ createFixture('should skip authentication check when OIDC is detected', [{
 });
 
 createFixture('should fail when dropping Node.js support in a minor release', [{
-	command: 'npm view --json test engines',
+	command: 'npm view --json test@1.0.0 engines',
 	stdout: JSON.stringify({node: '>=16'}),
 }, {
 	command: 'git config user.name',
@@ -651,7 +651,7 @@ createFixture('should fail when dropping Node.js support in a minor release', [{
 createFixture(
 	'should fail when dropping Node.js support with array-wrapped engines (npm 12)',
 	[{
-		command: 'npm view --json test engines',
+		command: 'npm view --json test@1.0.0 engines',
 		stdout: JSON.stringify([{node: '>=16'}]),
 	}, {
 		command: 'git config user.name',
@@ -677,7 +677,7 @@ createFixture(
 );
 
 createFixture('should fail when dropping Node.js support in a patch release', [{
-	command: 'npm view --json test engines',
+	command: 'npm view --json test@1.0.0 engines',
 	stdout: JSON.stringify({node: '>=16'}),
 }, {
 	command: 'git config user.name',
@@ -701,7 +701,7 @@ createFixture('should fail when dropping Node.js support in a patch release', [{
 });
 
 createFixture('should not fail when dropping Node.js support in a major release', [{
-	command: 'npm view --json test engines',
+	command: 'npm view --json test@1.0.0 engines',
 	stdout: JSON.stringify({node: '>=16'}),
 }, {
 	command: 'git config user.name',
@@ -720,7 +720,7 @@ createFixture('should not fail when dropping Node.js support in a major release'
 });
 
 createFixture('should not fail when dropping Node.js support in a premajor release', [{
-	command: 'npm view --json test engines',
+	command: 'npm view --json test@1.0.0 engines',
 	stdout: JSON.stringify({node: '>=16'}),
 }, {
 	command: 'git config user.name',
@@ -741,7 +741,7 @@ createFixture('should not fail when dropping Node.js support in a premajor relea
 createFixture(
 	'should not fail when dropping Node.js support in a pre-1.0.0 minor release',
 	[{
-		command: 'npm view --json test engines',
+		command: 'npm view --json test@0.1.0 engines',
 		stdout: JSON.stringify({node: '>=16'}),
 	}, {
 		command: 'git config user.name',
@@ -762,7 +762,7 @@ createFixture(
 );
 
 createFixture('should not fail when engines.node was not previously set', [{
-	command: 'npm view --json test engines',
+	command: 'npm view --json test@1.0.0 engines',
 	stdout: JSON.stringify({}),
 }, {
 	command: 'git config user.name',
@@ -781,7 +781,7 @@ createFixture('should not fail when engines.node was not previously set', [{
 });
 
 createFixture('should not fail when first publishing a package', [{
-	command: 'npm view --json test engines',
+	command: 'npm view --json test@0.0.0 engines',
 	exitCode: 1,
 	stderr: 'E404 Not Found',
 }, {
@@ -801,7 +801,7 @@ createFixture('should not fail when first publishing a package', [{
 });
 
 createFixture('should not fail when local package has no engines.node', [{
-	command: 'npm view --json test engines',
+	command: 'npm view --json test@1.0.0 engines',
 	stdout: JSON.stringify({node: '>=16'}),
 }, {
 	command: 'git config user.name',
@@ -849,7 +849,7 @@ createFixture(
 );
 
 createFixture('should not fail when Node.js minimum version stays the same', [{
-	command: 'npm view --json test engines',
+	command: 'npm view --json test@1.0.0 engines',
 	stdout: JSON.stringify({node: '>=18'}),
 }, {
 	command: 'git config user.name',
@@ -868,7 +868,7 @@ createFixture('should not fail when Node.js minimum version stays the same', [{
 });
 
 createFixture('should not fail when Node.js minimum version is lowered', [{
-	command: 'npm view --json test engines',
+	command: 'npm view --json test@1.0.0 engines',
 	stdout: JSON.stringify({node: '>=18'}),
 }, {
 	command: 'git config user.name',
@@ -887,7 +887,7 @@ createFixture('should not fail when Node.js minimum version is lowered', [{
 });
 
 createFixture('should fail when dropping Node.js support in a preminor release', [{
-	command: 'npm view --json test engines',
+	command: 'npm view --json test@1.0.0 engines',
 	stdout: JSON.stringify({node: '>=16'}),
 }, {
 	command: 'git config user.name',
@@ -911,7 +911,7 @@ createFixture('should fail when dropping Node.js support in a preminor release',
 });
 
 createFixture('should fail when dropping Node.js support in a prepatch release', [{
-	command: 'npm view --json test engines',
+	command: 'npm view --json test@1.0.0 engines',
 	stdout: JSON.stringify({node: '>=16'}),
 }, {
 	command: 'git config user.name',
@@ -990,7 +990,7 @@ createFixture(
 createFixture(
 	'external registry: should skip engine check when registry returns error',
 	[{
-		command: 'npm view --json test engines --registry http://my.io',
+		command: 'npm view --json test@1.0.0 engines --registry http://my.io',
 		exitCode: 1,
 		stderr: 'E405 Method Not Allowed',
 	}, {
@@ -1019,3 +1019,27 @@ createFixture(
 		await assert.doesNotReject(run(tasks));
 	},
 );
+
+for (const [version, bump, shouldReject] of [['0.1.1', 'patch', true], ['0.1.1-0', 'prepatch', true], ['0.2.0-0', 'preminor', false]]) {
+	createFixture(`Node.js support drop in a pre-1.0.0 ${bump} release ${shouldReject ? 'fails' : 'passes'}`, [{
+		command: 'npm view --json test@0.1.0 engines',
+		stdout: JSON.stringify({node: '>=16'}),
+	}, {
+		command: 'git config user.name',
+		stdout: 'Test User',
+	}, {
+		command: 'git config user.email',
+		stdout: 'test@example.com',
+	}, {
+		command: `git rev-parse --quiet --verify refs/tags/v${version}`,
+		stdout: '',
+	}], async ({testedModule: prerequisiteTasks}) => {
+		const tasks = prerequisiteTasks(version, {name: 'test', version: '0.1.0', engines: {node: '>=18'}}, {tag: 'next'}, {packageManager: npmConfig});
+		if (shouldReject) {
+			await assert.rejects(run(tasks), {message: `Raising minimum Node.js version from 16.0.0 to 18.0.0 requires a major version bump. The current release is a ${bump} bump.`});
+			assertTaskFailed(tasks, 'Check for Node.js engine support drop');
+		} else {
+			await assert.doesNotReject(run(tasks));
+		}
+	});
+}

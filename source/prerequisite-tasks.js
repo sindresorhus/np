@@ -109,7 +109,8 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 
 					// Only major and premajor releases are allowed to drop Node.js support
 					// For pre-1.0.0 packages, minor bumps are considered breaking changes per semver
-					if (diff !== 'major' && diff !== 'premajor' && diff !== 'prerelease' && semver.major(package_.version) >= 1) {
+					const isPre1MinorRelease = semver.major(package_.version) === 0 && (diff === 'minor' || diff === 'preminor');
+					if (diff !== 'major' && diff !== 'premajor' && diff !== 'prerelease' && !isPre1MinorRelease) {
 						throw new Error(`Raising minimum Node.js version from ${publishedMinimum} to ${localMinimum} requires a major version bump. The current release is a ${diff} bump.`);
 					}
 				}
