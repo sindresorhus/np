@@ -13,7 +13,8 @@ export default async function getConfig(rootDirectory) {
 
 	const explorer = cosmiconfig('np', {
 		searchPlaces,
-		stopDir: rootDirectory,
+		// A global search strategy would also load the operating system global config for local installations.
+		searchStrategy: 'none',
 	});
 
 	// Always read project config
@@ -23,7 +24,7 @@ export default async function getConfig(rootDirectory) {
 	if (isInstalledGlobally) {
 		const globalExplorer = cosmiconfig('np', {
 			searchPlaces: searchPlaces.filter(place => place !== 'package.json'),
-			stopDir: os.homedir(),
+			searchStrategy: 'none',
 		});
 
 		const {config: globalConfig} = (await globalExplorer.search(os.homedir())) ?? {};

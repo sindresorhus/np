@@ -46,7 +46,6 @@
 		"github-url-from-git": "^1.5.0",
 		"hosted-git-info": "^10.1.1",
 		"ignore-walk": "^9.0.0",
-		"import-local": "^3.2.0",
 		"inquirer": "^14.2.2",
 		"is-installed-globally": "^1.0.1",
 		"is-interactive": "^2.0.0",
