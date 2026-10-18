@@ -191,6 +191,12 @@ async function getOptions() {
 	}
 
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !package_.private;
+	if (runPublish && flags.provenance && packageManager.cli === 'yarn') {
+		const {stdout: yarnVersion} = await execa(packageManager.cli, ['--version']);
+		if (!semver.valid(yarnVersion) || semver.lt(yarnVersion, '4.9.0')) {
+			throw new Error('Publishing with provenance requires Yarn 4.9.0 or later. Please upgrade Yarn or disable provenance.');
+		}
+	}
 
 	// Start the registry lookup now so it overlaps with the Git checks below, which also wait on the network.
 	const availabilityPromise = runPublish

@@ -111,7 +111,7 @@ Currently, these are the flags you can configure:
 - `2fa` - Enable 2FA on new packages (`true` by default) (setting this to `false` is not recommended).
 - `message` - The commit message used for the version bump. Any `%s` in the string will be replaced with the new version. By default, npm uses `%s` and Yarn uses `v%s`.
 - `packageManager` - Set the package manager to be used. Defaults to the [`packageManager`](https://nodejs.org/api/packages.html#packagemanager) or [`devEngines.packageManager`](https://docs.npmjs.com/cli/v11/configuring-npm/package-json#devengines) field in package.json, so only use if you can't update package.json for some reason.
-- `provenance` - Publish with [npm provenance statements](https://docs.npmjs.com/generating-provenance-statements) (`false` by default). Requires npm 9.5.0+ and a supported CI environment (GitHub Actions or GitLab CI/CD).
+- `provenance` - Publish with [npm provenance statements](https://docs.npmjs.com/generating-provenance-statements) (`false` by default). Requires npm 9.5.0+ and a supported CI environment (GitHub Actions or GitLab CI/CD). With Yarn, this requires version 4.9.0 or later.
 - `remote` - Git remote to push tags and commits to. Useful when publishing from a fork where `origin` is your fork and `upstream` is the main repository.
 - `stage` - Use [staged publishing](https://docs.npmjs.com/staged-publishing) (`false` by default). Instead of going live immediately, the version is uploaded to a staging queue and `np` prints the `stage approve` command to run when you're ready to promote it (which requires 2FA and can be done later, for example from your phone or npmjs.com). Only supported with npm and pnpm, and only for packages that already exist on the registry.
 
