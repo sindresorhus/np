@@ -744,7 +744,7 @@ test('no-cleanup still uses lockfile-aware install command', async () => {
 		dryRun: false,
 	}, npPackageResult);
 
-	assert.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--engine-strict'], {cwd: npPackageResult.rootDirectory, all: true}]);
+	assert.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--include=dev', '--engine-strict'], {cwd: npPackageResult.rootDirectory, all: true}]);
 });
 
 test('contents mode looks up lockfile in projectDirectory and installs there', async () => {
@@ -781,7 +781,7 @@ test('contents mode looks up lockfile in projectDirectory and installs there', a
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory});
 
 	assert.ok(findLockfileStub.calledOnceWithExactly(projectDirectory, packageManager));
-	assert.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--engine-strict'], {cwd: projectDirectory, all: true}]);
+	assert.deepEqual(execaStub.firstCall.args, ['npm', ['ci', '--include=dev', '--engine-strict'], {cwd: projectDirectory, all: true}]);
 });
 
 test('contents mode keeps cleanup, install, and tests in projectDirectory while publishing from rootDirectory', async () => {

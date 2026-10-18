@@ -100,7 +100,7 @@ Returns the package manager config by detecting the lockfile in `rootDirectory`.
 @param {string} rootDirectory - The root directory to search for a lockfile.
 @param {import('./types.d.ts').PackageManagerConfig[]} [options] - The list of configs to check, in priority order.
 */
-function configFromLockfile(rootDirectory, options = [configs.npmConfig, configs.pnpmConfig, configs.yarnConfig]) {
+function configFromLockfile(rootDirectory, options = [configs.npmConfig, configs.pnpmConfig, configs.yarnConfig, configs.bunConfig]) {
 	const foundConfig = options.find(config => findLockfile(rootDirectory, config));
 
 	// If yarn.lock is found, check if it's Yarn Berry by looking for .yarnrc.yml

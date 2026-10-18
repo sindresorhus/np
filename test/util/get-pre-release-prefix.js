@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/stub-execa.js';
 import {getPreReleasePrefix as originalGetPreReleasePrefix} from '../../source/util.js';
+import {npmConfig, yarnConfig} from '../../source/package-manager/configs.js';
 
 /**
 @type {ReturnType<typeof createFixture<typeof import('../../source/util.js')>>}
@@ -16,7 +17,7 @@ createFixture('returns preid postfix if set - npm', [{
 	testedModule: {getPreReleasePrefix},
 }) => {
 	assert.equal(
-		await getPreReleasePrefix({cli: 'npm'}),
+		await getPreReleasePrefix(npmConfig),
 		'pre',
 	);
 });
@@ -28,7 +29,7 @@ createFixture('returns preid postfix if set - yarn', [{
 	testedModule: {getPreReleasePrefix},
 }) => {
 	assert.equal(
-		await getPreReleasePrefix({cli: 'yarn'}),
+		await getPreReleasePrefix(yarnConfig),
 		'pre',
 	);
 });
@@ -40,7 +41,7 @@ createFixture('returns empty string if not set - npm', [{
 	testedModule: {getPreReleasePrefix},
 }) => {
 	assert.equal(
-		await getPreReleasePrefix({cli: 'npm'}),
+		await getPreReleasePrefix(npmConfig),
 		'',
 	);
 });
@@ -52,7 +53,7 @@ createFixture('returns empty string if not set - yarn', [{
 	testedModule: {getPreReleasePrefix},
 }) => {
 	assert.equal(
-		await getPreReleasePrefix({cli: 'yarn'}),
+		await getPreReleasePrefix(yarnConfig),
 		'',
 	);
 });
@@ -60,12 +61,12 @@ createFixture('returns empty string if not set - yarn', [{
 test('no options passed', async () => {
 	await assert.rejects(
 		originalGetPreReleasePrefix(),
-		{message: 'Config is missing key `cli`'},
+		{message: 'Config is missing key `versionCommand`'},
 	);
 
 	await assert.rejects(
 		originalGetPreReleasePrefix({}),
-		{message: 'Config is missing key `cli`'},
+		{message: 'Config is missing key `versionCommand`'},
 	);
 });
 
@@ -78,5 +79,5 @@ test('returns actual value', async t => {
 	// eslint-disable-next-line node-test/no-process-env-mutation -- restored in the `t.after` hook above; node:test has no env-scoping helper
 	process.env.NPM_CONFIG_PREID = 'beta';
 
-	assert.equal(await originalGetPreReleasePrefix({cli: 'npm'}), 'beta');
+	assert.equal(await originalGetPreReleasePrefix(npmConfig), 'beta');
 });

@@ -118,16 +118,9 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 		return publishCommand(arguments_);
 	}
 
-	function getInstallCommand() {
-		// `--no-cleanup` only skips np's explicit cleanup task.
-		// We still use the package manager's normal lockfile-aware install mode,
-		// even when that install mode replaces `node_modules` itself.
-		if (lockfile) {
-			return packageManager.installCommand;
-		}
-
-		return packageManager.installCommandNoLockfile;
-	}
+	// `--no-cleanup` only skips np's explicit cleanup task.
+	// We still use the package manager's normal lockfile-aware install mode, even when that install mode replaces `node_modules` itself.
+	const installCommand = lockfile ? packageManager.installCommand : packageManager.installCommandNoLockfile;
 
 	const tasks = new TaskList([
 		{
@@ -154,13 +147,13 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 			enabled: isRunInstall,
 			skip() {
 				if (options.dryRun) {
-					return `[Dry run] Command not executed: ${printCommand(getInstallCommand())}.`;
+					return `[Dry run] Command not executed: ${printCommand(installCommand)}.`;
 				}
 			},
 			run: () => new TaskList([
 				{
 					title: 'Running install command',
-					run: () => exec(...getInstallCommand(), {cwd: projectDirectory}),
+					run: () => exec(...installCommand, {cwd: projectDirectory}),
 				},
 				{
 					title: 'Checking working tree is still clean', // If lockfile was out of date and tracked by git, this will fail

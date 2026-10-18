@@ -12,6 +12,17 @@ import {
 	bunConfig,
 } from '../source/package-manager/configs.js';
 
+for (const lockfile of ['bun.lock', 'bun.lockb']) {
+	test(`detects Bun from ${lockfile}`, t => {
+		fs.mkdirSync('.ai-temporary', {recursive: true});
+		const temporaryDirectory = fs.mkdtempSync(path.resolve('.ai-temporary', 'bun-lockfile-'));
+		t.after(() => fs.rmSync(temporaryDirectory, {recursive: true}));
+		fs.writeFileSync(path.join(temporaryDirectory, lockfile), '');
+
+		assert.equal(getPackageManagerConfig(temporaryDirectory, {name: 'test', version: '1.0.0'}), bunConfig);
+	});
+}
+
 test('detects npm from package-lock.json', () => {
 	const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'np-test-'));
 	fs.writeFileSync(path.join(temporaryDirectory, 'package-lock.json'), '');

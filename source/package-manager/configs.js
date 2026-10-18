@@ -4,7 +4,7 @@ export const npmConfig = {
 	id: 'npm',
 	ignoreScriptsCli: 'npm',
 	ignoreScriptsConfigFile: '.npmrc',
-	installCommand: ['npm', ['ci', '--engine-strict']],
+	installCommand: ['npm', ['ci', '--include=dev', '--engine-strict']],
 	installCommandNoLockfile: ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict']],
 	versionCommand: version => ['npm', ['version', version]],
 	getRegistryCommand: ['npm', ['config', 'get', 'registry', '--workspaces=false']],
@@ -19,8 +19,8 @@ export const pnpmConfig = {
 	id: 'pnpm',
 	ignoreScriptsCli: 'pnpm',
 	ignoreScriptsConfigFile: '.npmrc',
-	installCommand: ['pnpm', ['install']],
-	installCommandNoLockfile: ['pnpm', ['install']],
+	installCommand: ['pnpm', ['install', '--engine-strict']],
+	installCommandNoLockfile: ['pnpm', ['install', '--engine-strict']],
 	versionCommand: version => ['pnpm', ['version', version]],
 	// By default, pnpm config returns `undefined` instead of `v` for tag-version-prefix, so for consistent default behavior, use npm.
 	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix', '--workspaces=false']],
@@ -52,7 +52,7 @@ export const yarnBerryConfig = {
 	installCommandNoLockfile: ['yarn', ['install']],
 	// Yarn berry doesn't support git committing/tagging, so we use npm instead
 	versionCommand: version => ['npm', ['version', version]],
-	tagVersionPrefixCommand: ['yarn', ['config', 'get', 'version-tag-prefix']],
+	tagVersionPrefixCommand: ['npm', ['config', 'get', 'tag-version-prefix', '--workspaces=false']],
 	// Yarn berry offloads publishing to npm, e.g. `yarn npm publish x.y.z`
 	publishCommand: arguments_ => ['yarn', ['npm', ...arguments_]],
 	getRegistryCommand: ['yarn', ['config', 'get', 'npmRegistryServer']],

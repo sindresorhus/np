@@ -211,10 +211,11 @@ export const getNewDependencies = async (newPackage, rootDirectory) => {
 
 /** @type {(config: import('./package-manager/types.js').PackageManagerConfig) => Promise<string>} */
 export const getPreReleasePrefix = pMemoize(async config => {
-	assert(config && Object.hasOwn(config, 'cli'), 'Config is missing key `cli`');
+	assert(config && Object.hasOwn(config, 'versionCommand'), 'Config is missing key `versionCommand`');
+	const [versionCli] = config.versionCommand('prerelease');
 
 	try {
-		const {stdout} = await execa(config.cli, ['config', 'get', 'preid']);
+		const {stdout} = await execa(versionCli, ['config', 'get', 'preid']);
 
 		return stdout === 'undefined' ? '' : stdout;
 	} catch {
