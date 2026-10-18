@@ -244,6 +244,7 @@ export default async function ui({packageManager, ...options}, {package_, rootDi
 		if (!needsTag) {
 			return {
 				...options,
+				version: versionObject,
 				confirm: true,
 				repoUrl,
 				generateReleaseNotes,
@@ -256,7 +257,7 @@ export default async function ui({packageManager, ...options}, {package_, rootDi
 				type: 'select',
 				message: 'How should this pre-release version be tagged in npm?',
 				async choices() {
-					const existingPrereleaseTags = await npm.prereleaseTags(package_.name);
+					const existingPrereleaseTags = await npm.prereleaseTags(package_);
 
 					return [
 						...existingPrereleaseTags,
@@ -288,6 +289,7 @@ export default async function ui({packageManager, ...options}, {package_, rootDi
 
 		return {
 			...options,
+			version: versionObject,
 			tag: answers.tag || answers.customTag || options.tag,
 			confirm: true,
 			repoUrl,
@@ -392,27 +394,25 @@ export default async function ui({packageManager, ...options}, {package_, rootDi
 			type: 'input',
 			message: 'Version',
 			when: answers => answers.version === undefined,
-			filter(input) {
+			validate(input) {
 				if (SEMVER_INCREMENTS.includes(input)) {
-					throw new Error('Custom version should not be a SemVer increment.');
+					return 'Custom version should not be a SemVer increment.';
 				}
-
-				const version = new Version(oldVersion);
 
 				try {
 					// Version error handling does validation
-					version.setFrom(input);
+					new Version(oldVersion).setFrom(input);
+					return true;
 				} catch (error) {
 					if (error.message.includes('valid SemVer version')) {
-						throw new Error(`Custom version ${input} should be a valid SemVer version.`, {cause: error});
+						return `Custom version ${input} should be a valid SemVer version.`;
 					}
 
-					error.message = error.message.replace('New', 'Custom');
-
-					throw error;
+					return error.message.replace('New', 'Custom');
 				}
-
-				return version;
+			},
+			filter(input) {
+				return new Version(oldVersion).setFrom(input);
 			},
 		},
 		prereleasePrefix: {
@@ -433,7 +433,7 @@ export default async function ui({packageManager, ...options}, {package_, rootDi
 			message: 'How should this pre-release version be tagged in npm?',
 			when: answers => needsPrereleaseTag(answers),
 			async choices() {
-				const existingPrereleaseTags = await npm.prereleaseTags(package_.name);
+				const existingPrereleaseTags = await npm.prereleaseTags(package_);
 
 				return [
 					...existingPrereleaseTags,

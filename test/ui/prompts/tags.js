@@ -5,13 +5,14 @@ import {npmConfig as packageManager} from '../../../source/package-manager/confi
 import {npPackage} from '../../../source/util.js';
 import {mockInquirer} from '../../_helpers/mock-inquirer.js';
 
-const testUi = (title, {version, tags, answers}, assertions) => {
+const testUi = (title, {version, tags, answers, registry, requestedVersion}, assertions) => {
 	test(title, async t => {
+		const prereleaseTags = sinon.stub().resolves(tags);
 		const {ui, logs} = await mockInquirer({
 			t, answers: {confirm: true, ...answers}, mocks: {
 				'./npm/util.js': {
 					checkIgnoreStrategy: sinon.stub().resolves(),
-					prereleaseTags: sinon.stub().resolves(tags),
+					prereleaseTags,
 				},
 				'./util.js': {
 					getNewFiles: sinon.stub().resolves({unpublished: [], firstTime: []}),
@@ -35,17 +36,31 @@ const testUi = (title, {version, tags, answers}, assertions) => {
 			packageManager,
 			runPublish: true,
 			availability: {},
+			version: requestedVersion,
 		}, {
 			package_: {
 				name: 'foo',
 				version,
 				files: ['*'],
+				...registry && {publishConfig: {registry}},
 			},
 		});
 
-		await assertions({results, logs});
+		await assertions({results, logs, prereleaseTags});
 	});
 };
+
+for (const requestedVersion of [undefined, 'prepatch']) {
+	testUi(`prerelease tags use the publish registry with requested version ${requestedVersion}`, {
+		version: '1.0.0',
+		requestedVersion,
+		registry: 'https://registry.example.com/',
+		tags: ['next'],
+		answers: {version: 'prepatch', prereleasePrefix: '', tag: 'next'},
+	}, ({prereleaseTags}) => {
+		assert.equal(prereleaseTags.firstCall.firstArg.publishConfig?.registry, 'https://registry.example.com/');
+	});
+}
 
 testUi('choose next', {
 	version: '0.0.0',

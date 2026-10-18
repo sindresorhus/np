@@ -140,12 +140,18 @@ export const collaborators = async package_ => {
 	}
 };
 
-export const prereleaseTags = async packageName => {
+export const prereleaseTags = async package_ => {
+	const packageName = package_.name;
 	util.assert(typeof packageName === 'string', 'Package name is required');
+	const arguments_ = ['view', '--json', packageName, 'dist-tags'];
+
+	if (package_.publishConfig?.registry) {
+		arguments_.push('--registry', package_.publishConfig.registry);
+	}
 
 	let tags = [];
 	try {
-		const {stdout} = await execa('npm', ['view', '--json', packageName, 'dist-tags'], {timeout: npmNetworkTimeout});
+		const {stdout} = await execa('npm', arguments_, {timeout: npmNetworkTimeout});
 		const distTags = parseNpmViewOutput(stdout);
 		tags = Object.keys(distTags ?? {})
 			.filter(tag => tag !== 'latest');

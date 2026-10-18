@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import esmock from 'esmock';
 import {stripIndent} from 'common-tags';
 import {_createFixture} from '../../_helpers/stub-execa.js';
 import * as npm from '../../../source/npm/util.js';
@@ -8,6 +9,20 @@ import * as npm from '../../../source/npm/util.js';
 @type {ReturnType<typeof createFixture<typeof import('../../../source/npm/util.js')>>}
 */
 const createFixture = _createFixture('../../../source/npm/util.js', import.meta.url);
+
+test('prerelease tags query the publish registry', async () => {
+	const {prereleaseTags} = await esmock('../../../source/npm/util.js', {
+		execa: {
+			async execa(command, arguments_) {
+				assert.equal(command, 'npm');
+				assert.deepEqual(arguments_, ['view', '--json', 'foo', 'dist-tags', '--registry', 'https://registry.example.com/']);
+				return {stdout: JSON.stringify({beta: '2.0.0-beta.1'})};
+			},
+		},
+	});
+
+	assert.deepEqual(await prereleaseTags({name: 'foo', publishConfig: {registry: 'https://registry.example.com/'}}), ['beta']);
+});
 
 test('packageName not a string', async () => {
 	await assert.rejects(
@@ -25,7 +40,7 @@ createFixture('tags: latest', [{
 	testedModule: {prereleaseTags},
 }) => {
 	assert.deepEqual(
-		await prereleaseTags('foo'),
+		await prereleaseTags({name: 'foo'}),
 		['next'],
 	);
 });
@@ -40,7 +55,7 @@ createFixture('tags: latest, beta', [{
 	testedModule: {prereleaseTags},
 }) => {
 	assert.deepEqual(
-		await prereleaseTags('foo'),
+		await prereleaseTags({name: 'foo'}),
 		['beta'],
 	);
 });
@@ -55,7 +70,7 @@ createFixture('tags: array-wrapped output (npm 12)', [{
 	testedModule: {prereleaseTags},
 }) => {
 	assert.deepEqual(
-		await prereleaseTags('foo'),
+		await prereleaseTags({name: 'foo'}),
 		['beta'],
 	);
 });
@@ -83,7 +98,7 @@ createFixture(
 		testedModule: {prereleaseTags},
 	}) => {
 		assert.deepEqual(
-			await prereleaseTags('non-existent'),
+			await prereleaseTags({name: 'non-existent'}),
 			['next'],
 		);
 	},
@@ -113,7 +128,7 @@ createFixture('non-existent (code 404) - should not throw', [{
 	testedModule: {prereleaseTags},
 }) => {
 	assert.deepEqual(
-		await prereleaseTags('non-existent'),
+		await prereleaseTags({name: 'non-existent'}),
 		['next'],
 	);
 });
@@ -141,7 +156,7 @@ createFixture('non-existent with modern npm format (npm >=10) - should not throw
 	testedModule: {prereleaseTags},
 }) => {
 	assert.deepEqual(
-		await prereleaseTags('non-existent'),
+		await prereleaseTags({name: 'non-existent'}),
 		['next'],
 	);
 });
@@ -167,6 +182,6 @@ createFixture('bad permission (code 403) - should throw', [{
 }], async ({
 	testedModule: {prereleaseTags},
 }) => {
-	const error = await prereleaseTags('@private/pkg').catch(error => error);
+	const error = await prereleaseTags({name: '@private/pkg'}).catch(error => error);
 	assert.ok(error.stderr?.includes('E403'));
 });
