@@ -295,8 +295,8 @@ const run = async () => {
 		return;
 	}
 
-	// Check authentication early, before the task list starts (so login can be interactive)
-	if (options.runPublish) {
+	// Check authentication before an actual publish, so login can be interactive.
+	if (options.runPublish && !options.dryRun) {
 		await ensureAuthenticated(package_);
 	}
 

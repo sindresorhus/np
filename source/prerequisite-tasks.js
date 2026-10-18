@@ -31,7 +31,7 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 		},
 		{
 			title: 'Verify user is authenticated',
-			enabled: process.env.NODE_ENV !== 'test' && !package_.private,
+			enabled: process.env.NODE_ENV !== 'test' && !package_.private && !options.dryRun,
 			skip() {
 				if (getOidcProvider()) {
 					return 'Environment support for OIDC authentication detected - Skipping whoami check';

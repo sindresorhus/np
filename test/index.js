@@ -23,6 +23,55 @@ const defaultOptions = {
 
 const npPackageResult = await util.readPackage();
 
+for (const {dryRun, expectedDraftCalls} of [
+	{dryRun: true, expectedDraftCalls: 0},
+	{dryRun: false, expectedDraftCalls: 1},
+]) {
+	test(`release-draft-only respects dry-run mode: ${dryRun}`, async () => {
+		const releaseTaskStub = sinon.stub().resolves();
+		const npMock = await esmock('../source/index.js', {
+			'../source/release-task-helper.js': releaseTaskStub,
+		});
+
+		const result = await npMock('1.0.0', {
+			...defaultOptions,
+			releaseDraftOnly: true,
+			dryRun,
+		}, npPackageResult);
+
+		assert.equal(releaseTaskStub.callCount, expectedDraftCalls);
+		assert.equal(result, npPackageResult.package_);
+	});
+}
+
+test('previewing a release draft with long notes does not open a browser or change the clipboard', async () => {
+	const openStub = sinon.stub().resolves();
+	const clipboardWriteStub = sinon.stub().resolves();
+	const generateReleaseNotesStub = sinon.stub().returns('Long release notes. '.repeat(1000));
+	const npMock = await esmock('../source/index.js', {}, {
+		open: openStub,
+		clipboardy: {write: clipboardWriteStub},
+		'../source/util.js': {
+			getTagVersionPrefix: async () => 'v',
+			getPreReleasePrefix: async () => '',
+		},
+	});
+
+	const result = await npMock('1.0.0', {
+		...defaultOptions,
+		releaseDraftOnly: true,
+		preview: true,
+		repoUrl: 'https://github.com/example/fixture',
+		releaseNotes: true,
+		generateReleaseNotes: generateReleaseNotesStub,
+	}, npPackageResult);
+
+	assert.equal(result, npPackageResult.package_);
+	assert.ok(openStub.notCalled);
+	assert.ok(clipboardWriteStub.notCalled);
+	assert.ok(generateReleaseNotesStub.notCalled);
+});
+
 const getNpMock = async () => esmock('../source/index.js', {}, {
 	execa: {execa: sinon.stub().resolves({stdout: '10.0.0', stderr: ''})},
 	'../source/git-util.js': {

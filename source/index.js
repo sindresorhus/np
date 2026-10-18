@@ -50,7 +50,10 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 	const isOnGitHub = options.repoUrl && hostedGitInfo.fromUrl(options.repoUrl)?.type === 'github';
 
 	if (options.releaseDraftOnly) {
-		await releaseTaskHelper(options, package_, packageManager);
+		if (!options.dryRun) {
+			await releaseTaskHelper(options, package_, packageManager);
+		}
+
 		return package_;
 	}
 

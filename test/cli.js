@@ -296,6 +296,36 @@ test('cli does not print that the package was published after a dry run', async 
 	assert.ok(consoleLogStub.args.flat().every(argument => !String(argument).includes('published')));
 });
 
+test('cli does not log in to npm when previewing a release', async t => {
+	const usernameStub = sinon.stub().rejects(Object.assign(new Error('You must be logged in.'), {isNotLoggedIn: true}));
+	usernameStub.onThirdCall().resolves('sindresorhus');
+	const loginStub = sinon.stub().resolves();
+	const npStub = sinon.stub().resolves({name: 'test-package', version: '1.0.1'});
+	const gracefulExitStub = sinon.stub();
+	t.mock.method(console, 'log', () => {});
+	t.mock.method(console, 'error', () => {});
+
+	await loadCliImplementation({
+		meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: true, dryRun: true}, pkg: npPackage})},
+		'is-interactive': {default: () => true},
+		'../source/npm/util.js': {
+			isExternalRegistry: () => false,
+			isPackageNameAvailable: async () => ({isAvailable: false, isUnknown: false}),
+			getFilesToBePacked: async () => [],
+			username: usernameStub,
+			login: loginStub,
+		},
+		'../source/ui.js': {default: async options => ({...options, confirm: true, version: '1.0.1'})},
+		'../source/index.js': {default: npStub},
+		'exit-hook': {gracefulExit: gracefulExitStub},
+	});
+
+	assert.ok(npStub.calledOnce);
+	assert.equal(npStub.firstCall.args[1].dryRun, true);
+	assert.ok(gracefulExitStub.calledOnceWithExactly());
+	assert.ok(loginStub.notCalled, 'Previewing a release must not change npm credentials.');
+});
+
 const rejectsStagedPublishing = (title, {id, version, minimumVersion}) => {
 	test(title, async () => {
 		const gracefulExitStub = sinon.stub();

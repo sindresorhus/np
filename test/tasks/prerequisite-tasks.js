@@ -164,6 +164,30 @@ createFixture('should fail when user is not authenticated at npm registry', [
 	assertTaskFailed(tasks, 'Verify user is authenticated');
 });
 
+createFixture('a dry run does not require npm authentication', [{
+	command: 'npm whoami',
+	exitCode: 1,
+	stderr: 'npm error code ENEEDAUTH',
+}, {
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'npm config get tag-version-prefix --workspaces=false',
+	stdout: 'v',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	stdout: '',
+}], async ({testedModule: prerequisiteTasks}) => {
+	process.env.NODE_ENV = 'production';
+
+	const tasks = prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {dryRun: true, yolo: true}, {packageManager: npmConfig});
+	await assert.doesNotReject(run(tasks));
+	assertTaskDisabled(tasks, 'Verify user is authenticated');
+});
+
 createFixture('should fail when user is not authenticated at external registry', [
 	{
 		command: 'npm whoami --registry http://my.io',
