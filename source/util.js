@@ -191,6 +191,12 @@ export const getNewFiles = async rootDirectory => {
 	};
 };
 
+const getRuntimeDependencyNames = package_ => Object.keys({
+	...package_.dependencies,
+	...package_.optionalDependencies,
+	...package_.peerDependencies,
+});
+
 export const getNewDependencies = async (newPackage, rootDirectory) => {
 	let oldPackageFile;
 
@@ -198,13 +204,13 @@ export const getNewDependencies = async (newPackage, rootDirectory) => {
 		oldPackageFile = await git.readFileFromLastRelease(path.resolve(rootDirectory, 'package.json'));
 	} catch {
 		// Handle first time publish
-		return Object.keys(newPackage.dependencies ?? {});
+		return getRuntimeDependencyNames(newPackage);
 	}
 
 	const oldPackage = parsePackage(oldPackageFile);
 
-	const newDependencies = new Set(Object.keys(newPackage.dependencies ?? {}))
-		.difference(new Set(Object.keys(oldPackage.dependencies ?? {})));
+	const newDependencies = new Set(getRuntimeDependencyNames(newPackage))
+		.difference(new Set(getRuntimeDependencyNames(oldPackage)));
 
 	return [...newDependencies];
 };
