@@ -29,6 +29,20 @@ test('detects GitLab CI', async () => {
 	assert.equal(getOidcProvider(), 'gitlab');
 });
 
+for (const {env, expected, title} of [
+	{env: {CIRCLECI: 'true', NPM_ID_TOKEN: 'token'}, expected: 'circleci', title: 'detects CircleCI with an npm OIDC token'},
+	{env: {CIRCLECI: 'true'}, expected: undefined, title: 'does not detect CircleCI without an npm OIDC token'},
+	{env: {NPM_ID_TOKEN: 'token'}, expected: undefined, title: 'does not detect an OIDC token outside a supported CI provider'},
+]) {
+	test(title, async () => {
+		const {getOidcProvider} = await esmock('../../source/npm/oidc.js', {
+			'node:process': {env},
+		});
+
+		assert.equal(getOidcProvider(), expected);
+	});
+}
+
 test('detects no OIDC', async () => {
 	const {getOidcProvider} = await esmock('../../source/npm/oidc.js', {
 		'node:process': {

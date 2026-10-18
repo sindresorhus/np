@@ -17,6 +17,12 @@ const oidcProviders = [
 		// See https://github.com/npm/cli/blob/7da8fdd3625dd5541af57052c90fe1eabb41eb96/lib/utils/oidc.js#L37-L47
 		validate: () => process.env.GITLAB_CI && process.env.NPM_ID_TOKEN,
 	},
+	{
+		id: 'circleci',
+		name: 'CircleCI',
+		// See https://circleci.com/docs/guides/deploy/deploy-to-npm-registry/
+		validate: () => process.env.CIRCLECI && process.env.NPM_ID_TOKEN,
+	},
 ];
 
 export const getOidcProvider = () => {

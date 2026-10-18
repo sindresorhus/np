@@ -596,33 +596,34 @@ createFixture(
 	},
 );
 
-createFixture('should skip authentication check when OIDC is detected', [{
-	command: 'git config user.name',
-	stdout: 'Test User',
-}, {
-	command: 'git config user.email',
-	stdout: 'test@example.com',
-}, {
-	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
-	stdout: '',
-}], async ({t, testedModule: prerequisiteTasks}) => {
-	process.env.NODE_ENV = 'P';
-	process.env.GITHUB_ACTIONS = 'true';
-	process.env.ACTIONS_ID_TOKEN_REQUEST_URL = 'url';
-	process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = 'token';
+for (const [provider, env] of [
+	['GitHub Actions', {GITHUB_ACTIONS: 'true', ACTIONS_ID_TOKEN_REQUEST_URL: 'url', ACTIONS_ID_TOKEN_REQUEST_TOKEN: 'token'}],
+	['CircleCI', {CIRCLECI: 'true', NPM_ID_TOKEN: 'token'}],
+]) {
+	createFixture(`should skip authentication check when ${provider} OIDC is detected`, [{
+		command: 'npm whoami',
+		exitCode: 1,
+		stderr: 'ENEEDAUTH This command requires you to be logged in.',
+	}, {
+		command: 'git config user.name',
+		stdout: 'Test User',
+	}, {
+		command: 'git config user.email',
+		stdout: 'test@example.com',
+	}, {
+		command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+		stdout: '',
+	}], async ({t, testedModule: prerequisiteTasks}) => {
+		t.mock.property(process, 'env', {
+			...process.env, NODE_ENV: 'production', GITHUB_ACTIONS: '', GITLAB_CI: '', CIRCLECI: '', ...env,
+		});
 
-	t.after(() => {
-		delete process.env.GITHUB_ACTIONS;
-		delete process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
-		delete process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
-		process.env.NODE_ENV = 'test';
+		const tasks = prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig});
+		await assert.doesNotReject(run(tasks));
+
+		assertTaskSkipped(tasks, 'Verify user is authenticated');
 	});
-
-	const tasks = prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig});
-	await assert.doesNotReject(run(tasks));
-
-	assertTaskSkipped(tasks, 'Verify user is authenticated');
-});
+}
 
 createFixture('should fail when dropping Node.js support in a minor release', [{
 	command: 'npm view --json test@1.0.0 engines',

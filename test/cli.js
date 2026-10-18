@@ -8,6 +8,7 @@ import esmock from 'esmock';
 import {execa} from 'execa';
 import {ExitPromptError} from '@inquirer/core';
 import {npPackage, npRootDirectory as rootDirectory, readPackage} from '../source/util.js';
+import {getOidcProvider} from '../source/npm/oidc.js';
 import {cliPasses} from './_helpers/verify-cli.js';
 
 const cli = path.resolve(rootDirectory, 'source', 'cli-implementation.js');
@@ -417,6 +418,41 @@ acceptsStagedPublishing(
 );
 
 const notLoggedInError = () => Object.assign(new Error('You must be logged in. Use `npm login` and try again.'), {isNotLoggedIn: true});
+
+for (const hasOidcToken of [true, false]) {
+	test(`cli allows CircleCI publishing without npm login only with an OIDC token: ${hasOidcToken}`, async t => {
+		t.mock.property(process, 'env', {
+			...process.env, GITHUB_ACTIONS: '', GITLAB_CI: '', CIRCLECI: 'true', NPM_ID_TOKEN: hasOidcToken ? 'token' : '',
+		});
+		t.mock.method(console, 'log', () => {});
+		t.mock.method(console, 'error', () => {});
+		const usernameStub = sinon.stub().rejects(notLoggedInError());
+		const loginStub = sinon.stub();
+		const npStub = sinon.stub().resolves({name: 'test-package', version: '1.0.1'});
+		const gracefulExitStub = sinon.stub();
+
+		await loadCliImplementation({
+			meow: {default: () => ({input: ['patch'], flags: {publish: true}, pkg: npPackage})},
+			'is-interactive': {default: () => false},
+			'../source/npm/oidc.js': {getOidcProvider},
+			'../source/npm/util.js': {
+				isExternalRegistry: () => false,
+				isPackageNameAvailable: async () => ({isAvailable: false, isUnknown: false}),
+				getFilesToBePacked: async () => [],
+				username: usernameStub,
+				login: loginStub,
+			},
+			'../source/ui.js': {default: async options => ({...options, confirm: true, version: '1.0.1'})},
+			'../source/index.js': {default: npStub},
+			'exit-hook': {gracefulExit: gracefulExitStub},
+		});
+
+		assert.equal(npStub.calledOnce, hasOidcToken);
+		assert.equal(usernameStub.notCalled, hasOidcToken, 'OIDC must skip both the warm-up and the pre-publish authentication check.');
+		assert.ok(loginStub.notCalled);
+		assert.equal(gracefulExitStub.calledOnceWithExactly(1), !hasOidcToken);
+	});
+}
 
 test('cli auto-runs `npm login` and re-verifies after a successful login', async () => {
 	// The first two calls are the early warm-up and the auth check. Neither result is cached because `username` is stubbed, and the real memoized version does not cache failures either.
