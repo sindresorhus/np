@@ -76,3 +76,30 @@ createFixture(
 );
 
 test.todo('test fallback case');
+
+createFixture('sorts custom-prefix versions numerically and excludes unrelated previous-release candidates', async ({context, $$}) => {
+	await $$`git tag release-1.9.0`;
+	await context.commitNewFile();
+	await $$`git tag release-1.10.0`;
+	await $$`git tag other-1.10.1`;
+	await $$`git tag v1.10.2`;
+	await $$`git tag release-docs`;
+	await context.commitNewFile();
+	await $$`git tag release-1.11.0`;
+}, async ({testedModule: {previousTagOrFirstCommit}}) => {
+	assert.equal(await previousTagOrFirstCommit('release-'), 'release-1.10.0');
+});
+
+createFixture('a single custom-prefix release falls back to the first commit', async ({context, $$}) => {
+	await context.commitNewFile();
+	await $$`git tag release-1.0.0`;
+}, async ({context, testedModule: {previousTagOrFirstCommit}}) => {
+	const revision = await previousTagOrFirstCommit('release-');
+	assert.equal(await context.getCommitMessage(revision), context.firstCommitMessage);
+});
+
+createFixture('does not treat another tag prefix as a published release', async ({$$}) => {
+	await $$`git tag v1.0.0`;
+}, async ({testedModule: {previousTagOrFirstCommit}}) => {
+	assert.equal(await previousTagOrFirstCommit('release-'), undefined);
+});

@@ -2,6 +2,7 @@ import open from 'open';
 import newGithubReleaseUrl from 'new-github-release-url';
 import clipboard from 'clipboardy';
 import {getTagVersionPrefix, getPreReleasePrefix} from './util.js';
+import {latestTag} from './git-util.js';
 import Version from './version.js';
 
 // GitHub has a URL limit of ~8195 characters. We use a conservative limit to be safe.
@@ -13,11 +14,13 @@ export default async function releaseTaskHelper(options, package_, packageManage
 		throw new Error('Missing `repository` field in package.json. This is required for creating GitHub releases.');
 	}
 
+	const tagPrefix = await getTagVersionPrefix(packageManager);
+	const releasedTag = options.releaseDraftOnly ? await latestTag() : undefined;
 	const newVersion = options.releaseDraftOnly
-		? new Version(package_.version)
+		? new Version(releasedTag.slice(tagPrefix.length))
 		: new Version(package_.version).setFrom(options.version.toString(), {prereleasePrefix: await getPreReleasePrefix(packageManager)});
 
-	const tag = await getTagVersionPrefix(packageManager) + newVersion.toString();
+	const tag = releasedTag ?? (tagPrefix + newVersion.toString());
 
 	const releaseNotes = options.releaseNotes ? options.generateReleaseNotes(tag) : '';
 

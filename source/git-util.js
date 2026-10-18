@@ -50,12 +50,15 @@ const tagList = async () => {
 	return stdout ? stdout.split('\n') : [];
 };
 
-/** Returns an array of tags sorted by semver in ascending order. Non-semver tags are excluded. */
-const tagListSortedBySemver = async () => {
+/**
+Returns matching tags sorted by semver in ascending order after stripping the configured prefix. Non-semver tags are excluded.
+@param {string} tagPrefix - The configured Git version tag prefix.
+*/
+const tagListSortedBySemver = async tagPrefix => {
 	const tags = await tagList();
 	return tags
-		.filter(tag => semver.valid(tag))
-		.toSorted((a, b) => semver.compare(a, b));
+		.filter(tag => tag.startsWith(tagPrefix) && semver.valid(tag.slice(tagPrefix.length)))
+		.toSorted((leftTag, rightTag) => semver.compare(leftTag.slice(tagPrefix.length), rightTag.slice(tagPrefix.length)));
 };
 
 const firstCommit = async () => {
@@ -65,8 +68,8 @@ const firstCommit = async () => {
 	return stdout.split('\n', 1)[0];
 };
 
-export const previousTagOrFirstCommit = async () => {
-	const tags = await tagListSortedBySemver();
+export const previousTagOrFirstCommit = async (tagPrefix = '') => {
+	const tags = await tagListSortedBySemver(tagPrefix);
 
 	if (tags.length === 0) {
 		return;

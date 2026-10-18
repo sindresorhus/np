@@ -32,3 +32,16 @@ createFixture('returns multiple commits, from newest to oldest', async () => {
 
 	assert.equal(await commitLogFromRevision('v0.0.0'), commitLog);
 });
+
+createFixture('limits the commit log to an annotated end tag', async () => {
+	//
+}, async ({context, testedModule: {commitLogFromRevision}, $$}) => {
+	await $$`git tag v0.0.0`;
+	const releasedCommit = await context.commitNewFile();
+	await $$`git tag --annotate v1.0.0 -m release`;
+	const unreleasedCommit = await context.commitNewFile();
+
+	assert.equal(await commitLogFromRevision('v0.0.0', 'v1.0.0'), `${releasedCommit.commitMessage} ${releasedCommit.sha}`);
+	assert.equal(await commitLogFromRevision('v1.0.0'), `${unreleasedCommit.commitMessage} ${unreleasedCommit.sha}`);
+	assert.equal(await commitLogFromRevision('v1.0.0', 'v1.0.0'), '');
+});

@@ -19,13 +19,15 @@ const PRERELEASE_INCREMENTS = new Set([
 	'prerelease',
 ]);
 
-const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch) => {
-	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit();
+const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, {releaseBranch, tagPrefix}) => {
+	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit(tagPrefix);
 	if (!revision) {
 		throw new Error('The package has not been published yet.');
 	}
 
-	const log = await git.commitLogFromRevision(revision);
+	// Bound drafts by the tag instead of matching customizable version bump messages.
+	const endRevision = fromLatestTag ? 'HEAD' : await git.latestTag();
+	const log = await git.commitLogFromRevision(revision, endRevision);
 
 	if (!log) {
 		return {
@@ -35,10 +37,12 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 		};
 	}
 
-	let hasUnreleasedCommits = false;
-	let commitRangeText = `${revision}...${releaseBranch}`;
+	const hasUnreleasedCommits = !fromLatestTag && Boolean(await git.commitLogFromRevision(endRevision));
+	const commitRangeText = `${revision}...${fromLatestTag ? releaseBranch : endRevision}`;
 
-	let commits = log.split('\n')
+	const commits = log.split('\n')
+		// Get rid of the tagged version bump commit; Git already excludes unreleased commits.
+		.slice(fromLatestTag ? 0 : 1)
 		.map(commit => {
 			const splitIndex = commit.lastIndexOf(' ');
 			return {
@@ -46,26 +50,6 @@ const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, releaseBranch
 				id: commit.slice(splitIndex + 1),
 			};
 		});
-
-	if (!fromLatestTag) {
-		const latestTag = await git.latestTag();
-
-		// Version bump commit created by np, following the semver specification.
-		const versionBumpCommitName = latestTag.match(/v\d+\.\d+\.\d+/v) && latestTag.slice(1); // Name v1.0.1 becomes 1.0.1
-		const versionBumpCommitIndex = commits.findIndex(commit => commit.message === versionBumpCommitName);
-
-		if (versionBumpCommitIndex > 0) {
-			commitRangeText = `${revision}...${latestTag}`;
-			hasUnreleasedCommits = true;
-		}
-
-		if (await git.isHeadDetached()) {
-			commitRangeText = `${revision}...${latestTag}`;
-		}
-
-		// Get rid of unreleased commits and of the version bump commit.
-		commits = commits.slice(versionBumpCommitIndex + 1);
-	}
 
 	const history = commits.map(commit => {
 		const commitMessage = util.linkifyIssues(repoUrl, commit.message);
@@ -203,7 +187,8 @@ export default async function ui({packageManager, ...options}, {package_, rootDi
 	}
 
 	const isUseLatestTag = !options.releaseDraftOnly;
-	const {hasCommits, hasUnreleasedCommits, generateReleaseNotes} = await printCommitLog(repoUrl, registryUrl, isUseLatestTag, releaseBranch);
+	const tagPrefix = options.releaseDraftOnly ? await util.getTagVersionPrefix(packageManager) : '';
+	const {hasCommits, hasUnreleasedCommits, generateReleaseNotes} = await printCommitLog(repoUrl, registryUrl, isUseLatestTag, {releaseBranch, tagPrefix});
 
 	// Display unpublished files warning after commit log
 	displayUnpublishedFilesWarning(unpublishedFiles);
