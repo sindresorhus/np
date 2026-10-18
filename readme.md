@@ -302,7 +302,7 @@ To release a minor/patch version for an old major version, create a branch from 
 $ git checkout -b fix-old-bug v1.0.0 # Where 1.0.0 is the previous major version
 # Create some commits…
 $ git push --set-upstream origin HEAD
-$ np patch --any-branch --tag=v1
+$ np patch --any-branch --tag=release-1
 ```
 
 ### The prerequisite step runs forever on macOS
