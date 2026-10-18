@@ -15,7 +15,13 @@ import {
 /**
 @type {ReturnType<typeof createFixture<typeof import('../../source/prerequisite-tasks.js')>>}
 */
-const createFixture = _createFixture('../../source/prerequisite-tasks.js', import.meta.url);
+const createStubFixture = _createFixture('../../source/prerequisite-tasks.js', import.meta.url);
+// Command fixtures should not inherit the checkout's real tracking branch.
+const createFixture = (title, commands, assertions) => createStubFixture(title, [{
+	command: 'git rev-parse @{u}',
+	exitCode: 1,
+	stderr: 'fatal: no upstream configured',
+}, ...commands], assertions);
 const generatedEntryPointFixture = path.resolve('test', 'fixtures', 'files', 'prepack-generated-entry-point');
 
 test.beforeEach(() => {
@@ -426,6 +432,52 @@ createFixture('checks should pass', [{
 }) => {
 	const tasks = prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {}, {packageManager: npmConfig});
 	await assert.doesNotReject(run(tasks));
+});
+
+createFixture('fetches tags from the selected release remote', [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git ls-remote release HEAD',
+	stdout: 'abc123\tHEAD',
+}, {
+	command: 'git fetch',
+	exitCode: 1,
+	stderr: 'The default remote is unavailable',
+}, {
+	command: 'git fetch release',
+	stdout: '',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	stdout: '',
+}], async ({testedModule: prerequisiteTasks}) => {
+	const tasks = prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {remote: 'release', yolo: true}, {packageManager: npmConfig});
+	await assert.doesNotReject(run(tasks));
+});
+
+createFixture('rejects when fetching from the selected release remote fails', [{
+	command: 'git config user.name',
+	stdout: 'Test User',
+}, {
+	command: 'git config user.email',
+	stdout: 'test@example.com',
+}, {
+	command: 'git ls-remote release HEAD',
+	stdout: 'abc123\tHEAD',
+}, {
+	command: 'git fetch release',
+	exitCode: 1,
+	stderr: 'The selected remote could not be fetched',
+}, {
+	command: 'git rev-parse --quiet --verify refs/tags/v2.0.0',
+	stdout: '',
+}], async ({testedModule: prerequisiteTasks}) => {
+	const tasks = prerequisiteTasks('2.0.0', {name: 'test', version: '1.0.0'}, {remote: 'release', yolo: true}, {packageManager: npmConfig});
+	await assert.rejects(run(tasks), {stderr: 'The selected remote could not be fetched'});
+	assertTaskFailed(tasks, 'Check git remote and tag existence');
 });
 
 createFixture(

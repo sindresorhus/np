@@ -53,7 +53,7 @@ createFixture(
 			stdout: 'feature',
 		},
 		{
-			command: 'git status --porcelain',
+			command: 'git status --porcelain --untracked-files=normal',
 			stdout: '',
 		},
 		{
@@ -61,7 +61,7 @@ createFixture(
 			exitCode: 0,
 		},
 		{
-			command: 'git fetch --dry-run',
+			command: 'git fetch',
 			exitCode: 0,
 		},
 		{
@@ -85,7 +85,7 @@ createFixture('should fail when local working tree modified', [
 		stdout: 'master',
 	},
 	{
-		command: 'git status --porcelain',
+		command: 'git status --porcelain --untracked-files=normal',
 		stdout: 'M source/git-tasks.js',
 	},
 ], async ({
@@ -106,7 +106,7 @@ createFixture('should not fail when no remote set up', [
 		stdout: 'master',
 	},
 	{
-		command: 'git status --porcelain',
+		command: 'git status --porcelain --untracked-files=normal',
 		stdout: '',
 	},
 	{
@@ -126,7 +126,7 @@ createFixture('should fail when remote history differs and changes are fetched',
 		stdout: 'master',
 	},
 	{
-		command: 'git status --porcelain',
+		command: 'git status --porcelain --untracked-files=normal',
 		stdout: '',
 	},
 	{
@@ -134,7 +134,7 @@ createFixture('should fail when remote history differs and changes are fetched',
 		exitCode: 0,
 	},
 	{
-		command: 'git fetch --dry-run',
+		command: 'git fetch',
 		exitCode: 0,
 	},
 	{
@@ -159,7 +159,7 @@ createFixture('should fail when remote has unfetched changes', [
 		stdout: 'master',
 	},
 	{
-		command: 'git status --porcelain',
+		command: 'git status --porcelain --untracked-files=normal',
 		stdout: '',
 	},
 	{
@@ -167,8 +167,13 @@ createFixture('should fail when remote has unfetched changes', [
 		exitCode: 0,
 	},
 	{
-		command: 'git fetch --dry-run',
-		stdout: 'From https://github.com/sindresorhus/np', // Has unfetched changes
+		command: 'git fetch',
+		stderr: 'From https://github.com/sindresorhus/np', // Has unfetched changes
+		exitCode: 0,
+	},
+	{
+		command: 'git rev-list --count --left-only @{u}...HEAD',
+		stdout: '1',
 	},
 ], async ({
 	testedModule: gitTasks,
@@ -176,7 +181,7 @@ createFixture('should fail when remote has unfetched changes', [
 	const tasks = gitTasks({branch: 'master'});
 	await assert.rejects(
 		run(tasks),
-		{message: 'Remote history differs. Please run `git fetch` and pull changes.'},
+		{message: 'Remote history differs. Please pull changes.'},
 	);
 
 	assertTaskFailed(tasks, 'Check remote history');
@@ -190,7 +195,7 @@ createFixture(
 			stdout: 'master',
 		},
 		{
-			command: 'git status --porcelain',
+			command: 'git status --porcelain --untracked-files=normal',
 			stdout: '',
 		},
 		{
@@ -198,7 +203,7 @@ createFixture(
 			exitCode: 0,
 		},
 		{
-			command: 'git fetch --dry-run',
+			command: 'git fetch',
 			exitCode: 0,
 		},
 		{
@@ -220,7 +225,7 @@ createFixture('preflight should validate remote before checking remote history',
 		stdout: 'master',
 	},
 	{
-		command: 'git status --porcelain',
+		command: 'git status --porcelain --untracked-files=normal',
 		stdout: '',
 	},
 	{
@@ -247,7 +252,7 @@ createFixture('preflight should validate remote before checking remote history',
 
 createFixture('preflight should skip upstream probe on detached head with anyBranch', [
 	{
-		command: 'git status --porcelain',
+		command: 'git status --porcelain --untracked-files=normal',
 		stdout: '',
 	},
 	{
@@ -266,7 +271,7 @@ createFixture('preflight should skip upstream probe on detached head with anyBra
 
 createFixture('preflight should validate explicit remote without upstream', [
 	{
-		command: 'git status --porcelain',
+		command: 'git status --porcelain --untracked-files=normal',
 		stdout: '',
 	},
 	{
@@ -289,7 +294,7 @@ createFixture('preflight should validate the tracked remote instead of origin', 
 		stdout: 'main',
 	},
 	{
-		command: 'git status --porcelain',
+		command: 'git status --porcelain --untracked-files=normal',
 		stdout: '',
 	},
 	{
@@ -305,7 +310,7 @@ createFixture('preflight should validate the tracked remote instead of origin', 
 		exitCode: 0,
 	},
 	{
-		command: 'git fetch --dry-run',
+		command: 'git fetch',
 		exitCode: 0,
 	},
 	{

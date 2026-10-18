@@ -42,6 +42,15 @@ createFixture('throws', [{
 	await assert.rejects(pushGraceful(false));
 });
 
+createFixture('propagates unrelated GitHub push errors', [{
+	command: 'git push --follow-tags',
+	stderr: 'remote: error: GH007: Your push would publish a private email address.',
+}], async ({
+	testedModule: {pushGraceful},
+}) => {
+	await assert.rejects(pushGraceful(true), {stderr: /GH007/v});
+});
+
 createFixture('pushes to custom remote', [{
 	command: 'git push upstream --follow-tags',
 	exitCode: 0,

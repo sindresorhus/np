@@ -143,7 +143,7 @@ export const isHeadDetached = async () => {
 
 const isWorkingTreeClean = async () => {
 	try {
-		const {stdout: status} = await execa('git', ['status', '--porcelain']);
+		const {stdout: status} = await execa('git', ['status', '--porcelain', '--untracked-files=normal']);
 		return status === '';
 	} catch {
 		return false;
@@ -154,14 +154,6 @@ export const verifyWorkingTreeIsClean = async () => {
 	if (!(await isWorkingTreeClean())) {
 		throw new Error('Unclean working tree. Commit or stash changes first.');
 	}
-};
-
-const hasUnfetchedChangesFromRemote = async () => {
-	// Inherit stdin to allow SSH password prompts for password-protected keys
-	const {stdout: possibleNewChanges} = await execa('git', ['fetch', '--dry-run'], {stdin: 'inherit', timeout: gitNetworkTimeout});
-
-	// There are unfetched changes if output is not empty.
-	return Boolean(possibleNewChanges);
 };
 
 const isRemoteHistoryClean = async () => {
@@ -176,9 +168,8 @@ export const verifyRemoteHistoryIsClean = async () => {
 		return;
 	}
 
-	if (await hasUnfetchedChangesFromRemote()) {
-		throw new Error('Remote history differs. Please run `git fetch` and pull changes.');
-	}
+	// Refresh refs before comparing history; fetch output may contain harmless warnings.
+	await fetch();
 
 	if (!(await isRemoteHistoryClean())) {
 		throw new Error('Remote history differs. Please pull changes.');
@@ -194,9 +185,9 @@ export const verifyRemoteIsValid = async remote => {
 	}
 };
 
-export const fetch = async () => {
+export const fetch = async remote => {
 	// Inherit stdin to allow SSH password prompts for password-protected keys
-	await execa('git', ['fetch'], {stdin: 'inherit', timeout: gitNetworkTimeout});
+	await execa('git', ['fetch', ...(remote ? [remote] : [])], {stdin: 'inherit', timeout: gitNetworkTimeout});
 };
 
 const hasLocalBranch = async branch => {
@@ -243,8 +234,8 @@ export const verifyTagDoesNotExistOnRemote = async tagName => {
 	}
 };
 
-export const commitLogFromRevision = async revision => {
-	const {stdout} = await execa('git', ['log', '--format=%s %h', `${revision}..HEAD`]);
+export const commitLogFromRevision = async (revision, endRevision = 'HEAD') => {
+	const {stdout} = await execa('git', ['log', '--no-show-signature', '--format=%s %h', `${revision}..${endRevision}`]);
 	return stdout;
 };
 
@@ -257,7 +248,7 @@ export const pushGraceful = async (remoteIsOnGitHub, remote) => {
 	try {
 		await push(remote);
 	} catch (error) {
-		if (remoteIsOnGitHub && error.stderr && error.stderr.includes('GH006')) {
+		if (remoteIsOnGitHub && error.stderr && /GH006|GH013/v.test(error.stderr)) {
 			// Try to push tags only, when commits can't be pushed due to branch protection
 			await push(remote, '--tags');
 			return {pushed: 'tags', reason: 'Branch protection: np can`t push the commits. Push them manually.'};

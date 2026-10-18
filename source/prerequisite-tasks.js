@@ -132,12 +132,13 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 		{
 			title: 'Check git remote and tag existence',
 			async run() {
+				const remote = options.remote ?? (await git.hasUpstream() ? await git.getUpstreamRemote() : undefined);
 				// Both commands inherit stdin for SSH passphrase prompts, so they must not run at the same time as each other. Keeping them in one task keeps them sequential while the other tasks run concurrently.
 				// Limitation: The task list keeps drawing during the commands, so it can draw over an SSH passphrase prompt.
-				await git.verifyRemoteIsValid(options.remote);
+				await git.verifyRemoteIsValid(remote);
 
 				// Fetch is needed so `tagExistsOnRemote` can check local refs. Don't replace with `ls-remote`.
-				await git.fetch();
+				await git.fetch(remote);
 
 				const tagPrefix = await util.getTagVersionPrefix(packageManager);
 
