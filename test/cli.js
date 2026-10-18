@@ -220,6 +220,60 @@ test('cli stops when the publish is not confirmed', async () => {
 	assert.ok(npStub.notCalled);
 });
 
+test('cli allows --any-branch in a repository without main or master', async t => {
+	const defaultBranchStub = sinon.stub().rejects(new Error('Could not infer the default Git branch.'));
+	const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: false}));
+	const gracefulExitStub = sinon.stub();
+	t.mock.method(console, 'error', () => {});
+
+	await loadCliImplementation({
+		meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: false, anyBranch: true}, pkg: npPackage})},
+		'../source/git-util.js': {
+			defaultBranch: defaultBranchStub,
+			getCurrentBranch: sinon.stub().resolves('trunk'),
+		},
+		'../source/ui.js': {default: uiStub},
+		'exit-hook': {gracefulExit: gracefulExitStub},
+	});
+
+	assert.ok(uiStub.calledOnce);
+	assert.equal(uiStub.firstCall.args[0].branch, 'HEAD');
+	assert.ok(defaultBranchStub.notCalled);
+	assert.ok(gracefulExitStub.calledOnceWithExactly());
+});
+
+test('cli respects an explicit release branch with --any-branch', async () => {
+	const defaultBranchStub = sinon.stub();
+	const getCurrentBranchStub = sinon.stub();
+	const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: false}));
+
+	await loadCliImplementation({
+		meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: false, anyBranch: true, branch: 'release'}, pkg: npPackage})},
+		'../source/git-util.js': {defaultBranch: defaultBranchStub, getCurrentBranch: getCurrentBranchStub},
+		'../source/ui.js': {default: uiStub},
+	});
+
+	assert.equal(uiStub.firstCall.args[0].branch, 'release');
+	assert.ok(defaultBranchStub.notCalled);
+	assert.ok(getCurrentBranchStub.notCalled);
+});
+
+test('cli allows --any-branch on a detached HEAD', async () => {
+	const defaultBranchStub = sinon.stub();
+	const getCurrentBranchStub = sinon.stub().rejects(new Error('fatal: ref HEAD is not a symbolic ref'));
+	const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: false}));
+
+	await loadCliImplementation({
+		meow: {default: sinon.stub().returns({input: ['patch'], flags: {publish: false, anyBranch: true}, pkg: npPackage})},
+		'../source/git-util.js': {defaultBranch: defaultBranchStub, getCurrentBranch: getCurrentBranchStub},
+		'../source/ui.js': {default: uiStub},
+	});
+
+	assert.equal(uiStub.firstCall.args[0].branch, 'HEAD');
+	assert.ok(defaultBranchStub.notCalled);
+	assert.ok(getCurrentBranchStub.notCalled);
+});
+
 test('cli does not print that the package was published after a dry run', async () => {
 	const gracefulExitStub = sinon.stub();
 	const consoleLogStub = sinon.stub(console, 'log');

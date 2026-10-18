@@ -198,7 +198,7 @@ async function getOptions() {
 		warmUpPublishLookups(package_, packageManager, rootDirectory);
 	}
 
-	const branch = flags.branch ?? await git.defaultBranch();
+	const branch = flags.branch ?? (flags.anyBranch ? 'HEAD' : await git.defaultBranch());
 	if (!flags.releaseDraftOnly) {
 		// Keep obvious Git failures ahead of the wizard, but do not replace the later Git task.
 		// The publish flow still needs a final check in case the repo changes while the user is prompting or logging in.
