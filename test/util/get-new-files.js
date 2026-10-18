@@ -16,7 +16,7 @@ const createNewFilesFixture = (title, input, commands) => {
 			*/
 			const {getNewFiles} = await esmock('../../source/util.js', {}, {
 				'node:process': {cwd: () => temporaryDirectory},
-				execa: {execa: async (...arguments_) => execa(...arguments_, {cwd: temporaryDirectory})},
+				execa: {execa: async (command, commandArguments, options = {}) => execa(command, commandArguments, {...options, cwd: temporaryDirectory})},
 			});
 
 			await commands({context, $$, temporaryDirectory});
@@ -59,6 +59,20 @@ createNewFilesFixture('files to package with tags added', {
 	await context.createFile('index.js');
 	await $$`git add -A`;
 	await $$`git commit -m "added"`;
+});
+
+createNewFilesFixture('classifies non-ASCII filenames against the packed files', {
+	packageFiles: ['*.js'],
+	expected: {
+		unpublished: ['日本語.md'],
+		firstTime: ['café.js'],
+	},
+}, async ({context, $$}) => {
+	await $$`git tag v0.0.0`;
+	await context.createFile('café.js');
+	await context.createFile('日本語.md');
+	await $$`git add -A`;
+	await $$`git commit -m added`;
 });
 
 createNewFilesFixture('file `new` to package without tags added', {

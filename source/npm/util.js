@@ -1,4 +1,5 @@
 import path from 'node:path';
+import {createRequire} from 'node:module';
 import {pathExists} from 'path-exists';
 import {execa} from 'execa';
 import npmName from 'npm-name';
@@ -328,7 +329,15 @@ export const verifyPackageEntryPoints = async (package_, rootDirectory, {ignoreS
 	const missingEntryPoints = [];
 
 	for (const entryPoint of entryPoints) {
-		const normalizedPath = entryPoint.path.replace(/^\.\//v, '');
+		let normalizedPath = entryPoint.path.replace(/^\.\//v, '');
+
+		if (entryPoint.field === 'main') {
+			try {
+				// Node resolves extensionless main paths and directory indexes, while bin and exports require exact files.
+				const resolvedPath = createRequire(import.meta.url).resolve(path.resolve(rootDirectory, entryPoint.path));
+				normalizedPath = path.relative(rootDirectory, resolvedPath).split(path.sep).join('/');
+			} catch {}
+		}
 
 		if (seenPaths.has(normalizedPath)) {
 			continue;

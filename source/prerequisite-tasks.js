@@ -118,6 +118,11 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 		{
 			title: 'Verify package entry points',
 			enabled: !options.yolo,
+			skip() {
+				if (['pnpm', 'yarn-berry'].includes(packageManager.id) && ['main', 'bin', 'exports'].some(field => Object.hasOwn(package_.publishConfig ?? {}, field))) {
+					return 'Entry point inspection is unavailable for publishConfig entry point overrides.';
+				}
+			},
 			async run() {
 				// Read the setting from the package manager that performs the publish. Yarn Berry doesn't expose the `ignore-scripts` setting, so its publish continues to trust lifecycle scripts.
 				const ignoreScripts = packageManager.ignoreScriptsCli

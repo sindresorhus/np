@@ -267,6 +267,8 @@ Set the [`registry` option](https://docs.npmjs.com/misc/config#registry) in pack
 
 If a package manager is not set in package.json (`packageManager` or `devEngines.packageManager`), via configuration (`packageManager`), or via the CLI (`--package-manager`), `np` will attempt to infer the best package manager to use by looking for lockfiles. But it's recommended to set the [`packageManager` field](https://nodejs.org/api/packages.html#packagemanager) in your package.json to be consistent with other tools. See also the [corepack docs](https://nodejs.org/api/corepack.html).
 
+`np` skips its entry point check when pnpm or Yarn Berry overrides `main`, `bin`, or `exports` through `publishConfig`, since their published manifest and file list can differ from npm's packing rules. Verify the generated package yourself in this case.
+
 ### Publish with a CI
 
 If you use a Continuous Integration server to publish your tagged commits, use the `--no-publish` flag to skip the publishing step of `np`.

@@ -20,13 +20,14 @@ export const newFilesSinceLastRelease = async rootDirectory => {
 	try {
 		// `--relative` makes paths relative to the package directory (and excludes files outside it), so they match the paths from `npm pack` when the package lives in a subdirectory (e.g. `--contents`).
 		const relativeRootDirectory = path.relative(await root(), rootDirectory);
-		const {stdout} = await execa('git', ['diff', '--name-only', '--diff-filter=A', `--relative=${relativeRootDirectory}`, await latestTag(), 'HEAD']);
-		if (stdout.trim().length === 0) {
+		// A renamed destination is a new published path, regardless of Git's rename detection settings.
+		const {stdout} = await execa('git', ['diff', '--no-renames', '--name-only', '-z', '--diff-filter=A', `--relative=${relativeRootDirectory}`, await latestTag(), 'HEAD']);
+		if (stdout.length === 0) {
 			return [];
 		}
 
-		const result = stdout.trim().split('\n').map(row => row.trim());
-		return result;
+		// NUL delimiters keep Git from quoting file names and preserve whitespace in paths.
+		return stdout.split('\0').slice(0, -1);
 	} catch {
 		// Get all files under version control
 		return ignoreWalker({

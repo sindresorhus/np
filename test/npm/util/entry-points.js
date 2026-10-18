@@ -1,4 +1,6 @@
 import path from 'node:path';
+import fs from 'node:fs/promises';
+import {createRequire} from 'node:module';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as npm from '../../../source/npm/util.js';
@@ -191,6 +193,36 @@ test('verifyPackageEntryPoints - valid entry points', async () => {
 	const fixtureDirectory = getFixture('one-file');
 
 	await assert.doesNotReject(npm.verifyPackageEntryPoints({main: 'index.js'}, fixtureDirectory));
+});
+
+for (const [main, filename] of [
+	['index', 'index.js'],
+	['data', 'data.json'],
+	['dist', 'dist/index.js'],
+	['dist/', 'dist/index.js'],
+]) {
+	test(`verifyPackageEntryPoints - resolves main ${main} to ${filename}`, async t => {
+		await fs.mkdir('.ai-temporary', {recursive: true});
+		const temporaryDirectory = await fs.mkdtemp(path.resolve('.ai-temporary', 'main-entry-point-'));
+		t.after(() => fs.rm(temporaryDirectory, {recursive: true}));
+		const package_ = {
+			name: 'main-entry-point', version: '1.0.0', main, files: [filename],
+		};
+		await fs.writeFile(path.join(temporaryDirectory, 'package.json'), JSON.stringify(package_));
+		await fs.mkdir(path.dirname(path.join(temporaryDirectory, filename)), {recursive: true});
+		await fs.writeFile(path.join(temporaryDirectory, filename), '');
+
+		// Match the package entry point Node actually resolves, rather than requiring an exact filename in main.
+		assert.equal(createRequire(import.meta.url).resolve(temporaryDirectory), path.join(temporaryDirectory, filename));
+		await assert.doesNotReject(npm.verifyPackageEntryPoints(package_, temporaryDirectory));
+	});
+}
+
+test('verifyPackageEntryPoints - bin and exports do not use main resolution', async () => {
+	const fixtureDirectory = getFixture('one-file');
+
+	await assert.rejects(npm.verifyPackageEntryPoints({bin: 'index'}, fixtureDirectory), {message: /"bin": index/v});
+	await assert.rejects(npm.verifyPackageEntryPoints({exports: './index'}, fixtureDirectory), {message: /"exports": \.\/index/v});
 });
 
 test('verifyPackageEntryPoints - skipped when prepack script may generate files', async () => {
