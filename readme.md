@@ -15,7 +15,7 @@
 - Bumps the version in package.json and package-lock.json (if present) and creates a git tag
 - Prevents [accidental publishing](https://github.com/npm/npm/issues/13248) of pre-release versions under the `latest` [dist-tag](https://docs.npmjs.com/cli/dist-tag)
 - Publishes the new version to npm, optionally under a dist-tag
-- Rolls back the project to its previous state in case publishing fails
+- Rolls back the project to its previous state in case publishing fails, unless it has `publish` or `postpublish` hooks that could fail after upload
 - Pushes commits and tags (newly & previously created) to GitHub/GitLab
 - Supports [two-factor authentication](https://docs.npmjs.com/getting-started/using-two-factor-authentication)
 - Enables two-factor authentication on new repositories
@@ -159,6 +159,8 @@ _**Note:** The global config only applies when using the global `np` binary, and
 ### npm hooks
 
 You can use any of the test/version/publish related [npm lifecycle hooks](https://docs.npmjs.com/misc/scripts) in your package.json to add extra behavior.
+
+When a package has a `publish` or `postpublish` hook, a failed publish command preserves the release commit and tag. These hooks run after upload, so the package may already be published. Check the registry before retrying.
 
 For example, here we build the documentation before tagging the release:
 

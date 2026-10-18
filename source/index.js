@@ -231,11 +231,16 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 								throw error;
 							}
 
-							publishStatus = 'FAILED';
+							let rollbackMessage;
+							if (package_.scripts?.publish || package_.scripts?.postpublish) {
+								rollbackMessage = '\n\nThe release commit and tag were preserved: publish hooks can fail after upload. Check the registry before retrying.';
+							} else {
+								publishStatus = 'FAILED';
 
-							// The rollback prints its progress, so it must not be drawn over.
-							const isRolledBack = await task.withTerminal(rollback);
-							const rollbackMessage = isRolledBack ? '\n\nThe project was rolled back to its previous state.' : '';
+								// The rollback prints its progress, so it must not be drawn over.
+								const isRolledBack = await task.withTerminal(rollback);
+								rollbackMessage = isRolledBack ? '\n\nThe project was rolled back to its previous state.' : '';
+							}
 
 							throw new Error(`Error publishing package:\n${error.message}${rollbackMessage}`, {cause: error});
 						}
