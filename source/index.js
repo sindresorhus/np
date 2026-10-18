@@ -1,4 +1,3 @@
-import path from 'node:path';
 import {execa} from 'execa';
 import {deleteAsync} from 'del';
 import hostedGitInfo from 'hosted-git-info';
@@ -140,7 +139,7 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 					return '[Dry run] Command not executed: delete node_modules.';
 				}
 			},
-			run: () => deleteAsync(path.join(projectDirectory, 'node_modules')),
+			run: () => deleteAsync('node_modules', {cwd: projectDirectory}),
 		},
 		{
 			title: `Installing dependencies using ${packageManager.id}`,
@@ -305,6 +304,6 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 		console.error(`\n${logSymbols.error} ${pushedObjects.reason}`);
 	}
 
-	const {package_: newPackage} = await util.readPackage();
+	const {package_: newPackage} = await util.readPackage(rootDirectory);
 	return newPackage;
 }

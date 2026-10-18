@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import process from 'node:process';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -6,7 +7,7 @@ import sinon from 'sinon';
 import esmock from 'esmock';
 import {execa} from 'execa';
 import {ExitPromptError} from '@inquirer/core';
-import {npPackage, npRootDirectory as rootDirectory} from '../source/util.js';
+import {npPackage, npRootDirectory as rootDirectory, readPackage} from '../source/util.js';
 import {cliPasses} from './_helpers/verify-cli.js';
 
 const cli = path.resolve(rootDirectory, 'source', 'cli-implementation.js');
@@ -453,3 +454,69 @@ test('cli fails with an actionable error when still not authenticated after `npm
 	consoleLogStub.restore();
 	consoleErrorStub.restore();
 });
+
+for (const selection of ['flag', 'config']) {
+	for (const childExists of [true, false]) {
+		test(`cli rejects ${selection} contents without its own package.json when the directory exists: ${childExists}`, async t => {
+			await fs.mkdir('.ai-temporary', {recursive: true});
+			const projectDirectory = await fs.mkdtemp(path.resolve('.ai-temporary', 'contents-manifest-'));
+			t.after(() => fs.rm(projectDirectory, {recursive: true}));
+			await fs.writeFile(path.join(projectDirectory, 'package.json'), JSON.stringify({name: 'parent-package', version: '1.0.0'}));
+			const contentsDirectory = path.join(projectDirectory, 'dist');
+			if (childExists) {
+				await fs.mkdir(contentsDirectory);
+			}
+
+			const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: false}));
+			const gracefulExitStub = sinon.stub();
+			const consoleErrorStub = t.mock.method(console, 'error', () => {});
+
+			await loadCliImplementation({
+				meow: {default: () => ({input: ['patch'], flags: {publish: false, contents: selection === 'flag' ? contentsDirectory : undefined}, pkg: npPackage})},
+				'../source/config.js': {default: async () => selection === 'config' ? {contents: contentsDirectory} : {}},
+				'../source/util.js': {readPackage},
+				'../source/ui.js': {default: uiStub},
+				'exit-hook': {gracefulExit: gracefulExitStub},
+			});
+
+			assert.ok(uiStub.notCalled, 'A missing contents manifest must not silently select a parent package.');
+			assert.ok(gracefulExitStub.calledOnceWithExactly(1));
+			assert.match(consoleErrorStub.mock.calls[0].arguments[0], /package\.json.*contents/sv);
+		});
+	}
+}
+
+for (const {selection, contents, fromSubdirectory = false} of [
+	{selection: 'flag', contents: 'dist'},
+	{selection: 'config', contents: 'dist'},
+	{selection: 'flag', contents: '.'},
+	{selection: 'flag', fromSubdirectory: true},
+]) {
+	test(`cli selects the expected package for ${selection} contents ${JSON.stringify(contents)} from a subdirectory: ${fromSubdirectory}`, async t => {
+		await fs.mkdir('.ai-temporary', {recursive: true});
+		const projectDirectory = await fs.mkdtemp(path.resolve('.ai-temporary', 'contents-package-'));
+		t.after(() => fs.rm(projectDirectory, {recursive: true}));
+		const contentsDirectory = path.join(projectDirectory, 'dist');
+		await fs.mkdir(contentsDirectory);
+		await fs.mkdir(path.join(projectDirectory, 'src'));
+		await fs.writeFile(path.join(projectDirectory, 'package.json'), JSON.stringify({name: 'parent-package', version: '1.0.0'}));
+		await fs.writeFile(path.join(contentsDirectory, 'package.json'), JSON.stringify({name: 'child-package', version: '1.0.0'}));
+		const invocationDirectory = fromSubdirectory ? path.join(projectDirectory, 'src') : projectDirectory;
+		t.mock.method(process, 'cwd', () => invocationDirectory);
+		const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: false}));
+		const gracefulExitStub = sinon.stub();
+
+		await loadCliImplementation({
+			meow: {default: () => ({input: ['patch'], flags: {publish: false, contents: selection === 'flag' ? contents : undefined}, pkg: npPackage})},
+			'../source/config.js': {default: async () => selection === 'config' ? {contents} : {}},
+			'../source/util.js': {readPackage},
+			'../source/ui.js': {default: uiStub},
+			'exit-hook': {gracefulExit: gracefulExitStub},
+		});
+
+		assert.ok(uiStub.calledOnce);
+		assert.equal(uiStub.firstCall.args[1].package_.name, contents === 'dist' ? 'child-package' : 'parent-package');
+		assert.equal(uiStub.firstCall.args[1].rootDirectory, contents === 'dist' ? contentsDirectory : projectDirectory);
+		assert.ok(gracefulExitStub.calledOnceWithExactly());
+	});
+}

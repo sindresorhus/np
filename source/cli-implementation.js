@@ -8,6 +8,7 @@ import updateNotifier from 'update-notifier';
 import isInteractive from 'is-interactive';
 import {execa} from 'execa';
 import {gracefulExit} from 'exit-hook';
+import {packageDirectory} from 'package-directory';
 import {getPackageManagerConfig} from './package-manager/index.js';
 import config from './config.js';
 import * as util from './util.js';
@@ -140,16 +141,18 @@ const warmUpPublishLookups = async (package_, packageManager, rootDirectory) => 
 };
 
 async function getOptions() {
-	const initialConfig = await config(process.cwd());
-	const contents = cli.flags.contents ?? initialConfig?.contents;
-	const packagePath = contents ? path.resolve(process.cwd(), contents) : process.cwd();
+	const workingDirectory = process.cwd();
+	const foundProjectDirectory = await packageDirectory({cwd: workingDirectory});
+	const projectDirectory = foundProjectDirectory ?? workingDirectory;
+	const localConfig = await config(projectDirectory);
+	const contents = cli.flags.contents ?? localConfig?.contents;
+	// Configured contents are relative to the project; explicit CLI paths are relative to the invocation directory.
+	const packagePath = contents ? path.resolve(cli.flags.contents === undefined ? projectDirectory : workingDirectory, contents) : projectDirectory;
 
 	const {package_, rootDirectory} = await util.readPackage(packagePath);
-	const projectDirectory = contents ? process.cwd() : rootDirectory;
-
-	const localConfig = projectDirectory === process.cwd()
-		? initialConfig
-		: await config(projectDirectory);
+	if (contents && rootDirectory !== packagePath) {
+		throw new Error(`No \`package.json\` found in the contents directory: ${packagePath}`);
+	}
 
 	// Filter out undefined CLI flags (not provided by user)
 	const explicitCliFlags = Object.fromEntries(Object.entries(cli.flags).filter(([, value]) => value !== undefined));
@@ -174,11 +177,14 @@ async function getOptions() {
 		flags['2fa'] = flags['2Fa'];
 	}
 
+	const {package_: projectPackage} = foundProjectDirectory && foundProjectDirectory !== rootDirectory
+		? await util.readPackage(foundProjectDirectory)
+		: {package_};
 	if (flags.packageManager) {
-		package_.packageManager = flags.packageManager;
+		projectPackage.packageManager = flags.packageManager;
 	}
 
-	const packageManager = getPackageManagerConfig(projectDirectory, package_);
+	const packageManager = getPackageManagerConfig(projectDirectory, projectPackage);
 
 	if (packageManager.throwOnExternalRegistry && npm.isExternalRegistry(package_)) {
 		throw new Error(`External registry is not yet supported with ${packageManager.id}.`);

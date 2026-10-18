@@ -77,6 +77,31 @@ const fakeExecaReturn = () => ({
 
 const fakePublishError = error => Object.assign(new Error(error), {stdout: '', stderr: error});
 
+for (const projectDirectory of [process.cwd(), undefined]) {
+	test(`returns the published package from rootDirectory ${projectDirectory ? 'with' : 'without'} projectDirectory`, async () => {
+		const rootDirectory = path.resolve('dist');
+		const publishedPackage = {name: 'built-package', version: '2.0.0'};
+		const readPackageStub = sinon.stub().callsFake(async directory => ({
+			package_: directory === rootDirectory ? publishedPackage : npPackageResult.package_,
+		}));
+		const npMock = await esmock('../source/index.js', {
+			'../source/git-tasks.js': sinon.stub(),
+			'../source/git-util.js': {hasUpstream: sinon.stub().resolves(false)},
+			'../source/util.js': {readPackage: readPackageStub},
+		});
+
+		const result = await npMock('2.0.0', {
+			...defaultOptions,
+			runPublish: false,
+			dryRun: true,
+			yolo: true,
+		}, {package_: {name: 'built-package', version: '1.0.0'}, rootDirectory, projectDirectory});
+
+		assert.equal(result, publishedPackage);
+		assert.ok(readPackageStub.calledOnceWithExactly(rootDirectory));
+	});
+}
+
 // A renderer that logs when it gives the terminal to a task.
 const createTerminalLogRenderer = log => () => ({
 	pause() {
@@ -608,7 +633,7 @@ test('rootDirectory remains the default working directory when projectDirectory 
 
 	await npMock('1.0.0', defaultOptions, {package_: npPackageResult.package_, rootDirectory});
 
-	assert.ok(deleteAsyncStub.calledOnceWithExactly(path.join(rootDirectory, 'node_modules')));
+	assert.ok(deleteAsyncStub.calledOnceWithExactly('node_modules', {cwd: rootDirectory}));
 	assert.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: rootDirectory, all: true}]);
 	assert.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: rootDirectory, all: true}]);
 	assert.equal(publishCwd, rootDirectory);
@@ -679,7 +704,7 @@ test('cleanup uses projectDirectory from context', async () => {
 		dryRun: false,
 	}, {package_: npPackageResult.package_, projectDirectory, rootDirectory: contentsDirectory});
 
-	assert.ok(deleteAsyncStub.calledOnceWithExactly(path.join(projectDirectory, 'node_modules')));
+	assert.ok(deleteAsyncStub.calledOnceWithExactly('node_modules', {cwd: projectDirectory}));
 });
 
 test('tests use projectDirectory from context as cwd', async () => {
@@ -820,7 +845,7 @@ test('contents mode keeps cleanup, install, and tests in projectDirectory while 
 
 	await npMock('1.0.0', defaultOptions, {package_: npPackageResult.package_, projectDirectory, rootDirectory});
 
-	assert.ok(deleteAsyncStub.calledOnceWithExactly(path.join(projectDirectory, 'node_modules')));
+	assert.ok(deleteAsyncStub.calledOnceWithExactly('node_modules', {cwd: projectDirectory}));
 	assert.deepEqual(execaStub.firstCall.args, ['npm', ['install', '--no-package-lock', '--include=dev', '--engine-strict'], {cwd: projectDirectory, all: true}]);
 	assert.deepEqual(execaStub.secondCall.args, ['npm', ['run', 'test'], {env: {CI: 'true'}, cwd: projectDirectory, all: true}]);
 	assert.equal(publishCwd, rootDirectory);
