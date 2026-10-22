@@ -13,6 +13,9 @@ export const getEnable2faArguments = async (packageName, options) => {
 		arguments_.push('--otp', options.otp);
 	}
 
+	// Npm only shows the browser authentication URLs in its JSON output.
+	arguments_.push('--json');
+
 	return arguments_;
 };
 

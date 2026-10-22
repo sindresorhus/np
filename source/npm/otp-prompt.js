@@ -11,9 +11,9 @@ import {
 const otpLength = 6;
 
 /**
-Prompt for a one-time password. It submits when Enter is pressed, or by itself when 6 characters are entered.
+Prompt for a one-time password. It submits when Enter is pressed, or by itself when 6 characters are entered. With `allowEmpty`, Enter without input submits an empty string.
 
-@type {import('@inquirer/core').Prompt<string, {message: string}>}
+@type {import('@inquirer/core').Prompt<string, {message: string; allowEmpty?: boolean}>}
 */
 const otpPrompt = createPrompt((config, done) => {
 	const theme = makeTheme();
@@ -31,7 +31,7 @@ const otpPrompt = createPrompt((config, done) => {
 		// Readline clears its line when Enter is pressed, so use the value from before.
 		const answer = (isEnter ? value : readline.line).trim();
 
-		if (answer.length === otpLength || (isEnter && answer !== '')) {
+		if (answer.length === otpLength || (isEnter && (answer !== '' || config.allowEmpty))) {
 			setValue(answer);
 			setStatus('done');
 			done(answer);

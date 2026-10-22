@@ -1,5 +1,4 @@
 import {execa} from 'execa';
-import open from 'open';
 import {npmNetworkTimeout} from './util.js';
 
 export const getPackagePublishArguments = options => {
@@ -53,7 +52,6 @@ Runs the publish command and shows its output in the given task.
 */
 export async function runPublish(arguments_, {cwd, task}) {
 	const subprocess = execa(...arguments_, {
-		stdin: 'pipe',
 		// Timeout to prevent infinite hangs (e.g., from lifecycle scripts in watch mode)
 		timeout: publishTimeout,
 		// `npm` 8.5+ has a bug where `npm publish <folder>` publishes from cwd instead of <folder>.
@@ -62,42 +60,13 @@ export async function runPublish(arguments_, {cwd, task}) {
 		cwd,
 	});
 
-	let outputBuffer = '';
-
-	const handleOutput = data => {
-		const output = data.toString();
-		task.output = output;
-		outputBuffer += output;
-
-		// Detect npm's browser authentication prompt
-		// Example: "Authenticate your account at:\nhttps://www.npmjs.com/auth/cli/xyz"
-		if (outputBuffer.includes('Authenticate your account at:')) {
-			const urlMatch = outputBuffer.match(/https:\/\/www\.npmjs\.com\/auth\/cli\/\S+(?=\s)/v);
-			if (urlMatch) {
-				const authUrl = urlMatch[0];
-				// Auto-open browser for authentication (ignore errors if browser fails to open)
-				(async () => {
-					try {
-						await open(authUrl);
-					} catch {}
-				})();
-
-				// Automatically send ENTER to continue (skip "Press ENTER" prompt)
-				subprocess.stdin?.write('\n');
-				// Clear buffer after handling to prevent repeated triggers
-				outputBuffer = '';
-			}
-		}
-
-		// Prevent buffer from growing indefinitely
-		if (outputBuffer.length > 10_000) {
-			outputBuffer = outputBuffer.slice(-5000);
-		}
+	const showOutput = data => {
+		task.output = data.toString();
 	};
 
-	// Show the output in the task and monitor both stdout and stderr for the authentication prompt
-	subprocess.stdout?.on('data', handleOutput);
-	subprocess.stderr?.on('data', handleOutput);
+	// Show the output in the task
+	subprocess.stdout?.on('data', showOutput);
+	subprocess.stderr?.on('data', showOutput);
 
 	return subprocess;
 }

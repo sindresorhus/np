@@ -5,7 +5,12 @@ import assert from 'node:assert/strict';
 import sinon from 'sinon';
 import esmock from 'esmock';
 import {ExitPromptError} from '@inquirer/core';
-import {npmConfig as packageManager} from '../source/package-manager/configs.js';
+import {
+	npmConfig as packageManager,
+	pnpmConfig,
+	bunConfig,
+	yarnBerryConfig,
+} from '../source/package-manager/configs.js';
 import * as util from '../source/util.js';
 
 const defaultOptions = {
@@ -328,6 +333,40 @@ test('the OTP entered while publishing is used to enable 2FA, and the OTP handle
 	assert.equal(getPackagePublishArgumentsStub.secondCall.args[0].otp, '123456');
 	assert.deepEqual(enable2faStub.firstCall.args.slice(1), [npPackageResult.package_.name, {otp: '123456'}]);
 });
+
+for (const {packageManager: publishPackageManager, expectedCommand} of [
+	{packageManager, expectedCommand: ['npm', ['publish', '--json']]},
+	{packageManager: bunConfig, expectedCommand: ['npm', ['publish', '--json']]},
+	{packageManager: pnpmConfig, expectedCommand: ['pnpm', ['publish', '--no-git-checks']]},
+	{packageManager: yarnBerryConfig, expectedCommand: ['yarn', ['npm', 'publish']]},
+]) {
+	test(`only npm publishes with JSON output, which has the browser authentication URLs: ${publishPackageManager.id}`, async () => {
+		const runPublishStub = sinon.stub().resolves({});
+
+		/**
+		@type {typeof np}
+		*/
+		const npMock = await esmock('../source/index.js', {
+			del: {deleteAsync: sinon.stub()},
+			execa: {execa: sinon.stub().returns(fakeExecaReturn())},
+			'../source/prerequisite-tasks.js': sinon.stub(),
+			'../source/git-tasks.js': sinon.stub(),
+			'../source/git-util.js': {
+				hasUpstream: sinon.stub().returns(true),
+				pushGraceful: sinon.stub(),
+				verifyWorkingTreeIsClean: sinon.stub(),
+			},
+			'../source/npm/publish.js': {
+				getPackagePublishArguments: () => ['publish'],
+				runPublish: runPublishStub,
+			},
+		});
+
+		await npMock('1.0.0', {...defaultOptions, packageManager: publishPackageManager}, npPackageResult);
+
+		assert.deepEqual(runPublishStub.firstCall.args[0], expectedCommand);
+	});
+}
 
 test('Ctrl+C at the OTP prompt aborts without rolling back', async () => {
 	const deleteTagStub = sinon.stub().resolves();

@@ -116,8 +116,10 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 	*/
 	function getPublishCommand(_options) {
 		const publishCommand = packageManager.publishCommand || (arguments_ => [packageManager.cli, arguments_]);
-		const arguments_ = getPackagePublishArguments(_options);
-		return publishCommand(arguments_);
+		const [cli, arguments_] = publishCommand(getPackagePublishArguments(_options));
+
+		// Npm only shows the browser authentication URLs in its JSON output.
+		return cli === 'npm' ? [cli, [...arguments_, '--json']] : [cli, arguments_];
 	}
 
 	// `--no-cleanup` only skips np's explicit cleanup task.

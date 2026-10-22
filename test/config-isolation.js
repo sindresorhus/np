@@ -13,7 +13,7 @@ test('the local binary does not inherit an operating system global config', asyn
 	const projectDirectory = path.join(temporaryDirectory, 'project');
 	await fs.mkdir(projectDirectory);
 	await fs.writeFile(path.join(projectDirectory, 'package.json'), JSON.stringify({name: 'fixture', version: '1.0.0'}));
-	const {stdout} = await execa(process.execPath, ['--input-type=module', '--eval', `
+	const {stdout} = await execa(process.execPath, ['--input-type=module', '--eval', String.raw`
 		import fs from 'node:fs/promises';
 		import path from 'node:path';
 		import {createRequire} from 'node:module';
@@ -22,7 +22,8 @@ test('the local binary does not inherit an operating system global config', asyn
 		const globalDirectory = envPaths('np', {suffix: ''}).config;
 		await fs.mkdir(globalDirectory, {recursive: true});
 		await fs.writeFile(path.join(globalDirectory, 'config.json'), JSON.stringify({contents: 'unexpected-global-directory'}));
-		console.log(JSON.stringify(await getConfig(process.argv[1])));
+		// Write the string directly, because logging undefined uses util.inspect, which adds color codes when the stream supports colors.
+		process.stdout.write(JSON.stringify(await getConfig(process.argv[1])) + '\n');
 	`, projectDirectory], {
 		env: {
 			HOME: temporaryDirectory,

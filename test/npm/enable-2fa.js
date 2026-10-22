@@ -28,7 +28,7 @@ for (const {version, accessArgs} of npmVersionFixtures) {
 		}) => {
 			assert.deepEqual(
 				await getEnable2faArguments('np'),
-				[...accessArgs, 'np'],
+				[...accessArgs, 'np', '--json'],
 			);
 		},
 	);
@@ -41,7 +41,7 @@ for (const {version, accessArgs} of npmVersionFixtures) {
 		}) => {
 			assert.deepEqual(
 				await getEnable2faArguments('np', {confirm: true}),
-				[...accessArgs, 'np'],
+				[...accessArgs, 'np', '--json'],
 			);
 		},
 	);
@@ -54,7 +54,7 @@ for (const {version, accessArgs} of npmVersionFixtures) {
 		}) => {
 			assert.deepEqual(
 				await getEnable2faArguments('np', {otp: '123456'}),
-				[...accessArgs, 'np', '--otp', '123456'],
+				[...accessArgs, 'np', '--otp', '123456', '--json'],
 			);
 		},
 	);
@@ -82,5 +82,5 @@ test('retries with the OTP when enabling 2FA requires one', async () => {
 
 	await tryEnable2fa({}, 'np', {});
 
-	assert.deepEqual(execaStub.secondCall.args[1], ['access', 'set', 'mfa=publish', 'np', '--otp', '123456']);
+	assert.deepEqual(execaStub.secondCall.args[1], ['access', 'set', 'mfa=publish', 'np', '--otp', '123456', '--json']);
 });

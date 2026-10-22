@@ -15,9 +15,10 @@ Show the prompt with fake streams and type the given keys. Each item is written 
 
 @param {string[]} keys - The keys to type.
 @param {object} [context] - Extra context for the prompt.
+@param {object} [config] - Extra config for the prompt.
 @returns {Promise<{answer: string | undefined, error: unknown, output: string}>} The answer, or `undefined` if the prompt did not submit, and the error if the prompt was aborted.
 */
-const typeIntoPrompt = async (keys, context = {}) => {
+const typeIntoPrompt = async (keys, context = {}, config = {}) => {
 	const input = new PassThrough();
 	const output = new PassThrough();
 	let written = '';
@@ -28,7 +29,7 @@ const typeIntoPrompt = async (keys, context = {}) => {
 	// Readline ignores Backspace in a dumb terminal, so do not depend on the terminal of the test run.
 	const originalTerm = process.env.TERM;
 	process.env.TERM = 'xterm';
-	const prompt = otpPrompt({message: 'Enter OTP:'}, {input, output, ...context});
+	const prompt = otpPrompt({message: 'Enter OTP:', ...config}, {input, output, ...context});
 
 	if (originalTerm === undefined) {
 		delete process.env.TERM;
@@ -112,4 +113,9 @@ test('Ctrl+C aborts the prompt', async () => {
 	assert.equal(answer, undefined);
 	// The CLI handles this error like for any other aborted prompt.
 	assert.equal(error?.name, 'ExitPromptError');
+});
+
+test('submits Enter without input when `allowEmpty` is set', async () => {
+	const {answer} = await typeIntoPrompt([enter], {}, {allowEmpty: true});
+	assert.equal(answer, '');
 });
