@@ -251,6 +251,7 @@ export const mockInquirer = async ({t, answers, mocks = {}, onPrompt = () => {}}
 			},
 		},
 	}, {
+		'../../source/breaking-changes.js': {default: async () => []},
 		...fixRelativeMocks(mocks),
 		import: {
 			console: {

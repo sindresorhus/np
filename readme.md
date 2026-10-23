@@ -93,6 +93,16 @@ Run `np release-draft` to open a prefilled GitHub release form for the latest lo
 
 Run `np` without arguments to launch the interactive UI that guides you through publishing a new version.
 
+`np` warns about potential breaking changes since the latest Git tag and preselects `major` (`minor` for `0.x` versions). All choices remain available, and the default stays `patch` when the current version is a prerelease. It detects:
+
+- Reduced `engines.node` support.
+- An added `exports` field.
+- A changed `type` field.
+- Commits marked as breaking: Conventional Commits `type!:` (like `feat!:`) and `BREAKING CHANGE:`, plus `Breaking:`, `[breaking]`, `💥`, and `:boom:` subjects.
+- New entries under a heading like `Breaking changes` or `Incompatible changes` in a `CHANGELOG.md`, `CHANGES.md`, or `HISTORY.md` file in the package directory. Entries in releases the latest tag already covers are skipped when release headings use `#` and a SemVer version, like `## 1.2.0` or `## [1.2.0] - 2026-01-01`, with the newest release first.
+
+Detection is best effort. It needs the package.json from the latest Git tag, scans all commits in the repository since that tag, and is skipped when you pass a version.
+
 <img src="media/screenshot-ui.png" width="1290">
 
 ## Config

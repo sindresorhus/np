@@ -8,6 +8,7 @@ import isInteractive from 'is-interactive';
 import {execa} from 'execa';
 import semver from 'semver';
 import {PresentableError} from 'presentable-error';
+import getPotentialBreakingChanges from './breaking-changes.js';
 import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
@@ -355,8 +356,21 @@ export default async function ui({packageManager, ...options}, {package_, rootDi
 	const currentPrerelease = semver.prerelease(oldVersion);
 	// Only use the prefix if it's a string (not a number like in '1.0.0-0')
 	const currentPrereleasePrefix = typeof currentPrerelease?.[0] === 'string' ? currentPrerelease[0] : undefined;
-	const configPrereleasePrefix = await util.getPreReleasePrefix(packageManager);
+	const [configPrereleasePrefix, breakingChanges] = await Promise.all([
+		util.getPreReleasePrefix(packageManager),
+		getPotentialBreakingChanges(package_, rootDirectory),
+	]);
 	const defaultPrereleasePrefix = currentPrereleasePrefix ?? configPrereleasePrefix;
+	let defaultIncrement = 'patch';
+	if (breakingChanges.length > 0) {
+		// Commit messages, changelog entries, and manifest values must not inject terminal controls.
+		const reasons = breakingChanges.map(reason => reason.replaceAll(/\p{Control}/gv, ''));
+		console.log(`${chalk.yellow('⚠ Potentially breaking changes detected:')}\n${util.joinList(reasons)}\n`);
+		if (!currentPrerelease) {
+			defaultIncrement = semver.major(oldVersion) === 0 ? 'minor' : 'major';
+		}
+	}
+
 	// Align the versions with spaces, because a tab character makes terminals like iTerm2 repaint the prompt twice on every keypress, which flickers.
 	const incrementColumnWidth = Math.max(...SEMVER_INCREMENTS.map(increment => increment.length)) + 2;
 
@@ -365,7 +379,7 @@ export default async function ui({packageManager, ...options}, {package_, rootDi
 			type: 'select',
 			message: 'Select SemVer increment or specify new version',
 			pageSize: SEMVER_INCREMENTS.length + 2,
-			default: 0,
+			default: defaultIncrement,
 			choices: [
 				...SEMVER_INCREMENTS.map(increment => ({
 					name: `${increment.padEnd(incrementColumnWidth)}${new Version(oldVersion, increment, {prereleasePrefix: defaultPrereleasePrefix}).format()}`,

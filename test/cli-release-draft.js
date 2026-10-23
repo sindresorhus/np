@@ -3,6 +3,7 @@ import path from 'node:path';
 import process from 'node:process';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {stripVTControlCharacters} from 'node:util';
 import {execa} from 'execa';
 import esmock from 'esmock';
 
@@ -33,12 +34,13 @@ test('release-draft previews the tagged release without requiring a release bran
 
 	const {exitCode, stdout, stderr} = await execa(process.execPath, [cli, 'release-draft', '--dry-run'], {
 		cwd: temporaryDirectory,
+		env: {FORCE_COLOR: '1'},
 		reject: false,
 		timeout: 20_000,
 	});
 
 	assert.equal(exitCode, 0, stderr);
-	assert.match(stdout, /Create a release draft on GitHub for fixture/v);
+	assert.match(stripVTControlCharacters(stdout), /Create a release draft on GitHub for fixture/v);
 	assert.match(stdout, /Released improvement/v);
 	assert.match(stdout, /compare\/v1\.0\.0\.\.\.v1\.1\.0/v);
 	assert.doesNotMatch(stdout, /published|Publish a new version/v);

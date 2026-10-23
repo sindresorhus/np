@@ -16,7 +16,7 @@
 		"bun": ">=1"
 	},
 	"scripts": {
-		"test": "FORCE_HYPERLINK=1 HOME=/tmp NODE_ENV=test GIT_AUTHOR_NAME=test GIT_COMMITTER_NAME=test GIT_AUTHOR_EMAIL=test@example.com GIT_COMMITTER_EMAIL=test@example.com sh -c 'xo && node --test \"test/{*.js,!(_helpers|fixtures)/**/*.js}\"'"
+		"test": "FORCE_HYPERLINK=1 HOME=/tmp npm_config_cache=/tmp/.npm NODE_ENV=test GIT_AUTHOR_NAME=test GIT_COMMITTER_NAME=test GIT_AUTHOR_EMAIL=test@example.com GIT_COMMITTER_EMAIL=test@example.com sh -c 'xo && node --test \"test/{*.js,!(_helpers|fixtures)/**/*.js}\"'"
 	},
 	"files": [
 		"source"
