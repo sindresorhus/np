@@ -31,6 +31,9 @@ const cli = meow(`
 	  Version can be:
 	    ${SEMVER_INCREMENTS.join(' | ')} | 1.2.3
 
+	Commands
+	  release-draft          Open a prefilled GitHub release form for the latest Git tag
+
 	Options
 	  --any-branch           Allow publishing from any branch
 	  --branch               Name of the release branch (default: main | master)
@@ -42,7 +45,6 @@ const cli = meow(`
 	  --tag                  Publish under a given dist-tag
 	  --contents             Subdirectory to publish
 	  --no-release-draft     Skips opening a GitHub release draft
-	  --release-draft-only   Only opens a GitHub release draft for the latest published version
 	  --no-release-notes     Skips generating release notes when opening a GitHub release draft
 	  --test-script          Name of npm run script to run tests before publishing (default: test)
 	  --no-2fa               Don't enable 2FA on new packages (not recommended)
@@ -58,6 +60,7 @@ const cli = meow(`
 	  $ np 1.0.2
 	  $ np 1.0.2-beta.3 --tag=beta
 	  $ np 1.0.2-beta.3 --tag=beta --contents=dist
+	  $ np release-draft
 `, {
 	importMeta: import.meta,
 	booleanDefault: undefined,
@@ -125,6 +128,15 @@ const cli = meow(`
 	},
 });
 
+// Meow only handles these flags when they are the only argument, so `np release-draft --help` would otherwise run the command.
+if (cli.flags.help) {
+	cli.showHelp(0);
+}
+
+if (cli.flags.version) {
+	cli.showVersion();
+}
+
 updateNotifier({pkg: cli.pkg}).notify();
 
 /** @typedef {Awaited<ReturnType<typeof getOptions>>['options']} Options */
@@ -146,6 +158,11 @@ async function getOptions() {
 	const foundProjectDirectory = await packageDirectory({cwd: workingDirectory});
 	const projectDirectory = foundProjectDirectory ?? workingDirectory;
 	const localConfig = await config(projectDirectory);
+	// TODO: Remove this migration error and the old flag definition in a future major release.
+	if (cli.flags.releaseDraftOnly !== undefined || localConfig?.releaseDraftOnly !== undefined) {
+		throw new PresentableError('The `--release-draft-only` flag has been replaced by `np release-draft`. Remove `releaseDraftOnly` from your np config if set.');
+	}
+
 	const contents = cli.flags.contents ?? localConfig?.contents;
 	// Configured contents are relative to the project; explicit CLI paths are relative to the invocation directory.
 	const packagePath = contents ? path.resolve(cli.flags.contents === undefined ? projectDirectory : workingDirectory, contents) : projectDirectory;
@@ -158,7 +175,7 @@ async function getOptions() {
 	// Filter out undefined CLI flags (not provided by user)
 	const explicitCliFlags = Object.fromEntries(Object.entries(cli.flags).filter(([, value]) => value !== undefined));
 
-	// Merge: local config → explicit CLI flags → defaults
+	// Merge: defaults → local config → explicit CLI flags
 	const mergedFlags = {
 		cleanup: true,
 		tests: true,
@@ -168,6 +185,7 @@ async function getOptions() {
 		'2fa': true,
 		...localConfig,
 		...explicitCliFlags,
+		releaseDraftOnly: cli.input.at(0) === 'release-draft',
 	};
 
 	const {preview, ...flags} = mergedFlags;
@@ -187,11 +205,27 @@ async function getOptions() {
 
 	const packageManager = getPackageManagerConfig(projectDirectory, projectPackage);
 
+	if (flags.releaseDraftOnly) {
+		const options = await ui({
+			...flags,
+			packageManager,
+			runPublish: false,
+			version: package_.version,
+		}, {package_, rootDirectory});
+
+		return {
+			options: {...options, packageManager},
+			projectDirectory,
+			rootDirectory,
+			package_,
+		};
+	}
+
 	if (packageManager.throwOnExternalRegistry && npm.isExternalRegistry(package_)) {
 		throw new PresentableError(`External registry is not yet supported with ${packageManager.id}.`);
 	}
 
-	const runPublish = !flags.releaseDraftOnly && flags.publish && !package_.private;
+	const runPublish = flags.publish && !package_.private;
 	if (runPublish && flags.provenance && packageManager.cli === 'yarn') {
 		const {stdout: yarnVersion} = await execa(packageManager.cli, ['--version']);
 		if (!semver.valid(yarnVersion) || semver.lt(yarnVersion, '4.9.0')) {
@@ -212,11 +246,9 @@ async function getOptions() {
 	}
 
 	const branch = flags.branch ?? (flags.anyBranch ? 'HEAD' : await git.defaultBranch());
-	if (!flags.releaseDraftOnly) {
-		// Keep obvious Git failures ahead of the wizard, but do not replace the later Git task.
-		// The publish flow still needs a final check in case the repo changes while the user is prompting or logging in.
-		await verifyGitTasks({anyBranch: flags.anyBranch, branch, remote: flags.remote});
-	}
+	// Keep obvious Git failures ahead of the wizard, but do not replace the later Git task.
+	// The publish flow still needs a final check in case the repo changes while the user is prompting or logging in.
+	await verifyGitTasks({anyBranch: flags.anyBranch, branch, remote: flags.remote});
 
 	const availability = await availabilityPromise;
 
@@ -239,8 +271,8 @@ async function getOptions() {
 		}
 	}
 
-	// Use current (latest) version when 'releaseDraftOnly', otherwise try to use the first argument.
-	const version = flags.releaseDraftOnly ? package_.version : cli.input.at(0);
+	// Use the first argument as the version for the publish flow.
+	const version = cli.input.at(0);
 
 	const options = await ui({
 		...flags,

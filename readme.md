@@ -55,6 +55,9 @@ $ np --help
     Version can be:
       patch | minor | major | prepatch | preminor | premajor | prerelease | 1.2.3
 
+  Commands
+    release-draft           Open a prefilled GitHub release form for the latest Git tag
+
   Options
     --any-branch            Allow publishing from any branch
     --branch                Name of the release branch (default: main | master)
@@ -66,7 +69,6 @@ $ np --help
     --tag                   Publish under a given dist-tag
     --contents              Subdirectory to publish
     --no-release-draft      Skips opening a GitHub release draft
-    --release-draft-only    Only opens a GitHub release draft for the latest published version
     --no-release-notes      Skips generating release notes when opening a GitHub release draft
     --test-script           Name of npm run script to run tests before publishing (default: test)
     --no-2fa                Don't enable 2FA on new packages (not recommended)
@@ -82,7 +84,10 @@ $ np --help
     $ np 1.0.2
     $ np 1.0.2-beta.3 --tag=beta
     $ np 1.0.2-beta.3 --tag=beta --contents=dist
+    $ np release-draft
 ```
+
+Run `np release-draft` to open a prefilled GitHub release form for the latest local Git tag without publishing or bumping the version. Notes include changes through that tag and exclude later commits. Use `--no-release-notes` to leave the notes empty.
 
 ## Interactive UI
 

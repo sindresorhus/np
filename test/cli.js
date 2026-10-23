@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import process from 'node:process';
@@ -9,6 +10,7 @@ import {execa} from 'execa';
 import {ExitPromptError} from '@inquirer/core';
 import {npPackage, npRootDirectory as rootDirectory, readPackage} from '../source/util.js';
 import {getOidcProvider} from '../source/npm/oidc.js';
+import {npmConfig, yarnBerryConfig} from '../source/package-manager/configs.js';
 import {cliPasses} from './_helpers/verify-cli.js';
 
 const cli = path.resolve(rootDirectory, 'source', 'cli-implementation.js');
@@ -23,6 +25,9 @@ cliPasses('flags: --help', cli, '--help', [
 	'Version can be:',
 	'patch | minor | major | prepatch | preminor | premajor | prerelease | 1.2.3',
 	'',
+	'Commands',
+	'release-draft          Open a prefilled GitHub release form for the latest Git tag',
+	'',
 	'Options',
 	'--any-branch           Allow publishing from any branch',
 	'--branch               Name of the release branch (default: main | master)',
@@ -34,7 +39,6 @@ cliPasses('flags: --help', cli, '--help', [
 	'--tag                  Publish under a given dist-tag',
 	'--contents             Subdirectory to publish',
 	'--no-release-draft     Skips opening a GitHub release draft',
-	'--release-draft-only   Only opens a GitHub release draft for the latest published version',
 	'--no-release-notes     Skips generating release notes when opening a GitHub release draft',
 	'--test-script          Name of npm run script to run tests before publishing (default: test)',
 	'--no-2fa               Don\'t enable 2FA on new packages (not recommended)',
@@ -50,6 +54,7 @@ cliPasses('flags: --help', cli, '--help', [
 	'$ np 1.0.2',
 	'$ np 1.0.2-beta.3 --tag=beta',
 	'$ np 1.0.2-beta.3 --tag=beta --contents=dist',
+	'$ np release-draft',
 	'',
 ]);
 
@@ -59,6 +64,30 @@ test('flags: --dry-run is shown in help', async () => {
 	const {stdout} = await execa(cli, ['--help']);
 
 	assert.ok(stdout.includes('--dry-run              Show tasks without actually executing them'));
+});
+
+for (const arguments_ of [['release-draft', '--help'], ['--help', 'release-draft'], ['patch', '--help']]) {
+	test(`flags: ${arguments_.join(' ')} shows help before loading project configuration`, async t => {
+		await fs.mkdir('.ai-temporary', {recursive: true});
+		const temporaryDirectory = await fs.mkdtemp(path.resolve('.ai-temporary', 'release-draft-help-'));
+		t.after(() => fs.rm(temporaryDirectory, {recursive: true}));
+		await fs.writeFile(path.join(temporaryDirectory, 'package.json'), JSON.stringify({name: 'fixture', version: '1.0.0', np: {releaseDraftOnly: true}}));
+
+		const {exitCode, stdout, stderr} = await execa(cli, arguments_, {cwd: temporaryDirectory, reject: false, timeout: 10_000});
+
+		assert.equal(exitCode, 0, stderr);
+		assert.match(stdout, /Usage/v);
+		assert.match(stdout, /release-draft +Open a prefilled GitHub release form/v);
+		assert.doesNotMatch(stdout, /Create a release draft on GitHub|Publish a new version/v);
+		assert.equal(stderr, '');
+	});
+}
+
+test('flags: release-draft --version shows the version without running the command', async () => {
+	const {exitCode, stdout, stderr} = await execa(cli, ['release-draft', '--version', '--dry-run'], {cwd: os.tmpdir(), reject: false, timeout: 10_000});
+
+	assert.equal(exitCode, 0, stderr);
+	assert.equal(stdout, npPackage.version);
 });
 
 test('flags: unknown flags fail', async () => {
@@ -129,6 +158,116 @@ const loadCliImplementation = async overrides => esmock('../source/cli-implement
 	},
 	...overrides,
 });
+
+for (const flag of ['--release-draft-only', '--no-release-draft-only']) {
+	test(`cli explains the replacement for ${flag}`, async () => {
+		const {exitCode, stderr} = await execa(cli, [flag, '--dry-run'], {reject: false, timeout: 10_000});
+
+		assert.equal(exitCode, 1);
+		assert.match(stderr, /The `--release-draft-only` flag has been replaced by `np release-draft`\./v);
+		assert.doesNotMatch(stderr, /^ +at /mv);
+	});
+}
+
+for (const releaseDraftOnly of [true, false]) {
+	test(`cli rejects the old releaseDraftOnly configuration set to ${releaseDraftOnly} before starting a release`, async t => {
+		const uiStub = sinon.stub();
+		const npStub = sinon.stub();
+		const gracefulExitStub = sinon.stub();
+		const consoleErrorStub = t.mock.method(console, 'error', () => {});
+
+		await loadCliImplementation({
+			'../source/config.js': {default: async () => ({releaseDraftOnly})},
+			'../source/ui.js': {default: uiStub},
+			'../source/index.js': {default: npStub},
+			'exit-hook': {gracefulExit: gracefulExitStub},
+		});
+
+		assert.ok(gracefulExitStub.calledOnceWithExactly(1));
+		assert.match(consoleErrorStub.mock.calls[0].arguments[0], /np release-draft/v);
+		assert.match(consoleErrorStub.mock.calls[0].arguments[0], /Remove `releaseDraftOnly` from your np config/v);
+		assert.ok(uiStub.notCalled);
+		assert.ok(npStub.notCalled);
+	});
+}
+
+for (const {dryRun, packageManager, localConfig = {}} of [
+	{dryRun: false, packageManager: npmConfig},
+	{dryRun: true, packageManager: npmConfig},
+	{dryRun: false, packageManager: yarnBerryConfig, localConfig: {stage: true, provenance: true}},
+]) {
+	test(`cli release-draft bypasses publish preparation for ${packageManager.id} with dry-run: ${dryRun}`, async t => {
+		const defaultBranchStub = sinon.stub().rejects(new Error('No default branch'));
+		const verifyGitTasksStub = sinon.stub();
+		const availabilityStub = sinon.stub();
+		const usernameStub = sinon.stub();
+		const loginStub = sinon.stub();
+		const packedFilesStub = sinon.stub();
+		const externalRegistryStub = sinon.stub().returns(true);
+		const execaStub = sinon.stub().rejects(new Error('Publish validation must not run'));
+		const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: true}));
+		const npStub = sinon.stub().resolves({name: 'test-package', version: '1.0.0'});
+		const gracefulExitStub = sinon.stub();
+		const consoleLogStub = t.mock.method(console, 'log', () => {});
+		const consoleErrorStub = t.mock.method(console, 'error', () => {});
+
+		await loadCliImplementation({
+			meow: {default: () => ({input: ['release-draft'], flags: {dryRun}, pkg: npPackage})},
+			'../source/config.js': {default: async () => localConfig},
+			'../source/package-manager/index.js': {getPackageManagerConfig: () => packageManager},
+			'../source/git-util.js': {defaultBranch: defaultBranchStub},
+			'../source/git-tasks.js': {verifyGitTasks: verifyGitTasksStub},
+			'../source/npm/util.js': {
+				isExternalRegistry: externalRegistryStub,
+				isPackageNameAvailable: availabilityStub,
+				getFilesToBePacked: packedFilesStub,
+				username: usernameStub,
+				login: loginStub,
+			},
+			'../source/ui.js': {default: uiStub},
+			'../source/index.js': {default: npStub},
+			execa: {execa: execaStub},
+			'exit-hook': {gracefulExit: gracefulExitStub},
+		});
+
+		assert.ok(uiStub.calledOnce);
+		assert.equal(uiStub.firstCall.firstArg.releaseDraftOnly, true);
+		assert.equal(uiStub.firstCall.firstArg.runPublish, false);
+		assert.equal(uiStub.firstCall.firstArg.version, '1.0.0');
+		assert.ok(npStub.calledOnce);
+		assert.equal(npStub.firstCall.args[0], '1.0.0');
+		assert.equal(npStub.firstCall.args[1].dryRun, dryRun);
+		assert.ok(defaultBranchStub.notCalled);
+		assert.ok(verifyGitTasksStub.notCalled);
+		assert.ok(availabilityStub.notCalled);
+		assert.ok(packedFilesStub.notCalled);
+		assert.ok(usernameStub.notCalled);
+		assert.ok(loginStub.notCalled);
+		assert.ok(externalRegistryStub.notCalled);
+		assert.ok(execaStub.notCalled);
+		assert.ok(gracefulExitStub.calledOnceWithExactly());
+		assert.equal(consoleErrorStub.mock.callCount(), 0);
+		assert.ok(consoleLogStub.mock.calls.every(call => !String(call.arguments[0]).includes('published')));
+	});
+}
+
+for (const input of [[], ['patch'], ['1.2.3']]) {
+	test(`cli preserves the release version input ${JSON.stringify(input)}`, async () => {
+		const uiStub = sinon.stub().callsFake(async options => ({...options, confirm: false}));
+		const verifyGitTasksStub = sinon.stub();
+
+		await loadCliImplementation({
+			meow: {default: () => ({input, flags: {publish: false}, pkg: npPackage})},
+			'../source/git-tasks.js': {verifyGitTasks: verifyGitTasksStub},
+			'../source/ui.js': {default: uiStub},
+		});
+
+		assert.ok(verifyGitTasksStub.calledOnce);
+		assert.ok(uiStub.calledOnce);
+		assert.equal(uiStub.firstCall.firstArg.version, input[0]);
+		assert.equal(uiStub.firstCall.firstArg.releaseDraftOnly, false);
+	});
+}
 
 test('cli exits quietly through the exit hooks when a prompt is canceled', async () => {
 	const gracefulExitStub = sinon.stub();
