@@ -32,6 +32,21 @@ createIntegrationFixture('no remote', async () => {
 	);
 });
 
+createStubFixture('timeout', [{
+	command: 'git ls-remote origin HEAD',
+	exitCode: 1,
+	stderr: '',
+	timedOut: true,
+	shortMessage: 'Command timed out after 30000 milliseconds: git ls-remote origin HEAD',
+}], async ({
+	testedModule: {verifyRemoteIsValid},
+}) => {
+	await assert.rejects(
+		verifyRemoteIsValid(),
+		{message: 'Command timed out after 30000 milliseconds: git ls-remote origin HEAD', isPresentable: true},
+	);
+});
+
 createStubFixture('has custom remote', [{
 	command: 'git ls-remote upstream HEAD',
 	exitCode: 0,

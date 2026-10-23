@@ -4,6 +4,7 @@ import hostedGitInfo from 'hosted-git-info';
 import onetime from 'onetime';
 import {asyncExitHook} from 'exit-hook';
 import logSymbols from 'log-symbols';
+import {PresentableError} from 'presentable-error';
 // NOTE: We intentionally use our own task list instead of `listr` or `listr2`, so we control how the terminal is drawn, for example around prompts.
 // listr2's DefaultRenderer uses log-update which had known issues with terminal scrolling that caused it to overwrite content printed before listr2 started (like our inquirer prompts). See: https://github.com/cenk1cenk2/listr2/issues/296
 // log-update 8 cuts each frame to the terminal height, which fixes this. Our renderer then prints the final list in full, so it stays in the scrollback.
@@ -244,7 +245,7 @@ export default async function np(input = 'patch', {packageManager, ...rawOptions
 								rollbackMessage = isRolledBack ? '\n\nThe project was rolled back to its previous state.' : '';
 							}
 
-							throw new Error(`Error publishing package:\n${error.message}${rollbackMessage}`, {cause: error});
+							throw new PresentableError(`Error publishing package:\n${error.message}${rollbackMessage}`, {cause: error});
 						}
 
 						publishStatus = 'SUCCESS';

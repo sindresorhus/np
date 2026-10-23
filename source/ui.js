@@ -7,6 +7,7 @@ import isScoped from 'is-scoped';
 import isInteractive from 'is-interactive';
 import {execa} from 'execa';
 import semver from 'semver';
+import {PresentableError} from 'presentable-error';
 import Version, {SEMVER_INCREMENTS} from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
@@ -22,7 +23,7 @@ const PRERELEASE_INCREMENTS = new Set([
 const printCommitLog = async (repoUrl, registryUrl, fromLatestTag, {releaseBranch, tagPrefix}) => {
 	const revision = fromLatestTag ? await git.latestTagOrFirstCommit() : await git.previousTagOrFirstCommit(tagPrefix);
 	if (!revision) {
-		throw new Error('The package has not been published yet.');
+		throw new PresentableError('The package has not been published yet.');
 	}
 
 	// Bound drafts by the tag instead of matching customizable version bump messages.

@@ -51,3 +51,16 @@ createFixture('with external registry', [{
 		'private',
 	);
 });
+
+createFixture('timeout', [{
+	command: 'npm access get status @my/pkg --json',
+	exitCode: 1,
+	timedOut: true,
+}], async ({
+	testedModule: {getNpmPackageAccess},
+}) => {
+	await assert.rejects(
+		getNpmPackageAccess({name: '@my/pkg'}),
+		{message: 'Connection to npm registry timed out', isPresentable: true},
+	);
+});

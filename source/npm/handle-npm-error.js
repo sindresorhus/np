@@ -1,6 +1,7 @@
 import process from 'node:process';
 import {setTimeout as delay} from 'node:timers/promises';
 import open from 'open';
+import {PresentableError} from 'presentable-error';
 import otpPrompt from './otp-prompt.js';
 
 /**
@@ -46,7 +47,7 @@ const authenticateInBrowser = async ({authUrl, doneUrl}, task) => {
 		// eslint-disable-next-line no-await-in-loop
 		const {token} = response.ok ? await response.json() : {};
 		if (!token) {
-			throw new Error(`Browser authentication failed with status ${response.status}.`);
+			throw new PresentableError(`Browser authentication failed with status ${response.status}.`);
 		}
 
 		return token;
@@ -113,7 +114,7 @@ export default async function handleNpmError(error, task, executor) {
 		|| error.stderr?.includes('402 Payment Required') // Npm/pnpm (prefixed with `npm ERR!` before npm 10 and `npm error` since)
 		|| error.stdout?.includes('Response Code: 402 (Payment Required)') // Yarn Berry
 	) {
-		throw new Error('You cannot publish a scoped package privately without a paid plan. Did you mean to publish publicly?');
+		throw new PresentableError('You cannot publish a scoped package privately without a paid plan. Did you mean to publish publicly?');
 	}
 
 	throw error;

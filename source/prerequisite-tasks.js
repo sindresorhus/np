@@ -1,6 +1,7 @@
 import process from 'node:process';
 import {execa} from 'execa';
 import semver from 'semver';
+import {PresentableError} from 'presentable-error';
 import Version from './version.js';
 import * as util from './util.js';
 import * as git from './git-util.js';
@@ -50,7 +51,7 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 				const json = JSON.parse(collaborators);
 				const permissions = json[username];
 				if (!permissions || !permissions.includes('write')) {
-					throw new Error('You do not have write permissions required to publish this package.');
+					throw new PresentableError('You do not have write permissions required to publish this package.');
 				}
 			},
 		},
@@ -72,7 +73,7 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 			title: 'Check for pre-release version',
 			run() {
 				if (!package_.private && getNewVersion().isPrerelease() && (!options.tag || options.tag.toLowerCase() === 'latest')) {
-					throw new Error('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
+					throw new PresentableError('You must specify a dist-tag using --tag when publishing a pre-release version. This prevents accidentally tagging unstable versions as "latest". https://docs.npmjs.com/cli/dist-tag');
 				}
 			},
 		},
@@ -111,7 +112,7 @@ export default function prerequisiteTasks(input, package_, options, {packageMana
 					// For pre-1.0.0 packages, minor bumps are considered breaking changes per semver
 					const isPre1MinorRelease = semver.major(package_.version) === 0 && (diff === 'minor' || diff === 'preminor');
 					if (diff !== 'major' && diff !== 'premajor' && diff !== 'prerelease' && !isPre1MinorRelease) {
-						throw new Error(`Raising minimum Node.js version from ${publishedMinimum} to ${localMinimum} requires a major version bump. The current release is a ${diff} bump.`);
+						throw new PresentableError(`Raising minimum Node.js version from ${publishedMinimum} to ${localMinimum} requires a major version bump. The current release is a ${diff} bump.`);
 					}
 				}
 			},

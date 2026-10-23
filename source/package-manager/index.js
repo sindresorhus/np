@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import semver from 'semver';
+import {PresentableError} from 'presentable-error';
 import * as configs from './configs.js';
 
 /**
@@ -54,12 +55,12 @@ function configFromDevEnginesPackageManager(package_) {
 
 	const packageManagers = Array.isArray(packageManager) ? packageManager : [packageManager];
 	if (packageManagers.length === 0) {
-		throw new Error('Missing "name" property for "packageManager".');
+		throw new PresentableError('Missing "name" property for "packageManager".');
 	}
 
 	for (const candidate of packageManagers) {
 		if (!candidate || typeof candidate !== 'object' || !('name' in candidate) || typeof candidate.name !== 'string') {
-			throw new Error('Missing "name" property for "packageManager".');
+			throw new PresentableError('Missing "name" property for "packageManager".');
 		}
 	}
 
@@ -91,7 +92,7 @@ function configFromPackageManager(packageManager, version, rawPackageManager) {
 		return configs.bunConfig;
 	}
 
-	throw new Error(`Invalid package manager: ${rawPackageManager}`);
+	throw new PresentableError(`Invalid package manager: ${rawPackageManager}`);
 }
 
 /**

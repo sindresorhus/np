@@ -61,6 +61,7 @@
 		"p-memoize": "^8.0.0",
 		"package-directory": "^8.2.0",
 		"path-exists": "^5.0.0",
+		"presentable-error": "^0.0.1",
 		"read-package-up": "^12.0.0",
 		"read-pkg": "^10.1.0",
 		"semver": "^7.8.5",

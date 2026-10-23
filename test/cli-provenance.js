@@ -71,5 +71,6 @@ for (const {packageManager, version, provenance = true, publish = true, shouldRe
 		assert.equal(isReleased, !shouldReject, 'Unsupported provenance must not execute the release workflow.');
 		assert.equal(exitCode, shouldReject ? 1 : undefined);
 		assert.match(reportedError ?? '', shouldReject ? /provenance.*yarn.*4\.9\.0/iv : /^$/v);
+		assert.doesNotMatch(reportedError ?? '', /^ +at /mv, 'Expected errors must not print a stack trace.');
 	});
 }

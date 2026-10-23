@@ -37,6 +37,6 @@ createFixture('timeout', [{
 }) => {
 	await assert.rejects(
 		npm.checkConnection(),
-		{message: 'Connection to npm registry timed out'},
+		{message: 'Connection to npm registry timed out', isPresentable: true},
 	);
 });

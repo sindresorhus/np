@@ -8,6 +8,7 @@ import {execa} from 'execa';
 import pMemoize from 'p-memoize';
 import chalk from 'chalk';
 import semver from 'semver';
+import {PresentableError, makePresentableError} from 'presentable-error';
 import Version from './version.js';
 import * as git from './git-util.js';
 import * as npm from './npm/util.js';
@@ -22,7 +23,7 @@ export const readPackage = async (packagePath = process.cwd()) => {
 	const packageResult = await readPackageUp({cwd: packagePath});
 
 	if (!packageResult) {
-		throw new Error('No `package.json` found. Make sure the current directory is a valid package.');
+		throw new PresentableError('No `package.json` found. Make sure the current directory is a valid package.');
 	}
 
 	return {package_: packageResult.packageJson, rootDirectory: path.dirname(packageResult.path)};
@@ -232,7 +233,7 @@ export const getPreReleasePrefix = pMemoize(async config => {
 export const validateEngineVersionSatisfies = (engine, version) => {
 	const engineRange = npPackage.engines[engine];
 	if (!new Version(version).satisfies(engineRange)) {
-		throw new Error(`\`np\` requires ${engine} ${engineRange}`);
+		throw new PresentableError(`\`np\` requires ${engine} ${engineRange}`);
 	}
 };
 
@@ -249,6 +250,7 @@ export async function getNpmPackageAccess(package_) {
 	} catch (error) {
 		if (error.timedOut) {
 			error.message = 'Connection to npm registry timed out';
+			makePresentableError(error);
 		}
 
 		throw error;

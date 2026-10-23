@@ -9,6 +9,7 @@ import isInteractive from 'is-interactive';
 import {execa} from 'execa';
 import {gracefulExit} from 'exit-hook';
 import {packageDirectory} from 'package-directory';
+import {PresentableError, isPresentableError} from 'presentable-error';
 import {getPackageManagerConfig} from './package-manager/index.js';
 import config from './config.js';
 import * as util from './util.js';
@@ -151,7 +152,7 @@ async function getOptions() {
 
 	const {package_, rootDirectory} = await util.readPackage(packagePath);
 	if (contents && rootDirectory !== packagePath) {
-		throw new Error(`No \`package.json\` found in the contents directory: ${packagePath}`);
+		throw new PresentableError(`No \`package.json\` found in the contents directory: ${packagePath}`);
 	}
 
 	// Filter out undefined CLI flags (not provided by user)
@@ -187,14 +188,14 @@ async function getOptions() {
 	const packageManager = getPackageManagerConfig(projectDirectory, projectPackage);
 
 	if (packageManager.throwOnExternalRegistry && npm.isExternalRegistry(package_)) {
-		throw new Error(`External registry is not yet supported with ${packageManager.id}.`);
+		throw new PresentableError(`External registry is not yet supported with ${packageManager.id}.`);
 	}
 
 	const runPublish = !flags.releaseDraftOnly && flags.publish && !package_.private;
 	if (runPublish && flags.provenance && packageManager.cli === 'yarn') {
 		const {stdout: yarnVersion} = await execa(packageManager.cli, ['--version']);
 		if (!semver.valid(yarnVersion) || semver.lt(yarnVersion, '4.9.0')) {
-			throw new Error('Publishing with provenance requires Yarn 4.9.0 or later. Please upgrade Yarn or disable provenance.');
+			throw new PresentableError('Publishing with provenance requires Yarn 4.9.0 or later. Please upgrade Yarn or disable provenance.');
 		}
 	}
 
@@ -221,7 +222,7 @@ async function getOptions() {
 
 	if (flags.stage) {
 		if (!['npm', 'pnpm'].includes(packageManager.id)) {
-			throw new Error(`Staged publishing is only supported with npm and pnpm, not ${packageManager.id}.`);
+			throw new PresentableError(`Staged publishing is only supported with npm and pnpm, not ${packageManager.id}.`);
 		}
 
 		const minimumVersion = {
@@ -230,11 +231,11 @@ async function getOptions() {
 		}[packageManager.id];
 		const {stdout: packageManagerVersion} = await execa(packageManager.cli, ['--version']);
 		if (!semver.valid(packageManagerVersion) || semver.lt(packageManagerVersion, minimumVersion)) {
-			throw new Error(`Staged publishing requires ${packageManager.id} >=${minimumVersion}. Please upgrade ${packageManager.cli} and try again.`);
+			throw new PresentableError(`Staged publishing requires ${packageManager.id} >=${minimumVersion}. Please upgrade ${packageManager.cli} and try again.`);
 		}
 
 		if (availability.isAvailable) {
-			throw new Error('Staged publishing requires the package to already exist on the registry. Publish the first version normally, then use `--stage`.');
+			throw new PresentableError('Staged publishing requires the package to already exist on the registry. Publish the first version normally, then use `--stage`.');
 		}
 	}
 
@@ -289,7 +290,7 @@ const ensureAuthenticated = async package_ => {
 			throw error;
 		}
 
-		throw new Error('Still not authenticated after `npm login`. A project-level `.npmrc` may hold a stale or revoked token that overrides your login. Check it for outdated `_authToken` entries.', {cause: error});
+		throw new PresentableError('Still not authenticated after `npm login`. A project-level `.npmrc` may hold a stale or revoked token that overrides your login. Check it for outdated `_authToken` entries.', {cause: error});
 	}
 };
 
@@ -333,7 +334,9 @@ try {
 		// Run the exit hooks, so np can print that it was aborted. Exit with 130 like for SIGINT, as the prompt was canceled with Ctrl+C.
 		gracefulExit(130);
 	} else {
-		console.error(`\n${logSymbols.error} ${error?.stack ?? error}`);
+		// Presentable errors explain why np stopped, so the stack is just noise. Other errors are likely bugs, so keep the stack for debugging.
+		const message = isPresentableError(error) ? error.message : (error?.stack ?? error);
+		console.error(`\n${logSymbols.error} ${message}`);
 		gracefulExit(1);
 	}
 }

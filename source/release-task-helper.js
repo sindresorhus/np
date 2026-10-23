@@ -1,6 +1,7 @@
 import open from 'open';
 import newGithubReleaseUrl from 'new-github-release-url';
 import clipboard from 'clipboardy';
+import {PresentableError} from 'presentable-error';
 import {getTagVersionPrefix, getPreReleasePrefix} from './util.js';
 import {latestTag} from './git-util.js';
 import Version from './version.js';
@@ -11,7 +12,7 @@ const CLIPBOARD_PLACEHOLDER = '<!-- Paste release notes from clipboard -->';
 
 export default async function releaseTaskHelper(options, package_, packageManager) {
 	if (!options.repoUrl) {
-		throw new Error('Missing `repository` field in package.json. This is required for creating GitHub releases.');
+		throw new PresentableError('Missing `repository` field in package.json. This is required for creating GitHub releases.');
 	}
 
 	const tagPrefix = await getTagVersionPrefix(packageManager);

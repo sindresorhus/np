@@ -2,6 +2,7 @@ import path from 'node:path';
 import {execa} from 'execa';
 import ignoreWalker from 'ignore-walk';
 import semver from 'semver';
+import {PresentableError} from 'presentable-error';
 import * as util from './util.js';
 
 const gitNetworkTimeout = 120_000; // 2 minutes for remote git operations
@@ -131,7 +132,7 @@ export const getUpstreamRemote = async () => {
 export const verifyCurrentBranchIsReleaseBranch = async releaseBranch => {
 	const currentBranch = await getCurrentBranch();
 	if (currentBranch !== releaseBranch) {
-		throw new Error(`Not on \`${releaseBranch}\` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
+		throw new PresentableError(`Not on \`${releaseBranch}\` branch. Use --any-branch to publish anyway, or set a different release branch using --branch.`);
 	}
 };
 
@@ -156,7 +157,7 @@ const isWorkingTreeClean = async () => {
 
 export const verifyWorkingTreeIsClean = async () => {
 	if (!(await isWorkingTreeClean())) {
-		throw new Error('Unclean working tree. Commit or stash changes first.');
+		throw new PresentableError('Unclean working tree. Commit or stash changes first.');
 	}
 };
 
@@ -176,7 +177,7 @@ export const verifyRemoteHistoryIsClean = async () => {
 	await fetch();
 
 	if (!(await isRemoteHistoryClean())) {
-		throw new Error('Remote history differs. Please pull changes.');
+		throw new PresentableError('Remote history differs. Please pull changes.');
 	}
 };
 
@@ -185,7 +186,7 @@ export const verifyRemoteIsValid = async remote => {
 		// Inherit stdin to allow SSH password prompts for password-protected keys
 		await execa('git', ['ls-remote', remote ?? 'origin', 'HEAD'], {stdin: 'inherit', timeout: gitNetworkTimeout});
 	} catch (error) {
-		throw new Error(error.stderr.replace('fatal:', 'Git fatal error:'), {cause: error});
+		throw new PresentableError(error.stderr?.replace('fatal:', 'Git fatal error:') || error.shortMessage, {cause: error});
 	}
 };
 
@@ -211,7 +212,7 @@ export const defaultBranch = async () => {
 		}
 	}
 
-	throw new Error('Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.');
+	throw new PresentableError('Could not infer the default Git branch. Please specify one with the --branch flag or with a np config.');
 };
 
 // Checks local refs after a prior `git fetch`. This is intentional over `git ls-remote` — the fetch
@@ -234,7 +235,7 @@ const tagExistsOnRemote = async tagName => {
 
 export const verifyTagDoesNotExistOnRemote = async tagName => {
 	if (await tagExistsOnRemote(tagName)) {
-		throw new Error(`Git tag \`${tagName}\` already exists.`);
+		throw new PresentableError(`Git tag \`${tagName}\` already exists.`);
 	}
 };
 
@@ -289,7 +290,7 @@ export const verifyUserConfigIsSet = async () => {
 	]);
 
 	if (nameResult.status !== 'fulfilled' || !nameResult.value.stdout || emailResult.status !== 'fulfilled' || !emailResult.value.stdout) {
-		throw new Error([
+		throw new PresentableError([
 			'Git user configuration is not set.',
 			'',
 			'Please set your git user name and email:',
