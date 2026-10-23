@@ -40,9 +40,10 @@ test('error code 402 - npm 10+ log prefix', async () => {
 });
 
 // Load `handleNpmError` with an OTP prompt that answers with `answer`, a browser that records the opened URLs, and a task that records when the terminal is used.
-const setUpOtpPrompt = async ({answer = async () => '123456', isStdinTTY = true, isOpenFailing = false} = {}) => {
+const setUpOtpPrompt = async ({answer = async () => '123456', isStdinTTY = true, isOpenFailing = false, npmVersion = '11.9.0', isVersionFailing = false} = {}) => {
 	const prompts = [];
 	const openedUrls = [];
+	const versionCalls = [];
 
 	const task = {
 		isUsingTerminal: false,
@@ -66,6 +67,17 @@ const setUpOtpPrompt = async ({answer = async () => '123456', isStdinTTY = true,
 
 	const {default: handleNpmErrorWithPrompt} = await esmock('../../source/npm/handle-npm-error.js', {
 		'../../source/npm/otp-prompt.js': otpPrompt,
+		'../../source/npm/util.js': {
+			async version() {
+				versionCalls.push(npmVersion);
+
+				if (isVersionFailing) {
+					throw new Error('npm --version failed');
+				}
+
+				return npmVersion;
+			},
+		},
 		async open(url) {
 			openedUrls.push(url);
 
@@ -88,7 +100,7 @@ const setUpOtpPrompt = async ({answer = async () => '123456', isStdinTTY = true,
 	};
 
 	return {
-		handleNpmError: handleNpmErrorWithTTY, prompts, task, openedUrls,
+		handleNpmError: handleNpmErrorWithTTY, prompts, task, openedUrls, versionCalls,
 	};
 };
 
@@ -231,7 +243,91 @@ test('Yarn berry OTP errors prompt for an OTP', async () => {
 
 	await handleNpmErrorWithPrompt(makeError({stdout: 'One-time password:'}), task, async () => {});
 
-	assert.deepEqual(prompts.map(({message, allowEmpty}) => ({message, allowEmpty})), [{message: 'Enter OTP:', allowEmpty: false}]);
+	assert.deepEqual(prompts.map(({message, allowEmpty}) => ({message, allowEmpty})), [{message: 'Enter OTP (use npm for browser authentication):', allowEmpty: false}]);
+});
+
+test('Yarn v1 OTP errors prompt for an OTP with the npm hint and without reading the npm version', async () => {
+	const {handleNpmError: handleNpmErrorWithPrompt, prompts, task, versionCalls} = await setUpOtpPrompt({npmVersion: '10.0.0'});
+
+	await handleNpmErrorWithPrompt(makeError({stdout: 'Two factor authentication enabled.'}), task, async () => {});
+
+	assert.deepEqual(prompts.map(({message}) => message), ['Enter OTP (use npm for browser authentication):']);
+	assert.deepEqual(versionCalls, []);
+});
+
+for (const {name, stdout} of [
+	{name: 'pnpm', stdout: '📦 np-pm-test@1.0.0 → http://localhost:4873/\n[ERR_PNPM_OTP_NON_INTERACTIVE] The registry requires additional authentication, but pnpm is not running in an interactive terminal'},
+	{name: 'Yarn berry', stdout: '➤ YN0033: The registry requires additional authentication, but Yarn is not running in an interactive terminal'},
+]) {
+	test(`${name} non-interactive authentication errors prompt for an OTP and pass it to the executor`, async () => {
+		const {handleNpmError: handleNpmErrorWithPrompt, prompts, task} = await setUpOtpPrompt();
+
+		let executorOtp;
+		await handleNpmErrorWithPrompt(makeError({stdout}), task, async otp => {
+			executorOtp = otp;
+		});
+
+		assert.deepEqual(prompts.map(({message, allowEmpty}) => ({message, allowEmpty})), [{message: 'Enter OTP (use npm for browser authentication):', allowEmpty: false}]);
+		assert.equal(executorOtp, '123456');
+	});
+
+	test(`${name} non-interactive authentication errors prompt again with the hint when the OTP is rejected`, async () => {
+		const {handleNpmError: handleNpmErrorWithPrompt, prompts, task} = await setUpOtpPrompt();
+		const error = makeError({stdout});
+
+		let executorCalls = 0;
+		await handleNpmErrorWithPrompt(error, task, async () => {
+			executorCalls++;
+
+			if (executorCalls === 1) {
+				throw error;
+			}
+		});
+
+		assert.equal(executorCalls, 2);
+		assert.deepEqual(prompts.map(({message}) => message), ['Enter OTP (use npm for browser authentication):', 'OTP was incorrect, try again (use npm for browser authentication):']);
+	});
+}
+
+test('the OTP prompt suggests upgrading npm when it is too old for browser authentication', async () => {
+	const {handleNpmError: handleNpmErrorWithPrompt, prompts, task} = await setUpOtpPrompt({npmVersion: '11.8.0'});
+
+	await handleNpmErrorWithPrompt(otpError, task, async () => {});
+
+	assert.deepEqual(prompts.map(({message}) => message), ['Enter OTP (browser and passkey authentication need npm 11.9.0 or later):']);
+});
+
+test('the OTP prompt has no hint when npm is recent enough for browser authentication', async () => {
+	const {handleNpmError: handleNpmErrorWithPrompt, prompts, task, versionCalls} = await setUpOtpPrompt({npmVersion: '11.9.0'});
+
+	await handleNpmErrorWithPrompt(otpError, task, async () => {});
+
+	assert.deepEqual(prompts.map(({message}) => message), ['Enter OTP:']);
+	assert.deepEqual(versionCalls, ['11.9.0']);
+});
+
+test('the OTP prompt works when the npm version cannot be read', async () => {
+	const {handleNpmError: handleNpmErrorWithPrompt, prompts, task} = await setUpOtpPrompt({isVersionFailing: true});
+
+	let executorOtp;
+	await handleNpmErrorWithPrompt(otpError, task, async otp => {
+		executorOtp = otp;
+	});
+
+	assert.deepEqual(prompts.map(({message}) => message), ['Enter OTP:']);
+	assert.equal(executorOtp, '123456');
+});
+
+test('an unrelated authentication error does not prompt for an OTP', async () => {
+	const {handleNpmError: handleNpmErrorWithPrompt, prompts, task} = await setUpOtpPrompt();
+	const error = makeError({stdout: 'The registry requires additional authentication policies'});
+
+	await assert.rejects(
+		handleNpmErrorWithPrompt(error, task, () => assert.fail('executor should not run')),
+		error,
+	);
+
+	assert.equal(prompts.length, 0);
 });
 
 test('OTP errors are rethrown without prompting when stdin is not a terminal', async () => {
@@ -324,13 +420,13 @@ test('failed browser authentication throws without running the executor', async 
 
 	await assert.rejects(
 		handleNpmErrorWithPrompt(browserOtpError, task, () => assert.fail('executor should not run')),
-		{message: 'Browser authentication failed with status 404.'},
+		{message: 'Browser authentication failed with status 404. The authentication link is valid only for a short time, so it may have expired.'},
 	);
 });
 
 test('with `NP_OTP_PROMPT`, an OTP is used instead of browser authentication', async t => {
 	mockOtpPromptVariable(t, '1');
-	const {handleNpmError: handleNpmErrorWithPrompt, prompts, task, openedUrls} = await setUpOtpPrompt();
+	const {handleNpmError: handleNpmErrorWithPrompt, prompts, task, openedUrls, versionCalls} = await setUpOtpPrompt();
 
 	let executorOtp;
 	await handleNpmErrorWithPrompt(browserOtpError, task, async otp => {
@@ -340,6 +436,7 @@ test('with `NP_OTP_PROMPT`, an OTP is used instead of browser authentication', a
 	assert.deepEqual(prompts.map(({message, allowEmpty}) => ({message, allowEmpty})), [{message: 'Enter OTP (or press Enter to authenticate in the browser):', allowEmpty: true}]);
 	assert.equal(executorOtp, '123456');
 	assert.deepEqual(openedUrls, []);
+	assert.deepEqual(versionCalls, []);
 });
 
 test('with `NP_OTP_PROMPT`, Enter without an OTP authenticates in the browser', async t => {
@@ -419,7 +516,7 @@ test('browser authentication without a token throws', async t => {
 
 	await assert.rejects(
 		handleNpmErrorWithPrompt(browserOtpError, task, () => assert.fail('executor should not run')),
-		{message: 'Browser authentication failed with status 200.'},
+		{message: 'Browser authentication failed with status 200. The authentication link is valid only for a short time, so it may have expired.'},
 	);
 });
 

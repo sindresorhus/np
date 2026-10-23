@@ -25,7 +25,7 @@
 - Warns about the possibility of extraneous files being published
 - See exactly what will be executed with [dry-run mode](https://github.com/sindresorhus/np/issues/391), without pushing or publishing anything remotely
 - Supports [GitHub Packages](https://github.com/features/packages)
-- Supports npm 10+, pnpm 11+, Bun, and Yarn (Classic and Berry)
+- Supports npm 10+, pnpm 11.13+, Bun, Yarn Classic 1.7+, and Yarn Berry 4.18.1+
 
 ### Why not
 
@@ -342,7 +342,7 @@ The [ignore strategy](https://docs.npmjs.com/files/package.json#files), either m
 
 ### How does `np` handle two-factor authentication?
 
-When npm asks for two-factor authentication and the registry offers browser authentication, `np` opens the browser, where you authenticate with your passkey or security key, and then continues by itself. This works when `np` publishes with npm 11.9 or later (also for Bun). Otherwise, `np` prompts for a one-time password. When `np` enables 2FA on a new package, you may need to authenticate a second time. `np` waits for the browser authentication with the `fetch` of Node.js, which does not use the proxy and certificate settings of npm.
+When npm asks for two-factor authentication and the registry offers browser authentication, `np` opens the browser, where you authenticate with your passkey or security key, and then continues by itself. This works when `np` publishes with npm 11.9 or later (also for Bun). Otherwise, `np` prompts for a one-time password. When `np` publishes with pnpm or Yarn, only an authenticator app works, because `np` cannot do browser authentication through them. When `np` enables 2FA on a new package, you may need to authenticate a second time. `np` waits for the browser authentication with the `fetch` of Node.js, which does not use the proxy and certificate settings of npm.
 
 If you use an authenticator app and prefer to enter the one-time password in the terminal, set the `NP_OTP_PROMPT` environment variable to any non-empty value, for example with `export NP_OTP_PROMPT=1` in your shell profile. `np` then prompts for the one-time password, and you can still press <kbd>Enter</kbd> without one to authenticate in the browser.
 

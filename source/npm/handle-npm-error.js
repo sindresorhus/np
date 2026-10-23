@@ -2,7 +2,9 @@ import process from 'node:process';
 import {setTimeout as delay} from 'node:timers/promises';
 import open from 'open';
 import {PresentableError} from 'presentable-error';
+import Version from '../version.js';
 import otpPrompt from './otp-prompt.js';
+import {version} from './util.js';
 
 /**
 Get the browser authentication URLs that npm prints with `--json` when the registry offers browser authentication, which accounts with only a passkey need. npm masks them as `***` in stderr.
@@ -47,10 +49,47 @@ const authenticateInBrowser = async ({authUrl, doneUrl}, task) => {
 		// eslint-disable-next-line no-await-in-loop
 		const {token} = response.ok ? await response.json() : {};
 		if (!token) {
-			throw new PresentableError(`Browser authentication failed with status ${response.status}.`);
+			// The registry expires the authentication session quickly, so a late sign-in in the browser fails here.
+			throw new PresentableError(`Browser authentication failed with status ${response.status}. The authentication link is valid only for a short time, so it may have expired.`);
 		}
 
 		return token;
+	}
+};
+
+const npmOtpMessage = 'one-time pass';
+
+/**
+Returns whether the command failed because the registry requires an OTP.
+
+@param {{stdout?: string; stderr?: string}} error - The error from the command.
+*/
+const isOtpError = error =>
+	error.stderr?.includes(npmOtpMessage) // Npm
+	|| error.stdout?.includes('Two factor authentication') // Yarn v1
+	|| error.stdout?.includes('One-time password:') // Yarn berry
+	// Pnpm and Yarn berry without a terminal. Their browser authentication needs a terminal, which the publish subprocess does not get, so they fail with this message when the registry requires an OTP.
+	|| error.stdout?.includes('not running in an interactive terminal');
+
+/**
+Explains what to do when the package manager did not offer browser authentication.
+
+@param {{stdout?: string; stderr?: string}} error - The error from the command.
+@returns {Promise<string | undefined>} The hint, or `undefined` if there is nothing to add.
+*/
+const getBrowserAuthenticationHint = async error => {
+	// Only npm does browser authentication without a terminal.
+	if (!error.stderr?.includes(npmOtpMessage)) {
+		return 'use npm for browser authentication';
+	}
+
+	// The browser authentication URLs are in the error output only from npm 11.9.0.
+	try {
+		if (!new Version(await version()).satisfies('>=11.9.0')) {
+			return 'browser and passkey authentication need npm 11.9.0 or later';
+		}
+	} catch {
+		// Not knowing the npm version is not a reason to fail the release.
 	}
 };
 
@@ -66,12 +105,7 @@ When npm offers browser authentication, it opens the browser instead, and `execu
 export default async function handleNpmError(error, task, executor) {
 	let isRetry = false;
 
-	// `one-time pass` is for npm and `Two factor authentication` is for Yarn.
-	while (
-		error.stderr?.includes('one-time pass') // Npm
-		|| error.stdout?.includes('Two factor authentication') // Yarn v1
-		|| error.stdout?.includes('One-time password:') // Yarn berry
-	) {
+	while (isOtpError(error)) {
 		// Nobody can enter an OTP without a terminal, so fail instead of waiting forever. Check stdin, as the output can go to a pipe, like with `np | tee log`, while the user can still type.
 		// Not `is-interactive`, as it is `false` when the `CI` environment variable is set, even in a terminal.
 		if (!process.stdin.isTTY) {
@@ -85,10 +119,12 @@ export default async function handleNpmError(error, task, executor) {
 		// Users with an authenticator app can set `NP_OTP_PROMPT` to enter the OTP in the terminal instead of in the browser. A retry also prompts, so the user sees that the OTP was rejected, and the browser does not open again by itself.
 		if (!browserAuthentication || process.env.NP_OTP_PROMPT || isRetry) {
 			const message = isRetry ? 'OTP was incorrect, try again' : 'Enter OTP';
+			// eslint-disable-next-line no-await-in-loop
+			const hint = browserAuthentication ? 'or press Enter to authenticate in the browser' : await getBrowserAuthenticationHint(error);
 
 			// eslint-disable-next-line no-await-in-loop
 			otp = await task.withTerminal(() => otpPrompt({
-				message: browserAuthentication ? `${message} (or press Enter to authenticate in the browser):` : `${message}:`,
+				message: hint ? `${message} (${hint}):` : `${message}:`,
 				allowEmpty: Boolean(browserAuthentication),
 			}, {clearPromptOnDone: true}));
 		}

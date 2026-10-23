@@ -43,3 +43,11 @@ testEngineRanges('npm', 'npm', {above: '99.20.0', below: '7.18.0'});
 testEngineRanges('git', 'git', {above: '99.12.0', below: '2.10.0'});
 
 testEngineRanges('yarn', 'yarn', {above: '99.8.0', below: '1.6.0'});
+
+testEngineRanges('pnpm forwards the supplied OTP', 'pnpm', {above: '11.13.0', below: '11.12.0'});
+
+testEngineRanges('Yarn Berry minimum version', 'yarn', {above: '4.18.1', below: '4.18.0'});
+
+testEngineRanges('Yarn Classic remains supported', 'yarn', {above: '1.22.22', below: '2.4.0'});
+
+testEngineRanges('old Yarn Berry releases are unsupported', 'yarn', {above: '4.18.1', below: '3.8.7'});

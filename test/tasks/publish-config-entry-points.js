@@ -24,7 +24,7 @@ const createProject = async (t, fields) => {
 
 const getTasks = async (package_, rootDirectory, packageManager) => {
 	const {default: prerequisiteTasks} = await esmock('../../source/prerequisite-tasks.js', import.meta.url, {
-		execa: {execa: async () => ({stdout: '11.3.0'})},
+		execa: {execa: async () => ({stdout: '11.13.0'})},
 		'../../source/git-util.js': {
 			async verifyRecentGitVersion() {},
 			async verifyUserConfigIsSet() {},
@@ -76,7 +76,7 @@ test('pnpm still validates entry points with unrelated publishConfig settings', 
 	await assert.rejects(tasks.run({renderer: 'silent'}), /Missing entry points/v);
 });
 
-for (const {packageManager, minimumVersion} of [{packageManager: pnpmConfig, minimumVersion: '11.0.0'}, {packageManager: yarnBerryConfig, minimumVersion: '2.0.0'}]) {
+for (const {packageManager, minimumVersion} of [{packageManager: pnpmConfig, minimumVersion: '11.13.0'}, {packageManager: yarnBerryConfig, minimumVersion: '4.18.1'}]) {
 	test(`${packageManager.id} publishes entry point overrides in its actual tarball`, async t => {
 		const {exitCode, stdout: version} = await execa(packageManager.cli, ['--version'], {reject: false, env: {COREPACK_ENABLE_NETWORK: '0'}});
 		if (exitCode !== 0 || !semver.valid(version) || semver.lt(version, minimumVersion)) {

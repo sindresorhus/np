@@ -508,7 +508,7 @@ createFixture(
 	'should fail when pnpm ignore-scripts prevents the build script from running',
 	[{
 		command: 'pnpm --version',
-		stdout: '11.0.0',
+		stdout: '11.13.0',
 	}, {
 		command: 'pnpm config get ignore-scripts',
 		stdout: 'true',
