@@ -195,7 +195,7 @@ export const fetch = async remote => {
 	await execa('git', ['fetch', ...(remote ? [remote] : [])], {stdin: 'inherit', timeout: gitNetworkTimeout});
 };
 
-const hasLocalBranch = async branch => {
+export const hasLocalBranch = async branch => {
 	try {
 		await execa('git', ['show-ref', '--verify', '--quiet', `refs/heads/${branch}`]);
 		return true;

@@ -211,6 +211,7 @@ test('releaseDraftOnly does not throw on current version', async t => {
 			},
 			'./git-util.js': {
 				previousTagOrFirstCommit: sinon.stub().resolves('v1.0.0'),
+				latestTag: sinon.stub().resolves('v1.0.0'),
 				commitLogFromRevision: sinon.stub().resolves(''),
 			},
 			execa: {

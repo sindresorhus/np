@@ -6,6 +6,7 @@ import meow from 'meow';
 import semver from 'semver';
 import updateNotifier from 'update-notifier';
 import isInteractive from 'is-interactive';
+import inquirer from 'inquirer';
 import {execa} from 'execa';
 import {gracefulExit} from 'exit-hook';
 import {packageDirectory} from 'package-directory';
@@ -139,7 +140,56 @@ if (cli.flags.version) {
 
 updateNotifier({pkg: cli.pkg}).notify();
 
-/** @typedef {Awaited<ReturnType<typeof getOptions>>['options']} Options */
+/** @typedef {NonNullable<Awaited<ReturnType<typeof getOptions>>>['options']} Options */
+
+/**
+Resolves the release branch before loading package data. Switching restarts the command so executable config and memoized lookups come from the selected branch. Returns undefined when the current process should stop.
+@param {CLI['flags']} flags - Invocation flags, updated when continuing from the current branch.
+*/
+const prepareReleaseBranch = async flags => {
+	const branch = flags.branch ?? (flags.anyBranch ? 'HEAD' : await git.defaultBranch());
+	if (flags.anyBranch || flags.dryRun || !isInteractive()) {
+		return branch;
+	}
+
+	const currentBranch = await git.getCurrentBranch();
+	if (currentBranch === branch || !(await git.hasLocalBranch(branch))) {
+		return branch;
+	}
+
+	await git.verifyWorkingTreeIsClean();
+	const currentBranchLabel = currentBranch.replaceAll(/\p{Control}/gv, '');
+	const releaseBranchLabel = branch.replaceAll(/\p{Control}/gv, '');
+	const {action} = await inquirer.prompt({
+		action: {
+			type: 'select',
+			message: `You’re on “${currentBranchLabel}”, but the release branch is “${releaseBranchLabel}”.`,
+			choices: [
+				{name: `Switch to “${releaseBranchLabel}” and continue`, value: 'switch'},
+				{name: `Continue releasing from “${currentBranchLabel}”`, value: 'current'},
+				{name: 'Cancel', value: 'cancel'},
+			],
+		},
+	});
+
+	if (action === 'current') {
+		flags.anyBranch = true;
+		return 'HEAD';
+	}
+
+	if (action === 'switch') {
+		await execa('git', ['checkout', branch, '--']);
+		// Ctrl+C also reaches the restarted command, which handles it. Exiting first would return the shell prompt while it still runs its exit hooks.
+		const ignoreSignal = () => {};
+		process.on('SIGINT', ignoreSignal);
+		const {exitCode} = await execa(process.execPath, [...process.execArgv, ...process.argv.slice(1)], {stdio: 'inherit', reject: false});
+		process.off('SIGINT', ignoreSignal);
+		gracefulExit(exitCode ?? 1);
+		return;
+	}
+
+	gracefulExit();
+};
 
 // These lookups are memoized, each spawns a process, and the prompts and the auth check need them later. Starting them now overlaps that work with the Git checks in `getOptions`, which wait on the network. Failures are ignored here because the real calls report them.
 const warmUpPublishLookups = async (package_, packageManager, rootDirectory) => {
@@ -161,15 +211,6 @@ async function getOptions() {
 	// TODO: Remove this migration error and the old flag definition in a future major release.
 	if (cli.flags.releaseDraftOnly !== undefined || localConfig?.releaseDraftOnly !== undefined) {
 		throw new PresentableError('The `--release-draft-only` flag has been replaced by `np release-draft`. Remove `releaseDraftOnly` from your np config if set.');
-	}
-
-	const contents = cli.flags.contents ?? localConfig?.contents;
-	// Configured contents are relative to the project; explicit CLI paths are relative to the invocation directory.
-	const packagePath = contents ? path.resolve(cli.flags.contents === undefined ? projectDirectory : workingDirectory, contents) : projectDirectory;
-
-	const {package_, rootDirectory} = await util.readPackage(packagePath);
-	if (contents && rootDirectory !== packagePath) {
-		throw new PresentableError(`No \`package.json\` found in the contents directory: ${packagePath}`);
 	}
 
 	// Filter out undefined CLI flags (not provided by user)
@@ -194,6 +235,20 @@ async function getOptions() {
 	// Workaround for unintended auto-casing behavior from `meow`.
 	if ('2Fa' in flags) {
 		flags['2fa'] = flags['2Fa'];
+	}
+
+	const branch = flags.releaseDraftOnly ? undefined : await prepareReleaseBranch(flags);
+	if (!flags.releaseDraftOnly && branch === undefined) {
+		return;
+	}
+
+	const {contents} = flags;
+	// Configured contents are relative to the project; explicit CLI paths are relative to the invocation directory.
+	const packagePath = contents ? path.resolve(cli.flags.contents === undefined ? projectDirectory : workingDirectory, contents) : projectDirectory;
+
+	const {package_, rootDirectory} = await util.readPackage(packagePath);
+	if (contents && rootDirectory !== packagePath) {
+		throw new PresentableError(`No \`package.json\` found in the contents directory: ${packagePath}`);
 	}
 
 	const {package_: projectPackage} = foundProjectDirectory && foundProjectDirectory !== rootDirectory
@@ -245,7 +300,6 @@ async function getOptions() {
 		warmUpPublishLookups(package_, packageManager, rootDirectory);
 	}
 
-	const branch = flags.branch ?? (flags.anyBranch ? 'HEAD' : await git.defaultBranch());
 	// Keep obvious Git failures ahead of the wizard, but do not replace the later Git task.
 	// The publish flow still needs a final check in case the repo changes while the user is prompting or logging in.
 	await verifyGitTasks({anyBranch: flags.anyBranch, branch, remote: flags.remote});
@@ -327,7 +381,12 @@ const ensureAuthenticated = async package_ => {
 };
 
 const run = async () => {
-	const {options, projectDirectory, rootDirectory, package_} = await getOptions();
+	const context = await getOptions();
+	if (!context) {
+		return;
+	}
+
+	const {options, projectDirectory, rootDirectory, package_} = context;
 
 	if (!options.confirm) {
 		gracefulExit();

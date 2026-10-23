@@ -93,6 +93,8 @@ Run `np release-draft` to open a prefilled GitHub release form for the latest lo
 
 Run `np` without arguments to launch the interactive UI that guides you through publishing a new version.
 
+In an interactive terminal, if you are on a different branch than the release branch, `np` offers to switch to the release branch, continue from the current branch for this invocation, or cancel. The prompt requires a clean working tree and is skipped when the release branch does not exist locally. After switching, `np` restarts with the selected branch’s package and configuration. It stays on that branch if you cancel later. This prompt also applies when you pass a version, but is skipped with `--any-branch` or `--dry-run` and for `np release-draft`.
+
 `np` warns about potential breaking changes since the latest Git tag and preselects `major` (`minor` for `0.x` versions). All choices remain available, and the default stays `patch` when the current version is a prerelease. It detects:
 
 - Reduced `engines.node` support.
