@@ -65,8 +65,8 @@ createFixture(
 			exitCode: 0,
 		},
 		{
-			command: 'git rev-list --count --left-only @{u}...HEAD',
-			stdout: '0',
+			command: 'git rev-list --count --left-right @{u}...HEAD',
+			stdout: '0\t0',
 		},
 	],
 	async ({
@@ -138,8 +138,8 @@ createFixture('should fail when remote history differs and changes are fetched',
 		exitCode: 0,
 	},
 	{
-		command: 'git rev-list --count --left-only @{u}...HEAD',
-		stdout: '1', // Has unpulled changes
+		command: 'git rev-list --count --left-right @{u}...HEAD',
+		stdout: '1\t0', // Has unpulled changes
 	},
 ], async ({
 	testedModule: gitTasks,
@@ -172,8 +172,8 @@ createFixture('should fail when remote has unfetched changes', [
 		exitCode: 0,
 	},
 	{
-		command: 'git rev-list --count --left-only @{u}...HEAD',
-		stdout: '1',
+		command: 'git rev-list --count --left-right @{u}...HEAD',
+		stdout: '1\t0',
 	},
 ], async ({
 	testedModule: gitTasks,
@@ -207,8 +207,8 @@ createFixture(
 			exitCode: 0,
 		},
 		{
-			command: 'git rev-list --count --left-only @{u}...HEAD',
-			stdout: '0',
+			command: 'git rev-list --count --left-right @{u}...HEAD',
+			stdout: '0\t0',
 		},
 	],
 	async ({
@@ -314,8 +314,8 @@ createFixture('preflight should validate the tracked remote instead of origin', 
 		exitCode: 0,
 	},
 	{
-		command: 'git rev-list --count --left-only @{u}...HEAD',
-		stdout: '0',
+		command: 'git rev-list --count --left-right @{u}...HEAD',
+		stdout: '0\t0',
 	},
 ], async ({
 	testedModule,

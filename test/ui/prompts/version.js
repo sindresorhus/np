@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import sinon from 'sinon';
+import stripAnsi from 'strip-ansi';
 import {npmConfig as packageManager} from '../../../source/package-manager/configs.js';
 import {mockInquirer} from '../../_helpers/mock-inquirer.js';
 
@@ -308,4 +309,21 @@ testUi('version choices align the versions with spaces instead of tabs', {
 			assert.ok(!choice.name.includes('\t'), `Choice name must not contain a tab: ${JSON.stringify(choice.name)}`);
 		}
 	}
+});
+
+testUi('the selected version label has a single space between the increment and version', {
+	version: '0.2.0',
+	answers: {
+		version: 'minor',
+	},
+	onPrompt(prompts) {
+		if (prompts.version) {
+			const choice = prompts.version.choices.find(choice => choice.value === 'minor');
+			// Inquirer displays `short` after selection, falling back to the choice name.
+			assert.equal(stripAnsi(choice.short ?? choice.name), 'minor 0.3.0');
+			assert.match(stripAnsi(choice.name), /^minor {2,}0\.3\.0$/v);
+		}
+	},
+}, ({results: {version}}) => {
+	assert.equal(version.toString(), '0.3.0');
 });

@@ -161,13 +161,6 @@ export const verifyWorkingTreeIsClean = async () => {
 	}
 };
 
-const isRemoteHistoryClean = async () => {
-	const {stdout: history} = await execa('git', ['rev-list', '--count', '--left-only', '@{u}...HEAD']);
-
-	// Remote history is clean if there are 0 revisions.
-	return history === '0';
-};
-
 export const verifyRemoteHistoryIsClean = async () => {
 	if (!(await hasUpstream())) {
 		return;
@@ -176,9 +169,20 @@ export const verifyRemoteHistoryIsClean = async () => {
 	// Refresh refs before comparing history; fetch output may contain harmless warnings.
 	await fetch();
 
-	if (!(await isRemoteHistoryClean())) {
-		throw new PresentableError('Remote history differs. Please pull changes.');
+	const {stdout: history} = await execa('git', ['rev-list', '--count', '--left-right', '@{u}...HEAD']);
+	const [behind, ahead] = history.split('\t').map(Number);
+
+	// Remote history is clean if there are 0 incoming revisions.
+	if (behind === 0) {
+		return;
 	}
+
+	const isBehind = ahead === 0;
+	const error = new PresentableError(isBehind
+		? 'Remote history differs. Please pull changes.'
+		: 'Local and remote history have diverged. Resolve the divergence before releasing.');
+	error.isBehind = isBehind;
+	throw error;
 };
 
 export const verifyRemoteIsValid = async remote => {

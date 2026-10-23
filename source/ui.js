@@ -381,10 +381,14 @@ export default async function ui({packageManager, ...options}, {package_, rootDi
 			pageSize: SEMVER_INCREMENTS.length + 2,
 			default: defaultIncrement,
 			choices: [
-				...SEMVER_INCREMENTS.map(increment => ({
-					name: `${increment.padEnd(incrementColumnWidth)}${new Version(oldVersion, increment, {prereleasePrefix: defaultPrereleasePrefix}).format()}`,
-					value: increment,
-				})),
+				...SEMVER_INCREMENTS.map(increment => {
+					const formattedVersion = new Version(oldVersion, increment, {prereleasePrefix: defaultPrereleasePrefix}).format();
+					return {
+						name: `${increment.padEnd(incrementColumnWidth)}${formattedVersion}`,
+						short: `${increment} ${formattedVersion}`,
+						value: increment,
+					};
+				}),
 				new inquirer.Separator(),
 				{
 					name: 'Other (specify)',

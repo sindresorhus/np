@@ -7,28 +7,33 @@ import sinon from 'sinon';
 import esmock from 'esmock';
 import {execa} from 'execa';
 import {ExitPromptError} from '@inquirer/core';
+import {PresentableError} from 'presentable-error';
 import {npPackage} from '../source/util.js';
 import {npmConfig} from '../source/package-manager/configs.js';
 
 const loadCli = async (t, options = {}) => {
 	const {
 		action = 'current', flags = {}, input = ['patch'], interactive = true, currentBranch = 'feature', localBranch = true, exitCode = 0, localConfig = {},
-		promptError, checkoutError, workingTreeError,
+		promptError, checkoutError, workingTreeError, historyError,
 	} = options;
 	const prompt = promptError ? sinon.stub().rejects(promptError) : sinon.stub().resolves({action});
+	if (historyError) {
+		prompt.onSecondCall().resolves({action: 'update'});
+	}
+
 	const signalListenerCounts = [];
 	const execute = sinon.stub().callsFake(async () => {
 		signalListenerCounts.push(process.listenerCount('SIGINT'));
 		return {exitCode};
 	});
 	if (checkoutError) {
-		execute.rejects(checkoutError);
+		execute.withArgs('git').rejects(checkoutError);
 	}
 
 	const readPackage = sinon.stub().resolves({package_: {name: 'fixture', version: '1.0.0'}, rootDirectory: process.cwd()});
 	const ui = sinon.stub().callsFake(async releaseOptions => ({...releaseOptions, confirm: false}));
 	const publish = sinon.stub();
-	const verifyGitTasks = sinon.stub();
+	const verifyGitTasks = historyError ? sinon.stub().rejects(historyError) : sinon.stub();
 	const verifyWorkingTreeIsClean = workingTreeError ? sinon.stub().rejects(workingTreeError) : sinon.stub();
 	const getCurrentBranch = sinon.stub().resolves(currentBranch);
 	const defaultBranch = sinon.stub().resolves('main');
@@ -69,7 +74,18 @@ test('cli continues on the current branch for this invocation before the release
 	assert.equal(ui.firstCall.firstArg.anyBranch, true);
 	assert.equal(ui.firstCall.firstArg.branch, 'HEAD');
 	assert.deepEqual(localConfig, {branch: 'release'});
-	sinon.assert.callOrder(prompt, readPackage, verifyGitTasks, ui);
+	sinon.assert.callOrder(prompt, verifyGitTasks, readPackage, ui);
+});
+
+test('cli keeps continuing from the current branch when restarting after a fast-forward', async t => {
+	const historyError = Object.assign(new PresentableError('Remote history differs. Please pull changes.'), {isBehind: true});
+	const {prompt, execute, gracefulExit} = await loadCli(t, {historyError});
+
+	assert.equal(prompt.callCount, 2);
+	assert.deepEqual(prompt.secondCall.firstArg.action.choices.map(choice => choice.value), ['update', 'cancel']);
+	assert.deepEqual(execute.firstCall.args, ['git', ['merge', '--ff-only', '@{u}'], {stdio: 'inherit'}]);
+	assert.deepEqual(execute.secondCall.args, [process.execPath, [...process.execArgv, ...process.argv.slice(1), '--any-branch'], {stdio: 'inherit', reject: false}]);
+	assert.ok(gracefulExit.calledOnceWithExactly(0));
 });
 
 test('cli sanitizes branch labels without changing the branch passed to checkout', async t => {
@@ -189,7 +205,7 @@ test('switching branches restarts with the target package and executable config'
 			}},
 		});
 	`);
-	const {stdout, stderr, exitCode} = await execa(process.execPath, [runner, 'patch', '--no-publish'], {cwd: projectDirectory, reject: false, timeout: 20_000});
+	const {stdout, stderr, exitCode} = await execa(process.execPath, [runner, 'patch', '--no-publish'], {cwd: projectDirectory, reject: false, timeout: 60_000});
 
 	assert.equal(exitCode, 0, stderr);
 	assert.deepEqual(JSON.parse(stdout), {

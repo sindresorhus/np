@@ -143,6 +143,22 @@ updateNotifier({pkg: cli.pkg}).notify();
 /** @typedef {NonNullable<Awaited<ReturnType<typeof getOptions>>>['options']} Options */
 
 /**
+Restarts the command after a Git update so executable config and memoized lookups reflect the working tree.
+@param {string[]} [extraArguments] - Arguments to append to the original command.
+*/
+const restart = async (extraArguments = []) => {
+	// Ctrl+C also reaches the restarted command, which handles it. Exiting first would return the shell prompt while it still runs its exit hooks.
+	const ignoreSignal = () => {};
+	process.on('SIGINT', ignoreSignal);
+	try {
+		const {exitCode} = await execa(process.execPath, [...process.execArgv, ...process.argv.slice(1), ...extraArguments], {stdio: 'inherit', reject: false});
+		gracefulExit(exitCode ?? 1);
+	} finally {
+		process.off('SIGINT', ignoreSignal);
+	}
+};
+
+/**
 Resolves the release branch before loading package data. Switching restarts the command so executable config and memoized lookups come from the selected branch. Returns undefined when the current process should stop.
 @param {CLI['flags']} flags - Invocation flags, updated when continuing from the current branch.
 */
@@ -179,19 +195,52 @@ const prepareReleaseBranch = async flags => {
 
 	if (action === 'switch') {
 		await execa('git', ['checkout', branch, '--']);
-		// Ctrl+C also reaches the restarted command, which handles it. Exiting first would return the shell prompt while it still runs its exit hooks.
-		const ignoreSignal = () => {};
-		process.on('SIGINT', ignoreSignal);
-		const {exitCode} = await execa(process.execPath, [...process.execArgv, ...process.argv.slice(1)], {stdio: 'inherit', reject: false});
-		process.off('SIGINT', ignoreSignal);
-		gracefulExit(exitCode ?? 1);
+		await restart();
 		return;
 	}
 
 	gracefulExit();
 };
 
-// These lookups are memoized, each spawns a process, and the prompts and the auth check need them later. Starting them now overlaps that work with the Git checks in `getOptions`, which wait on the network. Failures are ignored here because the real calls report them.
+/**
+Checks Git before loading package data and offers to fast-forward a branch that is only behind its upstream. Returns whether the current process should continue.
+@param {CLI['flags']} flags - Invocation flags.
+@param {string} branch - The release branch.
+*/
+const prepareGit = async (flags, branch) => {
+	try {
+		await verifyGitTasks({anyBranch: flags.anyBranch, branch, remote: flags.remote});
+		return true;
+	} catch (error) {
+		if (!error.isBehind || flags.dryRun || !isInteractive()) {
+			throw error;
+		}
+	}
+
+	const {action} = await inquirer.prompt({
+		action: {
+			type: 'select',
+			message: 'Your branch is behind its upstream.',
+			choices: [
+				{name: 'Update branch and continue', value: 'update'},
+				{name: 'Cancel', value: 'cancel'},
+			],
+		},
+	});
+
+	if (action === 'update') {
+		await git.verifyWorkingTreeIsClean();
+		await execa('git', ['merge', '--ff-only', '@{u}'], {stdio: 'inherit'});
+		// Keep a choice to continue from the current branch, so the restarted command does not ask again.
+		await restart(flags.anyBranch ? ['--any-branch'] : []);
+	} else {
+		gracefulExit();
+	}
+
+	return false;
+};
+
+// These lookups are memoized, each spawns a process, and the prompts and the auth check need them later. Starting them now overlaps that work with the registry availability lookup. Failures are ignored here because the real calls report them.
 const warmUpPublishLookups = async (package_, packageManager, rootDirectory) => {
 	try {
 		await Promise.all([
@@ -237,9 +286,15 @@ async function getOptions() {
 		flags['2fa'] = flags['2Fa'];
 	}
 
-	const branch = flags.releaseDraftOnly ? undefined : await prepareReleaseBranch(flags);
-	if (!flags.releaseDraftOnly && branch === undefined) {
-		return;
+	let branch;
+	if (!flags.releaseDraftOnly) {
+		branch = await prepareReleaseBranch(flags);
+
+		// Keep obvious Git failures ahead of the wizard, but do not replace the later Git task.
+		// The publish flow still needs a final check in case the repo changes while the user is prompting or logging in.
+		if (branch === undefined || !(await prepareGit(flags, branch))) {
+			return;
+		}
 	}
 
 	const {contents} = flags;
@@ -288,7 +343,7 @@ async function getOptions() {
 		}
 	}
 
-	// Start the registry lookup now so it overlaps with the Git checks below, which also wait on the network.
+	// Start the registry lookup now so it overlaps with the publish lookup warm-up below.
 	const availabilityPromise = runPublish
 		? npm.isPackageNameAvailable(package_)
 		: Promise.resolve({
@@ -299,10 +354,6 @@ async function getOptions() {
 	if (runPublish) {
 		warmUpPublishLookups(package_, packageManager, rootDirectory);
 	}
-
-	// Keep obvious Git failures ahead of the wizard, but do not replace the later Git task.
-	// The publish flow still needs a final check in case the repo changes while the user is prompting or logging in.
-	await verifyGitTasks({anyBranch: flags.anyBranch, branch, remote: flags.remote});
 
 	const availability = await availabilityPromise;
 

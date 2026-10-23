@@ -23,15 +23,15 @@ createStubFixture('unfetched changes', [
 		exitCode: 0,
 	},
 	{
-		command: 'git rev-list --count --left-only @{u}...HEAD',
-		stdout: '1',
+		command: 'git rev-list --count --left-right @{u}...HEAD',
+		stdout: '1\t0',
 	},
 ], async ({
 	testedModule: {verifyRemoteHistoryIsClean},
 }) => {
 	await assert.rejects(
 		verifyRemoteHistoryIsClean(),
-		{message: 'Remote history differs. Please pull changes.'},
+		{message: 'Remote history differs. Please pull changes.', isBehind: true},
 	);
 });
 
@@ -45,8 +45,8 @@ createStubFixture('unclean remote history', [
 		exitCode: 0,
 	},
 	{
-		command: 'git rev-list --count --left-only @{u}...HEAD',
-		stdout: '1', // Has unpulled changes
+		command: 'git rev-list --count --left-right @{u}...HEAD',
+		stdout: '1\t0', // Has unpulled changes
 	},
 ], async ({
 	testedModule: {verifyRemoteHistoryIsClean},
@@ -67,8 +67,8 @@ createStubFixture('clean fetched remote history', [
 		exitCode: 0,
 	},
 	{
-		command: 'git rev-list --count --left-only @{u}...HEAD',
-		stdout: '0', // No changes
+		command: 'git rev-list --count --left-right @{u}...HEAD',
+		stdout: '0\t0', // No changes
 	},
 ], async ({
 	testedModule: {verifyRemoteHistoryIsClean},
@@ -87,8 +87,8 @@ createStubFixture('accepts harmless fetch warnings when tracked history is curre
 		exitCode: 0,
 	},
 	{
-		command: 'git rev-list --count --left-only @{u}...HEAD',
-		stdout: '0',
+		command: 'git rev-list --count --left-right @{u}...HEAD',
+		stdout: '0\t0',
 	},
 ], async ({testedModule: {verifyRemoteHistoryIsClean}}) => {
 	await assert.doesNotReject(verifyRemoteHistoryIsClean());
@@ -117,7 +117,7 @@ createIntegrationFixture('rejects unfetched commits from the tracked remote', as
 	const {stdout: upstreamBefore} = await $$`git rev-parse @{u}`;
 	await assert.rejects(
 		verifyRemoteHistoryIsClean(),
-		{message: 'Remote history differs. Please pull changes.'},
+		{message: 'Remote history differs. Please pull changes.', isBehind: true},
 	);
 	const {stdout: upstreamAfter} = await $$`git rev-parse @{u}`;
 	const {stdout: remoteHead} = await $$`git -C peer rev-parse HEAD`;
@@ -154,7 +154,7 @@ createIntegrationFixture('rejects diverged history even when local commits are u
 	await $$`git -C peer push`;
 	await $$`git commit --allow-empty -m local-change`;
 }, async ({testedModule: {verifyRemoteHistoryIsClean}, $$}) => {
-	await assert.rejects(verifyRemoteHistoryIsClean(), {message: 'Remote history differs. Please pull changes.'});
+	await assert.rejects(verifyRemoteHistoryIsClean(), {message: 'Local and remote history have diverged. Resolve the divergence before releasing.', isBehind: false});
 	const {stdout: divergence} = await $$`git rev-list --count --left-right @{u}...HEAD`;
 	assert.equal(divergence, '1\t1');
 });
