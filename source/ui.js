@@ -356,6 +356,8 @@ export default async function ui({packageManager, ...options}, {package_, rootDi
 	const currentPrereleasePrefix = typeof currentPrerelease?.[0] === 'string' ? currentPrerelease[0] : undefined;
 	const configPrereleasePrefix = await util.getPreReleasePrefix(packageManager);
 	const defaultPrereleasePrefix = currentPrereleasePrefix ?? configPrereleasePrefix;
+	// Align the versions with spaces, because a tab character makes terminals like iTerm2 repaint the prompt twice on every keypress, which flickers.
+	const incrementColumnWidth = Math.max(...SEMVER_INCREMENTS.map(increment => increment.length)) + 2;
 
 	const answers = await inquirer.prompt({
 		version: {
@@ -365,7 +367,7 @@ export default async function ui({packageManager, ...options}, {package_, rootDi
 			default: 0,
 			choices: [
 				...SEMVER_INCREMENTS.map(increment => ({
-					name: `${increment} 	${new Version(oldVersion, increment, {prereleasePrefix: defaultPrereleasePrefix}).format()}`,
+					name: `${increment.padEnd(incrementColumnWidth)}${new Version(oldVersion, increment, {prereleasePrefix: defaultPrereleasePrefix}).format()}`,
 					value: increment,
 				})),
 				new inquirer.Separator(),

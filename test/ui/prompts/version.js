@@ -4,10 +4,10 @@ import sinon from 'sinon';
 import {npmConfig as packageManager} from '../../../source/package-manager/configs.js';
 import {mockInquirer} from '../../_helpers/mock-inquirer.js';
 
-const testUi = (title, {version, answers}, assertions) => {
+const testUi = (title, {version, answers, onPrompt}, assertions) => {
 	test(title, async t => {
 		const {ui, logs} = await mockInquirer({
-			t, answers: {confirm: true, ...answers}, mocks: {
+			t, answers: {confirm: true, ...answers}, onPrompt, mocks: {
 				'./npm/util.js': {
 					checkIgnoreStrategy: sinon.stub().resolves(),
 				},
@@ -286,4 +286,25 @@ test('uses empty prerelease identifier by default when no prerelease identifier 
 	assert.ok(capturedPrereleasePrefixPrompt);
 	assert.equal(capturedPrereleasePrefixPrompt.default, '', 'the prerelease identifier default should remain empty');
 	assert.equal(version.toString(), '2.0.0-0');
+});
+
+let capturedVersionChoices;
+
+testUi('version choices align the versions with spaces instead of tabs', {
+	version: '1.0.0',
+	answers: {
+		version: 'major',
+	},
+	onPrompt(prompts) {
+		if (prompts.version) {
+			capturedVersionChoices = prompts.version.choices;
+		}
+	},
+}, () => {
+	// A tab character makes terminals like iTerm2 paint the prompt twice on every keypress, which flickers.
+	for (const choice of capturedVersionChoices) {
+		if (typeof choice.name === 'string') {
+			assert.ok(!choice.name.includes('\t'), `Choice name must not contain a tab: ${JSON.stringify(choice.name)}`);
+		}
+	}
 });
