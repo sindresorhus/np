@@ -17,10 +17,13 @@ export const root = async () => {
 	return stdout;
 };
 
+// Git only accepts `/` as the path separator in `--relative` and `<revision>:<path>`, even on Windows.
+const toGitPath = filePath => filePath.split(path.sep).join('/');
+
 export const newFilesSinceLastRelease = async rootDirectory => {
 	try {
 		// `--relative` makes paths relative to the package directory (and excludes files outside it), so they match the paths from `npm pack` when the package lives in a subdirectory (e.g. `--contents`).
-		const relativeRootDirectory = path.relative(await root(), rootDirectory);
+		const relativeRootDirectory = toGitPath(path.relative(await root(), rootDirectory));
 		// A renamed destination is a new published path, regardless of Git's rename detection settings.
 		const {stdout} = await execa('git', ['diff', '--no-renames', '--name-only', '-z', '--diff-filter=A', `--relative=${relativeRootDirectory}`, await latestTag(), 'HEAD']);
 		if (stdout.length === 0) {
@@ -40,7 +43,7 @@ export const newFilesSinceLastRelease = async rootDirectory => {
 
 export const readFileFromLastRelease = async file => {
 	const rootPath = await root();
-	const filePathFromRoot = path.relative(rootPath, path.resolve(rootPath, file));
+	const filePathFromRoot = toGitPath(path.relative(rootPath, path.resolve(rootPath, file)));
 	const {stdout: oldFile} = await execa('git', ['show', `${await latestTag()}:${filePathFromRoot}`]);
 	return oldFile;
 };

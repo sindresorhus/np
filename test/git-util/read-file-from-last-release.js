@@ -1,3 +1,4 @@
+import path from 'node:path';
 import assert from 'node:assert/strict';
 import {_createFixture} from '../_helpers/integration-test.js';
 
@@ -18,6 +19,22 @@ createFixture('returns content of a given file', async ({context, $$}) => {
 	testedModule: {readFileFromLastRelease},
 }) => {
 	const file = await readFileFromLastRelease('unicorn.txt');
+	assert.equal(file, 'unicorn-1');
+});
+
+createFixture('returns content of a file in a nested subdirectory', async ({context, $$}) => {
+	await context.createFile('packages/unicorn/package.json', 'unicorn-1');
+	await $$`git add .`;
+	await $$`git commit -m "added"`;
+	await $$`git tag v0.0.0`;
+	await context.createFile('packages/unicorn/package.json', 'unicorn-2');
+	await $$`git add .`;
+	await $$`git commit -m "added"`;
+}, async ({
+	testedModule: {readFileFromLastRelease},
+	temporaryDirectory,
+}) => {
+	const file = await readFileFromLastRelease(path.join(temporaryDirectory, 'packages', 'unicorn', 'package.json'));
 	assert.equal(file, 'unicorn-1');
 });
 

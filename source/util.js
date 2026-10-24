@@ -165,7 +165,8 @@ export const getTagVersionPrefix = pMemoize(async config => {
 export const joinList = list => chalk.reset(list.map(item => `- ${item}`).join('\n'));
 
 export const groupFilesInFolders = (files, groupingMinimumDepth = 1, groupingThresholdCount = 5) => {
-	const groups = Object.groupBy(files, file => path.join(...file.split(path.sep).slice(0, groupingMinimumDepth)));
+	// Git reports paths with `/` on every platform, so split on `/` instead of `path.sep`.
+	const groups = Object.groupBy(files, file => file.split('/').slice(0, groupingMinimumDepth).join('/'));
 
 	const lines = [];
 	for (const [folder, filesInFolder] of Object.entries(groups)) {
